@@ -1,4 +1,5 @@
 source_run_id=39708640090
-mode=missing-orbit-snapshot-safe
+recovery_run_id=39743112374
+mode=resumable-missing-orbit-checkpoints
 parallelism=4
-target_proxy=250000
+target_proxy=200000
