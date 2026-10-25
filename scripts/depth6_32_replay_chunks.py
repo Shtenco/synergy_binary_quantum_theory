@@ -8,10 +8,15 @@ recovery chunks using the persisted numerical proxy as a load measure.
 from __future__ import annotations
 
 
-def plan_missing_chunks(records, completed_orbit_ids, *, target_proxy: int = 250000) -> list[dict]:
+def plan_missing_chunks(records, completed_orbit_ids, *, target_proxy: int = 250000,
+                        max_blocks: int | None = None) -> list[dict]:
     target_proxy = int(target_proxy)
     if target_proxy <= 0:
         raise RuntimeError('target_proxy must be positive')
+    if max_blocks is not None and int(max_blocks) <= 0:
+        raise RuntimeError('max_blocks must be positive when provided')
+    if max_blocks is not None:
+        max_blocks = int(max_blocks)
 
     by_id = {}
     for rec in records:
@@ -43,7 +48,8 @@ def plan_missing_chunks(records, completed_orbit_ids, *, target_proxy: int = 250
         placed = False
         if rec['proxy'] <= target_proxy:
             for b in bins:
-                if b['proxy'] + rec['proxy'] <= target_proxy:
+                if ((max_blocks is None or len(b['orbit_ids']) < max_blocks)
+                    and b['proxy'] + rec['proxy'] <= target_proxy):
                     b['orbit_ids'].append(rec['orbit_id'])
                     b['proxy'] += rec['proxy']
                     b['columns'] += rec['m']
