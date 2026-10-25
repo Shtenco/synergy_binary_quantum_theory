@@ -37,7 +37,7 @@ def _write_chunk_manifest(out_dir: Path, *, chunk: int, requested: list[int],
     }
     path=Path(out_dir)/f'chunk-{int(chunk):04d}-manifest.json'
     tmp=path.with_suffix(path.suffix+'.tmp')
-    tmp.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\\n')
+    tmp.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
     tmp.replace(path)
     return payload
 
