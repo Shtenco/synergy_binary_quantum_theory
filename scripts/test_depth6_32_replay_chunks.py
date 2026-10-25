@@ -34,6 +34,15 @@ class ReplayChunkPlanningTests(unittest.TestCase):
             else:
                 self.assertLessEqual(ch['proxy'], 180)
 
+    def test_max_blocks_bounds_work_per_chunk(self):
+        chunks = C.plan_missing_chunks(self.records, set(), target_proxy=180, max_blocks=2)
+        ids = [oid for ch in chunks for oid in ch['orbit_ids']]
+        self.assertEqual(sorted(ids), [1, 2, 3, 4, 5])
+        self.assertEqual(len(ids), len(set(ids)))
+        for ch in chunks:
+            self.assertLessEqual(len(ch['orbit_ids']), 2)
+            self.assertEqual(ch['blocks'], len(ch['orbit_ids']))
+
     def test_unknown_completed_orbit_fails_closed(self):
         with self.assertRaises(RuntimeError):
             C.plan_missing_chunks(self.records, {999}, target_proxy=180)
