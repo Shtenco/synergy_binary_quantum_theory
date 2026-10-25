@@ -248,6 +248,7 @@ jobs:
           merge-multiple: false
       - name: Download current durable or partial recovery KEYMETA
         if: ${{ always() }}
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: bqg-depth6-32-keymeta-recovery-*
