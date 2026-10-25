@@ -16,6 +16,32 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def _write_chunk_manifest(out_dir: Path, *, chunk: int, requested: list[int],
+                          rows: list[dict], columns: int, status: str) -> dict:
+    payload={
+        'schema_version':1,
+        'kind':'BQG_DEPTH6_32_KEYMETA_RECOVERY_CHUNK_MANIFEST',
+        'status':status,
+        'chunk':int(chunk),
+        'orbit_ids':sorted(requested),
+        'completed_blocks':len(rows),
+        'completed_columns':int(columns),
+        'records':list(rows),
+        'raw_matrices_persisted':False,
+        'rank_certified':False,
+        'numerical_closure_claimed':False,
+        'claim_boundary':(
+            'Durable KEYMETA checkpoint for an explicit authorized frozen-orbit recovery chunk. '
+            'A partial checkpoint certifies only the listed persisted blocks; it makes no global '
+            'actual-q coverage, peeling, rank, kernel, or [3,2] closure claim.'),
+    }
+    path=Path(out_dir)/f'chunk-{int(chunk):04d}-manifest.json'
+    tmp=path.with_suffix(path.suffix+'.tmp')
+    tmp.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\\n')
+    tmp.replace(path)
+    return payload
+
+
 def run_chunk(records, orbit_ids, *, chunk: int, out_dir: Path,
               keymeta_backend, selector_backend, master_backend, basis_backend,
               tol: float=1e-8) -> dict:
@@ -40,6 +66,10 @@ def run_chunk(records, orbit_ids, *, chunk: int, out_dir: Path,
     block_dir.mkdir(parents=True,exist_ok=True)
     rows=[]
     columns=0
+    # Persist a manifest checkpoint after every successful block so a runner
+    # shutdown does not discard already completed numerical work.
+    _write_chunk_manifest(out_dir,chunk=chunk,requested=requested,rows=rows,
+                          columns=columns,status='PASS_KEYMETA_RECOVERY_CHUNK_PARTIAL')
     for oid in sorted(requested):
         rec=by_id[oid]
         m=int(rec['m'])
@@ -58,27 +88,12 @@ def run_chunk(records, orbit_ids, *, chunk: int, out_dir: Path,
             'rows':int(meta['rows']),
         })
         columns+=m
+        _write_chunk_manifest(out_dir,chunk=chunk,requested=requested,rows=rows,
+                              columns=columns,status='PASS_KEYMETA_RECOVERY_CHUNK_PARTIAL')
 
-    payload={
-        'schema_version':1,
-        'kind':'BQG_DEPTH6_32_KEYMETA_RECOVERY_CHUNK_MANIFEST',
-        'status':'PASS_KEYMETA_RECOVERY_CHUNK_COMPLETE',
-        'chunk':int(chunk),
-        'orbit_ids':sorted(requested),
-        'completed_blocks':len(rows),
-        'completed_columns':columns,
-        'records':rows,
-        'raw_matrices_persisted':False,
-        'rank_certified':False,
-        'numerical_closure_claimed':False,
-        'claim_boundary':(
-            'Complete KEYMETA persistence for one explicit authorized frozen-orbit recovery chunk only. '
-            'No global actual-q coverage, peeling, rank, kernel, or [3,2] closure claim.'),
-    }
-    (out_dir/f'chunk-{int(chunk):04d}-manifest.json').write_text(
-        json.dumps(payload,indent=2,sort_keys=True)+'\n')
-    return payload
-
+    return _write_chunk_manifest(
+        out_dir,chunk=chunk,requested=requested,rows=rows,columns=columns,
+        status='PASS_KEYMETA_RECOVERY_CHUNK_COMPLETE')
 
 def main()->int:
     ap=argparse.ArgumentParser()
