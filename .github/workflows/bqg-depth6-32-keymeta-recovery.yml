@@ -7,10 +7,14 @@ on:
         description: 'Original authorized KEYMETA replay run containing durable shard artifacts'
         required: true
         default: '39708640090'
+      recovery_run_id:
+        description: 'Previous recovery run containing durable completed or partial KEYMETA artifacts'
+        required: true
+        default: '39743112374'
       target_proxy:
         description: 'Maximum frozen proxy per recovery chunk; oversize records become singleton chunks'
         required: true
-        default: '250000'
+        default: '200000'
   push:
     paths:
       - '.github/START_DEPTH6_32_RECOVERY'
@@ -21,7 +25,8 @@ permissions:
 
 env:
   SOURCE_RUN_ID: ${{ inputs.source_run_id || '39708640090' }}
-  TARGET_PROXY: ${{ inputs.target_proxy || '250000' }}
+  RECOVERY_RUN_ID: ${{ inputs.recovery_run_id || '39743112374' }}
+  TARGET_PROXY: ${{ inputs.target_proxy || '200000' }}
 
 jobs:
   prepare:
@@ -52,6 +57,14 @@ jobs:
           if-no-files-found: error
           compression-level: 6
           retention-days: 30
+      - name: Download prior durable or partial recovery KEYMETA
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ env.RECOVERY_RUN_ID }}
+          github-token: ${{ github.token }}
+          pattern: bqg-depth6-32-keymeta-recovery-*
+          path: prior-recovery
+          merge-multiple: false
       - name: Fail-closed authorization and missing-orbit plan
         id: plan
         env:
@@ -70,18 +83,48 @@ jobs:
           if not auth['numerical_replay_authorized']:
               raise RuntimeError('numerical replay not authorized')
 
-          completed=set()
+          import hashlib
+          def sha256(path):
+              h=hashlib.sha256()
+              with Path(path).open('rb') as f:
+                  for part in iter(lambda:f.read(1024*1024),b''):
+                      h.update(part)
+              return h.hexdigest()
+
+          source_completed=set()
           manifests=list(Path('source-keymeta').rglob('shard-*-manifest.json'))
+          if not manifests:
+              raise RuntimeError('no durable source manifests found')
           for p in manifests:
               m=json.loads(p.read_text())
               if m.get('status')!='PASS_KEYMETA_FIRST_SHARD_COMPLETE':
                   raise RuntimeError(f'non-PASS source manifest: {p}')
               for rec in m.get('records',[]):
                   oid=int(rec['orbit_id'])
-                  if oid in completed:
+                  if oid in source_completed:
                       raise RuntimeError(f'duplicate durable source orbit {oid}')
-                  completed.add(oid)
+                  source_completed.add(oid)
 
+          prior_completed=set()
+          prior_manifests=list(Path('prior-recovery').rglob('chunk-*-manifest.json'))
+          if not prior_manifests:
+              raise RuntimeError('no prior recovery manifests found; refusing unsafe restart')
+          for p in prior_manifests:
+              m=json.loads(p.read_text())
+              if m.get('status') not in ('PASS_KEYMETA_RECOVERY_CHUNK_COMPLETE','PASS_KEYMETA_RECOVERY_CHUNK_PARTIAL'):
+                  raise RuntimeError(f'unknown prior recovery manifest status: {p}: {m.get("status")}')
+              for rec in m.get('records',[]):
+                  oid=int(rec['orbit_id'])
+                  if oid in source_completed or oid in prior_completed:
+                      raise RuntimeError(f'duplicate prior durable orbit {oid}')
+                  keymeta=list(p.parent.rglob(rec['keymeta_file']))
+                  if len(keymeta)!=1:
+                      raise RuntimeError(f'expected one prior KEYMETA file for orbit {oid}, got {len(keymeta)}')
+                  if sha256(keymeta[0])!=rec['keymeta_sha256']:
+                      raise RuntimeError(f'prior KEYMETA SHA256 mismatch for orbit {oid}')
+                  prior_completed.add(oid)
+
+          completed=source_completed | prior_completed
           target=int(os.environ['TARGET_PROXY'])
           chunks=C.plan_missing_chunks(ledger['records'],completed,target_proxy=target)
           planned=[oid for c in chunks for oid in c['orbit_ids']]
@@ -106,7 +149,10 @@ jobs:
               'source_run_id':int(os.environ['SOURCE_RUN_ID']),
               'source_snapshot_frozen':True,
               'identity_sha256':auth['identity_sha256'],
-              'durable_source_blocks':len(completed),
+              'durable_source_blocks':len(source_completed),
+              'prior_recovery_blocks':len(prior_completed),
+              'completed_blocks':len(completed),
+              'recovery_run_id':int(os.environ['RECOVERY_RUN_ID']),
               'missing_blocks':len(planned),
               'chunk_count':len(chunks),
               'target_proxy':target,
@@ -165,18 +211,19 @@ jobs:
             --orbit-ids-json '${{ matrix.orbit_ids_json }}' \
             --chunk '${{ matrix.chunk }}' \
             --out-dir 'recovery-chunk-${{ matrix.chunk }}'
-      - name: Upload compact recovery KEYMETA immediately
+      - name: Upload compact recovery KEYMETA, including checkpoints on failure
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: bqg-depth6-32-keymeta-recovery-${{ matrix.chunk }}
           path: recovery-chunk-${{ matrix.chunk }}/
-          if-no-files-found: error
+          if-no-files-found: warn
           compression-level: 6
           retention-days: 30
 
   aggregate:
     needs: [prepare,recover]
-    if: ${{ always() && needs.prepare.result == 'success' && (needs.recover.result == 'success' || needs.recover.result == 'skipped') }}
+    if: ${{ always() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -191,12 +238,20 @@ jobs:
         with:
           name: bqg-depth6-32-recovery-source-snapshot
           path: union/source
-      - name: Download recovery durable KEYMETA
-        if: ${{ needs.recover.result == 'success' }}
+      - name: Download prior durable recovery KEYMETA
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ env.RECOVERY_RUN_ID }}
+          github-token: ${{ github.token }}
+          pattern: bqg-depth6-32-keymeta-recovery-*
+          path: union/prior-recovery
+          merge-multiple: false
+      - name: Download current durable or partial recovery KEYMETA
+        if: ${{ always() }}
         uses: actions/download-artifact@v4
         with:
           pattern: bqg-depth6-32-keymeta-recovery-*
-          path: union/recovery
+          path: union/current-recovery
           merge-multiple: false
       - name: Require exact 2755/130903 union and write JSON-safe gate
         env:
@@ -214,19 +269,29 @@ jobs:
               with gzip.open(p,'rb') as f:
                   blocks.append(pickle.load(f))
           gate=K.validate_keymeta_union(blocks,target_blocks=2755,target_columns=130903)
-          if not gate['exact_keymeta_coverage'] or not gate['global_peeling_allowed']:
-              raise RuntimeError(
-                  f"recovery union incomplete: blocks={gate['blocks']} columns={gate['columns']}")
+          gate['recovery_union_exact_coverage'] = bool(gate['exact_keymeta_coverage'] and gate['global_peeling_allowed'])
           gate['source_run_id']=int(os.environ['SOURCE_RUN_ID'])
           gate['source_snapshot_frozen']=True
           gate['recovery_run_id']=int('${{ github.run_id }}')
           gate['rank_certified']=False
           gate['numerical_closure_claimed']=False
           A.write_union_gate_json(Path('BQG_DEPTH6_32_KEYMETA_RECOVERY_UNION_GATE.json'),gate)
-          print('PASS_EXACT_KEYMETA_RECOVERY_UNION',gate['blocks'],gate['columns'],gate['q_key_count'])
+          print('RECOVERY_UNION_AUDIT',gate['blocks'],gate['columns'],gate['q_key_count'],gate['recovery_union_exact_coverage'])
           PY
-      - uses: actions/upload-artifact@v4
+      - name: Upload recovery union coverage report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
         with:
           name: bqg-depth6-32-keymeta-recovery-union-gate
           path: BQG_DEPTH6_32_KEYMETA_RECOVERY_UNION_GATE.json
           retention-days: 30
+      - name: Fail closed unless exact KEYMETA union is complete
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          gate=json.loads(Path('BQG_DEPTH6_32_KEYMETA_RECOVERY_UNION_GATE.json').read_text())
+          if not gate.get('recovery_union_exact_coverage'):
+              raise SystemExit(f"INCOMPLETE KEYMETA UNION: blocks={gate.get('blocks')} columns={gate.get('columns')}")
+          print('PASS_EXACT_KEYMETA_RECOVERY_UNION',gate['blocks'],gate['columns'],gate['q_key_count'])
+          PY
