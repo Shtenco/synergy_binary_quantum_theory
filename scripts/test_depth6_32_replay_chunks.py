@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
+import gzip
+import json
+import pickle
+import tempfile
 import unittest
+from pathlib import Path
 
 import depth6_32_replay_chunks as C
+import run_depth6_32_orbit_chunk as R
 
 
 class ReplayChunkPlanningTests(unittest.TestCase):
@@ -42,6 +48,46 @@ class ReplayChunkPlanningTests(unittest.TestCase):
         for ch in chunks:
             self.assertLessEqual(len(ch['orbit_ids']), 2)
             self.assertEqual(ch['blocks'], len(ch['orbit_ids']))
+
+
+    def test_partial_manifest_survives_failure_after_first_orbit(self):
+        class FakeKeymeta:
+            calls = 0
+
+            @classmethod
+            def compute_and_persist_block(cls, record, selector, master, basis,
+                                          *, keymeta_path, raw_path=None, tol=1e-8):
+                cls.calls += 1
+                if cls.calls == 2:
+                    raise RuntimeError('synthetic second-orbit failure')
+                meta = {
+                    'orbit_id': int(record['orbit_id']),
+                    'm': int(record['m']),
+                    'q_key_count': 1,
+                    'rows': int(record['m']),
+                }
+                keymeta_path.parent.mkdir(parents=True, exist_ok=True)
+                with gzip.open(keymeta_path, 'wb') as f:
+                    pickle.dump(meta, f, protocol=5)
+                return meta
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp) / 'chunk'
+            records = [
+                {'orbit_id': 1, 'm': 2},
+                {'orbit_id': 2, 'm': 3},
+            ]
+            with self.assertRaisesRegex(RuntimeError, 'synthetic second-orbit failure'):
+                R.run_chunk(
+                    records, [1, 2], chunk=7, out_dir=out_dir,
+                    keymeta_backend=FakeKeymeta, selector_backend=None,
+                    master_backend=None, basis_backend=None,
+                )
+            manifest = json.loads((out_dir / 'chunk-0007-manifest.json').read_text())
+            self.assertEqual(manifest['status'], 'PASS_KEYMETA_RECOVERY_CHUNK_PARTIAL')
+            self.assertEqual(manifest['completed_blocks'], 1)
+            self.assertEqual([r['orbit_id'] for r in manifest['records']], [1])
+            self.assertTrue((out_dir / 'blocks' / 'orbit-0001.keymeta.pkl.gz').exists())
 
     def test_unknown_completed_orbit_fails_closed(self):
         with self.assertRaises(RuntimeError):
