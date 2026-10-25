@@ -1,5 +1,6 @@
 source_run_id=39708640090
 recovery_run_id=39743112374
-mode=resumable-missing-orbit-checkpoints
+mode=resumable-missing-orbit-checkpoints-v2
 parallelism=4
 target_proxy=200000
+max_blocks=20
