@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - bqg/depth6-32-canonical-recovery
+      - bqg/depth6-32-resumable-keymeta
   pull_request:
     paths:
       - 'scripts/depth6_keymeta_coverage.py'
@@ -28,6 +29,8 @@ on:
       - 'scripts/test_depth6_replay_readiness.py'
       - 'scripts/test_depth6_32_identity_rematerialization.py'
       - 'scripts/test_plan_depth6_32_batches.py'
+      - 'scripts/depth6_32_replay_chunks.py'
+      - 'scripts/test_depth6_32_replay_chunks.py'
       - '.github/workflows/bqg-depth6-32-canonical-recovery-tests.yml'
 
 jobs:
@@ -51,6 +54,7 @@ jobs:
             test_depth6_assignment_ledger.py \
             test_depth6_replay_readiness.py \
             test_depth6_32_identity_rematerialization.py \
-            test_plan_depth6_32_batches.py
+            test_plan_depth6_32_batches.py \\
+            test_depth6_32_replay_chunks.py
       - name: Verify live recovery frontier
         run: python scripts/verify_depth6_32_recovery_frontier.py
