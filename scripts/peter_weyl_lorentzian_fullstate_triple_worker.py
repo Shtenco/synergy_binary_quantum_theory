@@ -58,15 +58,18 @@ def save_state(path,state):
     np.savez_compressed(path,spins=spins,Ks=Ks,amp=amp)
 
 
-def run(a,b,c,coefficient,source=0):
+def run(a,b,c,coefficient,source=0,column_index=0):
     neigh=PW.NEIG[source]
     if len({a,b,c})!=3 or any(x not in neigh for x in (a,b,c)):
         raise ValueError(f'(a,b,c) must be distinct neighbors of source {source}: {neigh}')
     if coefficient not in (-1,1):
         raise ValueError('coefficient must be +/-1')
 
+    basis=PW.basis_full_jhalf()
+    if not (0<=column_index<len(basis)):
+        raise ValueError(f'column_index must be in [0,{len(basis)-1}], got {column_index}')
     LP.JMAX2=JMAX2
-    initial=PW.basis_full_jhalf()[0]
+    initial=basis[column_index]
     restore,caches=LP.install_sine_cached_stack()
     try:
         cov,diag=LP.ordered_triple_state(initial,source,a,b,c)
@@ -102,6 +105,9 @@ def run(a,b,c,coefficient,source=0):
             'epsilon_coefficient':coefficient,
             'Jmax':JMAX2/2,
             'input_key':repr(initial),
+            'column_index':int(column_index),
+            'input_Ks':list(initial[1]),
+            'source_pair_K01':list(initial[1][:2]),
             'covariant_support':len(cov),
             'covariant_norm':covnorm,
             'gauss_support':len(gauss),
@@ -126,7 +132,8 @@ def main():
     p.add_argument('--a',type=int,required=True); p.add_argument('--b',type=int,required=True); p.add_argument('--c',type=int,required=True)
     p.add_argument('--coefficient',type=int,required=True); p.add_argument('--source',type=int,default=0)
     p.add_argument('--json-output',type=Path,required=True); p.add_argument('--state-output',type=Path,required=True)
-    x=p.parse_args(); state,out=run(x.a,x.b,x.c,x.coefficient,x.source)
+    p.add_argument('--column-index',type=int,default=0,help='Index in PW.basis_full_jhalf() (0,8,16,24 for K0/K1 logical pair, others 0)')
+    x=p.parse_args(); state,out=run(x.a,x.b,x.c,x.coefficient,x.source,x.column_index)
     x.json_output.parent.mkdir(parents=True,exist_ok=True)
     x.json_output.write_text(json.dumps(out,indent=2,sort_keys=True)+'\n',encoding='utf-8')
     save_state(x.state_output,state)
