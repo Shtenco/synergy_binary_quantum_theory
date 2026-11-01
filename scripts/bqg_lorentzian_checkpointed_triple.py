@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Resumable genuine full-state BQG Lorentzian triple, with 8 aux channels x 3 stages.
+
+NO substitution of model amplitudes. Same LP/R AW/CV/KCOMP operator kernels,
+Jmax=7/2, charged-node rules, scalar pruning and scalar closure as the original
+peter_weyl_lorentzian_fullstate_triple_worker.py. Checkpoints include ALL
+covariant keys (not just logical states) and max-leak diagnostics.
+Stage options: cv, kb, ka, finish. Each stage is one durable GitHub Actions job.
+This computes a *single raw ordered triple*, NOT the full Hermitian Lorentzian H.
+"""
+from __future__ import annotations
+import argparse, hashlib, itertools, json, math, os, sys, time
+from pathlib import Path
+import numpy as np
+
+HERE=Path(__file__).resolve().parent
+if str(HERE) not in sys.path:sys.path.insert(0,str(HERE))
+import k5_peter_weyl_safe_hda_column as PW
+import peter_weyl_lorentzian_logical_projection_gate as LP
+import peter_weyl_lorentzian_gauss_action_gate as LGA
+import peter_weyl_covariant_volume_leg_gate as CV
+import peter_weyl_lorentzian_ordered_triple_gate as RAW
+
+JMAX2=7
+TOL=1e-10
+LEAK_FIELDS=("CV_complete_basis_leakage","CK_outer_complete_basis_leakage",
+             "CK_internal_volume_sector_leakage","CK_complete_charge_basis_leakage")
+STAGES=("cv","kb","ka","finish")
+BASE_FILES=("k5_peter_weyl_safe_hda_column.py",
+            "peter_weyl_lorentzian_logical_projection_gate.py",
+            "peter_weyl_lorentzian_gauss_action_gate.py",
+            "peter_weyl_lorentzian_ordered_triple_gate.py",
+            "peter_weyl_covariant_volume_leg_gate.py")
+def digest(path):
+    h=hashlib.sha256()
+    with Path(path).open("rb") as f:
+        while True:
+            block=f.read(1024*1024)
+            if not block:break
+            h.update(block)
+    return h.hexdigest()
+def source_hashes():
+    return {n:digest(HERE/n) for n in BASE_FILES}
+def write_atomic(path,write):
+    path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+    tmp=path.with_name(path.name+".partial")
+    with tmp.open("wb") as f:
+        write(f);f.flush();os.fsync(f.fileno())
+    os.replace(tmp,path)
+def persist_state(path,state):
+    rows=sorted(state.items(),key=lambda t:repr(t[0]))
+    n=len(rows)
+    spins=np.array([key[0] for key,v in rows],dtype=np.int16).reshape(n,len(PW.EDGES))
+    others=np.array([key[1] for key,v in rows],dtype=np.int16).reshape(n,len(PW.VERT)-1)
+    ints=np.array([key[2:] for key,v in rows],dtype=np.int16).reshape(n,4)
+    amps=np.asarray([v for key,v in rows],dtype=np.complex128)
+    write_atomic(path,lambda f:np.savez_compressed(f,spins=spins,Kother=others,
+        charges=ints,amp=amps))
+def restore_state(path):
+    with np.load(path,allow_pickle=False) as z:
+        spins=z["spins"];others=z["Kother"];ints=z["charges"];amplitudes=z["amp"]
+    if not(len(spins)==len(others)==len(ints)==len(amplitudes)):raise ValueError("corrupt row alignment")
+    if spins.shape[1:]!=(len(PW.EDGES),) or others.shape[1:]!=(len(PW.VERT)-1,) or ints.shape[1:]!=(4,):
+        raise ValueError("corrupt covariant key dimensions")
+    out={}
+    for s,k,j,v in zip(spins,others,ints,amplitudes):
+        key=(tuple(map(int,s)),tuple(map(int,k)),*map(int,j))
+        if key in out:raise ValueError("duplicate covariant key")
+        if not (np.isfinite(v.real) and np.isfinite(v.imag)):raise ValueError("nonfinite amplitude")
+        out[key]=complex(v)
+    return out
+def norm(state):
+    return math.sqrt(sum(abs(z)**2 for z in state.values()))
+def max_spin(state):
+    return max((max(k[0]) for k in state),default=0)/2
+def selected(args):
+    all_=list(itertools.product(range(2),repeat=3))
+    return all_ if args.channel=="all" else [tuple(map(int,args.channel))]
+def prefix(d,stage,ijk):
+    return d/(stage+"_"+''.join(map(str,ijk)))
+def load_result(d,stage,ijk,freeze):
+    stem=prefix(d,stage,ijk);path=stem.with_suffix(".npz");jpath=stem.with_suffix(".json")
+    if not path.exists() or not jpath.exists():
+        raise FileNotFoundError("Missing prior stage "+str(stem))
+    meta=json.loads(jpath.read_text(encoding="utf-8"))
+    if meta.get("freeze")!=freeze or meta.get("stage")!=stage or meta.get("channel")!=list(ijk):
+        raise ValueError("Checkpoint metadata mismatch "+str(stem))
+    if meta["sha256"]!=digest(path):raise ValueError("Checkpoint SHA256 mismatch "+str(stem))
+    state=restore_state(path)
+    if meta["support"]!=len(state) or not math.isclose(meta["norm"],norm(state),rel_tol=1e-12,abs_tol=1e-12):
+        raise ValueError("Checkpoint support or norm mismatch "+str(stem))
+    return state,meta
+def save_result(d,stage,ijk,state,freeze,diag,extra=None):
+    stem=prefix(d,stage,ijk);path=stem.with_suffix(".npz")
+    persist_state(path,state)
+    meta=dict(stage=stage,channel=list(ijk),freeze=freeze,
+              sha256=digest(path),support=len(state),norm=norm(state),
+              max_spin=max_spin(state),leakage_max={k:float(diag.get(k,0.)) for k in LEAK_FIELDS},
+              elapsed_s=round(time.perf_counter()-START,3))
+    meta.update(extra or {})
+    write_atomic(stem.with_suffix(".json"),lambda f:f.write((json.dumps(meta,indent=2,sort_keys=True)+"\n").encode()))
+    print("CHECKPOINT",stage,ijk,"states",len(state),"norm",meta["norm"],"sha",meta["sha256"][:12],flush=True)
+def maxdiag(a,b):
+    return {k:max(float(a.get(k,0.)),float(b.get(k,0.))) for k in LEAK_FIELDS}
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--stage",choices=STAGES,required=True)
+    p.add_argument("--source",type=int,default=1)
+    p.add_argument("--column-index",type=int,default=0)
+    p.add_argument("--a",type=int,default=0);p.add_argument("--b",type=int,default=2);p.add_argument("--c",type=int,default=3)
+    p.add_argument("--coefficient",type=int,default=-1)
+    p.add_argument("--channel",choices=["all"]+["".join(map(str,x)) for x in itertools.product(range(2),repeat=3)],default="all")
+    p.add_argument("--checkpoint-dir",type=Path,required=True)
+    p.add_argument("--json-output",type=Path)
+    p.add_argument("--state-output",type=Path)
+    args=p.parse_args()
+    if args.source not in PW.VERT or len({args.a,args.b,args.c})!=3 or not all(v in PW.NEIG[args.source] for v in (args.a,args.b,args.c)):
+        p.error("triple must be three distinct neighbors")
+    if args.coefficient not in (-1,1):p.error("coefficient must be +/-1")
+    basis=PW.basis_full_jhalf()
+    if not 0<=args.column_index<len(basis):p.error("column-index out of 32")
+    initial=basis[args.column_index]
+    freeze=dict(source=args.source,column_index=args.column_index,input_key=repr(initial),
+                input_Ks=list(initial[1]),triple=[args.a,args.b,args.c],epsilon=args.coefficient,
+                JMAX2=JMAX2,TOL=TOL,modules=source_hashes())
+    args.checkpoint_dir.mkdir(parents=True,exist_ok=True)
+    LP.JMAX2=JMAX2
+    restore,caches=LP.install_sine_cached_stack()
+    try:
+        if args.stage=="cv":
+            psi=CV.gauss_to_covariant({initial:1+0j},args.source)
+            for i,j,k in selected(args):
+                out,leak=RAW.COMP.C_volume_component(psi,args.source,args.c,k,i,JMAX2)
+                save_result(args.checkpoint_dir,"cv",(i,j,k),out,freeze,
+                            {"CV_complete_basis_leakage":leak})
+        elif args.stage in ("kb","ka"):
+            prev="cv" if args.stage=="kb" else "kb"
+            for i,j,k in selected(args):
+                x,meta=load_result(args.checkpoint_dir,prev,(i,j,k),freeze)
+                diag=meta["leakage_max"]
+                if not x:
+                    out={};d={}
+                elif args.stage=="kb":
+                    out,d=RAW.KCOMP.C_K_component(x,args.source,args.b,j,k,JMAX2)
+                else:
+                    out,d=RAW.KCOMP.C_K_component(x,args.source,args.a,i,j,JMAX2)
+                d={("CK_"+field):float(value) for field,value in d.items()
+                   if field in ("outer_complete_basis_leakage","internal_volume_sector_leakage","complete_charge_basis_leakage")}
+                diag=maxdiag(diag,d)
+                before=len(out)
+                if args.stage=="kb":
+                    out={key:amp for key,amp in out.items() if key[2] in (0,2)}
+                save_result(args.checkpoint_dir,args.stage,(i,j,k),out,freeze,diag,
+                            {"pruned_by_frozen_scalar_channel":before-len(out)})
+        else:
+            total={};diag={k:0. for k in LEAK_FIELDS};branch=[]
+            for i,j,k in itertools.product(range(2),repeat=3):
+                state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
+                LP.add(total,state) # exactly old pruning/TOL semantics
+                diag=maxdiag(diag,meta["leakage_max"])
+                branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
+                              "support":len(state),"sha256":meta["sha256"]})
+            gauss,accept2,reject2=LGA.project_scalar_gauss(total,args.source,TOL)
+            covnorm=norm(total);gnorm=norm(gauss)
+            frac=1.0 if accept2+reject2<1e-30 else accept2/(accept2+reject2)
+            physical=max(diag[k] for k in LEAK_FIELDS[:3])
+            checks=dict(finite_covariant_norm=math.isfinite(covnorm),
+                  finite_gauss_norm=math.isfinite(gnorm),
+                  physical_basis_volume_leakage=physical<1e-8,
+                  scalar_closure_fraction_or_exact_zero=frac>1-1e-10,
+                  nonscalar_rejected_norm=math.sqrt(max(reject2,0))<1e-8,
+                  single_HL_spin_wall=max_spin(gauss)<=JMAX2/2+1e-12)
+            report=dict(status="staged genuine full-state ordered triple",
+                  passed=all(checks.values()),freeze=freeze,source_node=args.source,
+                  ordered_edges=[args.a,args.b,args.c],epsilon_coefficient=args.coefficient,
+                  input_Ks=list(initial[1]),column_index=args.column_index,
+                  covariant_support=len(total),covariant_norm=covnorm,
+                  gauss_support=len(gauss),gauss_norm=gnorm,gauss_max_spin=max_spin(gauss),
+                  scalar_closure_fraction=frac,nonscalar_rejected_norm=math.sqrt(max(reject2,0)),
+                  physical_acceptance_max_leakage=physical,checks=checks,branches=branch,
+                  is_full_Hermitian_Lorentzian=False,is_full_HDA=False)
+            if not args.json_output or not args.state_output:p.error("finish requires json-output and state-output")
+            args.state_output.parent.mkdir(parents=True,exist_ok=True)
+            original=list(sorted(gauss.items(),key=lambda kv:repr(kv[0])))
+            np.savez_compressed(args.state_output,
+                spins=np.asarray([key[0] for key,v in original],np.int16).reshape(len(original),len(PW.EDGES)),
+                Ks=np.asarray([key[1] for key,v in original],np.int16).reshape(len(original),len(PW.VERT)),
+                amp=np.asarray([v for key,v in original],complex))
+            args.json_output.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+            print(json.dumps(report,indent=2),flush=True)
+            if not report["passed"]:return 1
+        print("stage complete",args.stage,"elapsed_s",round(time.perf_counter()-START,3),flush=True)
+        return 0
+    finally:
+        restore()
+START=time.perf_counter()
+if __name__=="__main__":raise SystemExit(main())
