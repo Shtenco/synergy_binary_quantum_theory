@@ -1,0 +1,64 @@
+name: bqg-node1-ka-low-spin-batch
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-ka-low-spin-batch.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  low-spin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [a,b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint/
+      - name: Verify actual low-spin indices from archived KB before executing
+        shell: bash
+        run: |
+          python - <<'PY'
+          import zipfile,numpy as np
+          with np.load('checkpoint/kb_000.npz',allow_pickle=False) as z:
+            low=set(np.flatnonzero(np.max(z['spins'],axis=1)==1).tolist())
+          expected={0,1,2,3,4,5,12,13,16,17,32,33}
+          assert low==expected,('source changed',low)
+          print('FROZEN_REAL_LOW_SPIN_KB_INDICES',sorted(low))
+          PY
+      - name: One exact full KA per source key; persist each independently
+        shell: bash
+        run: |
+          if [ "${{ matrix.shard }}" = "a" ]; then
+            IDS="1 2 3 4 5"
+          else
+            IDS="12 13 16 17 32 33"
+          fi
+          for IDX in $IDS; do
+            echo "::group::complete KA from actual source index $IDX"
+            /usr/bin/time -f "KEY $IDX elapsed %e max_rss_kb %M" python -u \
+              scripts/bqg_lorentzian_ka_partition.py \
+              --mode part --checkpoint-dir checkpoint --source 1 \
+              --column-index 0 --a 0 --b 2 --c 3 \
+              --channel 000 --parts 120 --part-index "$IDX"
+            echo "::endgroup::"
+          done
+      - name: Upload actual outputs for this shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-node1-ka-lowspin-${{ matrix.shard }}
+          path: checkpoint/ka_000_part???_of120.*
+          if-no-files-found: warn
+          retention-days: 30
