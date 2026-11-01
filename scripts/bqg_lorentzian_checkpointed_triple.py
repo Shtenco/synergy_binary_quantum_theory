@@ -51,7 +51,7 @@ def persist_state(path,state):
     rows=sorted(state.items(),key=lambda t:repr(t[0]))
     n=len(rows)
     spins=np.array([key[0] for key,v in rows],dtype=np.int16).reshape(n,len(PW.EDGES))
-    others=np.array([key[1] for key,v in rows],dtype=np.int16).reshape(n,len(PW.VERT)-1)
+    others=np.array([key[1] for key,v in rows],dtype=np.int16).reshape(n,len(PW.VERT))
     ints=np.array([key[2:] for key,v in rows],dtype=np.int16).reshape(n,4)
     amps=np.asarray([v for key,v in rows],dtype=np.complex128)
     write_atomic(path,lambda f:np.savez_compressed(f,spins=spins,Kother=others,
@@ -60,7 +60,7 @@ def restore_state(path):
     with np.load(path,allow_pickle=False) as z:
         spins=z["spins"];others=z["Kother"];ints=z["charges"];amplitudes=z["amp"]
     if not(len(spins)==len(others)==len(ints)==len(amplitudes)):raise ValueError("corrupt row alignment")
-    if spins.shape[1:]!=(len(PW.EDGES),) or others.shape[1:]!=(len(PW.VERT)-1,) or ints.shape[1:]!=(4,):
+    if spins.shape[1:]!=(len(PW.EDGES),) or others.shape[1:]!=(len(PW.VERT),) or ints.shape[1:]!=(4,):
         raise ValueError("corrupt covariant key dimensions")
     out={}
     for s,k,j,v in zip(spins,others,ints,amplitudes):
