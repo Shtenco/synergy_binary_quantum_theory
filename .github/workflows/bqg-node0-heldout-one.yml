@@ -1,0 +1,66 @@
+name: bqg-node0-heldout-one
+on:
+  push:
+    branches:
+      - research/bqg-node1-lorentzian-columns-20261031
+    paths:
+      - .github/workflows/bqg-node0-heldout-one.yml
+  workflow_dispatch:
+jobs:
+  heldout-node0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Verify frozen K5 initial source
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'scripts')
+          import k5_peter_weyl_safe_hda_column as PW
+          x=PW.basis_full_jhalf()[0]
+          assert x[1]==(0,0,0,0,0)
+          print("SOURCE0_READY",x)
+          PY
+      - name: Independent full outgoing source0 triple T_123
+        shell: bash
+        run: |
+          mkdir -p verification_results/bqg_node0_heldout_one
+          /usr/bin/time -v python -u scripts/peter_weyl_lorentzian_fullstate_triple_worker.py \
+            --a 1 --b 2 --c 3 --coefficient -1 \
+            --source 0 --column-index 0 \
+            --json-output verification_results/bqg_node0_heldout_one/T_123.json \
+            --state-output verification_results/bqg_node0_heldout_one/T_123.npz
+      - name: Strict checks
+        if: success()
+        run: |
+          python - <<'PY'
+          import json,numpy as np
+          base='verification_results/bqg_node0_heldout_one/T_123'
+          d=json.load(open(base+'.json'))
+          assert d['passed'] and d['source_node']==0 and d['column_index']==0
+          assert d['ordered_edges']==[1,2,3] and d['epsilon_coefficient']==-1
+          assert d['input_Ks']==[0,0,0,0,0]
+          with np.load(base+'.npz',allow_pickle=False) as a:
+            amps=a['amp'];spins=a['spins'];ks=a['Ks']
+            assert len(amps)==len(spins)==len(ks)==d['gauss_support']
+            assert np.isfinite(amps.real).all() and np.isfinite(amps.imag).all()
+            norm=float(np.linalg.norm(amps))
+            assert abs(norm-d['gauss_norm'])<1e-7*max(1.,norm)
+            print('REAL_NODE0_OUTGOING_VERIFIED',len(amps),'norm',norm)
+          PY
+      - name: Preserve outputs even if incomplete
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-node0-heldout-one-123
+          path: verification_results/bqg_node0_heldout_one/
+          retention-days: 30
+          if-no-files-found: warn
