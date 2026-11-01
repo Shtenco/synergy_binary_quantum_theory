@@ -1,0 +1,68 @@
+name: bqg-node1-heldout-one
+on:
+  push:
+    branches:
+      - research/bqg-node1-lorentzian-columns-20261031
+    paths:
+      - .github/workflows/bqg-node1-heldout-one.yml
+  workflow_dispatch:
+
+jobs:
+  heldout-node1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical requirements
+        run: python -m pip install -r requirements.txt
+      - name: Verify scripts and source index before science computation
+        run: |
+          python -m py_compile scripts/peter_weyl_lorentzian_fullstate_triple_worker.py
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'scripts')
+          import k5_peter_weyl_safe_hda_column as pw
+          x = pw.basis_full_jhalf()[0]
+          assert x[1] == (0,0,0,0,0)
+          print("SOURCE_OK",repr(x))
+          PY
+      - name: Independent full outgoing node1 Lorentzian triple T_023
+        shell: bash
+        run: |
+          mkdir -p verification_results/bqg_node1_heldout_one
+          /usr/bin/time -v python -u scripts/peter_weyl_lorentzian_fullstate_triple_worker.py \
+            --a 0 --b 2 --c 3 --coefficient -1 \
+            --source 1 --column-index 0 \
+            --json-output verification_results/bqg_node1_heldout_one/T_023.json \
+            --state-output verification_results/bqg_node1_heldout_one/T_023.npz
+      - name: Fail-closed verify metadata and outgoing state
+        if: success()
+        run: |
+          python - <<'PY'
+          import json, numpy as np
+          base='verification_results/bqg_node1_heldout_one/T_023'
+          d=json.load(open(base+'.json'))
+          assert d['passed'] and d['source_node']==1
+          assert d['column_index']==0 and d['input_Ks']==[0]*5
+          assert d['ordered_edges']==[0,2,3] and d['epsilon_coefficient']==-1
+          with np.load(base+'.npz',allow_pickle=False) as a:
+            amp=a['amp']; spins=a['spins']; ks=a['Ks']
+            assert len(amp)==len(spins)==len(ks)==d['gauss_support']
+            assert np.isfinite(amp.real).all() and np.isfinite(amp.imag).all()
+            norm=float(np.linalg.norm(amp))
+            assert abs(norm-d['gauss_norm'])<1e-7*max(norm,1.)
+            print('REAL_NODE1_OUTGOING_VERIFIED',len(amp),'norm',norm)
+          PY
+      - name: Upload raw worker outputs even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-node1-heldout-one-023
+          path: verification_results/bqg_node1_heldout_one/
+          if-no-files-found: warn
+          retention-days: 30
