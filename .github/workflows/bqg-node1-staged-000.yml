@@ -1,0 +1,77 @@
+name: bqg-node1-staged-000
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-staged-000.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile scripts/bqg_lorentzian_checkpointed_triple.py
+      - run: |
+          python -u scripts/bqg_lorentzian_checkpointed_triple.py \
+            --stage cv --source 1 --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --checkpoint-dir checkpoint
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: node1-cv-000
+          path: checkpoint/
+          if-no-files-found: warn
+          retention-days: 30
+  kb:
+    needs: cv
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: node1-cv-000
+          path: checkpoint/
+      - run: |
+          python -u scripts/bqg_lorentzian_checkpointed_triple.py \
+            --stage kb --source 1 --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --checkpoint-dir checkpoint
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: node1-kb-000
+          path: checkpoint/
+          if-no-files-found: warn
+          retention-days: 30
+  ka:
+    needs: kb
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: node1-kb-000
+          path: checkpoint/
+      - run: |
+          python -u scripts/bqg_lorentzian_checkpointed_triple.py \
+            --stage ka --source 1 --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --checkpoint-dir checkpoint
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: node1-ka-000
+          path: checkpoint/
+          if-no-files-found: warn
+          retention-days: 30
