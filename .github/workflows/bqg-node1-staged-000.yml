@@ -1,4 +1,5 @@
 name: bqg-node1-staged-000
+# v2: corrected actual covariant Kother carries all five vertex labels.
 on:
   push:
     branches: [research/bqg-node1-lorentzian-columns-20261031]
