@@ -1,0 +1,47 @@
+name: bqg-node1-ka-single-key
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-ka-single-key.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  ka-single:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        key_index: [0, 58]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install pinned repository dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Preflight source and syntax
+        run: |
+          python -m py_compile scripts/bqg_lorentzian_checkpointed_triple.py scripts/bqg_lorentzian_ka_partition.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint
+      - name: One genuine K5 KA source key with complete outgoing states
+        shell: bash
+        run: |
+          /usr/bin/time -v python -u scripts/bqg_lorentzian_ka_partition.py \
+            --mode part --checkpoint-dir checkpoint --source 1 \
+            --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --parts 120 --part-index ${{ matrix.key_index }}
+      - name: Preserve partial if finished
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node1-ka-key-${{ matrix.key_index }}
+          path: checkpoint/ka_000_part*_of120.*
+          if-no-files-found: warn
+          retention-days: 30
