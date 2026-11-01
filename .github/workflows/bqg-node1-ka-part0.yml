@@ -1,0 +1,38 @@
+name: bqg-node1-ka-part0
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-ka-part0.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  ka-part0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile scripts/bqg_lorentzian_ka_partition.py scripts/bqg_lorentzian_checkpointed_triple.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint/
+      - name: Real source-1 last-K action on 15 of 120 input states
+        run: |
+          python -u scripts/bqg_lorentzian_ka_partition.py \
+            --mode part --checkpoint-dir checkpoint --source 1 \
+            --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --parts 8 --part-index 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bqg-node1-ka-part0
+          path: checkpoint/ka_000_part000_of008.*
+          if-no-files-found: warn
+          retention-days: 30
