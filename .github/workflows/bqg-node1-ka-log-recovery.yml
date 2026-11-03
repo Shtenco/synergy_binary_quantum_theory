@@ -1,0 +1,63 @@
+name: bqg-node1-ka-log-recovery
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-ka-log-recovery.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 19
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [59, 105, 113]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint/
+      - name: Calculate exact K5 last operator from frozen actual KB input
+        shell: bash
+        run: |
+          python -u scripts/bqg_lorentzian_ka_partition.py \
+            --mode part --checkpoint-dir checkpoint --source 1 \
+            --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --parts 120 --part-index ${{ matrix.index }}
+      - name: Verify and print encoded complete numerical evidence into log
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os,json,hashlib,base64,numpy as np
+          from pathlib import Path
+          idx=int(os.environ["IDX"])
+          p=Path("checkpoint") / ("ka_000_part%03d_of120"%idx)
+          m=json.loads(p.with_suffix(".json").read_text())
+          contents=p.with_suffix(".npz").read_bytes()
+          assert m["sha256"]==hashlib.sha256(contents).hexdigest()
+          assert m["part_index"]==idx and m["parts"]==120
+          assert m["rows"]==1 and m["kb_sha256"]=="f486e2250d4a5678a34438467b9e338d730ebf6e1d1ec956d2de7f8c2521b293"
+          with np.load(p.with_suffix(".npz"),allow_pickle=False) as a:
+              assert a["spins"].shape==(m["support"],10)
+              assert a["Kother"].shape==(m["support"],5)
+              assert a["charges"].shape==(m["support"],4)
+              assert np.isfinite(a["amp"].real).all()
+              assert np.isfinite(a["amp"].imag).all()
+              assert abs(np.linalg.norm(a["amp"])-m["norm"])<1e-12
+          print("BQG_EVIDENCE_BEGIN",idx,flush=True)
+          print("BQG_METADATA",json.dumps(m,separators=(",",":")),flush=True)
+          print("BQG_NPZ_BASE64",base64.b64encode(contents).decode("ascii"),flush=True)
+          print("BQG_EVIDENCE_END",idx,flush=True)
+          PY
+        env:
+          IDX: ${{ matrix.index }}
