@@ -1,0 +1,66 @@
+name: bqg-node1-ka-high-weight-3
+on:
+  push:
+    branches:
+      - research/bqg-node1-lorentzian-columns-20261031
+    paths:
+      - .github/workflows/bqg-node1-ka-high-weight-3.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  full-ka-high-weight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [59, 105, 113]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile scripts/bqg_lorentzian_checkpointed_triple.py scripts/bqg_lorentzian_ka_partition.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint/
+      - name: Fail-closed frozen KB SHA and source eigen-weight check
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json,numpy as np
+          from pathlib import Path
+          meta=json.loads(Path('checkpoint/kb_000.json').read_text())
+          assert meta['sha256']==hashlib.sha256(Path('checkpoint/kb_000.npz').read_bytes()).hexdigest()
+          assert meta['channel']==[0,0,0] and meta['stage']=='kb'
+          assert meta['freeze']['source']==1 and meta['freeze']['column_index']==0
+          with np.load('checkpoint/kb_000.npz',allow_pickle=False) as z:
+              w=abs(z['amp'])**2
+              assert len(w)==120
+              ids=[59,105,113]
+              weights=[float(w[i]/sum(w)) for i in ids]
+              assert 0.216<sum(weights)<0.218
+              print('FROZEN_INPUT_WEIGHT',dict(zip(ids,weights)))
+          PY
+      - name: One full actual KA outgoing column from preregistered frozen KB key
+        shell: bash
+        run: |
+          mkdir -p run_metrics
+          /usr/bin/time -v python -u scripts/bqg_lorentzian_ka_partition.py \
+            --mode part --checkpoint-dir checkpoint --source 1 \
+            --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --parts 120 --part-index ${{ matrix.index }}
+      - name: Save actual full outgoing amplitude and JSON even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-node1-ka-high-weight-${{ matrix.index }}
+          path: checkpoint/ka_000_part???_of120.*
+          if-no-files-found: warn
+          retention-days: 30
