@@ -6,6 +6,11 @@ on:
     paths:
       - 'scripts/bqg_v04_actual_euclidean_kernel_gate.py'
       - '.github/workflows/bqg-v04-actual-euclidean-kernel.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v04_actual_euclidean_kernel_gate.py'
+      - '.github/workflows/bqg-v04-actual-euclidean-kernel.yml'
   workflow_dispatch:
 
 jobs:
