@@ -28,7 +28,13 @@ for idx in IDS:
     vec,one=Gram.vector(ROOT,idx)
     assert one["freeze"]==meta["freeze"]
     assert one["kb_sha256"]==meta["sha256"] and one["rows"]==1
-    saved[idx]=vec
+    # Gram.vector returns a serialized 3-part key (spins,Kother,charges4),
+    # while the genuine CK engine uses a FLAT 6-part covariant key.
+    # The old comparison matched disjoint dictionaries and produced sqrt(2).
+    native={ (k[0],k[1],*k[2]):v for k,v in vec.items() }
+    assert all(len(k)==6 and len(k[0])==10 and len(k[1])==5 for k in native)
+    assert len(native)==len(vec)
+    saved[idx]=native
 reference={}
 for idx in IDS:
     for k,v in saved[idx].items():reference[k]=reference.get(k,0j)+v
@@ -40,15 +46,20 @@ finally:restore()
 delta={k:direct.get(k,0j)-reference.get(k,0j) for k in set(direct)|set(reference)}
 error=norm(delta)
 scale=max(norm(direct),norm(reference),1e-30)
+shared=set(direct)&set(reference)
+overlap=sum(np.conjugate(direct[k])*reference[k] for k in shared)
 report=dict(status="PASS" if error/scale<1e-8 else "FAIL",
     test="independent REAL C_K two-source coherent linearity",
     source=1,channel="000",input_indices=list(IDS),
     direct_support=len(direct),summed_separate_support=len(reference),
     direct_norm=norm(direct),reference_norm=norm(reference),
     absolute_difference=error,relative_difference=error/scale,
+    exact_shared_keys=len(shared),
+    complex_overlap=[float(overlap.real),float(overlap.imag)],
+    overlap_relative_to_norms=float(abs(overlap)/max(norm(direct)*norm(reference),1e-30)),
     direct_diagnostics=diag,
     frozen_KB_sha256=meta["sha256"],
-    important="Only two selected columns; no full 100-key remainder, no HDA/TT claim.")
+    important="Live 6-field CK keys are normalized against archived 3-field serialized keys. Two real inputs only; no full HDA.")
 print("BQG_TWO_KEY_REAL_LINEARITY_START",flush=True)
 print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
 print("BQG_TWO_KEY_REAL_LINEARITY_END",flush=True)
