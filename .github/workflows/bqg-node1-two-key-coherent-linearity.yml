@@ -37,3 +37,5 @@ jobs:
           path: checkpoint
       - name: Compare full actual two-source KA vs independent coherent sum
         run: python -u scripts/bqg_node1_ka_two_key_linearity.py
+
+# v2: normalize nested archive charge keys before numerical comparison
