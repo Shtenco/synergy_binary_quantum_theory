@@ -1,4 +1,4 @@
-name: bqg-node1-G29-verified
+name: bqg-node1-G29-verified-v2
 on:
   push:
     branches: [research/bqg-node1-lorentzian-columns-20261031]
@@ -36,3 +36,5 @@ jobs:
           path: data
       - name: SHA verify all 29 real complex output vectors and compute coherent Gram
         run: python -u scripts/bqg_node1_g29_git.py --run 42130349763 --data data --repo-root .
+
+# v2: require all 29 unique genuine source indices, not stale G25 unique-index count.
