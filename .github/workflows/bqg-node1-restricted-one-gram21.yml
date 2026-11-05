@@ -1,0 +1,53 @@
+name: bqg-node1-restricted-one-gram21
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-node1-restricted-one-gram21.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  heldout-g21:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile scripts/bqg_node1_restricted_one_gate.py
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41304021860
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: node1-ka-key-*
+          merge-multiple: true
+          path: checkpoint
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41309076252
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: bqg-node1-ka-lowspin-*
+          merge-multiple: true
+          path: checkpoint
+      - name: Select highest-weight uncomputed source from genuine frozen KB
+        run: python -u scripts/bqg_node1_restricted_one_gate.py --mode select --checkpoint-dir checkpoint
+      - name: One full real CK outgoing source and independently verified G21
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${BQG_HELDOUT_INDEX:?Index selection did not run}"
+          /usr/bin/time -v python -u scripts/bqg_lorentzian_ka_partition.py \
+            --mode part --checkpoint-dir checkpoint --source 1 \
+            --column-index 0 --a 0 --b 2 --c 3 \
+            --channel 000 --parts 120 --part-index "$BQG_HELDOUT_INDEX"
+          python -u scripts/bqg_node1_restricted_one_gate.py --mode verify \
+            --checkpoint-dir checkpoint --repo-root . --index "$BQG_HELDOUT_INDEX"
