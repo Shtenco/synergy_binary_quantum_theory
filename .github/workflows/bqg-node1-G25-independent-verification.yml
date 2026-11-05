@@ -1,0 +1,68 @@
+name: bqg-node1-G25-independent-verification
+on:
+  push:
+    branches:
+      - research/bqg-node1-lorentzian-columns-20261031
+    paths:
+      - .github/workflows/bqg-node1-G25-independent-verification.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  gram25:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: data
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41304021860
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: node1-ka-key-*
+          merge-multiple: true
+          path: data
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41309076252
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: bqg-node1-ka-lowspin-*
+          merge-multiple: true
+          path: data
+      - name: Require four upstream genuine KA calculations to finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          python -u - <<'PY'
+          import os,json,time,urllib.request
+          repo='Shtenco/binary_quantum_theory'
+          api=f'https://api.github.com/repos/{repo}/actions/runs/42128476913'
+          token=os.environ['GITHUB_TOKEN']
+          for attempt in range(90):
+              req=urllib.request.Request(api,headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','User-Agent':'BQG-actual-G25'})
+              with urllib.request.urlopen(req,timeout=30) as resp:info=json.load(resp)
+              print('ORIGINAL_FOUR_KA_RUN_STATUS',info['status'],info.get('conclusion'),flush=True)
+              if info['status']=='completed':
+                  if info['conclusion']!='success':
+                      raise RuntimeError('Upstream four-key execution failed; G25 BLOCKED')
+                  break
+              time.sleep(10)
+          else:raise RuntimeError('Upstream four-key execution not complete within budget; G25 BLOCKED')
+          PY
+      - name: Reconstruct all 25 authentic outgoing columns and test spectrum
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -u scripts/bqg_node1_g25_from_verified_logs.py \
+             --run 42128476913 --data data --repo-root . --output /tmp/bqg_g25_actual_report.json
