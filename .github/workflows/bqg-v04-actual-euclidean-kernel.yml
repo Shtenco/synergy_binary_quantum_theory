@@ -1,0 +1,32 @@
+name: BQG v0.4 actual Euclidean kernel W5
+
+on:
+  push:
+    branches: [research/bqg-v04-actual-constraint-kernel-20261106]
+    paths:
+      - 'scripts/bqg_v04_actual_euclidean_kernel_gate.py'
+      - '.github/workflows/bqg-v04-actual-euclidean-kernel.yml'
+  workflow_dispatch:
+
+jobs:
+  actual-k5-w5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original Peter-Weyl dependencies
+        run: python -m pip install numpy scipy sympy
+      - name: Execute actual H_E,v for all K5 vertices on W5
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_v04_actual_euclidean_kernel_gate.py --output verification_results/BQG_V04_EUCLIDEAN_REAL_W5.json
+      - name: Upload numerical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-v04-actual-euclidean-kernel
+          path: verification_results/BQG_V04_EUCLIDEAN_REAL_W5.json
+          retention-days: 30
