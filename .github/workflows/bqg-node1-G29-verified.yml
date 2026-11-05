@@ -1,4 +1,4 @@
-name: bqg-node1-G29-verified-v2
+name: bqg-node1-G29-coherent-difference-v3
 on:
   push:
     branches: [research/bqg-node1-lorentzian-columns-20261031]
@@ -38,3 +38,5 @@ jobs:
         run: python -u scripts/bqg_node1_g29_git.py --run 42130349763 --data data --repo-root .
 
 # v2: require all 29 unique genuine source indices, not stale G25 unique-index count.
+
+# v3: measure actual G25->G29 coherent increment by complex amplitudes.
