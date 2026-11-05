@@ -1,4 +1,4 @@
-name: bqg-node1-G25-independent-verification-v2
+name: bqg-node1-G25-independent-verification-v3
 on:
   push:
     branches:
@@ -68,3 +68,5 @@ jobs:
              --run 42128476913 --data data --repo-root . --output /tmp/bqg_g25_actual_report.json
 
 # v2: source83 evidence now archived in repository; original four source jobs completed successfully.
+
+# v3: all 25 real source NPZ packets are SHA-checked from git-pinned evidence; no logs API calls.
