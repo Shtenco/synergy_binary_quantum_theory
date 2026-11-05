@@ -1,4 +1,4 @@
-name: bqg-node1-ka-log-recovery
+name: bqg-node1-ka-next-four
 on:
   push:
     branches: [research/bqg-node1-lorentzian-columns-20261031]
@@ -10,11 +10,11 @@ permissions:
 jobs:
   recover:
     runs-on: ubuntu-latest
-    timeout-minutes: 19
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        index: [59, 105, 113]
+        index: [112, 57, 52, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
