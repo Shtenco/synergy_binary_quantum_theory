@@ -1,0 +1,38 @@
+name: bqg-real-KA-shared-cache-benchmark
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-real-KA-shared-cache-benchmark.yml]
+  workflow_dispatch:
+permissions: {contents: read, actions: read}
+jobs:
+  compare-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41294081280
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-kb-000
+          path: checkpoint
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41304021860
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: node1-ka-key-0
+          path: checkpoint
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 41309076252
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: bqg-node1-ka-lowspin-b
+          path: checkpoint
+      - name: Original 2 real KA columns with isolated caches
+        run: python -u scripts/bqg_true_KA_shared_cache_benchmark.py --mode isolated
+      - name: Original 2 real KA columns with one shared cached stack
+        run: python -u scripts/bqg_true_KA_shared_cache_benchmark.py --mode shared
