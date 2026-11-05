@@ -1,4 +1,4 @@
-name: bqg-node1-G25-independent-verification
+name: bqg-node1-G25-independent-verification-v2
 on:
   push:
     branches:
@@ -66,3 +66,5 @@ jobs:
         run: |
           python -u scripts/bqg_node1_g25_from_verified_logs.py \
              --run 42128476913 --data data --repo-root . --output /tmp/bqg_g25_actual_report.json
+
+# v2: source83 evidence now archived in repository; original four source jobs completed successfully.
