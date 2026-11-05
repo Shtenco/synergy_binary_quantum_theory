@@ -110,12 +110,12 @@ def main():
     prev_norm=prev["coherent_output_norm"]
     full_norm=result["coherent_output_norm"]
     real_cross=(full_norm**2-prev_norm**2-delta_norm**2)/2
-    result["G33_reference_coherent_norm"]=prev_norm
+    result["G29_reference_coherent_norm"]=prev_norm
     result["actual_new_four_coherent_increment_norm"]=delta_norm
-    result["G33_to_G33_real_cross_inner_product"]=real_cross
-    result["G33_to_G33_normalized_real_overlap"]=real_cross/max(prev_norm*delta_norm,1e-30)
+    result["G29_to_G33_real_cross_inner_product"]=real_cross
+    result["G29_to_G33_normalized_real_overlap"]=real_cross/max(prev_norm*delta_norm,1e-30)
     result["new_four_total_outgoing_keys"]=len(delta)
-    result["new_four_output_keys_not_in_G33"]=len(set(delta)-previous_keys)
+    result["new_four_output_keys_not_in_G29"]=len(set(delta)-previous_keys)
     assert 0.75 < result["input_KB_squared_weight_covered"] < 0.76
     result["source_run"]=args.run
     result["new_evidence"]=new_evidence
