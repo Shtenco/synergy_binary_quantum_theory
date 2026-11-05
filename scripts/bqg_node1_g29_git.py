@@ -89,7 +89,7 @@ def main():
     recover_old(args.data,args.repo_root)
     new_evidence=recover_new(args.data,args.repo_root)
     selection=tuple(sorted(gram.STUDIED+PRIOR+NEW))
-    assert len(selection)==29 and len(set(selection))==25
+    assert len(selection)==29 and len(set(selection))==29
     result=gram.calc(args.data,study=selection)
     assert result["completed_KA_input_keys"]==29
     assert 0.70 < result["input_KB_squared_weight_covered"] < 0.71
