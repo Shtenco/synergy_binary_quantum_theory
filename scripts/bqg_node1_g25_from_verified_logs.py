@@ -3,7 +3,7 @@
 
 All source vectors and real SU(2) arrays checked by SHA256 + frozen source/
 kernel metadata; no artificial output, truncation, or symmetry substitution.
-GitHub job logs, not Artifact uploads, carry the NPZ bytes.
+SHA-checked original job logs have been pinned to the research Git branch as JSON, containing NPZ bytes.
 """
 from __future__ import annotations
 import argparse,base64,hashlib,io,json,os,re,urllib.request
@@ -60,33 +60,19 @@ def recover_old(root,repo_root):
         raw=base64.b64decode(payload["npz_base64"],validate=True)
         save(root,index,meta,raw)
 
-def recover_new(root,run,token):
-    listing=json.loads(api(f"actions/runs/{run}/jobs?per_page=100",token))
-    jobs=listing["jobs"]
-    if len(jobs)<len(NEW):raise RuntimeError("INCOMPLETE RUN JOB COUNT")
+def recover_new(root,repo_root):
+    # Evidence is pinned in Git under the original research branch: NO live logs
+    # authentication, NO unknown network bytes, NO API rate limits.
     evidence={}
-    for job in jobs:
-        m=re.search(r"calculate \((\d+)\)",job["name"])
-        if not m:continue
-        idx=int(m.group(1))
-        if idx not in NEW:continue
-        if job["conclusion"]!="success":raise RuntimeError(f"job {idx} not successful: {job['conclusion']}")
-        data=api(f"actions/jobs/{job['id']}/logs",token)
-        if data.startswith(b"PK"):
-            import zipfile
-            with zipfile.ZipFile(io.BytesIO(data)) as z:
-                logs="\n".join(z.read(name).decode("utf-8","replace") for name in z.namelist())
-        else:
-            logs=data.decode("utf-8","replace")
-        mm=re.findall(r"BQG_METADATA (\{[^\r\n]+\})",logs)
-        bb=re.findall(r"BQG_NPZ_BASE64 ([A-Za-z0-9+/=]+)",logs)
-        if not mm or not bb or f"BQG_EVIDENCE_END {idx}" not in logs:
-            raise RuntimeError(f"Missing complete evidence for {idx}")
-        meta=json.loads(mm[-1])
-        raw=base64.b64decode(bb[-1],validate=True)
+    for idx in NEW:
+        path=repo_root/"research"/"node1_fullstate_gate_2026_10_31"/"log_recovered_ka"/f"key_{idx}.json"
+        payload=json.loads(path.read_text(encoding="utf-8"))
+        meta=payload["metadata"]
+        raw=base64.b64decode(payload["npz_base64"],validate=True)
         save(root,idx,meta,raw)
-        evidence[idx]={"job_id":job["id"],"sha256":meta["sha256"],"support":meta["support"]}
-    if set(evidence)!=set(NEW):raise RuntimeError(f"Incomplete or duplicate source set: {sorted(evidence)}")
+        evidence[idx]={"job_id":payload["job_id"],"source_run":payload["source_run"],
+                       "sha256":meta["sha256"],"support":meta["support"]}
+    assert set(evidence)==set(NEW)
     return evidence
 
 def main():
@@ -96,14 +82,12 @@ def main():
     ap.add_argument("--repo-root",type=Path,default=Path("."))
     ap.add_argument("--output",type=Path)
     args=ap.parse_args()
-    token=os.environ.get("GITHUB_TOKEN")
-    if not token:raise RuntimeError("GITHUB_TOKEN with actions:read required")
     args.data.mkdir(parents=True,exist_ok=True)
     parent=args.data/"kb_000"
     kbmeta=json.loads(parent.with_suffix(".json").read_text(encoding="utf-8"))
     assert kbmeta["sha256"]==FROZEN==gram.checksum(parent.with_suffix(".npz"))
     recover_old(args.data,args.repo_root)
-    new_evidence=recover_new(args.data,args.run,token)
+    new_evidence=recover_new(args.data,args.repo_root)
     selection=tuple(sorted(gram.STUDIED+PRIOR+NEW))
     assert len(selection)==25 and len(set(selection))==25
     result=gram.calc(args.data,study=selection)
