@@ -92,6 +92,30 @@ def main():
     assert len(selection)==29 and len(set(selection))==29
     result=gram.calc(args.data,study=selection)
     assert result["completed_KA_input_keys"]==29
+    # Compare actual coherent G25 and G29 vectors, not just input coverage.
+    previous_indices=tuple(sorted(gram.STUDIED+PRIOR))
+    prev=gram.calc(args.data,study=previous_indices)
+    assert prev["completed_KA_input_keys"]==25
+    assert abs(prev["coherent_output_norm"]-0.07151296436808603)<1e-12
+    delta={}
+    previous_keys=set()
+    for idx in previous_indices:
+        out,_=gram.vector(args.data,idx)
+        previous_keys.update(out)
+    for idx in NEW:
+        out,_=gram.vector(args.data,idx)
+        for key,amp in out.items():
+            delta[key]=delta.get(key,0j)+amp
+    delta_norm=float(np.sqrt(sum(abs(x)**2 for x in delta.values())))
+    prev_norm=prev["coherent_output_norm"]
+    full_norm=result["coherent_output_norm"]
+    real_cross=(full_norm**2-prev_norm**2-delta_norm**2)/2
+    result["G25_reference_coherent_norm"]=prev_norm
+    result["actual_new_four_coherent_increment_norm"]=delta_norm
+    result["G25_to_G29_real_cross_inner_product"]=real_cross
+    result["G25_to_G29_normalized_real_overlap"]=real_cross/max(prev_norm*delta_norm,1e-30)
+    result["new_four_total_outgoing_keys"]=len(delta)
+    result["new_four_output_keys_not_in_G25"]=len(set(delta)-previous_keys)
     assert 0.70 < result["input_KB_squared_weight_covered"] < 0.71
     result["source_run"]=args.run
     result["new_evidence"]=new_evidence
