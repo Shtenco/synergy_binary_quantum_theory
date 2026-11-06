@@ -30,13 +30,21 @@ def raw(v,start,count,Jmax2,index):
     psi=CV.gauss_to_covariant({ini:1+0j},v)
     terms=ordered(PW.NEIG[v])
     total={};row=[]
+    # Exact memoization of the first covariant leg, which depends on (c,l,i)
+    # but NOT on the first-K index j or the chosen outer edge a.
+    first_leg_cache={}
     def executor():
         for k in range(start,min(start+count,24)):
             eps,(a,b,c)=terms[k]; tmp={}
             max_leak=0.
             stage={'after_CV':0,'after_CK1':0,'after_J02':0,'after_CK2':0,'CV_nonzero_aux_paths':0,'CK1_nonzero_aux_paths':0,'CK2_nonzero_aux_paths':0}
             for i,j,l in itertools.product(range(2),repeat=3):
-                q,leak=RAW.COMP.C_volume_component(psi,v,c,l,i,Jmax2)
+                cache_key=(c,l,i)
+                if cache_key not in first_leg_cache:
+                    first_leg_cache[cache_key]=RAW.COMP.C_volume_component(psi,v,c,l,i,Jmax2)
+                q,leak=first_leg_cache[cache_key]
+                # Do not share mutable state dictionaries with later operator steps.
+                q=dict(q)
                 max_leak=max(max_leak,float(leak))
                 if q:
                     stage['after_CV']+=len(q); stage['CV_nonzero_aux_paths']+=1
@@ -58,6 +66,7 @@ def raw(v,start,count,Jmax2,index):
             add(total,tmp,eps)
             row.append({'index':k,'sign':eps,'edges':[a,b,c],'support':len(tmp),
                 'norm':nrm(tmp),'max_basis_leak':max_leak,'stage_counts':stage})
+            print('ACTUAL_TERM_FINISHED',json.dumps(row[-1]),flush=True)
         return None
     SINE.run(v,executor=executor)
     return dict(vertex=v,input_index=index,Jmax2=Jmax2,start=start,count=len(row),
