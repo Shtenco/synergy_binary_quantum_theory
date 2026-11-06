@@ -66,7 +66,7 @@ def run(source,target,orient,Jmax2):
     raw=[]
     primitive_max=0.
     primitive_nonzero=0
-    seq_total=0;raw_total=0
+    seq_total=0;raw_total=0;primitive_sum_squared=0.
     timer=time.perf_counter()
     # This is exactly the original sine prefactor for each of the 32 T terms,
     # with both adjoints, for one real oriented HH contribution.
@@ -78,6 +78,7 @@ def run(source,target,orient,Jmax2):
             seq_total+=1
             for br in incoming:
                 raw.append((br[0],br[1],br[2]*pref*coef))
+                primitive_sum_squared += abs(br[2]*pref*coef)**2 * math.prod(float(np.vdot(T,T).real) for T in br[1])
                 p,bleak=CK.project_branch_complete_charges(br,charged)
                 CK.add_state(projected,p,scale=pref*coef,tol=0.0)
                 primitive_max=max(primitive_max,bleak)
@@ -89,7 +90,7 @@ def run(source,target,orient,Jmax2):
     if projected2>raw2+max(1e-10,raw2*1e-8):
         raise AssertionError(f"True projection increased norm: raw={raw2}, projected={projected2}")
     leak2=max(0.,raw2-projected2)
-    e=math.sqrt(leak2/max(raw2,1e-300)) if raw2>1e-25 else None
+    e=math.sqrt(leak2/max(raw2,1e-300)) if raw2>1e-25 and raw2>1e-12*primitive_sum_squared else None
     return {
       "status":"REAL_ONE_ORIENTATION_FULL_SINE_HE_PRESUM_CHARGE_TEST",
       "tested_operator":"ONE of 12 oriented actual H_E sine terms, full 32 T-sequences and both adjoints",
@@ -106,6 +107,9 @@ def run(source,target,orient,Jmax2):
       "true_unprojected_coherent_squared_norm":raw2,
       "true_projected_coherent_squared_norm":projected2,
       "postsum_relative_charge_leak":e,
+      "sum_individual_raw_branch_squared_norm":primitive_sum_squared,
+      "coherent_to_incoherent_squared_ratio":raw2/max(primitive_sum_squared,1e-300),
+      "numerical_stability":"CANCELLATION_DOMINATED_NOT_CERTIFIED" if e is None else "MEASURABLE_COHERENT_OUTPUT",
       "elapsed_s":time.perf_counter()-timer,
       "caveat":"ONE orientation and ONE source basis state, NOT full H_E, not a physical HDA or TT test",
     }
