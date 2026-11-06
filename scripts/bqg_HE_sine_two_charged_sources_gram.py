@@ -39,7 +39,6 @@ def main():
     assert eig[0]>=-1e-12
     cov={k:inputs[0][0].get(k,0j)+inputs[1][0].get(k,0j) for k in set(inputs[0][0])|set(inputs[1][0])}
     coherent_norm=math.sqrt(sum(abs(x)**2 for x in cov.values()))
-    coherence_interference=coherent_norm**2-sum(meta[0] for meta in [])
     a=inputs[0][0];b=inputs[1][0]
     expected=sum(abs(x)**2 for x in a.values())+sum(abs(x)**2 for x in b.values())
     res=dict(status="ACTUAL_EUCLIDEAN_HE_SINE_TWO_CHARGED_SOURCE_GRAM",
