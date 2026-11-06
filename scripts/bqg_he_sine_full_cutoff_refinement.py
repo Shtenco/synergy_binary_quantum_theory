@@ -14,12 +14,14 @@ import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_covariant_K_sine_composition_gate as SINE
 import peter_weyl_zeroaware_volume_migration_experiment as ZVM
 
-def run(jmax,source,target):
+def run(jmax,source,target,basis_rank=0):
     ZVM.patch_and_clear()
     initial=PW.basis_full_jhalf()[0]
     state,leak,wrong,_=CK.inverse_outer_complete(initial,source,target,0,0,jmax)
     assert state and leak<1e-10
-    key=max(state,key=lambda k:(abs(state[k]),str(k)))
+    ordered=sorted(state,key=lambda k:(-abs(state[k]),str(k)))
+    assert 0<=basis_rank<len(ordered)
+    key=ordered[basis_rank]
     amp=state[key]
     t=time.perf_counter()
     projected,vol,primitive=SINE.complete_HE_sine(key,source,jmax,(source,target))
@@ -32,7 +34,7 @@ def run(jmax,source,target):
         records.append([list(map(int,spins)),[list(label) for label in labels],float(val.real),float(val.imag)])
     original=json.dumps({"basis_key":[list(key[0]),[list(q) for q in key[1]]],
                          "basis_amp":[float(amp.real),float(amp.imag)],
-                         "source":source,"target":target,"Jmax2":jmax,
+                         "source":source,"target":target,"Jmax2":jmax,"basis_rank":basis_rank,
                          "states":records},separators=(",",":"),ensure_ascii=True).encode()
     compact=gzip.compress(original,compresslevel=9,mtime=0)
     sha=hashlib.sha256(original).hexdigest()
@@ -59,5 +61,6 @@ if __name__=="__main__":
     p.add_argument("--Jmax2",type=int,required=True)
     p.add_argument("--source",type=int,default=1)
     p.add_argument("--target",type=int,default=0)
+    p.add_argument("--basis-rank",type=int,default=0)
     a=p.parse_args()
-    run(a.Jmax2,a.source,a.target)
+    run(a.Jmax2,a.source,a.target,a.basis_rank)
