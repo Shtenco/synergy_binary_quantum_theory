@@ -34,22 +34,30 @@ def raw(v,start,count,Jmax2,index):
         for k in range(start,min(start+count,24)):
             eps,(a,b,c)=terms[k]; tmp={}
             max_leak=0.
+            stage={'after_CV':0,'after_CK1':0,'after_J02':0,'after_CK2':0,'CV_nonzero_aux_paths':0,'CK1_nonzero_aux_paths':0,'CK2_nonzero_aux_paths':0}
             for i,j,l in itertools.product(range(2),repeat=3):
                 q,leak=RAW.COMP.C_volume_component(psi,v,c,l,i,Jmax2)
                 max_leak=max(max_leak,float(leak))
+                if q:
+                    stage['after_CV']+=len(q); stage['CV_nonzero_aux_paths']+=1
                 if not q:continue
                 q,d=RAW.KCOMP.C_K_component(q,v,b,j,l,Jmax2)
                 max_leak=max(max_leak,float(d['outer_complete_basis_leakage']),
                     float(d['internal_volume_sector_leakage']))
+                if q:
+                    stage['after_CK1']+=len(q);stage['CK1_nonzero_aux_paths']+=1
                 q={key:z for key,z in q.items() if key[2] in (0,2)}
+                stage['after_J02']+=len(q)
                 if not q:continue
                 q,d=RAW.KCOMP.C_K_component(q,v,a,i,j,Jmax2)
                 max_leak=max(max_leak,float(d['outer_complete_basis_leakage']),
                     float(d['internal_volume_sector_leakage']))
+                if q:
+                    stage['after_CK2']+=len(q);stage['CK2_nonzero_aux_paths']+=1
                 add(tmp,q)
             add(total,tmp,eps)
             row.append({'index':k,'sign':eps,'edges':[a,b,c],'support':len(tmp),
-                'norm':nrm(tmp),'max_basis_leak':max_leak})
+                'norm':nrm(tmp),'max_basis_leak':max_leak,'stage_counts':stage})
         return None
     SINE.run(v,executor=executor)
     return dict(vertex=v,input_index=index,Jmax2=Jmax2,start=start,count=len(row),
