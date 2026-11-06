@@ -1,0 +1,18 @@
+name: bqg-HE-sine-full-second-basis-output
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-HE-sine-full-second-basis-output.yml]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  basis1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - name: Genuine full H_E sine on independent second charged basis of inverse holonomy
+        run: python -u scripts/bqg_he_sine_full_cutoff_refinement.py --source 1 --target 0 --Jmax2 3 --basis-rank 1
