@@ -45,20 +45,22 @@ def raw_gram_norm2(branches,block=64):
         raise AssertionError(f"raw norm negative: {total}")
     return max(0.,float(total.real)),len(grouped),max_group
 
-def choose_actual_source(source,target,Jmax2):
+def choose_actual_source(source,target,Jmax2,basis_rank=0):
     initial=PW.basis_full_jhalf()[0]
     state,leak,wrong,weights=CK.inverse_outer_complete(initial,source,target,0,0,Jmax2)
     if not state:raise RuntimeError("Genuine inverse holonomy produced no charged input states")
-    key=max(state,key=lambda k:(abs(state[k]),str(k)))
+    ordered=sorted(state,key=lambda k:(-abs(state[k]),str(k)))
+    if not 0<=basis_rank<len(ordered):raise ValueError("basis_rank outside original true inverse output")
+    key=ordered[basis_rank]
     assert len(key)==2 and key[1][source][0]=="C" and key[1][target][0]=="C"
     return key,state[key],len(state),float(leak),float(wrong)
 
-def run(source,target,orient,Jmax2):
+def run(source,target,orient,Jmax2,basis_rank=0):
     ZVM.patch_and_clear()
     assert source!=target and target in PW.NEIG[source]
     specs=PW.oriented_specs(source)
     assert len(specs)==12 and 0<=orient<len(specs)
-    key,amp,inv_size,invleak,wrong=choose_actual_source(source,target,Jmax2)
+    key,amp,inv_size,invleak,wrong=choose_actual_source(source,target,Jmax2,basis_rank)
     sign,(v,a,b,c)=specs[orient]
     original=CK.branch_from_key(key,amp)
     charged=(source,target)
@@ -94,7 +96,7 @@ def run(source,target,orient,Jmax2):
     return {
       "status":"REAL_ONE_ORIENTATION_FULL_SINE_HE_PRESUM_CHARGE_TEST",
       "tested_operator":"ONE of 12 oriented actual H_E sine terms, full 32 T-sequences and both adjoints",
-      "source":source,"target":target,"orientation_index":orient,
+      "source":source,"target":target,"orientation_index":orient,"inverse_basis_rank":basis_rank,
       "orientation_nodes":[v,a,b,c],"orientation_sign":sign,
       "Jmax2":Jmax2,"source_index":"max amplitude in genuine inverse holonomy state",
       "source_complex_amplitude":[float(amp.real),float(amp.imag)],
@@ -119,8 +121,9 @@ if __name__=="__main__":
     p.add_argument("--target",type=int,default=0)
     p.add_argument("--orientation",type=int,default=0)
     p.add_argument("--Jmax2",type=int,default=3)
+    p.add_argument("--basis-rank",type=int,default=0)
     a=p.parse_args()
-    z=run(a.source,a.target,a.orientation,a.Jmax2)
+    z=run(a.source,a.target,a.orientation,a.Jmax2,a.basis_rank)
     print("BQG_RAW_CHARGE_EXACT_BEGIN",flush=True)
     print(json.dumps(z,indent=2,ensure_ascii=False),flush=True)
     print("BQG_RAW_CHARGE_EXACT_END",flush=True)
