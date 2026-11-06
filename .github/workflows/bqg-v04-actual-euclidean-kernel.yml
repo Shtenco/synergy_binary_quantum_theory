@@ -28,10 +28,5 @@ jobs:
         run: |
           mkdir -p verification_results
           python scripts/bqg_v04_actual_euclidean_kernel_gate.py --output verification_results/BQG_V04_EUCLIDEAN_REAL_W5.json
-      - name: Upload numerical evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bqg-v04-actual-euclidean-kernel
-          path: verification_results/BQG_V04_EUCLIDEAN_REAL_W5.json
-          retention-days: 30
+      - name: Matrix evidence printed in previous step
+        run: echo "The calculation already prints the full JSON spectrum in the job log; skip artifact upload while storage quota is exceeded."
