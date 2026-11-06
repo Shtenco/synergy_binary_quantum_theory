@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/bqg_v04_actual_euclidean_kernel_gate.py'
       - '.github/workflows/bqg-v04-actual-euclidean-kernel.yml'
+      - 'scripts/bqg_v08_lorentzian_24term_raw_column.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
   pull_request:
     branches: [main]
     paths:
@@ -30,3 +32,19 @@ jobs:
           python scripts/bqg_v04_actual_euclidean_kernel_gate.py --output verification_results/BQG_V04_EUCLIDEAN_REAL_W5.json
       - name: Matrix evidence printed in previous step
         run: echo "The calculation already prints the full JSON spectrum in the job log; skip artifact upload while storage quota is exceeded."
+
+  raw-lorentzian-first-amplitude:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install numpy scipy sympy
+      - name: Real sine-ordered first K-K-V triple on all-jhalf K5
+        run: |
+          python -u scripts/bqg_v08_lorentzian_24term_raw_column.py \
+            --v 0 --input 0 --Jmax2 7 --start 0 --count 1 \
+            --output verification_results/BQG_V08_FIRST_TRIPLE.json
