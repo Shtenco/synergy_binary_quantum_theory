@@ -1,0 +1,17 @@
+name: bqg-real-W5-Lorentzian-cancellation-bound
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-real-W5-Lorentzian-cancellation-bound.yml]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  necessary-norm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy
+      - run: python -u scripts/bqg_v04_lorentzian_cancellation_necessary_gate.py
