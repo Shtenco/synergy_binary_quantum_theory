@@ -43,8 +43,8 @@ jobs:
           python-version: '3.11'
       - name: Dependencies
         run: python -m pip install numpy scipy sympy
-      - name: Real sine-ordered first K-K-V triple on all-jhalf K5
+      - name: Real sine-ordered ALL 24 K-K-V triples on all-jhalf K5
         run: |
           python -u scripts/bqg_v08_lorentzian_24term_raw_column.py \
-            --v 0 --input 0 --Jmax2 7 --start 0 --count 1 \
-            --output verification_results/BQG_V08_FIRST_TRIPLE.json
+            --v 0 --input 0 --Jmax2 7 --start 0 --count 24 \
+            --output verification_results/BQG_V09_ALL_24_TRIPLES.json
