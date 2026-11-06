@@ -1,0 +1,20 @@
+name: bqg-he-sine-raw-coherent-charge-orientation
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-he-sine-raw-coherent-charge-orientation.yml]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  exact-signed-term:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - name: Real H_E sine single oriented full primitive pre-projection coherent norm
+        run: |
+          python -m py_compile scripts/bqg_he_sine_true_coherent_charge_orientation.py
+          python -u scripts/bqg_he_sine_true_coherent_charge_orientation.py --source 1 --target 0 --orientation 0 --Jmax2 3
