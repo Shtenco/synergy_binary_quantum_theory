@@ -39,7 +39,20 @@ def run(v=0,index=0):
                         row["independent_reference_norm"]=nrm(ref)
                         row["independent_difference"]=difference(got,ref)
                     records.append(row)
-    print(json.dumps({"input":"all_jhalf","node":v,"input_index":index,
+    # A true acceptance gate: compare independent volume constructions and both cutoffs.
+    errs=[x["independent_difference"] for x in records if "independent_difference" in x]
+    assert max(errs)<1e-10, ("C(V) independent implementations disagree",max(errs))
+    for target in PW.NEIG[v]:
+        for i in range(2):
+            for j in range(2):
+                a=next(x for x in records if x["target"]==target and x["cutoff"]==3 and x["i"]==i and x["j"]==j)
+                b=next(x for x in records if x["target"]==target and x["cutoff"]==7 and x["i"]==i and x["j"]==j)
+                assert abs(a["norm"]-b["norm"])<1e-11,("C(V) cutoff mismatch",target,i,j)
+    if v==0 and index==0:
+        assert all(x["norm"]>0.1 for x in records if x["target"] in (1,2,3))
+        assert all(x["norm"]<1e-13 for x in records if x["target"]==4)
+    print(json.dumps({"passed":True,"max_independent_difference":max(errs),
+      "input":"all_jhalf","node":v,"input_index":index,
        "records":records,"note":"This is a comparison of real C(V) implementations, not an HL amplitude."},indent=2))
 if __name__=="__main__":
     ap=argparse.ArgumentParser();ap.add_argument("--v",type=int,default=0);ap.add_argument("--input",type=int,default=0)
