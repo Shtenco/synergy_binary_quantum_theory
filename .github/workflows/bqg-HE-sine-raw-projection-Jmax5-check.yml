@@ -1,0 +1,24 @@
+name: bqg-HE-sine-raw-projection-Jmax5-check
+on:
+  push:
+    branches: [research/bqg-node1-lorentzian-columns-20261031]
+    paths: [.github/workflows/bqg-HE-sine-raw-projection-Jmax5-check.yml]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  nonzero-orientations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        orientation: [1,2,4,5,7,8,9,10,11]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -r requirements.txt
+      - name: Actual nontrivial sine HE raw projection at larger Jmax2 5
+        env:
+          ORIENT: ${{ matrix.orientation }}
+        run: python -u scripts/bqg_he_sine_true_coherent_charge_orientation.py --source 1 --target 0 --orientation "$ORIENT" --Jmax2 5
