@@ -115,21 +115,33 @@ def compare_states(a, b):
             "absolute_delta": delta, "support_v4": len(a), "support_v2": len(b)}
 
 
+def _stable_complex_sum(values):
+    """Accurately sum finite complex contributions using separate fsum channels."""
+    real = math.fsum(float(complex(value).real) for value in values)
+    imag = math.fsum(float(complex(value).imag) for value in values)
+    return complex(real, imag)
+
+
 def sum_states_exact(states):
-    """Sum complex state maps without a numerical support threshold."""
-    total = {}
+    """Sum complex state maps without tolerance pruning or order-sensitive loss."""
+    buckets = {}
     for state in states:
         for key, amplitude in state.items():
-            total[key] = total.get(key, 0j) + amplitude
+            buckets.setdefault(key, []).append(amplitude)
+    total = {key: _stable_complex_sum(values)
+             for key, values in buckets.items()}
     return {key: value for key, value in total.items() if value != 0j}
 
 
 def assemble_pair_exact(results, coefficients):
-    """Assemble the signed pair without tolerance pruning or zero relabeling."""
-    total = {}
-    for name, coefficient in coefficients.items():
+    """Assemble signed pair using compensated real/imaginary summation."""
+    buckets = {}
+    for name in sorted(coefficients):
+        coefficient = coefficients[name]
         for key, amplitude in results[name].items():
-            total[key] = total.get(key, 0j) + coefficient * amplitude
+            buckets.setdefault(key, []).append(coefficient * amplitude)
+    total = {key: _stable_complex_sum(values)
+             for key, values in buckets.items()}
     total = {key: value for key, value in total.items() if value != 0j}
     norm = math.sqrt(math.fsum(abs(z) ** 2 for z in total.values()))
     return total, norm, ("VERIFIED_EXACT_ZERO_PAIR" if norm == 0.0
