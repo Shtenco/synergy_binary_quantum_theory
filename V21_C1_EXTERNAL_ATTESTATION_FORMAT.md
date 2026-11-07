@@ -49,3 +49,10 @@ The top-level manifest must also contain `seed_state_sha256`, `source_commit`, `
 ## Scope
 
 Passing these software checks would establish provenance and diagnostic consistency for the accepted finite computation. It would not establish that the computation is physically complete, prove the full Hamiltonian constraint algebra, establish a physical TT sector, or derive Einstein dynamics. The 32 ordered paths and four independent V2 comparisons must still be run on the real backend and compared at the full complex-amplitude level.
+
+
+## Exact complex-state aggregation
+
+The V21 collector sums the eight auxiliary-path state maps and assembles the signed forward/adjoint pair without the legacy (10^{-11}) support-pruning threshold. It removes a key only when its accumulated complex value is exactly `0j` in the executed floating-point arithmetic. A tiny nonzero residual is retained.
+
+`VERIFIED_EXACT_ZERO_PAIR` therefore means exact zero in the computed complex floating-point sum, not a symbolic proof that the underlying real-number expression vanishes. Numerical error bounds and independent V2 comparison remain necessary. The V2 reference files retain their own original generation semantics; discrepancies are reported, not silently normalized away.
