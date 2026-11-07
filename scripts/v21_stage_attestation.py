@@ -54,8 +54,10 @@ def attest_manifest(manifest):
             metadata_path = Path(spec["metadata_json"])
             metadata = json.loads(metadata_path.read_text("utf-8"))
             checks = metadata.get("checks")
-            if (metadata.get("passed") is not True or not isinstance(checks, dict)
-                    or not checks or not all(value is True for value in checks.values())):
+            if (metadata.get("passed") is not True
+                    or metadata.get("operator_version") != "tetrahedral-charged-volume-v2"
+                    or not isinstance(checks, dict) or not checks
+                    or not all(value is True for value in checks.values())):
                 raise ValueError("V2_REFERENCE_NOT_PASSED_" + name)
             if metadata.get("source_commit") != source_commit:
                 raise ValueError("V2_REFERENCE_SOURCE_COMMIT_MISMATCH_" + name)
