@@ -29,7 +29,7 @@ from pl_covariant_backend import install_pl_graph
 from tetrahedral_volume_backend import install_tetrahedral_volume_backend
 
 JMAX2=7
-TOL=LGA.TOL
+TOL=1e-10
 
 def parity(base,perm):
     idx=[base.index(x) for x in perm]
@@ -41,6 +41,10 @@ def add(dst,src,scale=1.0,tol=1e-11):
         z=dst.get(k,0j)+scale*a
         if abs(z)>tol:dst[k]=z
         elif k in dst:del dst[k]
+def norm2(s):
+    """Historical squared-norm API used by the V2 group worker."""
+    return float(sum(abs(amplitude)**2 for amplitude in s.values()))
+
 def state_norm(s):
     norm=0.0
     for amplitude in s.values():
