@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Collect genuine complete 32-path V4 and compare with four independent V2."""
 from __future__ import annotations
-import argparse, hashlib, json, math
+import argparse, hashlib, json, math, re, subprocess
 from itertools import product
 from pathlib import Path
 import numpy as np
@@ -176,6 +176,25 @@ def assemble_pair_exact(results, coefficients):
 
 
 def collect(manifest):
+    source_commit = manifest.get("source_commit")
+    if not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+        raise ValueError("BAD_MANIFEST_SOURCE_COMMIT")
+    try:
+        actual_head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, timeout=10
+        ).strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError("COLLECTOR_COMMIT_NOT_VERIFIABLE") from exc
+    if actual_head != source_commit:
+        raise ValueError("COLLECTOR_SOURCE_COMMIT_MISMATCH")
+    if not _sha(manifest.get("seed_state_sha256")):
+        raise ValueError("BAD_MANIFEST_SEED_DIGEST")
+
+    backend_file = Path(__file__).with_name("tetrahedral_volume_backend.py")
+    actual_backend_sha = hashlib.sha256(backend_file.read_bytes()).hexdigest()
+    if actual_backend_sha != manifest.get("volume_backend_sha256"):
+        raise ValueError("COLLECTOR_VOLUME_BACKEND_SHA_MISMATCH")
+
     from pl_dual_complex import DualComplex, seed_16cell_boundary
     from pl_lorentzian_physical_pair_worker_v4 import pair_indices
     import pl_lorentzian_triple_worker as W
