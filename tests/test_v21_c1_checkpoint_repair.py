@@ -20,7 +20,7 @@ class V21C1Tests(unittest.TestCase):
     def setUp(self):
         self.st = {((1,) * 32, (0,) * 16, 0, 0, 1, 1): 1 + 2j}
         self.one = {
-            "stage": 1, "passed": True, "source_commit": "a" * 40,
+            "stage": 1, "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY", "source_commit": "a" * 40,
             "source_node": 0, "omit": 0, "cycle": 0, "mode": "forward",
             "order": "p", "aux": [0, 0, 1], "Jmax2": 7,
             "volume_backend": "prod", "volume_backend_sha256": "b" * 64,
