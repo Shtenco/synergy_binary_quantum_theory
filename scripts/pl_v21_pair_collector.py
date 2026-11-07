@@ -121,6 +121,7 @@ def assemble_pair_exact(results, coefficients):
     for name, coefficient in coefficients.items():
         for key, amplitude in results[name].items():
             total[key] = total.get(key, 0j) + coefficient * amplitude
+    total = {key: value for key, value in total.items() if value != 0j}
     norm = math.sqrt(math.fsum(abs(z) ** 2 for z in total.values()))
     return total, norm, ("VERIFIED_EXACT_ZERO_PAIR" if norm == 0.0
                          else "VERIFIED_NONZERO_PAIR")
