@@ -109,3 +109,12 @@ The machine-readable registry `BQG_PROOF_REGISTRY_2026-11-07.json` records all 1
 7. Only then test the H1–H4 hypotheses required by the conditional IR universality theorem.
 
 **Conclusion:** BQG has substantial finite mathematical content, but the complete physical derivation of GR remains open. Preserve negative results and scoped theorems; do not inflate a finite or conditional result into a physical proof.
+
+
+## V21 repair specification
+
+A separate implementation-ready audit document is included: `V21_C1_ACCEPTANCE_PROVENANCE_REPAIR_SPEC.md`. It defines operation-specific diagnostic schemas, direct checkpoint digest chaining, trusted manifest requirements, zero-result semantics, adversarial regression cases, and strict C1 closure criteria. It is a specification only; no V21 worker code has been modified.
+
+## Conditional IR gate interpretation — clarified
+
+The root-level theorem is `BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md` (blob SHA `0cf465e954300d452d3d7bd2c11f7304086aa560`). The associated gate script `scripts/bcqg_ir_universality_closure_gate.py` explicitly says it checks theorem-level reductions and frozen finite prerequisites only. Its stored result `verification_results/BCQG_IR_UNIVERSALITY_CLOSURE.json` has `passed=true`, but lists H1–H4 as open. In particular, the gate sets the algebraic target values and rank tuple to verify the conditional reductions; it does not measure the collective HDA or prove those ranks from BQG microdynamics. Therefore its status remains **conditional theorem + finite algebraic/prerequisite checks**, not physical IR closure.
