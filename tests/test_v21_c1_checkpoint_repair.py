@@ -152,8 +152,8 @@ class V21C1Tests(unittest.TestCase):
                      npz_sha256=digest, output_state_sha256=digest,
                      state_support=1, stage=1,
                      guard={"stage_physical_basis_pass": True})))
-            with self.assertRaisesRegex(ValueError, "MISSING_STAGE_DIAGNOSTICS"):
-                read_stage(prefix)
+            with self.assertRaisesRegex(ValueError, "MISSING_EXTERNAL_STAGE_ATTESTATION"):
+                read_stage(prefix, None)
 
     def test_22_collector_recomputes_guard_and_checks_output_digest(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -165,12 +165,18 @@ class V21C1Tests(unittest.TestCase):
                         npz_sha256=digest, output_state_sha256=digest,
                         state_support=1, stage=1, diagnostics=diag,
                         operator_signature=["CV", 4, 1, 0], guard=guard)
-            prefix.with_suffix(".json").write_text(json.dumps(meta))
-            self.assertEqual(read_stage(prefix)[0]["npz_sha256"], digest)
+            meta_path = prefix.with_suffix(".json")
+            meta_path.write_text(json.dumps(meta))
+            attestation = {
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+                "npz_sha256": digest,
+            }
+            self.assertEqual(read_stage(prefix, attestation)[0]["npz_sha256"], digest)
             meta["guard"]["physical_leakage_max"] = 0.5
-            prefix.with_suffix(".json").write_text(json.dumps(meta))
+            meta_path.write_text(json.dumps(meta))
+            attestation["metadata_sha256"] = hashlib.sha256(meta_path.read_bytes()).hexdigest()
             with self.assertRaisesRegex(ValueError, "STORED_GUARD_RECOMPUTATION_MISMATCH"):
-                read_stage(prefix)
+                read_stage(prefix, attestation)
 
     def test_23_read_original_v2(self):
         with tempfile.TemporaryDirectory() as directory:
