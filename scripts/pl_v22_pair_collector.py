@@ -166,7 +166,7 @@ def collect(manifest):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--manifest',type=Path,required=True)
-    parser.add_argument('--output-prefix',type=Path,required=True)
+    parser.add_argument('--out','--output-prefix',dest='output_prefix',type=Path,required=True)
     args=parser.parse_args()
     args.output_prefix.parent.mkdir(parents=True,exist_ok=True)
     try:
