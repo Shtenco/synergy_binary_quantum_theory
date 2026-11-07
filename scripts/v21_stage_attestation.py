@@ -39,6 +39,35 @@ def attest_manifest(manifest):
                 "npz_sha256": npz_digest,
             }
         item["stage_attestations"] = pins
+    references = manifest.get("independent_v2")
+    if references is not None:
+        required_refs = {"fp", "fq", "ap", "aq"}
+        if not isinstance(references, dict) or set(references) != required_refs:
+            raise ValueError("V2_REFERENCE_SET_MUST_BE_FP_FQ_AP_AQ")
+        source_commit = manifest.get("source_commit")
+        backend_id = manifest.get("volume_backend")
+        backend_sha = manifest.get("volume_backend_sha256")
+        for name, spec in references.items():
+            if not isinstance(spec, dict):
+                raise ValueError("BAD_V2_REFERENCE_SPEC_" + name)
+            npz_path = Path(spec["npz"])
+            metadata_path = Path(spec["metadata_json"])
+            metadata = json.loads(metadata_path.read_text("utf-8"))
+            if metadata.get("passed") is not True or not all(metadata.get("checks", {}).values()):
+                raise ValueError("V2_REFERENCE_NOT_PASSED_" + name)
+            if metadata.get("source_commit") != source_commit:
+                raise ValueError("V2_REFERENCE_SOURCE_COMMIT_MISMATCH_" + name)
+            if (metadata.get("volume_backend") != backend_id
+                    or metadata.get("volume_backend_sha256") != backend_sha):
+                raise ValueError("V2_REFERENCE_BACKEND_MISMATCH_" + name)
+            npz_digest = sha256(npz_path)
+            metadata_digest = sha256(metadata_path)
+            if spec.get("sha256") not in (None, npz_digest):
+                raise ValueError("V2_REFERENCE_NPZ_PIN_CONFLICT_" + name)
+            if spec.get("metadata_sha256") not in (None, metadata_digest):
+                raise ValueError("V2_REFERENCE_METADATA_PIN_CONFLICT_" + name)
+            spec["sha256"] = npz_digest
+            spec["metadata_sha256"] = metadata_digest
     return manifest
 
 
