@@ -230,9 +230,13 @@ def main():
         print(json.dumps(run(a), indent=2))
         return 0
     except Exception as e:
+        failure = str(e)
         report = {
-            "status": "STAGE_FAILED_NOT_PHYSICS", "passed": False,
-            "error": str(e), "error_type": type(e).__name__,
+            "status": ("EXACT_ZERO_STAGE_OUTPUT_STOPPED"
+                       if failure == "EXACT_ZERO_STAGE_OUTPUT"
+                       else "STAGE_FAILED_NOT_PHYSICS"),
+            "passed": False, "failure_code": failure,
+            "error": failure, "error_type": type(e).__name__,
             "traceback": traceback.format_exc()
         }
         a.output_prefix.parent.mkdir(parents=True, exist_ok=True)
