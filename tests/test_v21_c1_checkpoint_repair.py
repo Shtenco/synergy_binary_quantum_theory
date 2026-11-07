@@ -11,7 +11,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from v21_stage_logic import all_32_specs, first_leg_census, operations, predecessor_ok
 from v21_checkpoint_guard import validate_physical_stage
-from pl_v21_pair_collector import compare_states, read_stage, read_v2
+from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 
@@ -227,6 +227,25 @@ class V21C1Tests(unittest.TestCase):
             path.write_bytes(path.read_bytes() + b"tamper")
             with self.assertRaisesRegex(ValueError, "NPZ_DIGEST_MISMATCH_STAGE2"):
                 attest_manifest({"paths": [item]})
+
+    def test_27_exact_pair_cancellation_is_distinguished(self):
+        key = next(iter(self.st))
+        pair, norm, status = assemble_pair_exact(
+            {"fp": {key: 1 + 2j}, "fq": {key: 1 + 2j},
+             "ap": {}, "aq": {}},
+            {"fp": 1.0, "fq": -1.0, "ap": 0.0, "aq": 0.0})
+        self.assertEqual(norm, 0.0)
+        self.assertEqual(pair[key], 0j)
+        self.assertEqual(status, "VERIFIED_EXACT_ZERO_PAIR")
+
+    def test_28_small_nonzero_pair_is_not_pruned(self):
+        key = next(iter(self.st))
+        pair, norm, status = assemble_pair_exact(
+            {"fp": {key: 1e-14 + 0j}, "fq": {}, "ap": {}, "aq": {}},
+            {"fp": 1.0, "fq": 0.0, "ap": 0.0, "aq": 0.0})
+        self.assertGreater(norm, 0.0)
+        self.assertEqual(pair[key], 1e-14 + 0j)
+        self.assertEqual(status, "VERIFIED_NONZERO_PAIR")
 
 
 if __name__ == "__main__":
