@@ -15,7 +15,7 @@ S=-i(L_raw-L_raw^dag)/2.  This worker never fits a coefficient and never drops a
 representation using a GR target.  Exact-zero ordered terms are valid.
 """
 from __future__ import annotations
-import argparse,itertools,json,math,sys,traceback
+import argparse,hashlib,itertools,json,math,subprocess,sys,traceback
 from pathlib import Path
 import numpy as np
 HERE=Path(__file__).resolve().parent
@@ -26,6 +26,7 @@ import peter_weyl_lorentzian_gauss_action_gate as LGA
 from pl_dual_complex import DualComplex,seed_16cell_boundary
 from pl_peter_weyl_euclidean import PLPeterWeylEuclidean
 from pl_covariant_backend import install_pl_graph
+from tetrahedral_volume_backend import install_tetrahedral_volume_backend
 
 JMAX2=7
 TOL=1e-10
@@ -100,8 +101,18 @@ def run(index,mode='forward',source=0):
     D=DualComplex(seed_16cell_boundary());G=PLPeterWeylEuclidean(D)
     omit,base,perm,targets,coef=ordered_spec(D,source,index)
     seed=((1,)*len(G.EDGES),(0,)*D.n_tets)
+    try:
+        source_commit=subprocess.check_output(
+            ['git','rev-parse','HEAD'],text=True,timeout=10).strip()
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise ValueError('V2_SOURCE_COMMIT_NOT_VERIFIABLE') from exc
+    if len(source_commit)!=40 or any(ch not in '0123456789abcdef' for ch in source_commit):
+        raise ValueError('BAD_V2_SOURCE_COMMIT')
+    backend_file=HERE/'tetrahedral_volume_backend.py'
+    backend_sha=hashlib.sha256(backend_file.read_bytes()).hexdigest()
     oldJ=LP.JMAX2
-    with install_pl_graph(G):
+    with install_tetrahedral_volume_backend():
+      with install_pl_graph(G):
         LP.JMAX2=JMAX2
         restore,caches=LP.install_sine_cached_stack()
         try:
@@ -130,6 +141,8 @@ def run(index,mode='forward',source=0):
     return gauss,{
       'status':'exact distributed PL-S3 Lorentzian ordered triple','passed':bool(all(checks.values())),
       'mode':mode,'index':index,'source_node':source,'omitted_local_slot':omit,
+      'source_commit':source_commit,'volume_backend':'tetrahedral-volume-v1',
+      'volume_backend_sha256':backend_sha,
       'base_local_slots':list(base),'permuted_local_slots':list(perm),'ordered_target_nodes':list(targets),
       'PL_epsilon_coefficient':coef,'Jmax':JMAX2/2,'input_key':repr(seed),
       'covariant_support':len(cov),'covariant_norm':cn,'gauss_support':len(gauss),'gauss_norm':gn,
