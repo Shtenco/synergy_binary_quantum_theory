@@ -29,7 +29,7 @@ from pl_covariant_backend import install_pl_graph
 from tetrahedral_volume_backend import install_tetrahedral_volume_backend
 
 JMAX2=7
-TOL=1e-10
+TOL=LGA.TOL
 
 def parity(base,perm):
     idx=[base.index(x) for x in perm]
@@ -41,7 +41,19 @@ def add(dst,src,scale=1.0,tol=1e-11):
         z=dst.get(k,0j)+scale*a
         if abs(z)>tol:dst[k]=z
         elif k in dst:del dst[k]
-def norm2(s):return float(sum(abs(a)**2 for a in s.values()))
+def state_norm(s):
+    norm=0.0
+    for amplitude in s.values():
+        norm=math.hypot(norm,abs(amplitude))
+    return norm
+
+def projection_rejected_norm(state,source):
+    norm=0.0
+    for key,amplitude in state.items():
+        if LGA.covariant_scalar_to_gauss_key(key,source) is None:
+            norm=math.hypot(norm,abs(amplitude))
+    return norm
+
 def max_spin(s):return max((max(k[0]) for k in s),default=0)/2.0
 
 def ordered_spec(D,source,index):
@@ -123,18 +135,19 @@ def run(index,mode='forward',source=0):
             cache_info={name:{'hits':fn.cache_info().hits,'misses':fn.cache_info().misses,'currsize':fn.cache_info().currsize} for name,fn in caches.items()}
         finally:
             restore();LP.JMAX2=oldJ
-    total=accepted2+rejected2
-    scalar_fraction=1.0 if total<1e-30 else accepted2/total
     physical=max(float(diag.get('CV_complete_basis_leakage',0.0)),float(diag.get('CK_outer_complete_basis_leakage',0.0)),float(diag.get('CK_internal_volume_sector_leakage',0.0)))
     charge=float(diag.get('CK_complete_charge_basis_leakage',0.0))
-    cn=math.sqrt(norm2(cov));gn=math.sqrt(norm2(gauss))
+    cn=state_norm(cov);gn=state_norm(gauss)
+    rejected_norm=projection_rejected_norm(cov,source)
+    scalar_fraction=1.0 if cn==0.0 else gn/cn
     checks={
       'finite_covariant_norm':math.isfinite(cn),'finite_gauss_norm':math.isfinite(gn),
+      'finite_projection_diagnostics':all(math.isfinite(float(x)) for x in (accepted2,rejected2)),
       'finite_covariant_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in cov.values()),
       'finite_gauss_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in gauss.values()),
       'physical_basis_volume_leakage':physical<1e-8,
       'scalar_closure_fraction_or_exact_zero':scalar_fraction>1-1e-10,
-      'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0))<1e-8,
+      'nonscalar_rejected_norm':rejected_norm<1e-8,
       'single_L_spin_wall':max_spin(gauss)<=JMAX2/2+1e-12,
       'PL_orientation_coefficient':coef in (-1,1),
     }
