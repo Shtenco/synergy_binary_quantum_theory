@@ -253,9 +253,9 @@ def collect(manifest):
         legacy_cov = sum_states_legacy_pruned(ordered_aux_states, LP.TOL)
         # Match the independent V2 scalar-projection tolerance, not the
         # looser display/worker threshold in pl_lorentzian_triple_worker.
-        gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, LGA.TOL)
+        gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, W.TOL)
         legacy_gauss, legacy_accepted2, legacy_rejected2 = LGA.project_scalar_gauss(
-            legacy_cov, source, LGA.TOL)
+            legacy_cov, source, W.TOL)
         numeric_checks = (accepted2, rejected2, legacy_accepted2, legacy_rejected2)
         if not all(math.isfinite(float(value)) for value in numeric_checks):
             raise ValueError("NONFINITE_GAUSS_PROJECTION_NORM")
@@ -280,7 +280,7 @@ def collect(manifest):
             "legacy_rejected2": float(legacy_rejected2),
             "legacy_rejected_norm": legacy_rejected_norm,
             "legacy_auxiliary_prune_tolerance": float(LP.TOL),
-            "gauss_projection_tolerance": float(LGA.TOL),
+            "gauss_projection_tolerance": float(W.TOL),
         }
     ref_specs = {"fp": ("forward", ip), "fq": ("forward", iq),
                  "ap": ("adjoint", ip), "aq": ("adjoint", iq)}
