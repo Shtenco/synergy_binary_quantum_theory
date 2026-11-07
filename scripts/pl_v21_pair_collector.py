@@ -225,6 +225,8 @@ def collect(manifest):
     targets_q = tuple(D.neighbor[(source, t)] for t in q)
     shared = {k: manifest[k] for k in ("source_commit", "source_node", "omit", "cycle",
               "Jmax2", "volume_backend", "volume_backend_sha256", "seed_state_sha256")}
+    if shared["volume_backend"] != "tetrahedral-volume-v1":
+        raise ValueError("WRONG_MANIFEST_VOLUME_BACKEND_ID")
     if shared["Jmax2"] != 7:
         raise ValueError("WRONG_JMAX")
     paths = {}
