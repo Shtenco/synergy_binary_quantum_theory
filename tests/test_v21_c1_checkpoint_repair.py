@@ -361,6 +361,61 @@ class V21C1Tests(unittest.TestCase):
                         expected_index=3, expected_source_commit="a" * 40,
                         expected_backend_sha="b" * 64)
 
+    def test_41_attestation_builder_pins_four_v2_references(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "b" * 64,
+                "paths": [],
+                "independent_v2": {},
+            }
+            for name in ("fp", "fq", "ap", "aq"):
+                npz = root / f"{name}.npz"
+                np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                    Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+                metadata = {
+                    "passed": True, "checks": {"finite": True},
+                    "source_commit": "a" * 40,
+                    "volume_backend": "tetrahedral-volume-v1",
+                    "volume_backend_sha256": "b" * 64,
+                }
+                meta_path = root / f"{name}.json"
+                meta_path.write_text(json.dumps(metadata))
+                manifest["independent_v2"][name] = {
+                    "npz": str(npz), "metadata_json": str(meta_path)
+                }
+            result = attest_manifest(manifest)
+            for spec in result["independent_v2"].values():
+                self.assertEqual(len(spec["sha256"]), 64)
+                self.assertEqual(len(spec["metadata_sha256"]), 64)
+
+    def test_42_attestation_builder_rejects_v2_backend_mismatch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            npz = root / "fp.npz"
+            np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            meta_path = root / "fp.json"
+            meta_path.write_text(json.dumps({
+                "passed": True, "checks": {"finite": True},
+                "source_commit": "a" * 40,
+                "volume_backend": "legacy-volume",
+                "volume_backend_sha256": "c" * 64,
+            }))
+            manifest = {
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "b" * 64,
+                "paths": [],
+                "independent_v2": {"fp": {
+                    "npz": str(npz), "metadata_json": str(meta_path)
+                }},
+            }
+            with self.assertRaisesRegex(ValueError, "V2_REFERENCE_SET_MUST_BE_FP_FQ_AP_AQ"):
+                attest_manifest(manifest)
+
 
 if __name__ == "__main__":
     unittest.main()
