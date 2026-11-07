@@ -152,17 +152,23 @@ def run(opts):
     }
     if opts.stage == 1:
         seed = ((1,) * len(G.EDGES), (0,) * D.n_tets)
-        meta["input_state_sha256"] = hashlib.sha256(repr(seed).encode("utf-8")).hexdigest()
+        seed_digest = hashlib.sha256(repr(seed).encode("utf-8")).hexdigest()
+        meta["seed_state_sha256"] = seed_digest
+        meta["input_state_sha256"] = seed_digest
     else:
         if not opts.previous_prefix:
             raise ValueError("MISSING_PREVIOUS_STAGE")
         prevpath = opts.previous_prefix.with_suffix(".json")
         previous = json.loads(prevpath.read_text("utf-8"))
+        previous_npz = opts.previous_prefix.with_suffix(".npz")
+        actual_previous_digest = hashlib.sha256(previous_npz.read_bytes()).hexdigest()
+        if actual_previous_digest != previous.get("npz_sha256"):
+            raise ValueError("PREDECESSOR_CHECKPOINT_FILE_DIGEST_MISMATCH")
+        meta["input_state_sha256"] = actual_previous_digest
+        meta["seed_state_sha256"] = previous.get("seed_state_sha256")
         predecessor_ok(previous, meta, opts.stage, allops[0], allops[1])
-        meta["input_state_sha256"] = previous["input_state_sha256"]
         state = load_charged(
-            opts.previous_prefix.with_suffix(".npz"),
-            previous["npz_sha256"], len(G.EDGES), D.n_tets
+            previous_npz, actual_previous_digest, len(G.EDGES), D.n_tets
         )
 
     with install_tetrahedral_volume_backend():
@@ -184,14 +190,17 @@ def run(opts):
 
     if opts.stage == 2:
         after = scalar_filter(after)
-    guard = validate_physical_stage(diag, after, opts.stage)
+    guard = validate_physical_stage(
+        diag, after, opts.stage, meta["operator_signature"]
+    )
     digest = save_charged(
         opts.output_prefix.with_suffix(".npz"),
         after, len(G.EDGES), D.n_tets
     )
     meta.update({
         "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY",
-        "npz_sha256": digest, "state_support": len(after),
+        "npz_sha256": digest, "output_state_sha256": digest,
+        "state_support": len(after),
         "state_norm": math.sqrt(sum(abs(z)**2 for z in after.values())),
         "diagnostics": diag, "guard": guard,
         "physical_full_pair_completed": False,
