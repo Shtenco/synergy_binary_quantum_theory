@@ -247,6 +247,11 @@ class V21C1Tests(unittest.TestCase):
         self.assertEqual(pair[key], 1e-14 + 0j)
         self.assertEqual(status, "VERIFIED_NONZERO_PAIR")
 
+    def test_29_reject_non_original_predecessor_status(self):
+        with self.assertRaisesRegex(ValueError, "STAGE_NOT_PASSED"):
+            predecessor_ok(dict(self.one, status="MOCK_OR_SYNTHETIC"),
+                           self.two, 2, ["CV", 4, 1, 0])
+
 
 if __name__ == "__main__":
     unittest.main()
