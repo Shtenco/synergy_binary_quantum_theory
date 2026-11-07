@@ -36,7 +36,7 @@
   },
   "audit_scope": {
     "structural_comparison": "All 146 non-main branches were compared against main in the preceding audit; GitHub compare truncates file lists at 300 for large diffs.",
-    "semantic_review": "Deep source-level review concentrated on the scientific families and V21/V22 code paths listed below. This registry is not a claim that every file in every branch has been semantically reviewed.",
+    "semantic_review": "Deep source-level review concentrated on the scientific families and V21/V22 code paths listed below. This registry is not a claim that every file in every branch has been semantically reviewed. The V21 stage worker and triple/pair workers were inspected directly; the IR theorem file path was resolved from the branch Git tree.",
     "local_execution": "No complete local checkout or fresh full scientific replay was run in this audit pass.",
     "repository_mutations": "No changes to main. An audit-only branch and two documentation files are created by this action."
   },
@@ -1112,8 +1112,9 @@
       "claim": "Under H1 nondegenerate stable metric, H2 local two-derivative ADM form, H3 standard HDA, H4 no extra second-class constraints, the IR theory lies in the ADM/Einstein family.",
       "formula": "c_DeWitt=1/2; AB=1; z=1; N_phys=2",
       "evidence_branch": "research/bqg-v16-first-leg-20261107",
-      "evidence_file": "BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md (path must be confirmed; prior retrieval at that path returned 404)",
-      "scope": "Conditional theorem; H1-H4 are not derived from BQG microdynamics."
+      "evidence_file": "BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md; scripts/bcqg_ir_universality_closure_gate.py; verification_results/BCQG_IR_UNIVERSALITY_CLOSURE.json; verification_results/BCQG_IR_UNIVERSALITY_CLOSURE_LOCAL.json",
+      "scope": "Conditional theorem and finite gate result; H1-H4 are not derived from BQG microdynamics. The gate output must be inspected for exact pass/fail scope before promoting status.",
+      "evidence_blob_sha": "0cf465e954300d452d3d7bd2c11f7304086aa560"
     },
     {
       "id": "BQG-FESHBACH-002",
@@ -1219,6 +1220,15 @@
       "evidence_branch": "main",
       "evidence_file": "depth6_frontier.json",
       "scope": "Structural support closure is not numeric kernel closure; finite closure would still not prove continuum physicality."
+    },
+    {
+      "id": "BQG-V21-CHECKPOINT-CHAIN-001",
+      "family": "workflow_provenance",
+      "status": "defect_confirmed_code_review",
+      "claim": "Stage 2/3 currently copy the seed input_state_sha256 rather than recording the immediate predecessor NPZ digest; predecessor_ok then checks equality of this inherited field instead of output-to-input digest linkage.",
+      "evidence_branch": "research/bqg-v21-c1-checkpoint-repair-20261107",
+      "evidence_file": "scripts/pl_v20_stage_worker.py: run(); scripts/v21_stage_logic.py: predecessor_ok()",
+      "scope": "A valid NPZ is digest-checked on load, but the metadata chain does not independently attest each transition."
     }
   ],
   "branch_dispositions": {
