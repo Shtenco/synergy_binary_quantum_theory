@@ -91,6 +91,17 @@ class V22C1Integration(unittest.TestCase):
         prefix=Path(self.manifest['paths'][0]['stage3']);p=prefix.with_suffix('.json')
         m=json.loads(p.read_text());m['predecessor_npz_sha256']='f'*64;p.write_text(json.dumps(m))
         with self.assertRaisesRegex(ValueError,'BROKEN_PREDECESSOR_NPZ_CHAIN'):C.collect(self.manifest)
+    def test_subthreshold_auxiliary_amplitudes_must_cohere(self):
+        # Eight terms individually below 1e-10 can add to a nonzero amplitude.
+        # This fixture tests algebra, NOT original SU2 physics.
+        parts=[6e-11+0j]*8
+        sequential={}
+        for z in parts:
+            a=sequential.get('key',0j)+z
+            if abs(a)>1e-10:sequential['key']=a
+            elif 'key' in sequential:del sequential['key']
+        self.assertEqual(sequential,{})
+        self.assertAlmostEqual(sum(parts).real,4.8e-10,places=20)
     def test_12_first_signatures(self):
         specs=list(all_32_specs((1,2,3)))
         self.assertEqual(len(specs),32)
