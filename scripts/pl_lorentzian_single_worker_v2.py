@@ -8,7 +8,7 @@ process evaluates exactly one of the frozen 24 forward or 24 direct-adjoint
 ordered terms so a slow term cannot cancel five completed terms at job timeout.
 """
 from __future__ import annotations
-import argparse,json,traceback
+import argparse,hashlib,json,subprocess,traceback
 from pathlib import Path
 
 import peter_weyl_lorentzian_logical_projection_gate as LP
@@ -24,6 +24,19 @@ VOLUME_DEFINITION='V_tet=sqrt(abs((1/4) sum_r (-1)^r q_hat_r)) with production z
 
 
 def run(mode,index,outdir,source=0):
+    try:
+        source_commit=subprocess.check_output(
+            ['git','rev-parse','HEAD'],text=True,timeout=10).strip()
+        dirty=subprocess.check_output(
+            ['git','status','--porcelain','--untracked-files=no'],text=True,timeout=10)
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise ValueError('V2_SOURCE_IDENTITY_NOT_VERIFIABLE') from exc
+    if len(source_commit)!=40 or any(ch not in '0123456789abcdef' for ch in source_commit):
+        raise ValueError('BAD_V2_SOURCE_COMMIT')
+    if dirty.strip():
+        raise ValueError('V2_TRACKED_WORKTREE_NOT_CLEAN')
+    backend_file=Path(__file__).with_name('tetrahedral_volume_backend.py')
+    backend_sha=hashlib.sha256(backend_file.read_bytes()).hexdigest()
     D=DualComplex(seed_16cell_boundary());G=PLPeterWeylEuclidean(D)
     # Validate the frozen orbit index before heavy work.
     W.ordered_spec(D,source,index)
@@ -39,6 +52,9 @@ def run(mode,index,outdir,source=0):
             restore();LP.JMAX2=oldJ
     meta['operator_version']=OPERATOR_VERSION
     meta['volume_definition']=VOLUME_DEFINITION
+    meta['source_commit']=source_commit
+    meta['volume_backend']='tetrahedral-volume-v1'
+    meta['volume_backend_sha256']=backend_sha
     meta['execution_granularity']='one frozen ordered term per process'
     meta['execution_only_note']='No operator, coefficient, cutoff, pruning rule, orientation sign or hard threshold differs from preregistered V2.'
     outdir=Path(outdir);outdir.mkdir(parents=True,exist_ok=True)
