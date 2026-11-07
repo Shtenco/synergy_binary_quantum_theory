@@ -43,13 +43,18 @@ def predecessor_ok(prev, cur, stage, first_operation, second_operation=None):
         raise ValueError("INVALID_STAGE")
     if prev.get("stage") != stage - 1 or prev.get("passed") is not True:
         raise ValueError("STAGE_NOT_PASSED")
-    if not prev.get("guard", {}).get("stage_physical_basis_pass"):
+    previous_guard = prev.get("guard")
+    if (not isinstance(previous_guard, dict)
+            or previous_guard.get("stage_physical_basis_pass") is not True):
         raise ValueError("PREDECESSOR_GUARD_NOT_PASSED")
     for key in ("source_commit", "source_node", "omit", "cycle", "mode",
                 "Jmax2", "volume_backend", "volume_backend_sha256",
                 "seed_state_sha256"):
         if prev.get(key) != cur.get(key):
             raise ValueError("MISMATCH_" + key)
+    if not (_sha(prev.get("seed_state_sha256"))
+            and _sha(cur.get("seed_state_sha256"))):
+        raise ValueError("BAD_SEED_STATE_DIGEST")
     previous_output = prev.get("output_state_sha256")
     previous_npz = prev.get("npz_sha256")
     current_input = cur.get("input_state_sha256")
