@@ -10,15 +10,27 @@ from v21_checkpoint_guard import validate_physical_stage
 from pl_v20_stage_worker import load_charged
 
 
-def read_stage(prefix):
+def read_stage(prefix, attestation):
     prefix = Path(prefix)
-    meta = json.loads(prefix.with_suffix(".json").read_text("utf-8"))
+    meta_path = prefix.with_suffix(".json")
+    npz_path = prefix.with_suffix(".npz")
+    if not isinstance(attestation, dict):
+        raise ValueError("MISSING_EXTERNAL_STAGE_ATTESTATION")
+    metadata_pin = attestation.get("metadata_sha256")
+    npz_pin = attestation.get("npz_sha256")
+    if not isinstance(metadata_pin, str) or not isinstance(npz_pin, str):
+        raise ValueError("INCOMPLETE_EXTERNAL_STAGE_ATTESTATION")
+    if hashlib.sha256(meta_path.read_bytes()).hexdigest() != metadata_pin:
+        raise ValueError("STAGE_METADATA_ATTESTATION_MISMATCH")
+    if hashlib.sha256(npz_path.read_bytes()).hexdigest() != npz_pin:
+        raise ValueError("STAGE_NPZ_ATTESTATION_MISMATCH")
+    meta = json.loads(meta_path.read_text("utf-8"))
     if meta.get("status") != "REAL_ORIGINAL_STAGE_ONLY" or meta.get("passed") is not True:
         raise ValueError("MISSING_SUCCESSFUL_ORIGINAL_STAGE")
     if not isinstance(meta.get("diagnostics"), dict):
         raise ValueError("MISSING_STAGE_DIAGNOSTICS")
     signature = meta.get("operator_signature")
-    state = load_charged(prefix.with_suffix(".npz"), meta.get("npz_sha256", ""))
+    state = load_charged(npz_path, meta.get("npz_sha256", ""))
     output_sha = meta.get("output_state_sha256")
     if output_sha != meta.get("npz_sha256"):
         raise ValueError("OUTPUT_CHECKPOINT_DIGEST_METADATA_MISMATCH")
@@ -33,9 +45,12 @@ def read_stage(prefix):
 
 
 def certify_triple(item, shared, p_targets, q_targets):
-    m1, _ = read_stage(item["stage1"])
-    m2, _ = read_stage(item["stage2"])
-    m3, s3 = read_stage(item["stage3"])
+    attestations = item.get("stage_attestations")
+    if not isinstance(attestations, dict):
+        raise ValueError("MISSING_TRIPLE_STAGE_ATTESTATIONS")
+    m1, _ = read_stage(item["stage1"], attestations.get("stage1"))
+    m2, _ = read_stage(item["stage2"], attestations.get("stage2"))
+    m3, s3 = read_stage(item["stage3"], attestations.get("stage3"))
     mode, order, aux = m3["mode"], m3["order"], m3["aux"]
     if (mode not in ("forward", "adjoint") or order not in ("p", "q")
             or not isinstance(aux, list) or len(aux) != 3
@@ -51,6 +66,8 @@ def certify_triple(item, shared, p_targets, q_targets):
                     "volume_backend_sha256", "seed_state_sha256"):
             if meta.get(key) != shared[key]:
                 raise ValueError("MIXED_PHYSICAL_SOURCE_OR_BACKEND_" + key)
+    if m1.get("input_state_sha256") != m1.get("seed_state_sha256"):
+        raise ValueError("STAGE1_INPUT_IS_NOT_DECLARED_SEED")
     predecessor_ok(m1, m2, 2, expected_ops[0], expected_ops[1])
     predecessor_ok(m2, m3, 3, expected_ops[0], expected_ops[1])
     return (mode, order, tuple(aux)), s3
