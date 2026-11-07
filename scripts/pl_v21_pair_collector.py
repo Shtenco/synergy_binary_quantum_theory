@@ -82,8 +82,9 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
         if hashlib.sha256(meta_path.read_bytes()).hexdigest() != spec["metadata_sha256"]:
             raise ValueError("V2_METADATA_SHA256_MISMATCH")
         meta = json.loads(meta_path.read_text("utf-8"))
-        if meta.get("passed") is not True or meta.get("mode") != expected_mode:
-            raise ValueError("V2_PRIMITIVE_FAILED_OR_WRONG_MODE")
+        if (meta.get("passed") is not True or meta.get("mode") != expected_mode
+                or meta.get("operator_version") != "tetrahedral-charged-volume-v2"):
+            raise ValueError("V2_PRIMITIVE_FAILED_OR_WRONG_MODE_OR_VERSION")
         if meta.get("index") != expected_index or meta.get("source_node") != expected_source:
             raise ValueError("V2_PRIMITIVE_WRONG_INPUT_OR_ORIENTATION")
         if (expected_source_commit is not None
