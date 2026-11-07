@@ -118,6 +118,12 @@ def run(opts):
         raise ValueError("REPOSITORY_COMMIT_NOT_VERIFIABLE") from exc
     if actual_head != opts.commit:
         raise ValueError("CHECKOUT_SOURCE_COMMIT_MISMATCH")
+    dirty = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        text=True, timeout=10
+    )
+    if dirty.strip():
+        raise ValueError("TRACKED_WORKTREE_NOT_CLEAN")
     if opts.stage not in (1, 2, 3):
         raise ValueError("BAD_STAGE")
     if len(opts.aux) != 3 or any(x not in (0, 1) for x in opts.aux):
