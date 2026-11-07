@@ -56,3 +56,9 @@ Passing these software checks would establish provenance and diagnostic consiste
 The V21 collector sums the eight auxiliary-path state maps and assembles the signed forward/adjoint pair without the legacy (10^{-11}) support-pruning threshold. It removes a key only when its accumulated complex value is exactly `0j` in the executed floating-point arithmetic. A tiny nonzero residual is retained.
 
 `VERIFIED_EXACT_ZERO_PAIR` therefore means exact zero in the computed complex floating-point sum, not a symbolic proof that the underlying real-number expression vanishes. Numerical error bounds and independent V2 comparison remain necessary. The V2 reference files retain their own original generation semantics; discrepancies are reported, not silently normalized away.
+
+## Canonical computation identity
+
+For this V21 protocol, `volume_backend` must be exactly `tetrahedral-volume-v1`. The worker records the SHA-256 of `scripts/tetrahedral_volume_backend.py`; the collector independently recomputes that hash and requires the current checkout HEAD to equal the manifest's `source_commit`.
+
+The four independent V2 reference artifacts must also carry the same `source_commit`, `volume_backend` identifier, and `volume_backend_sha256`. The independent ordered-triple worker now installs the same tetrahedral backend while preserving its separate ordered-triple/adjoint assembly path. Historical V2 artifacts generated without this backend are not admissible as matched references and must be regenerated.
