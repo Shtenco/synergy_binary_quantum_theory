@@ -41,7 +41,8 @@ def predecessor_ok(prev, cur, stage, first_operation, second_operation=None):
         raise ValueError("BAD_STAGE_METADATA")
     if stage not in (2, 3):
         raise ValueError("INVALID_STAGE")
-    if prev.get("stage") != stage - 1 or prev.get("passed") is not True:
+    if (prev.get("stage") != stage - 1 or prev.get("passed") is not True
+            or prev.get("status") != "REAL_ORIGINAL_STAGE_ONLY"):
         raise ValueError("STAGE_NOT_PASSED")
     previous_guard = prev.get("guard")
     if (not isinstance(previous_guard, dict)
