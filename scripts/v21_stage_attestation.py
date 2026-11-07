@@ -53,7 +53,9 @@ def attest_manifest(manifest):
             npz_path = Path(spec["npz"])
             metadata_path = Path(spec["metadata_json"])
             metadata = json.loads(metadata_path.read_text("utf-8"))
-            if metadata.get("passed") is not True or not all(metadata.get("checks", {}).values()):
+            checks = metadata.get("checks")
+            if (metadata.get("passed") is not True or not isinstance(checks, dict)
+                    or not checks or not all(value is True for value in checks.values())):
                 raise ValueError("V2_REFERENCE_NOT_PASSED_" + name)
             if metadata.get("source_commit") != source_commit:
                 raise ValueError("V2_REFERENCE_SOURCE_COMMIT_MISMATCH_" + name)
