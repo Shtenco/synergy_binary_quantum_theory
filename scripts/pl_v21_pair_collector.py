@@ -133,6 +133,19 @@ def sum_states_exact(states):
     return {key: value for key, value in total.items() if value != 0j}
 
 
+def sum_states_legacy_pruned(states, threshold):
+    """Reproduce the historical ordered add(..., tol=threshold) semantics."""
+    total = {}
+    for state in states:
+        for key, amplitude in state.items():
+            value = total.get(key, 0j) + amplitude
+            if abs(value) > threshold:
+                total[key] = value
+            elif key in total:
+                del total[key]
+    return total
+
+
 def assemble_pair_exact(results, coefficients):
     """Assemble signed pair using compensated real/imaginary summation."""
     buckets = {}
@@ -153,6 +166,7 @@ def collect(manifest):
     from pl_lorentzian_physical_pair_worker_v4 import pair_indices
     import pl_lorentzian_triple_worker as W
     import peter_weyl_lorentzian_gauss_action_gate as LGA
+    import peter_weyl_lorentzian_logical_projection_gate as LP
 
     D = DualComplex(seed_16cell_boundary())
     source, omit, cycle = (int(manifest[k]) for k in ("source_node", "omit", "cycle"))
@@ -172,14 +186,18 @@ def collect(manifest):
     allkeys = set(product(("forward", "adjoint"), ("p", "q"), product((0, 1), repeat=3)))
     if set(paths) != allkeys:
         raise ValueError("V4_32_PATHS_NOT_COMPLETE")
-    results, quality = {}, {}
+    results, legacy_results, quality = {}, {}, {}
     for mode, order in product(("forward", "adjoint"), ("p", "q")):
-        cov = sum_states_exact(
+        ordered_aux_states = [
             paths[mode, order, aux] for aux in product((0, 1), repeat=3)
-        )
+        ]
+        cov = sum_states_exact(ordered_aux_states)
+        legacy_cov = sum_states_legacy_pruned(ordered_aux_states, LP.TOL)
         # Match the independent V2 scalar-projection tolerance, not the
         # looser display/worker threshold in pl_lorentzian_triple_worker.
         gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, LGA.TOL)
+        legacy_gauss, legacy_accepted2, legacy_rejected2 = LGA.project_scalar_gauss(
+            legacy_cov, source, LGA.TOL)
         if math.sqrt(max(float(rejected2), 0)) >= 1e-8:
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
         if W.max_spin(gauss) > 3.5 + 1e-12:
@@ -187,8 +205,18 @@ def collect(manifest):
         name = {("forward", "p"): "fp", ("forward", "q"): "fq",
                 ("adjoint", "p"): "ap", ("adjoint", "q"): "aq"}[mode, order]
         results[name] = gauss
-        quality[name] = {"gauss_support": len(gauss), "accepted2": float(accepted2),
-                         "rejected2": float(rejected2)}
+        legacy_results[name] = legacy_gauss
+        quality[name] = {
+            "unpruned_gauss_support": len(gauss),
+            "unpruned_accepted2": float(accepted2),
+            "unpruned_rejected2": float(rejected2),
+            "legacy_pruned_covariant_support": len(legacy_cov),
+            "legacy_gauss_support": len(legacy_gauss),
+            "legacy_accepted2": float(legacy_accepted2),
+            "legacy_rejected2": float(legacy_rejected2),
+            "legacy_auxiliary_prune_tolerance": float(LP.TOL),
+            "gauss_projection_tolerance": float(LGA.TOL),
+        }
     ref_specs = {"fp": ("forward", ip), "fq": ("forward", iq),
                  "ap": ("adjoint", ip), "aq": ("adjoint", iq)}
     if len({manifest["independent_v2"][k]["npz"] for k in ref_specs}) != 4:
@@ -197,8 +225,9 @@ def collect(manifest):
                      expected_mode=ref_specs[k][0], expected_index=ref_specs[k][1])
           for k in ref_specs}
     comparisons = {k: compare_states(results[k], v2[k]) for k in v2}
-    if any(x["relative_delta"] >= 1e-10 for x in comparisons.values()):
-        raise ValueError("ORIGINAL_V2_V4_COMPLEX_MISMATCH")
+    legacy_comparisons = {k: compare_states(legacy_results[k], v2[k]) for k in v2}
+    if any(x["relative_delta"] >= 1e-10 for x in legacy_comparisons.values()):
+        raise ValueError("LEGACY_THRESHOLD_ALIGNED_V2_V4_COMPLEX_MISMATCH")
     cp = int(W.ordered_spec(D, source, ip)[4])
     cq = int(W.ordered_spec(D, source, iq)[4])
     if cp != -cq:
@@ -208,9 +237,12 @@ def collect(manifest):
                   "ap": +.5j * cp, "aq": +.5j * cq})
     return {"status": "VERIFIED_ORIGINAL_V4_ONE_PHYSICAL_PAIR", "passed": True,
             "paths_completed": 32, "v2_primitives_compared": 4,
-            "comparisons": comparisons, "quality": quality,
+            "unpruned_v2_comparisons": comparisons,
+            "legacy_threshold_aligned_v2_comparisons": legacy_comparisons,
+            "quality": quality,
             "gauss_projection_tolerance": float(LGA.TOL),
-            "auxiliary_sum_policy": "stable fsum; no support pruning before Gauss projection",
+            "legacy_auxiliary_prune_tolerance": float(LP.TOL),
+            "auxiliary_sum_policy": "report both unpruned stable fsum and legacy threshold-aligned sum",
             "pair_status": pair_status, "pair_norm": pair_norm,
             "pair_zero_semantics": "exact floating-point sum; not symbolic identity",
             "pair_support": len(S), "HDA_proved": False, "HL_complete": False}, S
