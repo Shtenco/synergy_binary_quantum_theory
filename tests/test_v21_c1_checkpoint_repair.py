@@ -2,6 +2,7 @@
 """V21 structural regressions. Synthetic states test software only, never physics."""
 import hashlib
 import json
+import math
 import sys
 import tempfile
 import unittest
@@ -329,6 +330,11 @@ class V21C1Tests(unittest.TestCase):
         result = compare_states({key: 1e-200 + 0j}, {})
         self.assertEqual(result["relative_delta"], 1.0)
         self.assertEqual(result["absolute_delta"], 1e-200)
+
+    def test_39_overflowed_relative_delta_is_not_accepted_as_nan(self):
+        key = next(iter(self.st))
+        result = compare_states({key: 1e308 + 0j}, {key: -1e308 + 0j})
+        self.assertTrue(math.isinf(result["relative_delta"]))
 
 
 if __name__ == "__main__":
