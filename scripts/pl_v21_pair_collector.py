@@ -118,8 +118,11 @@ def compare_states(a, b):
     norm_a = _l2_norm(a.values())
     norm_b = _l2_norm(b.values())
     denominator = max(norm_a, norm_b)
-    relative = (delta / denominator if denominator > 0.0
-                else (0.0 if delta == 0.0 else math.inf))
+    if not all(math.isfinite(value) for value in (delta, norm_a, norm_b)):
+        relative = math.inf
+    else:
+        relative = (delta / denominator if denominator > 0.0
+                    else (0.0 if delta == 0.0 else math.inf))
     return {"relative_delta": relative, "absolute_delta": delta,
             "norm_v4": norm_a, "norm_v2": norm_b,
             "support_v4": len(a), "support_v2": len(b)}
@@ -209,6 +212,9 @@ def collect(manifest):
         gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, LGA.TOL)
         legacy_gauss, legacy_accepted2, legacy_rejected2 = LGA.project_scalar_gauss(
             legacy_cov, source, LGA.TOL)
+        numeric_checks = (accepted2, rejected2, legacy_accepted2, legacy_rejected2)
+        if not all(math.isfinite(float(value)) for value in numeric_checks):
+            raise ValueError("NONFINITE_GAUSS_PROJECTION_NORM")
         if (math.sqrt(max(float(rejected2), 0)) >= 1e-8
                 or math.sqrt(max(float(legacy_rejected2), 0)) >= 1e-8):
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
@@ -247,6 +253,8 @@ def collect(manifest):
     S, pair_norm, pair_status = assemble_pair_exact(
         results, {"fp": -.5j * cp, "fq": -.5j * cq,
                   "ap": +.5j * cp, "aq": +.5j * cq})
+    if not math.isfinite(pair_norm):
+        raise ValueError("NONFINITE_PHYSICAL_PAIR_NORM")
     return {"status": "VERIFIED_ORIGINAL_V4_ONE_PHYSICAL_PAIR", "passed": True,
             "paths_completed": 32, "v2_primitives_compared": 4,
             "unpruned_v2_comparisons": comparisons,
