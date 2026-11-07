@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   physical-cv-first-leg:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
       OPENBLAS_NUM_THREADS: "1"
@@ -30,20 +30,23 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install production scientific backend
-        shell: pwsh
+        shell: bash
         run: |
+          set -euo pipefail
           python -m pip install -r requirements.txt
-          if ($LASTEXITCODE -ne 0) { exit 2 }
+
       - name: Compile and verify original PL16 imports
-        shell: pwsh
+        shell: bash
         run: |
+          set -euo pipefail
           python -m py_compile scripts/pl_v16_first_leg_probe.py
-          $env:PYTHONPATH = "scripts"
+          export PYTHONPATH=scripts
           python -c "import pl_lorentzian_physical_pair_worker_v4, tetrahedral_volume_backend, pl_dual_complex"
           if ($LASTEXITCODE -ne 0) { exit 2 }
       - name: Execute REAL V4 first leg C(V) without fitting or approximation
-        shell: pwsh
+        shell: bash
         run: |
+          set -euo pipefail
           python scripts/pl_v16_first_leg_probe.py --index 0 --output-prefix out/stage1
           if ($LASTEXITCODE -ne 0) { exit 2 }
           python -c "import json,os; d=json.load(open('out/stage1.json')); assert d['passed'] and not d['full_pair_completed']; assert d['source_commit']==os.environ['GITHUB_SHA']"
