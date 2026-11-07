@@ -34,7 +34,7 @@ Every entry in the collector's `paths` array must include:
 }
 ```
 
-The top-level manifest must also contain `seed_state_sha256`, `source_commit`, `source_node`, `omit`, `cycle`, `Jmax2`, and `volume_backend_sha256`, alongside the existing `independent_v2` references.
+The top-level manifest must also contain `seed_state_sha256`, `source_commit`, `source_node`, `omit`, `cycle`, `Jmax2`, and `volume_backend_sha256`, `volume_backend`, and `volume_backend_sha256`, alongside the existing `independent_v2` references.
 
 ## Required chain invariants
 
