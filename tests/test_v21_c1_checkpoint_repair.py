@@ -262,6 +262,23 @@ class V21C1Tests(unittest.TestCase):
         total = sum_states_exact([{key: 1 + 2j}, {key: -1 - 2j}])
         self.assertNotIn(key, total)
 
+    def test_32_stable_sum_recovers_small_residual_after_large_cancellation(self):
+        key = next(iter(self.st))
+        total = sum_states_exact([
+            {key: 1e16 + 0j}, {key: 1.0 + 0j}, {key: -1e16 + 0j}
+        ])
+        self.assertEqual(total[key], 1.0 + 0j)
+
+    def test_33_pair_assembly_is_order_stable_for_cancellation(self):
+        key = next(iter(self.st))
+        pair, norm, status = assemble_pair_exact(
+            {"fp": {key: 1e16 + 0j}, "fq": {key: 1.0 + 0j},
+             "ap": {key: -1e16 + 0j}, "aq": {}},
+            {"fp": 1.0, "fq": 1.0, "ap": 1.0, "aq": 0.0})
+        self.assertEqual(pair[key], 1.0 + 0j)
+        self.assertEqual(norm, 1.0)
+        self.assertEqual(status, "VERIFIED_NONZERO_PAIR")
+
 
 if __name__ == "__main__":
     unittest.main()
