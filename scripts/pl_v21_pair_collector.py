@@ -40,10 +40,23 @@ def certify_triple(item,shared,p_targets,q_targets):
     predecessor_ok(m2,m3,3,expected_ops[0],expected_ops[1])
     return (mode,order,tuple(aux)),s3
 
-def read_v2(spec):
+def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=None):
     file=Path(spec['npz'])
     if hashlib.sha256(file.read_bytes()).hexdigest()!=spec['sha256']:
         raise ValueError('INDEPENDENT_V2_SHA256_MISMATCH')
+    if expected_source is not None:
+        meta_path=Path(spec['metadata_json'])
+        if hashlib.sha256(meta_path.read_bytes()).hexdigest()!=spec['metadata_sha256']:
+            raise ValueError('V2_METADATA_SHA256_MISMATCH')
+        meta=json.loads(meta_path.read_text('utf-8'))
+        if meta.get('passed') is not True or meta.get('mode')!=expected_mode:
+            raise ValueError('V2_PRIMITIVE_FAILED_OR_WRONG_MODE')
+        if meta.get('index')!=expected_index or meta.get('source_node')!=expected_source:
+            raise ValueError('V2_PRIMITIVE_WRONG_INPUT_OR_ORIENTATION')
+        if float(meta.get('Jmax',-1))!=3.5:
+            raise ValueError('V2_PRIMITIVE_WRONG_CUTOFF')
+        if not meta.get('checks') or not all(meta['checks'].values()):
+            raise ValueError('V2_PRIMITIVE_FAILED_ACCEPTANCE')
     with np.load(file,allow_pickle=False) as data:
         if set(data.files)!={'spins','Ks','amp'}:
             raise ValueError('INVALID_V2_FORMAT')
@@ -99,7 +112,13 @@ def collect(manifest):
         name={('forward','p'):'fp',('forward','q'):'fq',('adjoint','p'):'ap',('adjoint','q'):'aq'}[mode,order]
         results[name]=gauss
         quality[name]={'gauss_support':len(gauss),'accepted2':float(accepted2),'rejected2':float(rejected2)}
-    v2={k:read_v2(manifest['independent_v2'][k]) for k in ('fp','fq','ap','aq')}
+    ref_specs={'fp':('forward',ip),'fq':('forward',iq),
+               'ap':('adjoint',ip),'aq':('adjoint',iq)}
+    if len({manifest['independent_v2'][k]['npz'] for k in ref_specs})!=4:
+        raise ValueError('V2_REFERENCES_NOT_DISTINCT_FILES')
+    v2={k:read_v2(manifest['independent_v2'][k],
+                 expected_source=source,expected_mode=ref_specs[k][0],
+                 expected_index=ref_specs[k][1]) for k in ref_specs}
     comparisons={k:compare_states(results[k],v2[k]) for k in v2}
     if any(x['relative_delta']>=1e-10 for x in comparisons.values()):
         raise ValueError('ORIGINAL_V2_V4_COMPLEX_MISMATCH')
