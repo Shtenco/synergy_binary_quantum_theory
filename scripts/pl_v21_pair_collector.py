@@ -72,7 +72,8 @@ def certify_triple(item, shared, p_targets, q_targets):
     return (mode, order, tuple(aux)), s3
 
 
-def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=None):
+def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=None,
+            expected_source_commit=None, expected_backend_sha=None):
     file = Path(spec["npz"])
     if hashlib.sha256(file.read_bytes()).hexdigest() != spec["sha256"]:
         raise ValueError("INDEPENDENT_V2_SHA256_MISMATCH")
@@ -85,6 +86,14 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
             raise ValueError("V2_PRIMITIVE_FAILED_OR_WRONG_MODE")
         if meta.get("index") != expected_index or meta.get("source_node") != expected_source:
             raise ValueError("V2_PRIMITIVE_WRONG_INPUT_OR_ORIENTATION")
+        if (expected_source_commit is not None
+                and meta.get("source_commit") != expected_source_commit):
+            raise ValueError("V2_SOURCE_COMMIT_MISMATCH")
+        if (expected_backend_sha is not None
+                and meta.get("volume_backend_sha256") != expected_backend_sha):
+            raise ValueError("V2_VOLUME_BACKEND_MISMATCH")
+        if meta.get("volume_backend") != "tetrahedral-volume-v1":
+            raise ValueError("V2_WRONG_VOLUME_BACKEND")
         if float(meta.get("Jmax", -1)) != 3.5:
             raise ValueError("V2_PRIMITIVE_WRONG_CUTOFF")
         if not meta.get("checks") or not all(meta["checks"].values()):
@@ -269,8 +278,11 @@ def collect(manifest):
                  "ap": ("adjoint", ip), "aq": ("adjoint", iq)}
     if len({manifest["independent_v2"][k]["npz"] for k in ref_specs}) != 4:
         raise ValueError("V2_REFERENCES_NOT_DISTINCT_FILES")
-    v2 = {k: read_v2(manifest["independent_v2"][k], expected_source=source,
-                     expected_mode=ref_specs[k][0], expected_index=ref_specs[k][1])
+    v2 = {k: read_v2(
+              manifest["independent_v2"][k], expected_source=source,
+              expected_mode=ref_specs[k][0], expected_index=ref_specs[k][1],
+              expected_source_commit=source_commit,
+              expected_backend_sha=shared["volume_backend_sha256"])
           for k in ref_specs}
     comparisons = {k: compare_states(results[k], v2[k]) for k in v2}
     legacy_comparisons = {k: compare_states(legacy_results[k], v2[k]) for k in v2}
