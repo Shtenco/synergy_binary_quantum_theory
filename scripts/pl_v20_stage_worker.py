@@ -210,7 +210,7 @@ def run(opts):
         "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY",
         "npz_sha256": digest, "output_state_sha256": digest,
         "state_support": len(after),
-        "state_norm": math.sqrt(sum(abs(z)**2 for z in after.values())),
+        "state_norm": math.hypot(*(abs(z) for z in after.values())) if after else 0.0,
         "diagnostics": diag, "guard": guard,
         "physical_full_pair_completed": False,
         "physical_HDA_proved": False
