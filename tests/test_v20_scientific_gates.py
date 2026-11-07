@@ -96,7 +96,8 @@ class V20Tests(unittest.TestCase):
     def test_14_mixed_backend_refused(self):
         prev={"source_commit":"a"*40,"source_node":0,"omit":0,"cycle":0,
               "mode":"forward","order":"p","aux":[0,1,0],"Jmax2":7,
-              "volume_backend":"original","npz_sha256":"b"*64,
+              "volume_backend":"original","volume_backend_sha256":"c"*64,
+              "input_state_sha256":"d"*64,"npz_sha256":"b"*64,
               "stage":2,"passed":True}
         validate_predecessor(prev,dict(prev,stage=3),3)
         with self.assertRaisesRegex(ValueError,"PREDECESSOR_MISMATCH_volume_backend"):
