@@ -16,6 +16,8 @@ import traceback
 from pathlib import Path
 
 import numpy as np
+from v21_checkpoint_guard import validate_physical_stage
+from v21_stage_logic import predecessor_ok
 
 JMAX2 = 7
 
@@ -156,7 +158,7 @@ def run(opts):
             raise ValueError("MISSING_PREVIOUS_STAGE")
         prevpath = opts.previous_prefix.with_suffix(".json")
         previous = json.loads(prevpath.read_text("utf-8"))
-        validate_predecessor(previous, meta, opts.stage)
+        predecessor_ok(previous, meta, opts.stage, allops[0], allops[1])
         meta["input_state_sha256"] = previous["input_state_sha256"]
         state = load_charged(
             opts.previous_prefix.with_suffix(".npz"),
@@ -182,6 +184,7 @@ def run(opts):
 
     if opts.stage == 2:
         after = scalar_filter(after)
+    guard = validate_physical_stage(diag, after, opts.stage)
     digest = save_charged(
         opts.output_prefix.with_suffix(".npz"),
         after, len(G.EDGES), D.n_tets
@@ -190,7 +193,7 @@ def run(opts):
         "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY",
         "npz_sha256": digest, "state_support": len(after),
         "state_norm": math.sqrt(sum(abs(z)**2 for z in after.values())),
-        "diagnostics": diag,
+        "diagnostics": diag, "guard": guard,
         "physical_full_pair_completed": False,
         "physical_HDA_proved": False
     })
