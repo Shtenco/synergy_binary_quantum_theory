@@ -235,7 +235,7 @@ class V21C1Tests(unittest.TestCase):
              "ap": {}, "aq": {}},
             {"fp": 1.0, "fq": -1.0, "ap": 0.0, "aq": 0.0})
         self.assertEqual(norm, 0.0)
-        self.assertEqual(pair[key], 0j)
+        self.assertNotIn(key, pair)
         self.assertEqual(status, "VERIFIED_EXACT_ZERO_PAIR")
 
     def test_28_small_nonzero_pair_is_not_pruned(self):
