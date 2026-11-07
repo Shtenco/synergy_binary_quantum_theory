@@ -38,3 +38,11 @@ If only the legacy-aligned lane is examined, a sub-threshold nonzero residue can
 State and pair L2 norms use iterative `math.hypot`, not `sqrt(sum(abs(z)**2))`. This prevents a nonzero amplitude such as `1e-200` from being mislabeled as zero because its square underflows. Pair zero classification is based on whether the assembled amplitude map is empty after exact floating-point zero removal, not whether a squared norm happens to evaluate to zero.
 
 Relative V2 comparison no longer uses an arbitrary `1e-15` denominator floor, which could conceal a complete mismatch between tiny states. If any comparison norm or delta overflows to a non-finite value, the relative delta is set to infinity so the acceptance comparison fails closed. Projection and final pair norms are also required to be finite.
+
+## 6. Volume backend identity mismatch found and repaired in the independent worker
+
+The V21 staged worker installed `install_tetrahedral_volume_backend()`. The historical independent `pl_lorentzian_triple_worker.py` path installed the zero-aware spectral convention but did not install the tetrahedral four-leg volume extension. Therefore artifacts from that old V2 worker were not same-operator comparators for V21, even if their spin cutoff and source node matched.
+
+The independent V2 worker has now been updated to install the same tetrahedral backend while retaining its independent ordered-triple/adjoint assembly path. It records the exact source commit and tetrahedral backend SHA-256. The collector rejects V2 references unless both match the V21 run. V2 artifacts produced before this change are historical references only and must not be counted among the four valid matched-backend comparisons.
+
+The V2 worker's scalar projection tolerance is also pinned to `LGA.TOL`, matching the collector. The old worker used a looser `1e-10` value despite the projection module's canonical `1e-11` tolerance.
