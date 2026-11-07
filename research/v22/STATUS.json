@@ -1,0 +1,51 @@
+{
+  "version": "BQG_V22_C1_SOFTWARE_GATE",
+  "date": "2026-11-08",
+  "branch": "research/bqg-v22-local-c1-e2e-20261107",
+  "local_full_archive_test_passed": 57,
+  "local_full_archive_test_failed": 0,
+  "github_c1_integration_test_present": true,
+  "github_ci_succeeded": false,
+  "actual_original_su2_stage3_paths_completed_this_pass": 0,
+  "actual_v2_v4_comparison_finished": false,
+  "physical_hl_constructed": false,
+  "physical_hda_proved": false,
+  "original_production_backend_not_locally_mounted": true,
+  "unique_first_legs": 12,
+  "second_legs": 32,
+  "third_legs": 32,
+  "necessary_independent_v2": 4,
+  "files": [
+    {
+      "path": "scripts/pl_v22_stage_worker.py",
+      "git_blob_sha": "523d778aa9605fe9662f96a71d05d797695acbcf",
+      "bytes": 10010
+    },
+    {
+      "path": "scripts/pl_v22_pair_collector.py",
+      "git_blob_sha": "9e51bc8c00d77ae890c2ca433a847037a6f2b343",
+      "bytes": 10397
+    },
+    {
+      "path": "scripts/pl_v22_independent_v2.py",
+      "git_blob_sha": "17ae6875cd8f74f43bd9513de3c941e40375421c",
+      "bytes": 2171
+    },
+    {
+      "path": "scripts/pl_v22_one_pair_runner.py",
+      "git_blob_sha": "932421cf567bf6fed2c7876bffeac95210823125",
+      "bytes": 6938
+    },
+    {
+      "path": "tests/test_v22_c1_integration.py",
+      "git_blob_sha": "c61df508225215b6c95ee6687f243912229b2aa3",
+      "bytes": 6701
+    },
+    {
+      "path": "research/v22/README_RU.md",
+      "git_blob_sha": "77a4adf7fc3d0b5e5b09280ca4d171965f4edfb0",
+      "bytes": 3809
+    }
+  ],
+  "scope_note": "Local tests include synthetic bookkeeping data; neither branch code nor mock fixtures are proof of physical Lorentzian amplitude."
+}
