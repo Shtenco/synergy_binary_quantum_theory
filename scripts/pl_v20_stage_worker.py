@@ -206,11 +206,14 @@ def run(opts):
         opts.output_prefix.with_suffix(".npz"),
         after, len(G.EDGES), D.n_tets
     )
+    state_norm = 0.0
+    for amplitude in after.values():
+        state_norm = math.hypot(state_norm, abs(amplitude))
     meta.update({
         "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY",
         "npz_sha256": digest, "output_state_sha256": digest,
         "state_support": len(after),
-        "state_norm": math.hypot(*(abs(z) for z in after.values())) if after else 0.0,
+        "state_norm": state_norm,
         "diagnostics": diag, "guard": guard,
         "physical_full_pair_completed": False,
         "physical_HDA_proved": False
