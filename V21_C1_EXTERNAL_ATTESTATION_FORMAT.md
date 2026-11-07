@@ -62,3 +62,5 @@ The V21 collector sums the eight auxiliary-path state maps and assembles the sig
 For this V21 protocol, `volume_backend` must be exactly `tetrahedral-volume-v1`. The worker records the SHA-256 of `scripts/tetrahedral_volume_backend.py`; the collector independently recomputes that hash and requires the current checkout HEAD to equal the manifest's `source_commit`.
 
 The four independent V2 reference artifacts must also carry the same `source_commit`, `volume_backend` identifier, and `volume_backend_sha256`. The independent ordered-triple worker now installs the same tetrahedral backend while preserving its separate ordered-triple/adjoint assembly path. Historical V2 artifacts generated without this backend are not admissible as matched references and must be regenerated.
+
+The stage worker, independent V2 worker, and collector also reject tracked dirty worktrees. This ensures the recorded Git HEAD actually identifies the tracked source files used in the calculation. Untracked output artifacts are permitted so staged jobs can exchange checkpoint files; production workflows must keep executable source and dependency files tracked in the pinned commit.
