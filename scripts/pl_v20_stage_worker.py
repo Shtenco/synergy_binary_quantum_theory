@@ -170,6 +170,15 @@ def run(opts):
         state = load_charged(
             previous_npz, actual_previous_digest, len(G.EDGES), D.n_tets
         )
+        previous_guard = validate_physical_stage(
+            previous.get("diagnostics"), state, previous.get("stage"),
+            previous.get("operator_signature"),
+            previous.get("guard", {}).get("threshold", 1e-8)
+        )
+        if previous.get("guard") != previous_guard:
+            raise ValueError("PREDECESSOR_GUARD_RECOMPUTATION_MISMATCH")
+        if len(state) != previous.get("state_support"):
+            raise ValueError("PREDECESSOR_STATE_SUPPORT_MISMATCH")
 
     with install_tetrahedral_volume_backend():
         with install_pl_graph(G):
