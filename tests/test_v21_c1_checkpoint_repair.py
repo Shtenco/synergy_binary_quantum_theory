@@ -281,12 +281,13 @@ class V21C1Tests(unittest.TestCase):
 
     def test_34_legacy_sum_reproduces_ordered_pruning(self):
         key = next(iter(self.st))
-        total = sum_states_legacy_pruned(
-            [{key: 0.75e-11 + 0j}, {key: 0.75e-11 + 0j}], 1e-11)
-        self.assertEqual(total[key], 1.5e-11 + 0j)
-        dropped = sum_states_legacy_pruned(
-            [{key: 0.75e-11 + 0j}], 1e-11)
-        self.assertNotIn(key, dropped)
+        contributions = [{key: 0.75e-11 + 0j}, {key: 0.75e-11 + 0j}]
+        legacy = sum_states_legacy_pruned(contributions, 1e-11)
+        unpruned = sum_states_exact(contributions)
+        # Historical add() drops each sub-threshold partial sum before the
+        # next auxiliary path arrives; the unpruned sum retains their total.
+        self.assertNotIn(key, legacy)
+        self.assertEqual(unpruned[key], 1.5e-11 + 0j)
 
 
 if __name__ == "__main__":
