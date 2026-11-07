@@ -1,0 +1,37 @@
+{
+  "schema": "BQG_V20_LOCAL_RESULT_SUMMARY",
+  "source_snapshot_sha256": "950423420850c887f8facb747be66a44cc4ed007655c6b04aac8ce21b347dbc9",
+  "archived_git_blob_sha": "0231c54d2e9a7fc9401995c999d3989f3f1f7648",
+  "scope": "genuine archived K5 W5 E-only Gram + separate PL16 E-only commutator spectra; new math postprocessing only",
+  "kernel_nullity_k": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "minimum_Q_operator_norm": [
+    3.795527455475629,
+    3.819160320111237,
+    3.8656831328549615,
+    3.8941943223308657,
+    4.0499638293355025
+  ],
+  "minimum_Q_Frobenius_norm": [
+    3.795527455475629,
+    5.384423294651105,
+    6.628387458471391,
+    7.687669979889535,
+    8.689216117615022
+  ],
+  "K5_W5_exact_printed_Gershgorin_lower": "30986014705888919694296245097028693/1000000000000000000000000000000000",
+  "K5_W5_exact_printed_Gershgorin_decimal": "30.986014705888919694296245097028693",
+  "PL16_ten_probe_min_singular_C": 1.324189319007516,
+  "PL16_rank_at_most_9_residual_op_lower": 0.5885285862255627,
+  "local_full_bundle_unit_tests": "18/18 PASS",
+  "github_research_tests": "15 tests present; CI not executed successfully",
+  "new_SU2_amplitudes": false,
+  "full_lorentzian_HL_computed": false,
+  "HDA_proved": false,
+  "continuum_proved": false
+}
