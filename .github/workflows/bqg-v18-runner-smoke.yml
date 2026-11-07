@@ -1,0 +1,24 @@
+name: BQG V18 runner infrastructure smoke
+on:
+  push:
+    branches:
+      - research/bqg-v16-first-leg-20261107
+    paths:
+      - .github/workflows/bqg-v18-runner-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  minimal-runner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Runner sanity check
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'BQG_V18_RUNNER_STARTED'
+          python3 -c 'import sys; print("PYTHON_STARTED",sys.version)'
+          echo 'BQG_V18_RUNNER_COMPLETED'
