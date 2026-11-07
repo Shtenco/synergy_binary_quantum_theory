@@ -32,3 +32,9 @@ If only the legacy-aligned lane is examined, a sub-threshold nonzero residue can
 - The independent V2 artifact metadata must remain externally pinned and semantically matched.
 - The 32-path computation, four V2 comparisons, and all structural tests still require actual execution on a working runner.
 - A successful software comparison is not a proof of the full Hamiltonian constraint algebra, physical TT closure, or Einstein dynamics.
+
+## 5. Underflow and overflow handling
+
+State and pair L2 norms use iterative `math.hypot`, not `sqrt(sum(abs(z)**2))`. This prevents a nonzero amplitude such as `1e-200` from being mislabeled as zero because its square underflows. Pair zero classification is based on whether the assembled amplitude map is empty after exact floating-point zero removal, not whether a squared norm happens to evaluate to zero.
+
+Relative V2 comparison no longer uses an arbitrary `1e-15` denominator floor, which could conceal a complete mismatch between tiny states. If any comparison norm or delta overflows to a non-finite value, the relative delta is set to infinity so the acceptance comparison fails closed. Projection and final pair norms are also required to be finite.
