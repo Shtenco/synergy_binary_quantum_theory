@@ -344,6 +344,7 @@ class V21C1Tests(unittest.TestCase):
                                 Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
             metadata = {
                 "passed": True, "mode": "forward", "index": 3,
+                "operator_version": "tetrahedral-charged-volume-v2",
                 "source_node": 0, "Jmax": 3.5, "checks": {"ok": True},
                 "source_commit": "a" * 40,
                 "volume_backend": "tetrahedral-volume-v1",
