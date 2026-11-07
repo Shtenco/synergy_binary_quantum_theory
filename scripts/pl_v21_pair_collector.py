@@ -204,6 +204,12 @@ def collect(manifest):
         raise ValueError("COLLECTOR_COMMIT_NOT_VERIFIABLE") from exc
     if actual_head != source_commit:
         raise ValueError("COLLECTOR_SOURCE_COMMIT_MISMATCH")
+    dirty = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        text=True, timeout=10
+    )
+    if dirty.strip():
+        raise ValueError("COLLECTOR_TRACKED_WORKTREE_NOT_CLEAN")
     if not _sha(manifest.get("seed_state_sha256")):
         raise ValueError("BAD_MANIFEST_SEED_DIGEST")
 
