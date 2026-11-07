@@ -50,8 +50,12 @@ def validate_physical_stage(diag, state, stage, operator_signature,
         if not (math.isfinite(complex(amplitude).real)
                 and math.isfinite(complex(amplitude).imag)):
             raise ValueError("NONFINITE_AMPLITUDE")
-    norm2 = math.fsum(abs(complex(z)) ** 2 for z in state.values())
-    if not math.isfinite(norm2) or norm2 <= 0.0:
+    state_norm = 0.0
+    for amplitude in state.values():
+        state_norm = math.hypot(state_norm, abs(complex(amplitude)))
+    if not math.isfinite(state_norm):
+        raise ValueError("NONFINITE_STATE_NORM")
+    if state_norm == 0.0:
         raise ValueError("EXACT_ZERO_STAGE_OUTPUT")
 
     charge = (float(diag["complete_charge_basis_leakage"])
