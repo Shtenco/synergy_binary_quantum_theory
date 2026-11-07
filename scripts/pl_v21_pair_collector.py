@@ -198,7 +198,8 @@ def collect(manifest):
         gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, LGA.TOL)
         legacy_gauss, legacy_accepted2, legacy_rejected2 = LGA.project_scalar_gauss(
             legacy_cov, source, LGA.TOL)
-        if math.sqrt(max(float(rejected2), 0)) >= 1e-8:
+        if (math.sqrt(max(float(rejected2), 0)) >= 1e-8
+                or math.sqrt(max(float(legacy_rejected2), 0)) >= 1e-8):
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
         if W.max_spin(gauss) > 3.5 + 1e-12:
             raise ValueError("PHYSICAL_SPIN_WALL")
