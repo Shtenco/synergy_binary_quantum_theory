@@ -11,7 +11,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from v21_stage_logic import all_32_specs, first_leg_census, operations, predecessor_ok
 from v21_checkpoint_guard import validate_physical_stage
-from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact
+from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 
@@ -251,6 +251,16 @@ class V21C1Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "STAGE_NOT_PASSED"):
             predecessor_ok(dict(self.one, status="MOCK_OR_SYNTHETIC"),
                            self.two, 2, ["CV", 4, 1, 0])
+
+    def test_30_auxiliary_sum_preserves_subthreshold_amplitudes(self):
+        key = next(iter(self.st))
+        total = sum_states_exact([{key: 1e-14 + 0j}, {}, {key: 2e-14 + 0j}])
+        self.assertEqual(total[key], 3e-14 + 0j)
+
+    def test_31_auxiliary_sum_removes_only_exact_cancellation(self):
+        key = next(iter(self.st))
+        total = sum_states_exact([{key: 1 + 2j}, {key: -1 - 2j}])
+        self.assertNotIn(key, total)
 
 
 if __name__ == "__main__":
