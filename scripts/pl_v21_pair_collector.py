@@ -115,6 +115,15 @@ def compare_states(a, b):
             "absolute_delta": delta, "support_v4": len(a), "support_v2": len(b)}
 
 
+def sum_states_exact(states):
+    """Sum complex state maps without a numerical support threshold."""
+    total = {}
+    for state in states:
+        for key, amplitude in state.items():
+            total[key] = total.get(key, 0j) + amplitude
+    return {key: value for key, value in total.items() if value != 0j}
+
+
 def assemble_pair_exact(results, coefficients):
     """Assemble the signed pair without tolerance pruning or zero relabeling."""
     total = {}
@@ -153,9 +162,9 @@ def collect(manifest):
         raise ValueError("V4_32_PATHS_NOT_COMPLETE")
     results, quality = {}, {}
     for mode, order in product(("forward", "adjoint"), ("p", "q")):
-        cov = {}
-        for aux in product((0, 1), repeat=3):
-            W.add(cov, paths[mode, order, aux])
+        cov = sum_states_exact(
+            paths[mode, order, aux] for aux in product((0, 1), repeat=3)
+        )
         gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, W.TOL)
         if math.sqrt(max(float(rejected2), 0)) >= 1e-8:
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
