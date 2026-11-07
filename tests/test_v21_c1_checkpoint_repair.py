@@ -309,6 +309,27 @@ class V21C1Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PHYSICAL_BASIS_LEAKAGE_EXCEEDS"):
                 read_stage(prefix, attestation)
 
+    def test_36_tiny_nonzero_stage_is_not_misclassified_as_zero(self):
+        tiny = {next(iter(self.st)): 1e-200 + 0j}
+        guard = validate_physical_stage(
+            {"CV_complete_basis_leakage": 0.0}, tiny, 1, ["CV", 4, 1, 0])
+        self.assertTrue(guard["stage_physical_basis_pass"])
+
+    def test_37_tiny_nonzero_pair_is_not_misclassified_by_squared_norm_underflow(self):
+        key = next(iter(self.st))
+        pair, norm, status = assemble_pair_exact(
+            {"fp": {key: 1e-200 + 0j}, "fq": {}, "ap": {}, "aq": {}},
+            {"fp": 1.0, "fq": 0.0, "ap": 0.0, "aq": 0.0})
+        self.assertEqual(status, "VERIFIED_NONZERO_PAIR")
+        self.assertEqual(pair[key], 1e-200 + 0j)
+        self.assertEqual(norm, 1e-200)
+
+    def test_38_relative_comparison_does_not_hide_tiny_state_difference(self):
+        key = next(iter(self.st))
+        result = compare_states({key: 1e-200 + 0j}, {})
+        self.assertEqual(result["relative_delta"], 1.0)
+        self.assertEqual(result["absolute_delta"], 1e-200)
+
 
 if __name__ == "__main__":
     unittest.main()
