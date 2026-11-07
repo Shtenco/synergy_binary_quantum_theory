@@ -115,9 +115,20 @@ def compare_states(a, b):
             "absolute_delta": delta, "support_v4": len(a), "support_v2": len(b)}
 
 
+def assemble_pair_exact(results, coefficients):
+    """Assemble the signed pair without tolerance pruning or zero relabeling."""
+    total = {}
+    for name, coefficient in coefficients.items():
+        for key, amplitude in results[name].items():
+            total[key] = total.get(key, 0j) + coefficient * amplitude
+    norm = math.sqrt(math.fsum(abs(z) ** 2 for z in total.values()))
+    return total, norm, ("VERIFIED_EXACT_ZERO_PAIR" if norm == 0.0
+                         else "VERIFIED_NONZERO_PAIR")
+
+
 def collect(manifest):
     from pl_dual_complex import DualComplex, seed_16cell_boundary
-    from pl_lorentzian_physical_pair_worker_v4 import pair_indices, add as pair_add
+    from pl_lorentzian_physical_pair_worker_v4 import pair_indices
     import pl_lorentzian_triple_worker as W
     import peter_weyl_lorentzian_gauss_action_gate as LGA
 
@@ -168,14 +179,13 @@ def collect(manifest):
     cq = int(W.ordered_spec(D, source, iq)[4])
     if cp != -cq:
         raise ValueError("WRONG_PAIR_ORIENTATION")
-    S = {}
-    for k, c in (("fp", -.5j * cp), ("fq", -.5j * cq),
-                 ("ap", +.5j * cp), ("aq", +.5j * cq)):
-        pair_add(S, results[k], c)
+    S, pair_norm, pair_status = assemble_pair_exact(
+        results, {"fp": -.5j * cp, "fq": -.5j * cq,
+                  "ap": +.5j * cp, "aq": +.5j * cq})
     return {"status": "VERIFIED_ORIGINAL_V4_ONE_PHYSICAL_PAIR", "passed": True,
             "paths_completed": 32, "v2_primitives_compared": 4,
             "comparisons": comparisons, "quality": quality,
-            "pair_norm": math.sqrt(math.fsum(abs(z) ** 2 for z in S.values())),
+            "pair_status": pair_status, "pair_norm": pair_norm,
             "pair_support": len(S), "HDA_proved": False, "HL_complete": False}, S
 
 
