@@ -6,7 +6,7 @@ Status: code-level comparison of V21 staged aggregation with the historical V2 o
 
 The historical ordered-triple path uses `TOL = 1e-11` and `add(dst, src, scale, tol)` when combining the eight auxiliary `(i,j,k)` contributions. The add operation removes a key whenever the current partial sum has magnitude less than or equal to the threshold. A later auxiliary contribution can then re-create the key from zero.
 
-The independent scalar Gauss projection also uses `LGA.TOL = 1e-11`. The V21 collector must not use the triple worker's looser `W.TOL = 1e-10` for this comparison. It now explicitly uses `LGA.TOL`.
+The production V2 path is `pl_lorentzian_group_worker_v2.py` (or the one-term V2 worker), which wraps the shared group worker with the tetrahedral backend. The base group worker sets `TOL = W.TOL = 1e-10` and passes that value explicitly to `LGA.project_scalar_gauss`; this overrides the module default `LGA.TOL = 1e-11`. The V21 collector therefore uses `W.TOL = 1e-10` for the matched production V2 comparison. The inner ordered-triple auxiliary accumulator still uses `LP.TOL = 1e-11`.
 
 This ordered thresholding is not algebraically equivalent to summing all eight contributions first and pruning once. Example: two contributions of magnitude `0.75e-11` to the same key are each dropped by the historical incremental accumulator, while an unpruned sum retains `1.5e-11`.
 
@@ -17,7 +17,7 @@ The V21 collector now calculates both:
 - **Unpruned lane:** stable complex summation using separate real/imaginary `math.fsum`; no support threshold during auxiliary aggregation; then scalar Gauss projection at `LGA.TOL`.
 - **Legacy-aligned lane:** ordered incremental accumulation reproducing the historical `add(..., tol=LP.TOL)` behavior; then scalar Gauss projection at `LGA.TOL`.
 
-The four independent V2 references are gated against the legacy-aligned lane at relative delta below `1e-10`. Unpruned-versus-V2 deltas are separately reported. Both lanes must satisfy the nonscalar rejection gate.
+The four independent V2 references are gated against the legacy-aligned lane at relative delta below `1e-10`. The legacy-aligned lane reproduces `LP.TOL` auxiliary accumulation followed by the production V2 `W.TOL` scalar projection. Unpruned-versus-V2 deltas are separately reported. Both lanes must satisfy the nonscalar rejection gate.
 
 The final V21 physical pair is assembled from the unpruned lane, with stable summation and no tolerance pruning. Its `VERIFIED_EXACT_ZERO_PAIR` label means zero in the resulting floating-point complex sum only; it is not a symbolic proof of exact cancellation.
 
@@ -39,10 +39,10 @@ State and pair L2 norms use iterative `math.hypot`, not `sqrt(sum(abs(z)**2))`. 
 
 Relative V2 comparison no longer uses an arbitrary `1e-15` denominator floor, which could conceal a complete mismatch between tiny states. If any comparison norm or delta overflows to a non-finite value, the relative delta is set to infinity so the acceptance comparison fails closed. Projection and final pair norms are also required to be finite.
 
-## 6. Volume backend identity mismatch found and repaired in the independent worker
+## 6. Production V2 workflow and backend identity
 
-The V21 staged worker installed `install_tetrahedral_volume_backend()`. The historical independent `pl_lorentzian_triple_worker.py` path installed the zero-aware spectral convention but did not install the tetrahedral four-leg volume extension. Therefore artifacts from that old V2 worker were not same-operator comparators for V21, even if their spin cutoff and source node matched.
+The first pass inspected the legacy standalone `pl_lorentzian_triple_worker.py` and initially mistook it for the canonical independent V2 path. That was the wrong workflow target. The repository's production V2 workflows use `pl_lorentzian_group_worker_v2.py` and `pl_lorentzian_single_worker_v2.py`; both already wrap their base computation in `install_tetrahedral_volume_backend()`. Therefore the production V2 path already uses the same tetrahedral backend as V21.
 
-The independent V2 worker has now been updated to install the same tetrahedral backend while retaining its independent ordered-triple/adjoint assembly path. It records the exact source commit and tetrahedral backend SHA-256. The collector rejects V2 references unless both match the V21 run. V2 artifacts produced before this change are historical references only and must not be counted among the four valid matched-backend comparisons.
+The repair now adds explicit source-commit and backend-SHA provenance to those production V2 workers and requires the V2 collector and V21 collector to verify those values. The legacy standalone worker is not a substitute for the 48-term production V2 artifacts. V2 references generated before the provenance fields were added remain historical/unattested until regenerated.
 
-The V2 worker's scalar projection tolerance is also pinned to `LGA.TOL`, matching the collector. The old worker used a looser `1e-10` value despite the projection module's canonical `1e-11` tolerance.
+The production V2 worker's projection tolerance is `W.TOL = 1e-10`, passed explicitly into `LGA.project_scalar_gauss`; it is not the module default `LGA.TOL = 1e-11`. V21 uses the same explicit production V2 tolerance for its matched comparison lane.
