@@ -1,0 +1,1239 @@
+{
+  "schema_version": "1.0",
+  "snapshot_date": "2026-11-07",
+  "repository": "Shtenco/binary_quantum_theory",
+  "canonical_main_sha": "90a5acde961c09cde565f942c9e21a7d7db1376b",
+  "inventory": {
+    "branch_count": 147,
+    "non_main_count": 146,
+    "unique_head_count": 135,
+    "duplicate_head_groups": [
+      [
+        "exp/iq1s70b-vs-qwen3-14b-20260923",
+        "exp/nexus-70b-runtime"
+      ],
+      [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ],
+      [
+        "research/bqg-v21-c1-checkpoint-repair-20261107",
+        "research/bqg-v22-local-c1-e2e-20261107"
+      ],
+      [
+        "research/v19-canonical-k5-replay-20261015",
+        "research/v20-160-canonical-k5-20261015"
+      ]
+    ]
+  },
+  "audit_scope": {
+    "structural_comparison": "All 146 non-main branches were compared against main in the preceding audit; GitHub compare truncates file lists at 300 for large diffs.",
+    "semantic_review": "Deep source-level review concentrated on the scientific families and V21/V22 code paths listed below. This registry is not a claim that every file in every branch has been semantically reviewed.",
+    "local_execution": "No complete local checkout or fresh full scientific replay was run in this audit pass.",
+    "repository_mutations": "No changes to main. An audit-only branch and two documentation files are created by this action."
+  },
+  "branch_refs": [
+    {
+      "branch": "audit/active-habitat-master-v1",
+      "head_sha": "43f8d00ea237e2123ec07d88c1aa2d3d91f683e2",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/active-habitat-master-v2-preregistered",
+      "head_sha": "9ae7c06d4660061a62bfde4fd5136010dcff9fd5",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/active-habitat-master-v2",
+      "head_sha": "4f3c9ccc67c14e892744b30a9f2736f2fc4576aa",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/bell-chsh-gate",
+      "head_sha": "de0b56710f3892f566ece0e6ea31030a50c2dfaf",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/current-status-2026-10-10",
+      "head_sha": "ac1a07a27c2acc9231d2d42ffcbbed9799afb426",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/k5-s5-carrier-symmetry",
+      "head_sha": "5a4685d2f73453790f554cf3f5cd75275c6458bb",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/k5-s5-hamiltonian-covariance-v1",
+      "head_sha": "f683df8f9d80c6654dab8e99c3c8946c586c7401",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/loc-2026-09-15",
+      "head_sha": "4fc5634ebed3b5e29318bef90f23e5006a50bb31",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/physicalization-truth-v3",
+      "head_sha": "e5ae681bbaed3bdb53d82a7f9d6b51cf3707da9b",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/q4-k5-local-carrier-bridge",
+      "head_sha": "d9683ce796b3e05dc9c1c83d16790db7ec6f946c",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/q4-s4-background-obstruction",
+      "head_sha": "14d9088c5674d320801979f24af72e45375c5851",
+      "family": "audit_controls",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "audit/spectral-history-closure-2026-09-06",
+      "head_sha": "c19de5df420e84ae7125b67cea4bef5a9dc37536",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "bqg/depth6-32-canonical-recovery",
+      "head_sha": "36b652fa493a1ea623ff8f9b3e80671a3b7c5428",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "bqg/depth6-32-resumable-keymeta",
+      "head_sha": "1ddda1e7a42af6792a2e7270a8e4da3b615ab0b3",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "ci-sinergy-messenger-v02-native-build",
+      "head_sha": "4a6bdf75b1403333b27600d4af9bc510b7bbadd0",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "ci-sinergy-messenger-v030",
+      "head_sha": "6c4fd254530fea3b70d2c7fec15711ccb1caedc3",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "ci-sinergy-messenger-v033-diagnostic",
+      "head_sha": "931faff5906ea13ce2b2ada9b269f2c10ca18a94",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "ci-sinergy-messenger-v033-functional-final",
+      "head_sha": "412517dc6a6fecf2b58ba6203972df2c62d5f007",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "cleanup/gr-qm-bit-continuum",
+      "head_sha": "91f4dbf7cd61d851426198db4d38afc743db4c98",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex",
+      "head_sha": "486036ab8fdaa0901c5461ec8bda8418df34ab09",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-3g4lb0",
+      "head_sha": "344659a4976b77c9cd85d84e8fa1f10f03769cfc",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-4bua2u",
+      "head_sha": "11012b7abe75ba881125a793885327f03a1e9b59",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-4ni6ut",
+      "head_sha": "ba7e6cedc3bd7b356e3f353227fef5795c336027",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-5uocfq",
+      "head_sha": "de7d0be18ebc49349738b8191e8976b05809edc3",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-89btph",
+      "head_sha": "fd4f13017d698b5ac92517c6c08b9f5726cfe34e",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-bwhfkc",
+      "head_sha": "2b861a419623dd46c91b06b4a58eb104c4fd5366",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-e0ee6e",
+      "head_sha": "6c0badce8a9d407d9f3244351866913ec5486dfc",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-hobdxi",
+      "head_sha": "be5d5fba10868e4e1b613813494e19943354059c",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-kpnzg2",
+      "head_sha": "770d156d5985a1c5d355ae62708fb231c24318a0",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-lppw5h",
+      "head_sha": "b46883f229c5870135720a485c161bf30ae87e9c",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-qgjhgi",
+      "head_sha": "a0b2b9b7b9a961a92abeea9e90868ef13737fa30",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-ro2602",
+      "head_sha": "f6155c3abe030a2564e0402306baad1f5b9f253a",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-sjothi",
+      "head_sha": "a29288ede4363534124c9ef1630b5b06648c912d",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-va54l6",
+      "head_sha": "616d4e7f240b8cc184041ac7497852f03ae4c683",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-vbnn2h",
+      "head_sha": "2bece049421c96e5e4e1aefef6a45b57ea5a190d",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "codex-yn178z",
+      "head_sha": "1c0138c6309531c31984beab5e3565fdb2ef60fe",
+      "family": "unclassified_codex",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/iq1s70b-vs-qwen3-14b-20260923",
+      "head_sha": "326b53733b688c079ae983f7f4936102f82b112b",
+      "family": "unrelated_or_external",
+      "same_head_aliases": [
+        "exp/nexus-70b-runtime"
+      ]
+    },
+    {
+      "branch": "exp/nexus-70b-runtime",
+      "head_sha": "326b53733b688c079ae983f7f4936102f82b112b",
+      "family": "unrelated_or_external",
+      "same_head_aliases": [
+        "exp/iq1s70b-vs-qwen3-14b-20260923"
+      ]
+    },
+    {
+      "branch": "exp/nexus-dwe-real-12b",
+      "head_sha": "32e28947dc586c44652bec0d68f98605a62a6a52",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/plain-llama-portable",
+      "head_sha": "120f596f652fb5a70e28a10605f0884af59134f2",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen15-local-courier",
+      "head_sha": "42c71612967fdaf3409ac5ddfd390ec7b0189589",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen15b-q8-courier",
+      "head_sha": "ecd0b20ca7affc5e424e7f113a5b273ba73c6c3a",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen-activation-calibration",
+      "head_sha": "213c7a6e6443625f57cb8c727500aaaeddbdd4a5",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen-chunks",
+      "head_sha": "952b6524633773d6c4dfd674036c044f3d0f2d8b",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen-f16-courier",
+      "head_sha": "ae1025b29150293d0b98ce9d970346883bfede52",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "exp/qwen-local-courier",
+      "head_sha": "b59f4bb4031338f9f6d7d5c97c5123deb77da984",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "federation-v3-domain-expansion",
+      "head_sha": "101be6105e1bee9c3e6d662b451d72af2350e827",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "final-squash-base",
+      "head_sha": "c40b091513cd3c73b14bbcaaa80bc12d861da7f3",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "hodge-spectral-dimension-notation-fix",
+      "head_sha": "7f01e41120f001b51a933d4d6aae27010e908e05",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "main",
+      "head_sha": "90a5acde961c09cde565f942c9e21a7d7db1376b",
+      "family": "canonical",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "migration/synergy-723-2026-09",
+      "head_sha": "63ee28fb16dc303344928b5a75fcae2a068055be",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "nexus-r74-phi-fix-run",
+      "head_sha": "cfe01691b8541b3963fe220cea254fef5cae4a32",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "nexus-r74-public-run-20260818",
+      "head_sha": "9e660e61d55d316d09508f900adce0807936b34c",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "nexus-r74-qwen-instruct-run",
+      "head_sha": "39585d2b152790579e6e8b9a608939c9e3acc8dc",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "nexus-r74-structured-five-run",
+      "head_sha": "52ec9e5161024119f276f79c96162012f796ba8d",
+      "family": "unrelated_or_external",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "physical-tt-kernel-leading-ir",
+      "head_sha": "e3118e1a710b83d23622af57d9c41ed66d7da2c4",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "recovery/bqg-physical-spectral-history-2026-09-06",
+      "head_sha": "4cb8ae20b72768d556973361820edb1e3137ae05",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "release/canonical-theory-package-v1",
+      "head_sha": "934ead3ebdcdc93b4adbc11bca08ca46f6325570",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bcqg-core-candidate-v1",
+      "head_sha": "2b2c9f623544f5d38f7ffd7f37617f91f4dae306",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-2t-algebra",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-algebra2",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-final",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-final2",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-v2",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-v3",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-v4",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v5",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-v5",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-work"
+      ]
+    },
+    {
+      "branch": "research/bqg-2t-gate-work",
+      "head_sha": "b03bf253a43a92e0adda6c18ee3def5fe534b7da",
+      "family": "two_time_hypothesis",
+      "same_head_aliases": [
+        "research/bqg-2t-algebra",
+        "research/bqg-2t-algebra2",
+        "research/bqg-2t-gate",
+        "research/bqg-2t-gate-final",
+        "research/bqg-2t-gate-final2",
+        "research/bqg-2t-gate-v2",
+        "research/bqg-2t-gate-v3",
+        "research/bqg-2t-gate-v4",
+        "research/bqg-2t-gate-v5"
+      ]
+    },
+    {
+      "branch": "research/bqg-bell-volume-20261012",
+      "head_sha": "80d519240f9f4e68df77a7a28742e1a943b37f15",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-hda-minimal-no-go-20261012",
+      "head_sha": "ae74e72035fd97c01b1f3399365bfd865ce95617",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-micro-carry-rank-20261031",
+      "head_sha": "fa8c487226465cd9beb2cf8997e8226f2142f3f6",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-node1-lorentzian-columns-20261031",
+      "head_sha": "a4d41b343e7ce04895abb655e16a500da290ee23",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-v04-actual-constraint-kernel-20261106",
+      "head_sha": "ec8d9bdc3594f6304787f592ed6c4adedc878f40",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-v16-first-leg-20261107",
+      "head_sha": "e0431080b283e3a920d9715a63e7318021bd4eb8",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-v20-local-c1-gates-20261107",
+      "head_sha": "8d8d3ae533a9a47704263463c76c3a2288635173",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/bqg-v21-c1-checkpoint-repair-20261107",
+      "head_sha": "2c28123720db59306890daa0dfba1ad21c2e7eb1",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": [
+        "research/bqg-v22-local-c1-e2e-20261107"
+      ]
+    },
+    {
+      "branch": "research/bqg-v22-local-c1-e2e-20261107",
+      "head_sha": "2c28123720db59306890daa0dfba1ad21c2e7eb1",
+      "family": "lorentzian_v16_v22",
+      "same_head_aliases": [
+        "research/bqg-v21-c1-checkpoint-repair-20261107"
+      ]
+    },
+    {
+      "branch": "research/canonical-frontier-v2",
+      "head_sha": "73287ef611096c01c1673ac894ff44ffb1a38066",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/canonical-ledger-2026-08-15",
+      "head_sha": "1f754a7060653746e13da05cc8c76261665379f9",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/canonical-lorentzian-frontier",
+      "head_sha": "4c51657a7cdc2a758b67a44f0b5c641a10350d50",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/canonical-prefactor-audit",
+      "head_sha": "e68a226bfa4638d82e169e4b2a7dbb4645dda349",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/depth6-s4sign-proof",
+      "head_sha": "887e76fba5210524650002da0b54653d2c5b37fd",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/first-q2-scalar-effective-action",
+      "head_sha": "6c63f0d8734d7bc67d1ca6e462e1ba05956b8db5",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/hl-sine-dag",
+      "head_sha": "299e3d896a7845688ca6f3e7cb6c4b379c6a73f1",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/k5-covariance-hda",
+      "head_sha": "af16606ecb1358a246574ba3a1406e15f9b5c8fa",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/logical-s4-sign-twirl",
+      "head_sha": "e40011f66d9779eda82bca2584229128ab3a76f2",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/lorentzian-composition-fast",
+      "head_sha": "7abcaba66567fd09ec533c0c2a170b7d560e2b9a",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/lorentzian-ordered-triple-fast",
+      "head_sha": "5cdf421c8f662db620b762328bec6d9228c7d7b4",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/micro-hda-joint-prediction",
+      "head_sha": "c5aade6763fdd1bd41717f93037231fcba2de99c",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/mirror-anisotropy-audit-v2",
+      "head_sha": "11a0775ce11fddc5cf28680bb24d1f4cc609774d",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/mirror-orientation-eta",
+      "head_sha": "7710fc5f2b2b93eebfc2ff72552ff853398a88f4",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/modular-complex-arithmetic-bridge",
+      "head_sha": "6dad7a4fb05ed8b80540fa610c884d05e1af5563",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/operator-micro-dynamics",
+      "head_sha": "ad37059d0f478ff9bfda57a157d538399f39318a",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/physical-cosmology-interference-lensing",
+      "head_sha": "185bee58de27b053497e2a28eaf45c66b1470540",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/physical-pole-universality",
+      "head_sha": "b46dbad39e4c9b3de08a45742604d0a9cb973fec",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/physical-scalar-kernel-dynamics",
+      "head_sha": "ab24171a4bb327d190551bdf68957bd10a819c1d",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/physicalization-l1-depth2-metric",
+      "head_sha": "f06b18f3a9af995d0e7987b323359631945a9394",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/physicalization-scale-observable-prediction",
+      "head_sha": "c2a3ee8e30ab449ef23b0cd60fac3db1a0285631",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/post-hda-physicalization-v2",
+      "head_sha": "6d3f23860fc134ec0f10259fa17adb2c32588739",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-24-collector",
+      "head_sha": "f7f28882d02339b9ed3703c02634ad526c2d1f1b",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-24-mitm",
+      "head_sha": "4d72abf7fd0f88c3d9113138eca0b06d264ef2c3",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-component-fast",
+      "head_sha": "4d7676a0e153145d34e35b215356528eb8629f04",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-component-mitm",
+      "head_sha": "fe117390f4b3b567241084ed945fcb7d3166751e",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-envtrace",
+      "head_sha": "7a44506a3b17a341381a720ac27eae78b81e27b0",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-envtrace-orbit",
+      "head_sha": "ed0949bee6f7e21658f3ef054b9f23d6f167c611",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-logical-projection",
+      "head_sha": "651dd9003cb15b8fd57d4b7c31f7c3a70d9bb49b",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-lowcut-scout",
+      "head_sha": "0559c1122070a8eb72885fa8214bf2ba7f1be320",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-mitm",
+      "head_sha": "2d05ca59f920d78d926a7f78020a69f6c1326e81",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-parity",
+      "head_sha": "cf968d788c2b7aac93d468516cd81695a2feff1b",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-single-mitm",
+      "head_sha": "71e807cfedcd38085ebd1801293428ba5701f098",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-single-probe",
+      "head_sha": "8d4d697d613a05334f2f346dedd68771e0460318",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-lorentzian-ultralow-scout",
+      "head_sha": "e0322ee01558510b0aaf922936a93520488b5360",
+      "family": "lorentzian_computation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-master-32",
+      "head_sha": "87aee1e6005fa33d1aa2a1361207218088ed0d1c",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/pw-spin-parity-master",
+      "head_sha": "3462cb5ee7c802b45d83577ef875877bc5964231",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-face-incidence-bridge",
+      "head_sha": "6a32a784dfbdc47ffa20248232713a92fd9b90ee",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-gravity-gyc-amplitude",
+      "head_sha": "ae748aa16c3569d0fe16351150ee33de6bb63ab4",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-gravity-gyc-sign-twirl",
+      "head_sha": "494fd514d2d46ee89b487e9b3d506579a9539831",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-history-directed-laplacian-factorization",
+      "head_sha": "69d30ce243b79e89151a48888d02342f8897f0b9",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-history-fourier-complex-structure",
+      "head_sha": "1a580b434391da0c884d640930ed1b67971c4613",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-history-gravity-orientation-current",
+      "head_sha": "5ba4bc24230c3d0a1e47bf309453a692601ee49d",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-history-phase-refinement-winding",
+      "head_sha": "d52496c73c76b8fec0e7b4021ef9a852503bc690",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-orientation-intrinsic-metric-nogo",
+      "head_sha": "115d308433254b3b32440e3497df259533930b9d",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-oriented-flux-history-observable",
+      "head_sha": "ce33520f0c1bdd9985661bb9be086a463de87e9f",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-relational-history-projector",
+      "head_sha": "fbdf2ef66d3f28be9ee9c03c0cd479af4459e5c3",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-relational-metric-source",
+      "head_sha": "4c5053a002d4acd380a5911413cc4a76697fa87c",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/q2-unified-complex-structure",
+      "head_sha": "83f45dfc19cdef884e5290f111bf46dc0e10d1e7",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/scalar-adm-physical-response",
+      "head_sha": "4833af3f878a18c2179cdb560fa9b22d9ad941c8",
+      "family": "physical_ir_cosmology",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/sine-kkv-next",
+      "head_sha": "9066d572b456f139939d180b7e3cbc2a5a64b514",
+      "family": "foundations_and_geometry",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v12-gauge-dressed-nucleation-20261015",
+      "head_sha": "d1a4648187d063c464d8fd51558b45afbfff39dc",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v13-k5-leakage-safe-master-20261015",
+      "head_sha": "2cd4813005356302d8d66f8767b264b908b99d4e",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v14-k5-first-real-columns-20261015",
+      "head_sha": "ce43cabf260d3bb937f4de0bf03d685247c83d41",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v15-k5-32input-rank-audit-20261015",
+      "head_sha": "bc172ff2b4b823d2f33af61ab11be6da37221267",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v16-full-initial-k5-and-first-shell-20261015",
+      "head_sha": "95fa4040df6ac71566f111adf89eebb3ab5b74e5",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v17-k5-parity-shell-selection-20261015",
+      "head_sha": "330236f88c9e5734d67b123330190088c4dfecdd",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v18-k5-parity-feshbach-20261015",
+      "head_sha": "2c59b1e03fd7404685db29547fd6b9da3ede575a",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v19-canonical-k5-replay-20261015",
+      "head_sha": "1a715e22d10bb27b2d7c7b6529ac53c59092a851",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": [
+        "research/v20-160-canonical-k5-20261015"
+      ]
+    },
+    {
+      "branch": "research/v20-160-canonical-k5-20261015",
+      "head_sha": "1a715e22d10bb27b2d7c7b6529ac53c59092a851",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": [
+        "research/v19-canonical-k5-replay-20261015"
+      ]
+    },
+    {
+      "branch": "research/v20-complete-160-canonical-20261015",
+      "head_sha": "f3ce62cfd9199201dd3ff1025846600cfb75c72d",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v21-first-shell-checkpoints-20261015",
+      "head_sha": "085e7b8aa152191a2323803fceecb8565a353880",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v22-k5-kernel-ritz-cutoff-20261016",
+      "head_sha": "35056f1b7eebc89840606529164dfd083e1e5f1e",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v23-unified-proof-bridge-20261016",
+      "head_sha": "c0df55a10937d6545616a44593a6e060cb21d513",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v24-crossscale-multiplicity-obstruction-20261016",
+      "head_sha": "e3eb71e898f4b638d32cdc19b2c3e5ba2f97db52",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v25-ancilla-crossscale-k5-20261016",
+      "head_sha": "45d7ba89facf7c0ad17ddb2359c26bb00f6e6eb5",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/v26-graph-sector-output-obstruction-20261016",
+      "head_sha": "456aa7c477c022b87ba1a09d1d0397c67506645c",
+      "family": "finite_master_depth6_crossscale",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "research/zeroaware-volume-migration",
+      "head_sha": "042baa6e87b2a0340511cf083c974042c89b848b",
+      "family": "other_research",
+      "same_head_aliases": []
+    },
+    {
+      "branch": "spectral-history-closure",
+      "head_sha": "306eaccf4f6416438271eb69eeb72ff2ea6959ae",
+      "family": "history_q2_orientation",
+      "same_head_aliases": []
+    }
+  ],
+  "evidence_records": [
+    {
+      "id": "BQG-DIM3-001",
+      "family": "binary_geometry",
+      "status": "proved_scoped",
+      "claim": "For the frozen q=2 refinement count N_g=(4*8^g+10)/7, the finite-step dimension has exact fixed point d*=3.",
+      "formula": "N_g=(4*8^g+10)/7; d*=3",
+      "evidence_branch": "main",
+      "evidence_file": "theory_gates.json; Q2_DIMENSION3_FIXED_POINT_CLOSURE.md; scripts/q2_dimension3_fixed_point_gate.py",
+      "scope": "Exact theorem for the specified frozen refinement rule, not universal uniqueness of 3D nature.",
+      "replay": "Gate declared proved; no fresh local replay in this pass."
+    },
+    {
+      "id": "BQG-MAN3-001",
+      "family": "binary_geometry",
+      "status": "tested_finite",
+      "claim": "Selected q=2 cross-polytope PL completion has declared recursive orientable 3-manifold link and homology checks.",
+      "evidence_branch": "main",
+      "evidence_file": "theory_gates.json; GLOBAL_MANIFOLD_Q2_COMPLETION.md; bcqg_global_manifold_gate.py",
+      "scope": "Chosen PL completion and tested refinement family; not every possible causal completion."
+    },
+    {
+      "id": "BQG-WALSH-001",
+      "family": "quantum_geometry",
+      "status": "proved_scoped",
+      "claim": "Three nontrivial Walsh characters of frozen q=2 labels form an exact regular tetrahedral flux frame with declared Gauss-singlet support.",
+      "evidence_branch": "main",
+      "evidence_file": "theory_gates.json; MICRO_WALSH_QGEOM_BRIDGE.md; scripts/micro_walsh_qgeom_gate.py",
+      "scope": "Exact finite algebraic construction; does not itself derive physical dynamics."
+    },
+    {
+      "id": "BQG-FESHBACH-001",
+      "family": "effective_operator",
+      "status": "proved_scoped",
+      "claim": "Finite Hermitian block elimination yields exact Feshbach/Schur complement and block-Krylov identities under stated invertibility assumptions.",
+      "formula": "C_eff(z)=PCP-PCQ(QCQ-z)^(-1)QCP",
+      "evidence_branch": "main",
+      "evidence_file": "physicalization_gates.json; FESHBACH_INTERBLOCK_EFFECTIVE_KERNEL.md",
+      "scope": "Constraint spectral parameter is not physical frequency; no graviton propagator follows automatically."
+    },
+    {
+      "id": "BQG-MASTER-001",
+      "family": "finite_projector",
+      "status": "proved_scoped",
+      "claim": "For finite constraint family C_A and positive metric G, M=C†GC is positive and ker(M)=intersection ker(C_A).",
+      "formula": "M_G=C_A†G^{AB}C_B>=0; ker(M_G)=intersection_A ker(C_A)",
+      "evidence_branch": "main",
+      "evidence_file": "physicalization_gates.json; MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+      "scope": "Finite theorem only; continuum rigging map and physical boundary amplitude remain open."
+    },
+    {
+      "id": "BQG-L1-024",
+      "family": "collective_metric",
+      "status": "proved_finite",
+      "claim": "At the specified first barycentric refinement, rank{P4 c_u}=24.",
+      "evidence_branch": "research/physicalization-l1-depth2-metric",
+      "evidence_file": "COLLECTIVE_L1_E_Q4_RANK_THEOREM.md",
+      "scope": "Finite rank result; 24 directions are not yet identified as physical graviton modes."
+    },
+    {
+      "id": "BQG-METRIC-CAL-001",
+      "family": "collective_metric",
+      "status": "proved_finite",
+      "claim": "Finite metric calibration map has singular values 1/sqrt(6),1/sqrt(6),1/sqrt(3) and condition number sqrt(2).",
+      "formula": "M_hq^T M_hq=1/4 I-(1/12)O_opp",
+      "evidence_branch": "research/physicalization-l1-depth2-metric",
+      "evidence_file": "COLLECTIVE_METRIC_CALIBRATION_IRREP_THEOREM.md",
+      "scope": "Exact finite representation geometry; predicted kinetic ratio not yet measured in physical effective action."
+    },
+    {
+      "id": "BQG-IR-UNIV-001",
+      "family": "conditional_ir",
+      "status": "conditional",
+      "claim": "Under H1 nondegenerate stable metric, H2 local two-derivative ADM form, H3 standard HDA, H4 no extra second-class constraints, the IR theory lies in the ADM/Einstein family.",
+      "formula": "c_DeWitt=1/2; AB=1; z=1; N_phys=2",
+      "evidence_branch": "research/bqg-v16-first-leg-20261107",
+      "evidence_file": "BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md (path must be confirmed; prior retrieval at that path returned 404)",
+      "scope": "Conditional theorem; H1-H4 are not derived from BQG microdynamics."
+    },
+    {
+      "id": "BQG-FESHBACH-002",
+      "family": "exact_linear_algebra",
+      "status": "proved_scoped",
+      "claim": "For C=[[0,B],[B†,D]] with invertible D, the zero-parameter Schur complement is -BD^-1B†.",
+      "formula": "C_eff(0)=-BD^{-1}B†",
+      "evidence_branch": "research/bcqg-core-candidate-v1",
+      "evidence_file": "Feshbach/Schur complement derivations (exact path pending semantic audit)",
+      "scope": "Exact block linear algebra; no continuum spectral gap claim."
+    },
+    {
+      "id": "BQG-CARRY-001",
+      "family": "micro_carry",
+      "status": "proved_finite",
+      "claim": "P_g H(w) P_0 H(w) P_g=|w><w|; one memoryless intermediate channel cannot implement full directed four-element carry with relative error below sqrt(3)/2.",
+      "formula": "epsilon_min=sqrt(3)/2≈0.8660254",
+      "evidence_branch": "research/bqg-micro-carry-rank-20261031",
+      "evidence_file": "branch theorem and finite tests (exact path pending semantic audit)",
+      "scope": "Finite kinematic theorem; does not establish physical history or dynamical HDA."
+    },
+    {
+      "id": "BQG-HIST-001",
+      "family": "history_algebra",
+      "status": "proved_scoped",
+      "claim": "R²=1 and RTR=T^-1 generate D_infinity=Z⋊Z2; reversal conjugates history characters.",
+      "formula": "chi_theta(n)=exp(i n theta); C_h=(T-T†)/(2i)",
+      "evidence_branch": "research/q2-history-gravity-orientation-current",
+      "evidence_file": "history/orientation algebra reports (exact file path pending semantic audit)",
+      "scope": "Finite/group-theoretic result; history is not yet physical time."
+    },
+    {
+      "id": "BQG-W5-GRAM-001",
+      "family": "euclidean_numeric",
+      "status": "computed_saved_data",
+      "claim": "Saved K5 W5 Euclidean Gram has printed-matrix Gershgorin lower bound 30.986014705888927 and archived diagonalization lambda_min≈32.41356449685593.",
+      "formula": "lambda_min(G_EE)>=30.986014705888927 for printed entries",
+      "evidence_branch": "research/bqg-node1-lorentzian-columns-20261031",
+      "evidence_file": "research/node1_fullstate_gate_2026_10_31/V04_CROSS_BRANCH_REAL_EUCLIDEAN_W5_LOG_EVIDENCE.json; Git blob 0231c54d2e9a7fc9401995c999d3989f3f1f7648",
+      "scope": "K5 W5 Euclidean carrier only; no SU(2) entry error enclosure; not PL16 and not a Lorentzian result."
+    },
+    {
+      "id": "BQG-HDA-NEC-001",
+      "family": "hda_necessary_bound",
+      "status": "proved_conditional_finite",
+      "claim": "For ten independent PL16 E-only commutator probes, exact closure requires rank(K)=10; rank(K)<=9 implies operator-norm residual >=0.5885285862255626.",
+      "formula": "R=a²C+K; rank(K)<=9 => ||R||_op>=a² sigma_min(C)",
+      "evidence_branch": "research/bqg-v16-first-leg-20261107",
+      "evidence_file": "research/BQG_V19_HDA_RANK_OBSTRUCTION_AND_W5_GAP_20261107.md",
+      "scope": "PL16 finite habitat; K not computed. Not a global BQG no-go and not to be combined with K5 W5 Gram."
+    },
+    {
+      "id": "BQG-HDA-Q-NEC-001",
+      "family": "hda_necessary_bound",
+      "status": "proved_conditional_finite",
+      "claim": "On K5 W5, if H=aA+Q has a common kernel vector, then ||Q||_op>=|a| sigma_min(A); archived threshold ≈3.795527455475629.",
+      "formula": "||Q||_op>=|a| sigma_min(G_EE)^(1/2)",
+      "evidence_branch": "research/bqg-v16-first-leg-20261107",
+      "evidence_file": "research/BQG_V19_HDA_RANK_OBSTRUCTION_AND_W5_GAP_20261107.md",
+      "scope": "Necessary only; actual Q not computed; K5 W5 only."
+    },
+    {
+      "id": "BQG-V21-GUARD-001",
+      "family": "workflow_validation",
+      "status": "defect_confirmed_code_review",
+      "claim": "V21 guard uses generic diagnostic key set for all stages, permits empty state, and collector trusts guard boolean in metadata rather than recomputing.",
+      "evidence_branch": "research/bqg-v21-c1-checkpoint-repair-20261107",
+      "evidence_file": "scripts/v21_checkpoint_guard.py; scripts/v21_stage_logic.py; scripts/pl_v21_pair_collector.py; tests/test_v21_c1_checkpoint_repair.py",
+      "scope": "Code-level acceptance/provenance defect; does not invalidate actual amplitude values by itself."
+    },
+    {
+      "id": "BQG-V21-INPUT-001",
+      "family": "workflow_provenance",
+      "status": "defect_confirmed_code_review",
+      "claim": "Worker propagates seed input_state_sha256 through later stages; predecessor checkpoint NPZ is hash-checked, but metadata does not record an independently verifiable direct input-checkpoint digest chain.",
+      "evidence_branch": "research/bqg-v21-c1-checkpoint-repair-20261107",
+      "evidence_file": "scripts/pl_v20_stage_worker.py; scripts/v21_stage_logic.py; scripts/pl_v21_pair_collector.py",
+      "scope": "Provenance chain incomplete; stage computations still load predecessor NPZ using its stored digest."
+    },
+    {
+      "id": "BQG-V21-ZERO-001",
+      "family": "workflow_semantics",
+      "status": "defect_confirmed_code_review",
+      "claim": "Collector can accept exact-zero V4 and V2 states as relative_delta=0; final pair norm is reported but not required nonzero.",
+      "evidence_branch": "research/bqg-v21-c1-checkpoint-repair-20261107",
+      "evidence_file": "scripts/pl_v21_pair_collector.py; scripts/pl_lorentzian_triple_worker.py",
+      "scope": "Exact zero may be legitimate; must be classified separately from a nonzero physical signal."
+    },
+    {
+      "id": "BQG-PHYS-GATES-001",
+      "family": "physical_completion",
+      "status": "open_physical",
+      "claim": "All nine mandatory physical gates remain open in main.",
+      "evidence_branch": "main",
+      "evidence_file": "physicalization_gates.json",
+      "scope": "No complete physical projector/history, TT pole, IR six-vector, common scale, dynamical Maxwell or cosmological closure."
+    },
+    {
+      "id": "BQG-DEPTH6-001",
+      "family": "depth6",
+      "status": "incomplete_numerical_witnesses",
+      "claim": "Depth-6 structural support is declared closed for all seven S5 irreps, but numeric witnesses remain pending for [3,2], [3,1,1], [2,2,1]; finite depth-6 target kernel theorem not proved.",
+      "evidence_branch": "main",
+      "evidence_file": "depth6_frontier.json",
+      "scope": "Structural support closure is not numeric kernel closure; finite closure would still not prove continuum physicality."
+    }
+  ],
+  "branch_dispositions": {
+    "research/bqg-v22-local-c1-e2e-20261107": "same commit as V21; no distinct code/science increment",
+    "research/bqg-v21-c1-checkpoint-repair-20261107": "high-priority code audit; do not use as physical certificate until guard/provenance fixes",
+    "research/bqg-v20-local-c1-gates-20261107": "local structural test and workflow scaffold; not completed physical path run",
+    "research/bqg-v16-first-leg-20261107": "current HDA replay/necessary bounds; post-processing saved data, not new Lorentzian amplitudes",
+    "research/bqg-node1-lorentzian-columns-20261031": "contains actual saved W5 Euclidean computation evidence; distinct carrier from PL16",
+    "research/bqg-micro-carry-rank-20261031": "finite theorem, +6 commits and 0 behind main per preceding compare; selective-port candidate",
+    "research/bqg-v04-actual-constraint-kernel-20261106": "workflow attempts failed before job steps; no new physics result",
+    "release/canonical-theory-package-v1": "historical snapshot; older closure language superseded by current open physical gates",
+    "cleanup/gr-qm-bit-continuum": "historical background branch; retain as history, do not merge wholesale",
+    "research/v19-canonical-k5-replay; research/v20-160-canonical-20261015": "same head SHA; duplicate refs, not independent evidence",
+    "research/bqg-2t-*": "ten refs share one head SHA; one research line, not ten independent confirmations",
+    "exp/iq1s70b-vs-qwen3-14b-20260923; exp/nexus-70b-runtime": "same head SHA and unrelated runtime experiment"
+  },
+  "merge_policy": "Never merge large divergent research branches wholesale. Port individual proofs, tests and artifacts only after source-level review, same-carrier compatibility checks, independent replay and explicit status classification."
+}
