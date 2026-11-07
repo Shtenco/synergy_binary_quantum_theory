@@ -105,13 +105,24 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
     return result
 
 
+def _l2_norm(values):
+    norm = 0.0
+    for value in values:
+        norm = math.hypot(norm, abs(value))
+    return norm
+
+
 def compare_states(a, b):
     keys = set(a) | set(b)
-    delta = math.sqrt(math.fsum(abs(a.get(k, 0j) - b.get(k, 0j)) ** 2 for k in keys))
-    norm_a = math.sqrt(math.fsum(abs(z) ** 2 for z in a.values()))
-    norm_b = math.sqrt(math.fsum(abs(z) ** 2 for z in b.values()))
-    return {"relative_delta": delta / max(norm_a, norm_b, 1e-15),
-            "absolute_delta": delta, "support_v4": len(a), "support_v2": len(b)}
+    delta = _l2_norm(a.get(key, 0j) - b.get(key, 0j) for key in keys)
+    norm_a = _l2_norm(a.values())
+    norm_b = _l2_norm(b.values())
+    denominator = max(norm_a, norm_b)
+    relative = (delta / denominator if denominator > 0.0
+                else (0.0 if delta == 0.0 else math.inf))
+    return {"relative_delta": relative, "absolute_delta": delta,
+            "norm_v4": norm_a, "norm_v2": norm_b,
+            "support_v4": len(a), "support_v2": len(b)}
 
 
 def _stable_complex_sum(values):
@@ -155,9 +166,10 @@ def assemble_pair_exact(results, coefficients):
     total = {key: _stable_complex_sum(values)
              for key, values in buckets.items()}
     total = {key: value for key, value in total.items() if value != 0j}
-    norm = math.sqrt(math.fsum(abs(z) ** 2 for z in total.values()))
-    return total, norm, ("VERIFIED_EXACT_ZERO_PAIR" if norm == 0.0
-                         else "VERIFIED_NONZERO_PAIR")
+    norm = _l2_norm(total.values())
+    pair_status = ("VERIFIED_EXACT_ZERO_PAIR" if not total
+                   else "VERIFIED_NONZERO_PAIR")
+    return total, norm, pair_status
 
 
 def collect(manifest):
