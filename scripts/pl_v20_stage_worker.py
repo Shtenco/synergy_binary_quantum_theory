@@ -108,8 +108,8 @@ def run(opts):
     """Only production SU(2) primitives, original order and scalar filter."""
     if not re.fullmatch("[0-9a-f]{40}", opts.commit):
         raise ValueError("NEED_FROZEN_SOURCE_COMMIT")
-    if not opts.volume_backend:
-        raise ValueError("NEED_VOLUME_BACKEND_IDENTITY")
+    if opts.volume_backend != "tetrahedral-volume-v1":
+        raise ValueError("WRONG_OR_MISSING_VOLUME_BACKEND_IDENTITY")
     try:
         actual_head = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], text=True, timeout=10
