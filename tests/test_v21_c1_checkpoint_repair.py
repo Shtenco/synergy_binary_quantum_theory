@@ -336,6 +336,31 @@ class V21C1Tests(unittest.TestCase):
         result = compare_states({key: 1e308 + 0j}, {key: -1e308 + 0j})
         self.assertTrue(math.isinf(result["relative_delta"]))
 
+    def test_40_v2_reference_must_match_attested_volume_backend(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            npz = root / "v2.npz"
+            np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            metadata = {
+                "passed": True, "mode": "forward", "index": 3,
+                "source_node": 0, "Jmax": 3.5, "checks": {"ok": True},
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "c" * 64,
+            }
+            meta_path = root / "v2.json"
+            meta_path.write_text(json.dumps(metadata))
+            spec = {
+                "npz": str(npz), "sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
+                "metadata_json": str(meta_path),
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+            }
+            with self.assertRaisesRegex(ValueError, "V2_VOLUME_BACKEND_MISMATCH"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=3, expected_source_commit="a" * 40,
+                        expected_backend_sha="b" * 64)
+
 
 if __name__ == "__main__":
     unittest.main()
