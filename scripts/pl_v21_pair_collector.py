@@ -177,7 +177,9 @@ def collect(manifest):
         cov = sum_states_exact(
             paths[mode, order, aux] for aux in product((0, 1), repeat=3)
         )
-        gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, W.TOL)
+        # Match the independent V2 scalar-projection tolerance, not the
+        # looser display/worker threshold in pl_lorentzian_triple_worker.
+        gauss, accepted2, rejected2 = LGA.project_scalar_gauss(cov, source, LGA.TOL)
         if math.sqrt(max(float(rejected2), 0)) >= 1e-8:
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
         if W.max_spin(gauss) > 3.5 + 1e-12:
@@ -207,6 +209,8 @@ def collect(manifest):
     return {"status": "VERIFIED_ORIGINAL_V4_ONE_PHYSICAL_PAIR", "passed": True,
             "paths_completed": 32, "v2_primitives_compared": 4,
             "comparisons": comparisons, "quality": quality,
+            "gauss_projection_tolerance": float(LGA.TOL),
+            "auxiliary_sum_policy": "stable fsum; no support pruning before Gauss projection",
             "pair_status": pair_status, "pair_norm": pair_norm,
             "pair_zero_semantics": "exact floating-point sum; not symbolic identity",
             "pair_support": len(S), "HDA_proved": False, "HL_complete": False}, S
