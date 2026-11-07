@@ -13,6 +13,7 @@ from v21_stage_logic import all_32_specs, first_leg_census, operations, predeces
 from v21_checkpoint_guard import validate_physical_stage
 from pl_v21_pair_collector import compare_states, read_stage, read_v2
 from pl_v20_stage_worker import save_charged, load_charged
+from v21_stage_attestation import attest_manifest
 
 
 class V21C1Tests(unittest.TestCase):
@@ -193,6 +194,39 @@ class V21C1Tests(unittest.TestCase):
                                 Ks=np.empty((0, 16)), amp=np.empty((0,), dtype=complex))
             with self.assertRaisesRegex(ValueError, "INDEPENDENT_V2_SHA256_MISMATCH"):
                 read_v2({"npz": str(path), "sha256": "0" * 64})
+
+    def test_25_attestation_builder_pins_both_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            item = {}
+            for stage in (1, 2, 3):
+                prefix = root / f"stage{stage}"
+                digest = save_charged(prefix.with_suffix(".npz"), self.st)
+                meta = {"stage": stage, "passed": True, "npz_sha256": digest,
+                        "output_state_sha256": digest}
+                prefix.with_suffix(".json").write_text(json.dumps(meta))
+                item[f"stage{stage}"] = str(prefix)
+            result = attest_manifest({"paths": [item]})
+            pins = result["paths"][0]["stage_attestations"]
+            self.assertEqual(set(pins), {"stage1", "stage2", "stage3"})
+            self.assertEqual(pins["stage2"]["npz_sha256"],
+                             hashlib.sha256(Path(item["stage2"]).with_suffix(".npz").read_bytes()).hexdigest())
+
+    def test_26_attestation_builder_rejects_npz_tampering(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            item = {}
+            for stage in (1, 2, 3):
+                prefix = root / f"stage{stage}"
+                digest = save_charged(prefix.with_suffix(".npz"), self.st)
+                meta = {"stage": stage, "passed": True, "npz_sha256": digest,
+                        "output_state_sha256": digest}
+                prefix.with_suffix(".json").write_text(json.dumps(meta))
+                item[f"stage{stage}"] = str(prefix)
+            path = Path(item["stage2"]).with_suffix(".npz")
+            path.write_bytes(path.read_bytes() + b"tamper")
+            with self.assertRaisesRegex(ValueError, "NPZ_DIGEST_MISMATCH_STAGE2"):
+                attest_manifest({"paths": [item]})
 
 
 if __name__ == "__main__":
