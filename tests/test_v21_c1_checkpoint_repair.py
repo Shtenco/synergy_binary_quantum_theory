@@ -11,7 +11,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from v21_stage_logic import all_32_specs, first_leg_census, operations, predecessor_ok
 from v21_checkpoint_guard import validate_physical_stage
-from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact
+from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 
@@ -278,6 +278,15 @@ class V21C1Tests(unittest.TestCase):
         self.assertEqual(pair[key], 1.0 + 0j)
         self.assertEqual(norm, 1.0)
         self.assertEqual(status, "VERIFIED_NONZERO_PAIR")
+
+    def test_34_legacy_sum_reproduces_ordered_pruning(self):
+        key = next(iter(self.st))
+        total = sum_states_legacy_pruned(
+            [{key: 0.75e-11 + 0j}, {key: 0.75e-11 + 0j}], 1e-11)
+        self.assertEqual(total[key], 1.5e-11 + 0j)
+        dropped = sum_states_legacy_pruned(
+            [{key: 0.75e-11 + 0j}], 1e-11)
+        self.assertNotIn(key, dropped)
 
 
 if __name__ == "__main__":
