@@ -26,6 +26,13 @@ def certify_triple(item,shared,p_targets,q_targets):
     m1,s1=read_stage(item['stage1'])
     m2,s2=read_stage(item['stage2'])
     m3,s3=read_stage(item['stage3'])
+    for previous,nextmeta in ((item['stage1'],m2),(item['stage2'],m3)):
+        pp=Path(previous)
+        prevmeta=json.loads(pp.with_suffix('.json').read_text('utf-8'))
+        if nextmeta.get('predecessor_npz_sha256')!=prevmeta['npz_sha256']:
+            raise ValueError('BROKEN_PREDECESSOR_NPZ_CHAIN')
+        if nextmeta.get('predecessor_metadata_sha256')!=hashlib.sha256(pp.with_suffix('.json').read_bytes()).hexdigest():
+            raise ValueError('BROKEN_PREDECESSOR_METADATA_CHAIN')
     for previous, next_meta in ((item['stage1'],m2),(item['stage2'],m3)):
         prevprefix=Path(previous)
         prevmeta=json.loads(prevprefix.with_suffix('.json').read_text('utf-8'))
@@ -138,7 +145,7 @@ def collect(manifest):
     if len({manifest['independent_v2'][k]['npz'] for k in ref_specs})!=4:
         raise ValueError('V2_REFERENCES_NOT_DISTINCT_FILES')
     v2={k:read_v2(manifest['independent_v2'][k],
-                 expected_source=source,expected_mode=ref_specs[k][0],
+                 expected_source=s,expected_mode=ref_specs[k][0],
                  expected_index=ref_specs[k][1],
                  expected_commit=shared['source_commit'],
                  expected_backend_sha=shared['volume_backend_sha256']) for k in ref_specs}
