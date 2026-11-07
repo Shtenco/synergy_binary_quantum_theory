@@ -112,6 +112,14 @@ def _l2_norm(values):
     return norm
 
 
+def projection_rejected_norm(state, source, projection):
+    norm = 0.0
+    for key, amplitude in state.items():
+        if projection.covariant_scalar_to_gauss_key(key, source) is None:
+            norm = math.hypot(norm, abs(amplitude))
+    return norm
+
+
 def compare_states(a, b):
     keys = set(a) | set(b)
     delta = _l2_norm(a.get(key, 0j) - b.get(key, 0j) for key in keys)
@@ -234,8 +242,9 @@ def collect(manifest):
         numeric_checks = (accepted2, rejected2, legacy_accepted2, legacy_rejected2)
         if not all(math.isfinite(float(value)) for value in numeric_checks):
             raise ValueError("NONFINITE_GAUSS_PROJECTION_NORM")
-        if (math.sqrt(max(float(rejected2), 0)) >= 1e-8
-                or math.sqrt(max(float(legacy_rejected2), 0)) >= 1e-8):
+        rejected_norm = projection_rejected_norm(cov, source, LGA)
+        legacy_rejected_norm = projection_rejected_norm(legacy_cov, source, LGA)
+        if rejected_norm >= 1e-8 or legacy_rejected_norm >= 1e-8:
             raise ValueError("NONSCALAR_REJECTION_TOO_LARGE")
         if W.max_spin(gauss) > 3.5 + 1e-12:
             raise ValueError("PHYSICAL_SPIN_WALL")
@@ -247,10 +256,12 @@ def collect(manifest):
             "unpruned_gauss_support": len(gauss),
             "unpruned_accepted2": float(accepted2),
             "unpruned_rejected2": float(rejected2),
+            "unpruned_rejected_norm": rejected_norm,
             "legacy_pruned_covariant_support": len(legacy_cov),
             "legacy_gauss_support": len(legacy_gauss),
             "legacy_accepted2": float(legacy_accepted2),
             "legacy_rejected2": float(legacy_rejected2),
+            "legacy_rejected_norm": legacy_rejected_norm,
             "legacy_auxiliary_prune_tolerance": float(LP.TOL),
             "gauss_projection_tolerance": float(LGA.TOL),
         }
