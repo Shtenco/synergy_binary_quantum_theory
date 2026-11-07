@@ -63,7 +63,7 @@ def certify_triple(item, shared, p_targets, q_targets):
         if meta.get("stage") != stage or tuple(meta.get("operator_signature", ())) != tuple(op):
             raise ValueError("MISSING_STAGE_OR_WRONG_OPERATOR_SIGNATURE")
         for key in ("source_commit", "source_node", "omit", "cycle", "Jmax2",
-                    "volume_backend_sha256", "seed_state_sha256"):
+                    "volume_backend", "volume_backend_sha256", "seed_state_sha256"):
             if meta.get(key) != shared[key]:
                 raise ValueError("MIXED_PHYSICAL_SOURCE_OR_BACKEND_" + key)
     if m1.get("input_state_sha256") != m1.get("seed_state_sha256"):
@@ -138,7 +138,7 @@ def collect(manifest):
     targets_p = tuple(D.neighbor[(source, t)] for t in p)
     targets_q = tuple(D.neighbor[(source, t)] for t in q)
     shared = {k: manifest[k] for k in ("source_commit", "source_node", "omit", "cycle",
-              "Jmax2", "volume_backend_sha256", "seed_state_sha256")}
+              "Jmax2", "volume_backend", "volume_backend_sha256", "seed_state_sha256")}
     if shared["Jmax2"] != 7:
         raise ValueError("WRONG_JMAX")
     paths = {}
