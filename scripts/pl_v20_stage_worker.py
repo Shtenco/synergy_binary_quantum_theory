@@ -11,6 +11,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import traceback
 from pathlib import Path
 
@@ -92,11 +93,13 @@ def validate_predecessor(prev, expected, stage):
     if prev.get("stage") != stage - 1 or not prev.get("passed"):
         raise ValueError("PREVIOUS_STAGE_NOT_PASSED")
     for key in ("source_commit", "source_node", "omit", "cycle", "mode",
-                "order", "aux", "Jmax2", "volume_backend"):
+                "order", "aux", "Jmax2", "volume_backend", "volume_backend_sha256"):
         if prev.get(key) != expected.get(key):
             raise ValueError("PREDECESSOR_MISMATCH_" + key)
     if not re.fullmatch("[0-9a-f]{64}", prev.get("npz_sha256", "")):
         raise ValueError("BAD_PREDECESSOR_DIGEST")
+    if not re.fullmatch("[0-9a-f]{64}", prev.get("input_state_sha256", "")):
+        raise ValueError("MISSING_INPUT_STATE_PROVENANCE")
 
 
 def run(opts):
@@ -105,6 +108,14 @@ def run(opts):
         raise ValueError("NEED_FROZEN_SOURCE_COMMIT")
     if not opts.volume_backend:
         raise ValueError("NEED_VOLUME_BACKEND_IDENTITY")
+    try:
+        actual_head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, timeout=10
+        ).strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError("REPOSITORY_COMMIT_NOT_VERIFIABLE") from exc
+    if actual_head != opts.commit:
+        raise ValueError("CHECKOUT_SOURCE_COMMIT_MISMATCH")
     if opts.stage not in (1, 2, 3):
         raise ValueError("BAD_STAGE")
     if len(opts.aux) != 3 or any(x not in (0, 1) for x in opts.aux):
@@ -120,6 +131,8 @@ def run(opts):
     D = DualComplex(seed_16cell_boundary())
     G = PLPeterWeylEuclidean(D)
     p, q, _, _ = pair_indices(D, opts.source_node, opts.omit, opts.cycle)
+    backend_file = Path(__file__).with_name("tetrahedral_volume_backend.py")
+    backend_sha = hashlib.sha256(backend_file.read_bytes()).hexdigest()
     perm = p if opts.order == "p" else q
     targets = tuple(D.neighbor[(opts.source_node, t)] for t in perm)
     allops = ordered_operations(targets, opts.mode, opts.aux)
@@ -130,18 +143,21 @@ def run(opts):
         "mode": opts.mode, "order": opts.order,
         "aux": opts.aux, "Jmax2": JMAX2,
         "volume_backend": opts.volume_backend,
+        "volume_backend_sha256": backend_sha,
         "graph": "PL-16cell", "stage": opts.stage,
         "operator_signature": list(allops[opts.stage - 1]),
         "post_second_scalar_filter": opts.stage >= 2
     }
     if opts.stage == 1:
         seed = ((1,) * len(G.EDGES), (0,) * D.n_tets)
+        meta["input_state_sha256"] = hashlib.sha256(repr(seed).encode("utf-8")).hexdigest()
     else:
         if not opts.previous_prefix:
             raise ValueError("MISSING_PREVIOUS_STAGE")
         prevpath = opts.previous_prefix.with_suffix(".json")
         previous = json.loads(prevpath.read_text("utf-8"))
         validate_predecessor(previous, meta, opts.stage)
+        meta["input_state_sha256"] = previous["input_state_sha256"]
         state = load_charged(
             opts.previous_prefix.with_suffix(".npz"),
             previous["npz_sha256"], len(G.EDGES), D.n_tets
