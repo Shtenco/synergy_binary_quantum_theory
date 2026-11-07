@@ -196,6 +196,7 @@ def collect(manifest):
             "paths_completed": 32, "v2_primitives_compared": 4,
             "comparisons": comparisons, "quality": quality,
             "pair_status": pair_status, "pair_norm": pair_norm,
+            "pair_zero_semantics": "exact floating-point sum; not symbolic identity",
             "pair_support": len(S), "HDA_proved": False, "HL_complete": False}, S
 
 
