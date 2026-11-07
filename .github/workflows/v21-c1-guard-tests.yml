@@ -10,6 +10,10 @@ on:
       - "scripts/pl_v20_stage_worker.py"
       - "scripts/pl_v21_pair_collector.py"
       - "scripts/v21_stage_attestation.py"
+      - "scripts/pl_lorentzian_triple_worker.py"
+      - "scripts/pl_lorentzian_group_worker_v2.py"
+      - "scripts/pl_lorentzian_single_worker_v2.py"
+      - "scripts/pl_lorentzian_48_collect_v2.py"
       - "tests/test_v21_c1_checkpoint_repair.py"
       - ".github/workflows/v21-c1-guard-tests.yml"
 
@@ -27,6 +31,6 @@ jobs:
       - name: Install test dependency
         run: python -m pip install numpy
       - name: Compile modified Python modules
-        run: python -m py_compile scripts/v21_checkpoint_guard.py scripts/v21_stage_logic.py scripts/pl_v20_stage_worker.py scripts/pl_v21_pair_collector.py scripts/v21_stage_attestation.py tests/test_v21_c1_checkpoint_repair.py
+        run: python -m py_compile scripts/v21_checkpoint_guard.py scripts/v21_stage_logic.py scripts/pl_v20_stage_worker.py scripts/pl_v21_pair_collector.py scripts/v21_stage_attestation.py scripts/pl_lorentzian_triple_worker.py scripts/pl_lorentzian_group_worker_v2.py scripts/pl_lorentzian_single_worker_v2.py scripts/pl_lorentzian_48_collect_v2.py tests/test_v21_c1_checkpoint_repair.py
       - name: Run V21 adversarial structural tests
         run: python -m unittest discover -s tests -p "test_v21_c1_checkpoint_repair.py" -v
