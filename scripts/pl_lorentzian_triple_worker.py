@@ -120,6 +120,10 @@ def run(index,mode='forward',source=0):
         raise ValueError('V2_SOURCE_COMMIT_NOT_VERIFIABLE') from exc
     if len(source_commit)!=40 or any(ch not in '0123456789abcdef' for ch in source_commit):
         raise ValueError('BAD_V2_SOURCE_COMMIT')
+    dirty=subprocess.check_output(
+        ['git','status','--porcelain','--untracked-files=no'],text=True,timeout=10)
+    if dirty.strip():
+        raise ValueError('V2_TRACKED_WORKTREE_NOT_CLEAN')
     backend_file=HERE/'tetrahedral_volume_backend.py'
     backend_sha=hashlib.sha256(backend_file.read_bytes()).hexdigest()
     oldJ=LP.JMAX2
