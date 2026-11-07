@@ -6,7 +6,7 @@ from itertools import product
 from pathlib import Path
 import numpy as np
 from v21_stage_logic import operations, predecessor_ok
-from v21_checkpoint_guard import validate_physical_stage
+from v21_checkpoint_guard import BOUND, validate_physical_stage
 from pl_v20_stage_worker import load_charged
 
 
@@ -37,8 +37,7 @@ def read_stage(prefix, attestation):
     if len(state) != meta.get("state_support"):
         raise ValueError("STATE_SUPPORT_MISMATCH")
     recomputed = validate_physical_stage(
-        meta["diagnostics"], state, meta.get("stage"), signature,
-        meta.get("guard", {}).get("threshold", 1e-8))
+        meta["diagnostics"], state, meta.get("stage"), signature, BOUND)
     if meta.get("guard") != recomputed:
         raise ValueError("STORED_GUARD_RECOMPUTATION_MISMATCH")
     return meta, state
