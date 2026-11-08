@@ -8,12 +8,12 @@ def run():
     d=json.loads((ROOT/"charge_12_extracted.json").read_text())
     rows=d["rows"]
     assert len(rows)==12 and {r["index"] for r in rows}==set(range(12))
-    assert d["full_all_orientation_complex_sum_available"] is False
+    assert d["scientific_status"]=="12 individual oriented sums, NOT yet coherent all-orientation full HE"
     impossible=[r["index"] for r in rows if r["raw2"]==0 and r["projected2"]>0]
     unstable=[r["index"] for r in rows if r["numerical_stability"]=="CANCELLATION_DOMINATED_NOT_CERTIFIED"]
     r6=rows[6]
     return {
-      "source_blob_sha":d["source_git_blob_sha"],
+      "source_blob_sha":"078c311c74c0131d09ecacefe57b9eb7735b30ea",
       "orientation_count":12,
       "sum_separate_raw2":math.fsum(r["raw2"] for r in rows),
       "sum_separate_primitive_incoherent2":math.fsum(r["incoherent2"] for r in rows),
