@@ -57,12 +57,12 @@ Four path-metadata and three manifest-selector regressions were added (tests 50�
 The independent local synthetic harness remains separate: its 17/17 PASS result does not validate the production collector or replace the 58 repository tests.
 ## 8. V2 48-term artifact binding and orbit validation
 
-The independent V2 path also needed a stricter artifact boundary. The V2 single-term and six-term group workers now write the SHA-256 of each exact NPZ beside its JSON metadata. The V2 48-term preflight requires that digest to match the sibling NPZ before the historical reducer can load it.
+The independent V2 path also needed a stricter artifact boundary. The V2 single-term and six-term group workers now write the SHA-256 of each exact NPZ beside its JSON metadata. The V2 48-term preflight requires that digest to match the sibling NPZ before the historical reducer can load it. It also validates the NPZ key set, fixed spin/K shapes, integer index dtypes, complex finite amplitude vector, unique state keys, and exact integer support count before the reducer can deserialize it.
 
 Each V2 term record is now checked for literal boolean passed=true, an exact integer index in 0..23, exact integer source_node=0, an exact integer orientation coefficient in {-1,+1}, Jmax=3.5, and a nonempty checks map whose values are all literal boolean true. The collector verifies the complete unique forward/adjoint 24+24 orbit, recomputes each PL orientation coefficient and ordered target tuple from the canonical worker specification, and enforces one source commit and one backend SHA across all 48 terms.
 
 The V21 collector additionally requires each independent V2 metadata npz_sha256 to equal the externally pinned NPZ SHA-256. This closes the metadata-to-state binding seam for the four references used in V21 comparison.
 
-Seven more regressions were added (tests 59–65): boolean passed/index/source/coefficient rejection, NPZ digest mismatch rejection, canonical V2 term acceptance, and V21 metadata-to-NPZ digest binding. The repository test inventory is now 65 tests. These tests remain unexecuted because GitHub Actions jobs continue to terminate before runner assignment.
+Ten more regressions were added (tests 59–68): boolean passed/index/source/coefficient rejection, NPZ digest mismatch and schema rejection, duplicate-key rejection, support-count typing, canonical V2 term acceptance, and V21 metadata-to-NPZ digest binding. The repository test inventory is now 68 tests. These tests remain unexecuted because GitHub Actions jobs continue to terminate before runner assignment.
 
 These checks validate provenance, path identity, and file integrity. They do not regenerate the four V2 references, run the 48 physical V2 terms, or complete the 32-path V4 calculation.
