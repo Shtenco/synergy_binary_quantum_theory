@@ -58,6 +58,19 @@ def validate_path_metadata(meta):
     return mode, order, tuple(aux)
 
 
+def validate_manifest_indices(manifest):
+    """Reject bool-as-int source selectors in the top-level V21 manifest."""
+    if not isinstance(manifest, dict):
+        raise ValueError("BAD_V21_MANIFEST")
+    values = []
+    for key in ("source_node", "omit", "cycle", "Jmax2"):
+        value = manifest.get(key)
+        if type(value) is not int:
+            raise ValueError("BAD_MANIFEST_INTEGER_" + key.upper())
+        values.append(value)
+    return tuple(values[:3])
+
+
 def certify_triple(item, shared, p_targets, q_targets):
     attestations = item.get("stage_attestations")
     if not isinstance(attestations, dict):
@@ -247,7 +260,7 @@ def collect(manifest):
     import peter_weyl_lorentzian_logical_projection_gate as LP
 
     D = DualComplex(seed_16cell_boundary())
-    source, omit, cycle = (int(manifest[k]) for k in ("source_node", "omit", "cycle"))
+    source, omit, cycle = validate_manifest_indices(manifest)
     p, q, ip, iq = pair_indices(D, source, omit, cycle)
     targets_p = tuple(D.neighbor[(source, t)] for t in p)
     targets_q = tuple(D.neighbor[(source, t)] for t in q)
