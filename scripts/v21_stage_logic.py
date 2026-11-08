@@ -47,6 +47,9 @@ def predecessor_ok(prev, cur, stage, first_operation, second_operation=None):
             or prev.get("stage") != stage - 1 or prev.get("passed") is not True
             or prev.get("status") != "REAL_ORIGINAL_STAGE_ONLY"):
         raise ValueError("STAGE_NOT_PASSED")
+    support = prev.get("state_support")
+    if type(support) is not int or support <= 0:
+        raise ValueError("BAD_PREDECESSOR_STATE_SUPPORT")
     previous_guard = prev.get("guard")
     if (not isinstance(previous_guard, dict)
             or previous_guard.get("stage_physical_basis_pass") is not True):
