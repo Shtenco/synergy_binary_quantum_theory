@@ -15,6 +15,7 @@ from v21_checkpoint_guard import validate_physical_stage
 from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned, validate_path_metadata, validate_manifest_indices
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
+from pl_lorentzian_48_collect_v2 import validate_term_record
 
 
 class V21C1Tests(unittest.TestCase):
@@ -591,6 +592,55 @@ class V21C1Tests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "BAD_PREDECESSOR_STATE_SUPPORT"):
                     predecessor_ok(dict(self.one, state_support=invalid),
                                    self.two, 2, ["CV", 4, 1, 0])
+
+
+    def _v2_term_record(self, root, **overrides):
+        path = Path(root) / "term_forward_0.json"
+        npz = path.with_suffix(".npz")
+        npz.write_bytes(b"synthetic-term-checkpoint")
+        metadata = {
+            "passed": True, "mode": "forward", "index": 0, "source_node": 0,
+            "PL_epsilon_coefficient": 1, "Jmax": 3.5,
+            "checks": {"finite": True},
+            "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
+        }
+        metadata.update(overrides)
+        return path, metadata
+
+    def test_59_v2_term_passed_must_be_boolean_true(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, passed="yes")
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_NOT_PASSED_BOOLEAN_TRUE"):
+                validate_term_record(path, meta)
+
+    def test_60_v2_term_index_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, index=True)
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_BAD_INTEGER_INDEX"):
+                validate_term_record(path, meta)
+
+    def test_61_v2_term_source_node_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, source_node=False)
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_BAD_SOURCE_NODE"):
+                validate_term_record(path, meta)
+
+    def test_62_v2_orientation_coefficient_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, PL_epsilon_coefficient=True)
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_BAD_ORIENTATION_COEFFICIENT"):
+                validate_term_record(path, meta)
+
+    def test_63_v2_term_npz_must_match_metadata_digest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, npz_sha256="0" * 64)
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_NPZ_DIGEST_MISMATCH"):
+                validate_term_record(path, meta)
+
+    def test_64_v2_term_record_accepts_exact_provenance_and_digest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory)
+            self.assertEqual(validate_term_record(path, meta), ("forward", 0, 0))
 
 
 
