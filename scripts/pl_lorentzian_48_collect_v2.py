@@ -6,6 +6,12 @@ from pathlib import Path
 import numpy as np
 import pl_lorentzian_48_collect as BASE
 VERSION='tetrahedral-charged-volume-v2'
+REQUIRED_TERM_CHECKS={
+    'finite_covariant_norm','finite_gauss_norm',
+    'finite_covariant_amplitudes','finite_gauss_amplitudes',
+    'physical_basis_volume_leakage','scalar_closure_fraction_or_exact_zero',
+    'nonscalar_rejected_norm','single_L_spin_wall','PL_orientation_coefficient',
+}
 
 def _sha(value):
     return isinstance(value,str) and re.fullmatch(r'[0-9a-f]{64}',value) is not None
