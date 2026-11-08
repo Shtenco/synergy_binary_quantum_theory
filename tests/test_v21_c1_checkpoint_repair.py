@@ -424,5 +424,53 @@ class V21C1Tests(unittest.TestCase):
                 attest_manifest(manifest)
 
 
+    def test_43_v2_index_arrays_must_have_integer_dtype(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "v2-float-indices.npz"
+            np.savez_compressed(path, spins=np.array([[1.5] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "V2_BAD_SHAPE_DTYPE_OR_NONFINITE"):
+                read_v2({"npz": str(path), "sha256": digest})
+
+    def test_44_v2_checks_must_be_boolean_true_not_truthy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            npz = root / "v2.npz"
+            np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            metadata = {
+                "passed": True, "mode": "forward", "index": 3,
+                "operator_version": "tetrahedral-charged-volume-v2",
+                "source_node": 0, "Jmax": 3.5, "checks": {"ok": "yes"},
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "c" * 64,
+            }
+            meta_path = root / "v2.json"
+            meta_path.write_text(json.dumps(metadata))
+            spec = {
+                "npz": str(npz), "sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
+                "metadata_json": str(meta_path),
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+            }
+            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_FAILED_ACCEPTANCE"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=3, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+    def test_45_checkpoint_index_arrays_must_have_integer_dtype(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bad-index.npz"
+            np.savez_compressed(
+                path, spins=np.array([[1.5] * 32]),
+                K_other=np.array([[0] * 16]), charges=np.array([[0] * 4]),
+                amp=np.array([1 + 0j]))
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "BAD_CHECKPOINT_SHAPE_OR_INDEX_DTYPE"):
+                load_charged(path, digest)
+
+
+
 if __name__ == "__main__":
     unittest.main()
