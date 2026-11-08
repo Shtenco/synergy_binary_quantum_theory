@@ -16,7 +16,7 @@ from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 from pl_lorentzian_48_collect_v2 import validate_term_record
-from pl_lorentzian_group_worker import validate_term_diagnostics
+from v2_term_guards import validate_term_diagnostics
 
 
 class V21C1Tests(unittest.TestCase):
