@@ -9,6 +9,13 @@ from v21_stage_logic import operations, predecessor_ok
 from v21_checkpoint_guard import BOUND, validate_physical_stage
 from pl_v20_stage_worker import load_charged
 
+REQUIRED_V2_CHECKS={
+    "finite_covariant_norm", "finite_gauss_norm",
+    "finite_covariant_amplitudes", "finite_gauss_amplitudes",
+    "physical_basis_volume_leakage", "scalar_closure_fraction_or_exact_zero",
+    "nonscalar_rejected_norm", "single_L_spin_wall", "PL_orientation_coefficient",
+}
+
 
 def read_stage(prefix, attestation):
     prefix = Path(prefix)
