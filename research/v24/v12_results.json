@@ -1,0 +1,231 @@
+{
+  "C3": {
+    "active_node_indices": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      12
+    ],
+    "commutator_norms": [
+      0.0,
+      2.8582162244542877,
+      2.8518466402582723,
+      2.507614700123577,
+      3.1449672514612614,
+      1.3394096247374225,
+      1.505747626768406,
+      0.0,
+      3.144967251461261,
+      1.3394096247374223,
+      1.5057476267684056,
+      0.0,
+      2.719180720644807,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "commutator_operator_identity_max_error": 1.1102230246251565e-15,
+    "inactive_node_indices": [
+      0,
+      7,
+      11,
+      13,
+      14,
+      15
+    ],
+    "lost_commutator_fraction_on_W17": 1.0,
+    "max_overlap_C_r_with_E_first_layer": 0.0,
+    "max_overlap_C_r_with_seed": 0.0,
+    "norm_total_C3": 7.608464409020511,
+    "warning": "Projection of a full commutator onto W17 loses all nonzero C_r Omega, not an HDA anomaly verdict"
+  },
+  "Krylov_W43": {
+    "all_input_gram_max_eigen": 46.19045912890751,
+    "all_input_gram_min_eigen": 0.5220297144249147,
+    "basis_condition_number": 9.406510128904108,
+    "definition": "span{Omega,E_v Omega,E_0 E_v Omega,E_v E_0 Omega} for v=0..15; measured partial depth2, not all 256 EvEw",
+    "even_dimension": 27,
+    "even_gram_max_eigen": 46.19045912890751,
+    "even_gram_min_eigen": 0.5220297144249147,
+    "odd_dimension": 16,
+    "seed_Cr_output_retention_fraction": 1.0,
+    "total_dimension": 43,
+    "warning": "Full C2 E+S+R closure, depth3 and HDA D remain unmeasured"
+  },
+  "amplitude_entries": {
+    "A": 80575,
+    "B": 80575,
+    "C": 17040,
+    "E": 1344
+  },
+  "checks": {
+    "16_first_E_columns_with_digest": true,
+    "48_second_E_columns_with_digest": true,
+    "C3_commutator_on_seed_orthogonal_W17": true,
+    "C3_full_ten_nonzero": true,
+    "C3_signal_retained_in_partial_W43": true,
+    "E0_on_first_E_full_rank": true,
+    "all_source_arrays_finite": true,
+    "commutator_B_minus_A_identity": true,
+    "cross_run_hermiticity_defect_below_1e-6": true,
+    "first_E_full_rank": true,
+    "full_E0_on_W17_injective": true,
+    "grading_E_odd_E2_even": true,
+    "large_leakage_all_W1": true,
+    "measured_partial_Krylov_43_full_rank": true,
+    "projected_E0_rank_two_chiral": true,
+    "same_run_Lanczos_second_step_nonzero": true
+  },
+  "full_vs_compressed": {
+    "W17_dimension": 17,
+    "compressed_E0_eigenvalues": [
+      -2.144278032692428,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      2.144278032692428
+    ],
+    "compressed_E0_nullity": 15,
+    "compressed_E0_rank": 2,
+    "euclidean_prefactor_abs_2_over_3_gap": 1.3387591518997122,
+    "full_E0_map_all_singular_values_ascending": [
+      2.0081387278495684,
+      2.0570173057830954,
+      2.0571943509148474,
+      2.1086605434935675,
+      2.109464050769511,
+      2.1234832595307163,
+      2.131456245582408,
+      2.144278032692428,
+      2.14427804878338,
+      2.1442780502243743,
+      2.144278052340554,
+      2.144278052404689,
+      2.1442780534936428,
+      2.1586377984620557,
+      2.169479778517741,
+      2.2029866008606347,
+      3.1266642323554463
+    ],
+    "full_E0_map_max_singular": 3.1266642323554463,
+    "full_E0_map_min_singular": 2.0081387278495684,
+    "full_E0_map_rank": 17,
+    "full_E0_nullity": 0
+  },
+  "grading": {
+    "E2_wrong": 0,
+    "E_wrong": 0,
+    "w": "0x12a2a525"
+  },
+  "input_first_layer": {
+    "E0Omega_norm_first_run": 2.144278032692428,
+    "E1_vs_E2_seed_pairing_max_abs_defect": 4.213106574724179e-08,
+    "basis_dimension": 16,
+    "gram_max": 5.677798907988457,
+    "gram_min": 3.65455455822542
+  },
+  "lanczos": {
+    "3x3_compressed_eigenvalues": [
+      -3.124814075978577,
+      8.153200337090993e-17,
+      3.124814075978576
+    ],
+    "3x3_compressed_tridiagonal": [
+      [
+        0.0,
+        2.1442780425164956,
+        0.0
+      ],
+      [
+        2.1442780425164956,
+        0.0,
+        2.273001250728973
+      ],
+      [
+        0.0,
+        2.273001250728973,
+        0.0
+      ]
+    ],
+    "beta_1": 2.1442780425164956,
+    "beta_2": 2.273001250728973,
+    "mu2_from_same_E2_run": 4.5979283236183734,
+    "mu4_from_same_E2_run": 44.89630103599979,
+    "mu4_minus_mu2_squared": 23.755356166867724,
+    "note": "3x3 Lanczos projection is diagnostic, zero eigenvalue not physical; action on third vector unknown"
+  },
+  "leakage": {
+    "leakage_frobenius_norm_on_W1": 8.534155903030326,
+    "lower_bound_eta_Er_from_e0_input": [
+      2.2730012507289725,
+      2.1922914951067853,
+      2.155586106559366,
+      2.1693205169639507,
+      2.0583333285177985,
+      2.13172876121381,
+      2.1091409469129374,
+      2.1442780425164862,
+      2.0583333285177985,
+      2.1317287612138096,
+      2.1091409469129365,
+      2.144278042516486,
+      2.009435595451091,
+      2.1442780425164893,
+      2.1442780425164885,
+      2.144278042516489
+    ],
+    "maximum_W17_output_projection_fraction_squared": 0.47150860119764587,
+    "minimum_leakage_norm_ratio": 0.7269741390189571,
+    "minimum_leakage_norm_ratio_squared": 0.5284913988023541,
+    "norm_Q_E0_W17": 2.2954452206713833,
+    "singular_values_Q_E0_on_W1_ascending": [
+      2.0081212123499417,
+      2.0538938815592855,
+      2.0570173057831025,
+      2.1086377319403886,
+      2.1094640507695095,
+      2.1218905153305667,
+      2.131456245582408,
+      2.1442780487833777,
+      2.1442780502243743,
+      2.144278052340555,
+      2.144278052404689,
+      2.1442780534936414,
+      2.1499156779454585,
+      2.1694771630218854,
+      2.195511328806378,
+      2.2954452206713833
+    ]
+  },
+  "passed": true,
+  "science_scope": "E-only SU2 finite spin cutoff; no full Lorentzian/route/HDA D",
+  "source": {
+    "E2_zeroaware_patch_difference_caveat": true,
+    "E_first": 31959116492,
+    "E_second": 31962819789,
+    "same_operator_code_shas": {
+      "scripts/k5_peter_weyl_safe_hda_column.py": "e7e1e0705c4b833dcee167a2036ef5f8929a4388",
+      "scripts/pl_dual_complex.py": "fa273bfb1089bb143d36ae5277461a5eaf972673",
+      "scripts/pl_peter_weyl_euclidean.py": "4f3e64b59293c4981663fc1c2787a74864dd34de"
+    }
+  },
+  "title": "BQG v0.12 real finite-PL-S3 E0 Krylov leakage and C3 invisible bracket audit"
+}
