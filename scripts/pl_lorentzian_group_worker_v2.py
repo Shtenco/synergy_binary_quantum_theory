@@ -41,13 +41,17 @@ def run(mode,slot,outdir,source=0):
     # preserving their exact amplitudes/states.
     for idx in out.get('indices',[]):
         p=Path(outdir)/f'term_{mode}_{idx}.json'
-        if p.exists():
-            d=json.loads(p.read_text(encoding='utf-8'))
+        npz=Path(outdir)/f'term_{mode}_{idx}.npz'
+        if not p.is_file() or not npz.is_file():
+            raise ValueError(f'V2_TERM_OUTPUT_MISSING_{mode}_{idx}')
+        npz_sha=hashlib.sha256(npz.read_bytes()).hexdigest()
+        d=json.loads(p.read_text(encoding='utf-8'))
             d['operator_version']='tetrahedral-charged-volume-v2'
             d['volume_definition']=out['volume_definition']
             d['source_commit']=source_commit
             d['volume_backend']='tetrahedral-volume-v1'
             d['volume_backend_sha256']=backend_sha
+            d['npz_sha256']=npz_sha
             p.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n',encoding='utf-8')
     return out
 
