@@ -311,7 +311,7 @@ def collect(manifest):
             "unpruned_v2_comparisons": comparisons,
             "legacy_threshold_aligned_v2_comparisons": legacy_comparisons,
             "quality": quality,
-            "gauss_projection_tolerance": float(LGA.TOL),
+            "gauss_projection_tolerance": float(W.TOL),
             "legacy_auxiliary_prune_tolerance": float(LP.TOL),
             "auxiliary_sum_policy": "report both unpruned stable fsum and legacy threshold-aligned sum",
             "pair_status": pair_status, "pair_norm": pair_norm,
