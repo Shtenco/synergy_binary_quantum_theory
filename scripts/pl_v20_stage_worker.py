@@ -16,7 +16,7 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-from v21_checkpoint_guard import validate_physical_stage
+from v21_checkpoint_guard import BOUND, validate_physical_stage
 from v21_stage_logic import predecessor_ok
 
 JMAX2 = 7
@@ -179,7 +179,7 @@ def run(opts):
         previous_guard = validate_physical_stage(
             previous.get("diagnostics"), state, previous.get("stage"),
             previous.get("operator_signature"),
-            previous.get("guard", {}).get("threshold", 1e-8)
+            BOUND
         )
         if previous.get("guard") != previous_guard:
             raise ValueError("PREDECESSOR_GUARD_RECOMPUTATION_MISMATCH")
