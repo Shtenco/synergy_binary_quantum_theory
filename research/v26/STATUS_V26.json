@@ -1,0 +1,38 @@
+{
+  "schema": "BQG_V26_RESEARCH_STATUS",
+  "date": "2026-11-09",
+  "scope": "finite previously archived K5 charge and PL16 E-only plus synthetic precision tests",
+  "local_tests_reported": {
+    "V22": 57,
+    "V23": 31,
+    "V24": 49,
+    "V25": 12,
+    "V26": 45,
+    "total": 194
+  },
+  "github_compact_tests_count": 17,
+  "github_ci_verified": false,
+  "physical_results": {
+    "new_original_Lorentzian_V4_final_paths": 0,
+    "full_coherent_all_12_HE_charge": null,
+    "independent_V2_V4": null,
+    "full_HL": null,
+    "physical_joint_kernel": null,
+    "offshell_HDA_with_independent_D": null,
+    "continuum_limit": null,
+    "TT_pole": null
+  },
+  "finite_gates": {
+    "PL16_W17_dimension": 17,
+    "necessary_onehit_habitat_dimension_lower": 32,
+    "PL16_ten_EE_commutator_habitat_dimension": 27,
+    "conditional_error_model_eta_min": 3.0531133177191805e-16,
+    "conditional_absolute_charge_leak_triangle_upper_at_eta_min": 2.968242024292176e-7,
+    "unstable_orientation_ids": [
+      0,
+      3,
+      6
+    ]
+  },
+  "publication_note": "Original SU2 engine not run locally, user-provided archive tests do not establish physical proof."
+}
