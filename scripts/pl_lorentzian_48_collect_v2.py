@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse,hashlib,json,re,subprocess,traceback
 from pathlib import Path
+import numpy as np
 import pl_lorentzian_48_collect as BASE
 VERSION='tetrahedral-charged-volume-v2'
 
@@ -44,6 +45,24 @@ def validate_term_record(path,metadata,expected_source=0):
         raise RuntimeError('V2_TERM_NPZ_DIGEST_MISSING')
     if hashlib.sha256(npz_path.read_bytes()).hexdigest() != digest:
         raise RuntimeError('V2_TERM_NPZ_DIGEST_MISMATCH')
+    with np.load(npz_path,allow_pickle=False) as data:
+        if set(data.files) != {'spins','Ks','amp'}:
+            raise RuntimeError('V2_TERM_NPZ_BAD_KEYS')
+        spins,Ks,amp=data['spins'],data['Ks'],data['amp']
+        if (spins.shape != (len(amp),32) or Ks.shape != (len(amp),16)
+                or amp.ndim != 1 or spins.dtype.kind not in 'iu'
+                or Ks.dtype.kind not in 'iu' or amp.dtype.kind != 'c'
+                or not np.isfinite(amp).all()):
+            raise RuntimeError('V2_TERM_NPZ_BAD_SHAPE_DTYPE_OR_AMPLITUDE')
+        support=metadata.get('gauss_support')
+        if type(support) is not int or support != len(amp):
+            raise RuntimeError('V2_TERM_NPZ_SUPPORT_MISMATCH')
+        seen=set()
+        for spin_row,K_row in zip(spins,Ks):
+            key=tuple(map(int,spin_row)),tuple(map(int,K_row))
+            if key in seen:
+                raise RuntimeError('V2_TERM_NPZ_DUPLICATE_KEY')
+            seen.add(key)
     return mode,index,source
 
 
