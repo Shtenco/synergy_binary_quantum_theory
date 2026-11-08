@@ -1,21 +1,6 @@
 name: V21 C1 fail-closed guard tests
 
 on:
-  pull_request:
-    branches:
-      - research/bqg-v21-c1-checkpoint-repair-20261107
-    paths:
-      - "scripts/v21_checkpoint_guard.py"
-      - "scripts/v21_stage_logic.py"
-      - "scripts/pl_v20_stage_worker.py"
-      - "scripts/pl_v21_pair_collector.py"
-      - "scripts/v21_stage_attestation.py"
-      - "scripts/pl_lorentzian_triple_worker.py"
-      - "scripts/pl_lorentzian_group_worker_v2.py"
-      - "scripts/pl_lorentzian_single_worker_v2.py"
-      - "scripts/pl_lorentzian_48_collect_v2.py"
-      - "tests/test_v21_c1_checkpoint_repair.py"
-      - ".github/workflows/v21-c1-guard-tests.yml"
   push:
     branches:
       - fix/v21-c1-fail-closed-20261108
