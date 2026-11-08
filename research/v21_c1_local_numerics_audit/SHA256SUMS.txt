@@ -1,8 +1,10 @@
 # SHA256 manifest — BQG V21 C1 local synthetic audit (2026-11-08)
 
-- test_numerics.py: be02c28b53102fd4952c356dad90752d669c18b85155b17211bd3fccbd75eca0
-- test_metadata_guards.py: 3672ac51b36b5a7986bbfe631033b782d51a9569341cccdab3e895de0ce486ef
-- README.md: e87e33b28ba8db569e896a5cf12a951424b2d8c09f16290ef3d9478869f91cf6
-- RESULTS_2026-11-08.md: 34259e18f14b42057198e301fcd247f2bbca6b226dc968ce4da9a18b11ab5d1d
-- run.log: fba44c6b216bef5524eeced2372c99198c4945106d8a458ff9052b56fa94a2ac
-- local ZIP (chat artifact): ddcdec8dc80bb1b1fb591faa9f7e84a3429d4e9dc6c9e5eebea44f7d3c6214a6
+be02c28b53102fd4952c356dad90752d669c18b85155b17211bd3fccbd75eca0  test_numerics.py
+3672ac51b36b5a7986bbfe631033b782d51a9569341cccdab3e895de0ce486ef  test_metadata_guards.py
+e87e33b28ba8db569e896a5cf12a951424b2d8c09f16290ef3d9478869f91cf6  README.md
+34259e18f14b42057198e301fcd247f2bbca6b226dc968ce4da9a18b11ab5d1d  RESULTS_2026-11-08.md
+fba44c6b216bef5524eeced2372c99198c4945106d8a458ff9052b56fa94a2ac  run.log
+
+# Detached chat ZIP SHA256 (not included in its own archive)
+32be68fe092551311306d70eaf720e0971434d80ea39cfc0bc3b0a5f4c70a97e  bqg_local_audit.zip
