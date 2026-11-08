@@ -472,5 +472,59 @@ class V21C1Tests(unittest.TestCase):
 
 
 
+    def test_46_stage_number_must_be_integer_not_boolean(self):
+        with self.assertRaisesRegex(ValueError, "BAD_STAGE"):
+            validate_physical_stage(
+                {"CV_complete_basis_leakage": 0.0}, self.st, True,
+                ["CV", 4, 1, 0])
+
+    def test_47_operator_signature_indices_must_be_integer_not_boolean(self):
+        with self.assertRaisesRegex(ValueError, "BAD_OPERATOR_SIGNATURE"):
+            validate_physical_stage(
+                {"CV_complete_basis_leakage": 0.0}, self.st, 1,
+                ["CV", 4, True, 0])
+
+    def test_48_v2_input_indices_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            npz = root / "v2.npz"
+            np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            metadata = {
+                "passed": True, "mode": "forward", "index": False,
+                "operator_version": "tetrahedral-charged-volume-v2",
+                "source_node": 0, "Jmax": 3.5, "checks": {"ok": True},
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "c" * 64,
+            }
+            meta_path = root / "v2.json"
+            meta_path.write_text(json.dumps(metadata))
+            spec = {
+                "npz": str(npz), "sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
+                "metadata_json": str(meta_path),
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+            }
+            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_BAD_INTEGER_INDEX"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=0, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+    def test_49_attestation_stage_number_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            item = {}
+            for stage in (1, 2, 3):
+                prefix = root / f"stage{stage}"
+                digest = save_charged(prefix.with_suffix(".npz"), self.st)
+                meta = {"stage": (True if stage == 1 else stage), "passed": True,
+                        "npz_sha256": digest, "output_state_sha256": digest}
+                prefix.with_suffix(".json").write_text(json.dumps(meta))
+                item[f"stage{stage}"] = str(prefix)
+            with self.assertRaisesRegex(ValueError, "STAGE_NUMBER_MISMATCH_STAGE1"):
+                attest_manifest({"paths": [item]})
+
+
+
 if __name__ == "__main__":
     unittest.main()
