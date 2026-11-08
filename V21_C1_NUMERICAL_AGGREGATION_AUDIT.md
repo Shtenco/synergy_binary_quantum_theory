@@ -52,9 +52,9 @@ A source-level adversarial review found a Python/JSON type pitfall: bool is a su
 
 The V21 pair collector now rejects booleans and non-integer values in all three stage path metadata records for source_node, omit, cycle, Jmax2, and each of the three auxiliary indices. It also requires the three stage metadata records to describe exactly the same mode, order, and auxiliary tuple. Top-level manifest selectors are type-checked before use rather than coerced.
 
-Four path-metadata and three manifest-selector regressions were added (tests 50–56). A further guard now requires checkpoint state_support to be a nonnegative JSON integer rather than accepting bool/float equality with a support count; test 57 covers this. The stage-to-stage predecessor gate also requires a positive non-boolean integer support count before a worker may consume the prior checkpoint (test 58). The repository suite now contains 58 tests. These tests have not yet executed in CI: GitHub Actions runs 42470000116 (attempts 1 and 2), 42470158108, 42470338726, and 42470819556 failed before runner assignment (runner_id=0, empty step lists); the log endpoints are unavailable. This is an infrastructure-level no-execution result, not a test assertion failure.
+Four path-metadata and three manifest-selector regressions were added (tests 50–56). A further guard now requires checkpoint state_support to be a nonnegative JSON integer rather than accepting bool/float equality with a support count; test 57 covers this. The stage-to-stage predecessor gate also requires a positive non-boolean integer support count before a worker may consume the prior checkpoint (test 58). The repository suite now contains 72 tests. These tests have not yet executed in CI: GitHub Actions runs 42470000116 (attempts 1 and 2), 42470158108, 42470338726, and 42470819556 failed before runner assignment (runner_id=0, empty step lists); the log endpoints are unavailable. This is an infrastructure-level no-execution result, not a test assertion failure.
 
-The independent local synthetic harness remains separate: its 17/17 PASS result does not validate the production collector or replace the 58 repository tests.
+The independent local synthetic harness remains separate: its 32/32 PASS result does not validate the production collector or replace the 72 repository tests.
 ## 8. V2 48-term artifact binding and orbit validation
 
 The independent V2 path also needed a stricter artifact boundary. The V2 single-term and six-term group workers now write the SHA-256 of each exact NPZ beside its JSON metadata. The V2 48-term preflight requires that digest to match the sibling NPZ before the historical reducer can load it. It also validates the NPZ key set, fixed spin/K shapes, integer index dtypes, complex finite amplitude vector, unique state keys, and exact integer support count before the reducer can deserialize it.
@@ -63,6 +63,15 @@ Each V2 term record is now checked for literal boolean passed=true, an exact int
 
 The V21 collector additionally requires each independent V2 metadata npz_sha256 to equal the externally pinned NPZ SHA-256. This closes the metadata-to-state binding seam for the four references used in V21 comparison.
 
-Ten more regressions were added (tests 59–68): boolean passed/index/source/coefficient rejection, NPZ digest mismatch and schema rejection, duplicate-key rejection, support-count typing, canonical V2 term acceptance, and V21 metadata-to-NPZ digest binding. The repository test inventory is now 68 tests. These tests remain unexecuted because GitHub Actions jobs continue to terminate before runner assignment.
+Ten more regressions were added (tests 59–68): boolean passed/index/source/coefficient rejection, NPZ digest mismatch and schema rejection, duplicate-key rejection, support-count typing, canonical V2 term acceptance, and V21 metadata-to-NPZ digest binding. The repository test inventory is now 72 tests. These tests remain unexecuted because GitHub Actions jobs continue to terminate before runner assignment.
 
 These checks validate provenance, path identity, and file integrity. They do not regenerate the four V2 references, run the 48 physical V2 terms, or complete the 32-path V4 calculation.
+## 9. Exact V2 acceptance-check inventory and strict reader metadata
+
+A further source review found that checking only whether a V2 `checks` mapping was nonempty and all its supplied values were `true` was insufficient: a malformed artifact could omit a required acceptance criterion and still pass. The V2 production worker emits a fixed nine-key inventory. Both the 48-term preflight and the V21 independent-reference reader now require the exact key set and literal `true` for every value.
+
+The V21 reader also rejects string-valued `Jmax` (only a finite numeric 3.5 is accepted) and requires `gauss_support` to be a non-boolean integer exactly matching the number of NPZ amplitudes. Four regressions were added (tests 69–72), including rejection of incomplete check maps at both collector boundaries. The repository suite now contains 72 tests.
+
+A second review found a malformed indentation in the V2 six-term group worker's metadata rewrite block. This syntax error was corrected in `scripts/pl_lorentzian_group_worker_v2.py`; the workflow's `py_compile` step includes that module. However, GitHub Actions run 42495070894 also ended before exposing any job steps, so the compile and test commands are still not verified as executed.
+
+The local archive was rerun after updating its isolated V2 guard copy: 32/32 synthetic tests pass under Python 3.13.5. This remains a separate synthetic result, not a production-module import or the 72-test repository suite.
