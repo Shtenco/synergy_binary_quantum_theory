@@ -85,6 +85,10 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
         if (meta.get("passed") is not True or meta.get("mode") != expected_mode
                 or meta.get("operator_version") != "tetrahedral-charged-volume-v2"):
             raise ValueError("V2_PRIMITIVE_FAILED_OR_WRONG_MODE_OR_VERSION")
+        for field in ("index", "source_node"):
+            value = meta.get(field)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError("V2_PRIMITIVE_BAD_INTEGER_" + field.upper())
         if meta.get("index") != expected_index or meta.get("source_node") != expected_source:
             raise ValueError("V2_PRIMITIVE_WRONG_INPUT_OR_ORIENTATION")
         if (expected_source_commit is not None
