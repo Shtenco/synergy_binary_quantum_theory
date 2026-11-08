@@ -564,6 +564,27 @@ class V21C1Tests(unittest.TestCase):
         self.assertEqual(validate_manifest_indices(manifest), (0, 2, 1))
 
 
+    def test_57_state_support_metadata_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            prefix = Path(directory) / "stage"
+            digest = save_charged(prefix.with_suffix(".npz"), self.st)
+            diagnostics = {"CV_complete_basis_leakage": 0.0}
+            guard = validate_physical_stage(
+                diagnostics, self.st, 1, ["CV", 4, 1, 0])
+            meta = dict(self.one, passed=True, status="REAL_ORIGINAL_STAGE_ONLY",
+                        npz_sha256=digest, output_state_sha256=digest,
+                        state_support=True, stage=1, diagnostics=diagnostics,
+                        operator_signature=["CV", 4, 1, 0], guard=guard)
+            meta_path = prefix.with_suffix(".json")
+            meta_path.write_text(json.dumps(meta))
+            attestation = {
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+                "npz_sha256": digest,
+            }
+            with self.assertRaisesRegex(ValueError, "BAD_STATE_SUPPORT_METADATA"):
+                read_stage(prefix, attestation)
+
+
 
 if __name__ == "__main__":
     unittest.main()
