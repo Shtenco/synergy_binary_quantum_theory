@@ -76,7 +76,7 @@ def verify():
     C=v13["C3"]
     assert C["measured_commutator_rank"]==10
     smin=C["minimum_nonzero_commutator_singular"]
-    Fnorm=src["commutator_F_norm"]
+    Fnorm=float(src["commutator_F_norm"])
     smax=C["maximum_commutator_singular"]
     hda=[]
     for r in range(10):
