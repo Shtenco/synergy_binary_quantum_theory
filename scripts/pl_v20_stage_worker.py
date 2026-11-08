@@ -78,8 +78,10 @@ def load_charged(path, digest, n_edges=32, n_vertices=16):
         if not (s.shape == (len(a), n_edges)
                 and k.shape == (len(a), n_vertices)
                 and c.shape == (len(a), 4)
+                and s.dtype.kind in "iu" and k.dtype.kind in "iu"
+                and c.dtype.kind in "iu"
                 and a.ndim == 1 and a.dtype.kind == "c"):
-            raise ValueError("BAD_CHECKPOINT_SHAPE")
+            raise ValueError("BAD_CHECKPOINT_SHAPE_OR_INDEX_DTYPE")
         if not np.isfinite(a).all():
             raise ValueError("BAD_CHECKPOINT_AMPLITUDES")
         state = {}
