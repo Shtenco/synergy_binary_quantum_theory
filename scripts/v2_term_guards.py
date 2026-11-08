@@ -19,18 +19,17 @@ def validate_term_diagnostics(diag, accepted2, rejected2):
     for key in REQUIRED_TERM_DIAGNOSTICS:
         if key not in diag:
             raise ValueError("MISSING_TERM_DIAGNOSTIC_" + key.upper())
-        try:
-            value = float(diag[key])
-        except (TypeError, ValueError, OverflowError) as exc:
-            raise ValueError("INVALID_TERM_DIAGNOSTIC_" + key.upper()) from exc
+        raw = diag[key]
+        if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+            raise ValueError("INVALID_TERM_DIAGNOSTIC_" + key.upper())
+        value = float(raw)
         if not math.isfinite(value) or value < 0.0:
             raise ValueError("INVALID_TERM_DIAGNOSTIC_" + key.upper())
         values[key] = value
     for name, value in (("ACCEPTED2", accepted2), ("REJECTED2", rejected2)):
-        try:
-            numeric = float(value)
-        except (TypeError, ValueError, OverflowError) as exc:
-            raise ValueError("INVALID_PROJECTION_NORM_" + name) from exc
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("INVALID_PROJECTION_NORM_" + name)
+        numeric = float(value)
         if not math.isfinite(numeric) or numeric < 0.0:
             raise ValueError("INVALID_PROJECTION_NORM_" + name)
         values[name.lower()] = numeric
