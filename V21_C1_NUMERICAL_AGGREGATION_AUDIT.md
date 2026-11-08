@@ -46,3 +46,12 @@ The first pass inspected the legacy standalone `pl_lorentzian_triple_worker.py` 
 The repair now adds explicit source-commit and backend-SHA provenance to those production V2 workers and requires the V2 collector and V21 collector to verify those values. The legacy standalone worker is not a substitute for the 48-term production V2 artifacts. V2 references generated before the provenance fields were added remain historical/unattested until regenerated.
 
 The production V2 worker's projection tolerance is `W.TOL = 1e-10`, passed explicitly into `LGA.project_scalar_gauss`; it is not the module default `LGA.TOL = 1e-11`. V21 uses the same explicit production V2 tolerance for its matched comparison lane.
+## 7. Strict JSON integer metadata
+
+A source-level adversarial review found a Python/JSON type pitfall: bool is a subclass of int, and equality treats True == 1 and False == 0. Membership checks such as value in (0, 1) and integer coercion such as int(manifest["source_node"]) can therefore accept malformed boolean selectors.
+
+The V21 pair collector now rejects booleans and non-integer values in all three stage path metadata records for source_node, omit, cycle, Jmax2, and each of the three auxiliary indices. It also requires the three stage metadata records to describe exactly the same mode, order, and auxiliary tuple. Top-level manifest selectors are type-checked before use rather than coerced.
+
+Four path-metadata and three manifest-selector regressions were added (tests 50–56). The repository suite now contains 56 tests. These tests have not yet executed in CI: the latest GitHub Actions run failed before runner assignment (runner_id=0, empty step list), and the log endpoint is unavailable. This is an infrastructure-level no-execution result, not a test assertion failure.
+
+The independent local synthetic harness remains separate: its 17/17 PASS result does not validate the production collector or replace the 56 repository tests.
