@@ -148,6 +148,12 @@ class V2ArtifactGuardAudit(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE"):
                 validate_term_record(path, meta)
 
+    def test_incomplete_acceptance_check_inventory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            path, meta = self._record(d, checks={"finite_covariant_norm": True})
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE"):
+                validate_term_record(path, meta)
+
     def test_canonical_v2_artifact_is_accepted(self):
         with tempfile.TemporaryDirectory() as d:
             path, meta = self._record(d)
