@@ -42,9 +42,9 @@ def validate_term_record(path,metadata,expected_source=0):
             or float(jmax) != 3.5):
         raise RuntimeError('V2_TERM_BAD_CUTOFF')
     checks=metadata.get('checks')
-    if (not isinstance(checks,dict) or not checks
+    if (not isinstance(checks,dict) or set(checks) != REQUIRED_TERM_CHECKS
             or not all(value is True for value in checks.values())):
-        raise RuntimeError('V2_TERM_CHECKS_NOT_BOOLEAN_TRUE')
+        raise RuntimeError('V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE')
     npz_path=Path(path).with_suffix('.npz')
     digest=metadata.get('npz_sha256')
     if not _sha(digest) or not npz_path.is_file():
