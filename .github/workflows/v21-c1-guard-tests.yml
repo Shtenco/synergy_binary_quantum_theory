@@ -3,7 +3,7 @@ name: V21 C1 fail-closed guard tests
 on:
   pull_request:
     branches:
-      - fix/v21-c1-fail-closed-20261108
+      - research/bqg-v21-c1-checkpoint-repair-20261107
     paths:
       - "scripts/v21_checkpoint_guard.py"
       - "scripts/v21_stage_logic.py"
