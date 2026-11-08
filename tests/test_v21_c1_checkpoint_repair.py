@@ -609,7 +609,14 @@ class V21C1Tests(unittest.TestCase):
         metadata = {
             "passed": True, "mode": "forward", "index": 0, "source_node": 0,
             "PL_epsilon_coefficient": 1, "Jmax": 3.5, "gauss_support": 1,
-            "checks": {"finite": True},
+            "checks": {
+                "finite_covariant_norm": True, "finite_gauss_norm": True,
+                "finite_covariant_amplitudes": True, "finite_gauss_amplitudes": True,
+                "physical_basis_volume_leakage": True,
+                "scalar_closure_fraction_or_exact_zero": True,
+                "nonscalar_rejected_norm": True, "single_L_spin_wall": True,
+                "PL_orientation_coefficient": True,
+            },
             "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
         }
         metadata.update(overrides)
