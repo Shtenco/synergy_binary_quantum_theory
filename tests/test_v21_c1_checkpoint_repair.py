@@ -597,10 +597,11 @@ class V21C1Tests(unittest.TestCase):
     def _v2_term_record(self, root, **overrides):
         path = Path(root) / "term_forward_0.json"
         npz = path.with_suffix(".npz")
-        npz.write_bytes(b"synthetic-term-checkpoint")
+        np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                            Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
         metadata = {
             "passed": True, "mode": "forward", "index": 0, "source_node": 0,
-            "PL_epsilon_coefficient": 1, "Jmax": 3.5,
+            "PL_epsilon_coefficient": 1, "Jmax": 3.5, "gauss_support": 1,
             "checks": {"finite": True},
             "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
         }
@@ -670,6 +671,35 @@ class V21C1Tests(unittest.TestCase):
                 read_v2(spec, expected_source=0, expected_mode="forward",
                         expected_index=0, expected_source_commit="a" * 40,
                         expected_backend_sha="c" * 64)
+
+
+    def test_66_v2_term_npz_shape_and_dtype_are_checked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory)
+            npz = path.with_suffix(".npz")
+            np.savez_compressed(npz, spins=np.array([[1] * 31]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            meta["npz_sha256"] = hashlib.sha256(npz.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_NPZ_BAD_SHAPE_DTYPE_OR_AMPLITUDE"):
+                validate_term_record(path, meta)
+
+    def test_67_v2_term_npz_duplicate_keys_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory)
+            npz = path.with_suffix(".npz")
+            np.savez_compressed(npz, spins=np.array([[1] * 32, [1] * 32]),
+                                Ks=np.array([[0] * 16, [0] * 16]),
+                                amp=np.array([1 + 0j, 2 + 0j]))
+            meta["gauss_support"] = 2
+            meta["npz_sha256"] = hashlib.sha256(npz.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_NPZ_DUPLICATE_KEY"):
+                validate_term_record(path, meta)
+
+    def test_68_v2_term_support_must_be_integer_not_boolean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(directory, gauss_support=True)
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_NPZ_SUPPORT_MISMATCH"):
+                validate_term_record(path, meta)
 
 
 
