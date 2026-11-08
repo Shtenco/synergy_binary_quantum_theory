@@ -144,9 +144,9 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
                 or not math.isfinite(float(cutoff)) or float(cutoff) != 3.5):
             raise ValueError("V2_PRIMITIVE_WRONG_CUTOFF")
         checks = meta.get("checks")
-        if (not isinstance(checks, dict) or not checks
+        if (not isinstance(checks, dict) or set(checks) != REQUIRED_V2_CHECKS
                 or not all(value is True for value in checks.values())):
-            raise ValueError("V2_PRIMITIVE_FAILED_ACCEPTANCE")
+            raise ValueError("V2_PRIMITIVE_FAILED_ACCEPTANCE_OR_INCOMPLETE_CHECKS")
     with np.load(file, allow_pickle=False) as data:
         if set(data.files) != {"spins", "Ks", "amp"}:
             raise ValueError("INVALID_V2_FORMAT")
