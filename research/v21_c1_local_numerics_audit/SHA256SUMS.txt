@@ -1,7 +1,8 @@
 # SHA256 manifest — BQG V21 C1 local synthetic audit (2026-11-08)
 
 - test_numerics.py: be02c28b53102fd4952c356dad90752d669c18b85155b17211bd3fccbd75eca0
-- README.md: 71c43b0db6076fdc7f4e990dddf67deb73fe945ad2ef9a534c0f22e0cfc9f28b
-- RESULTS_2026-11-08.md: d40e0ad2f1f170d70ace5e54c1008634667564b868315729586dd225bb2e6db7
-- run.log: 974b8aeead278e69e5e342d436d863f6b26fb97f08c8b153d2d660850617c992
-- local ZIP (chat artifact): e87798f4d049607b41da9b0a0a93f40b9c612959079b63b11be2a5bb8a165422
+- test_metadata_guards.py: 3672ac51b36b5a7986bbfe631033b782d51a9569341cccdab3e895de0ce486ef
+- README.md: e87e33b28ba8db569e896a5cf12a951424b2d8c09f16290ef3d9478869f91cf6
+- RESULTS_2026-11-08.md: 34259e18f14b42057198e301fcd247f2bbca6b226dc968ce4da9a18b11ab5d1d
+- run.log: fba44c6b216bef5524eeced2372c99198c4945106d8a458ff9052b56fa94a2ac
+- local ZIP (chat artifact): dd cdec8dc80bb1b1fb591faa9f7e84a3429d4e9dc6c9e5eebea44f7d3c6214a6
