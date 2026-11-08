@@ -34,7 +34,10 @@ def read_stage(prefix, attestation):
     output_sha = meta.get("output_state_sha256")
     if output_sha != meta.get("npz_sha256"):
         raise ValueError("OUTPUT_CHECKPOINT_DIGEST_METADATA_MISMATCH")
-    if len(state) != meta.get("state_support"):
+    support = meta.get("state_support")
+    if type(support) is not int or support < 0:
+        raise ValueError("BAD_STATE_SUPPORT_METADATA")
+    if len(state) != support:
         raise ValueError("STATE_SUPPORT_MISMATCH")
     recomputed = validate_physical_stage(
         meta["diagnostics"], state, meta.get("stage"), signature, BOUND)
