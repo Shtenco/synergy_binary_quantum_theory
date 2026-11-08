@@ -702,6 +702,47 @@ class V21C1Tests(unittest.TestCase):
                 validate_term_record(path, meta)
 
 
+    def _attested_v2_read_spec(self, root, **overrides):
+        root = Path(root)
+        npz = root / "v2.npz"
+        np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                            Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+        digest = hashlib.sha256(npz.read_bytes()).hexdigest()
+        metadata = {
+            "passed": True, "mode": "forward", "index": 0,
+            "operator_version": "tetrahedral-charged-volume-v2",
+            "source_node": 0, "Jmax": 3.5, "gauss_support": 1,
+            "checks": {"ok": True}, "source_commit": "a" * 40,
+            "volume_backend": "tetrahedral-volume-v1",
+            "volume_backend_sha256": "c" * 64, "npz_sha256": digest,
+        }
+        metadata.update(overrides)
+        meta_path = root / "v2.json"
+        meta_path.write_text(json.dumps(metadata))
+        spec = {
+            "npz": str(npz), "sha256": digest,
+            "metadata_json": str(meta_path),
+            "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+        }
+        return spec
+
+    def test_69_v2_cutoff_must_be_numeric_not_string(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = self._attested_v2_read_spec(directory, Jmax="3.5")
+            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_WRONG_CUTOFF"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=0, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+    def test_70_v2_attested_support_must_be_exact_integer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = self._attested_v2_read_spec(directory, gauss_support=True)
+            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_SUPPORT_MISMATCH"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=0, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+
 
 if __name__ == "__main__":
     unittest.main()
