@@ -81,8 +81,12 @@ Review of the actual V2 group worker found another fail-open path: missing leaka
 
 Numeric metadata is type-checked before conversion: bool and numeric strings are rejected rather than silently treated as 1/0 or parsed numbers. The same strictness applies to `accepted2` and `rejected2`. The helper was separated from the heavy group-worker imports so the regression tests can import the guard without loading the full Lorentzian engine.
 
-Six new repository tests were added in tests 73–78: missing diagnostics, negative leakage, non-finite charge diagnostic, negative/non-finite projection norms, boolean diagnostic, numeric-string diagnostic, and boolean projection norm (the negative/non-finite projection cases are combined in one test). Repository suite count is 78.
+Six new repository tests were added in tests 73–78: missing diagnostics, negative leakage, non-finite charge diagnostic, negative/non-finite projection norms, boolean diagnostic, numeric-string diagnostic, and boolean projection norm (the negative/non-finite projection cases are combined in one test). Repository suite count is 79.
 
-The CI workflow now compiles both `v2_term_guards.py` and `pl_lorentzian_group_worker.py`, in addition to the V2 workers and collectors. It uses `ubuntu-latest` rather than Windows to reduce hosted-runner cost. Nevertheless, the latest Actions jobs still fail without any step or log records, so neither compilation nor the 78 repository tests are confirmed as executed.
+The CI workflow now compiles both `v2_term_guards.py` and `pl_lorentzian_group_worker.py`, in addition to the V2 workers and collectors. It uses `ubuntu-latest` rather than Windows to reduce hosted-runner cost. Nevertheless, the latest Actions jobs still fail without any step or log records, so neither compilation nor the 79 repository tests are confirmed as executed.
 
-The local synthetic archive now contains 40/40 passing checks, including five diagnostic-guard tests and three additional numeric-type edge cases. These are isolated copies of the small validator, not production module tests.
+The local synthetic archive now contains 41/41 passing checks, including five diagnostic-guard tests and three additional numeric-type edge cases. These are isolated copies of the small validator, not production module tests.
+
+## 11. Seeded randomized aggregation stress test
+
+A further production regression (test 79) permutes 80 complex state maps over five sparse keys and compares the exact aggregation against the baseline for 32 deterministic state-order and per-map insertion-order permutations. The local synthetic harness separately ran 1000 deterministic permutations using seed 20261108; all produced exactly equal result maps. This is a numerical reproducibility stress test, not a physical V4 calculation.
