@@ -643,6 +643,35 @@ class V21C1Tests(unittest.TestCase):
             self.assertEqual(validate_term_record(path, meta), ("forward", 0, 0))
 
 
+    def test_65_v2_metadata_must_bind_exact_npz_digest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            npz = root / "v2.npz"
+            np.savez_compressed(npz, spins=np.array([[1] * 32]),
+                                Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
+            digest = hashlib.sha256(npz.read_bytes()).hexdigest()
+            metadata = {
+                "passed": True, "mode": "forward", "index": 0,
+                "operator_version": "tetrahedral-charged-volume-v2",
+                "source_node": 0, "Jmax": 3.5, "checks": {"ok": True},
+                "source_commit": "a" * 40,
+                "volume_backend": "tetrahedral-volume-v1",
+                "volume_backend_sha256": "c" * 64,
+                "npz_sha256": "0" * 64,
+            }
+            meta_path = root / "v2.json"
+            meta_path.write_text(json.dumps(metadata))
+            spec = {
+                "npz": str(npz), "sha256": digest,
+                "metadata_json": str(meta_path),
+                "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+            }
+            with self.assertRaisesRegex(ValueError, "V2_METADATA_NPZ_DIGEST_MISMATCH"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=0, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+
 
 if __name__ == "__main__":
     unittest.main()
