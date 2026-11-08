@@ -97,15 +97,18 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
             raise ValueError("V2_WRONG_VOLUME_BACKEND")
         if float(meta.get("Jmax", -1)) != 3.5:
             raise ValueError("V2_PRIMITIVE_WRONG_CUTOFF")
-        if not meta.get("checks") or not all(meta["checks"].values()):
+        checks = meta.get("checks")
+        if (not isinstance(checks, dict) or not checks
+                or not all(value is True for value in checks.values())):
             raise ValueError("V2_PRIMITIVE_FAILED_ACCEPTANCE")
     with np.load(file, allow_pickle=False) as data:
         if set(data.files) != {"spins", "Ks", "amp"}:
             raise ValueError("INVALID_V2_FORMAT")
         spins, Ks, amp = data["spins"], data["Ks"], data["amp"]
         if (spins.shape != (len(amp), 32) or Ks.shape != (len(amp), 16)
+                or spins.dtype.kind not in "iu" or Ks.dtype.kind not in "iu"
                 or amp.ndim != 1 or amp.dtype.kind != "c" or not np.isfinite(amp).all()):
-            raise ValueError("V2_BAD_SHAPE_OR_NONFINITE")
+            raise ValueError("V2_BAD_SHAPE_DTYPE_OR_NONFINITE")
         result = {}
         for sp, ks, z in zip(spins, Ks, amp):
             key = tuple(map(int, sp)), tuple(map(int, ks))
