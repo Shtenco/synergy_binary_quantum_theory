@@ -764,6 +764,25 @@ class V21C1Tests(unittest.TestCase):
                         expected_backend_sha="c" * 64)
 
 
+    def test_71_v2_term_requires_complete_acceptance_check_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path, meta = self._v2_term_record(
+                directory, checks={"finite_covariant_norm": True})
+            with self.assertRaisesRegex(
+                    RuntimeError, "V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE"):
+                validate_term_record(path, meta)
+
+    def test_72_v2_attested_reader_requires_complete_acceptance_check_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = self._attested_v2_read_spec(
+                directory, checks={"finite_covariant_norm": True})
+            with self.assertRaisesRegex(
+                    ValueError, "V2_PRIMITIVE_FAILED_ACCEPTANCE_OR_INCOMPLETE_CHECKS"):
+                read_v2(spec, expected_source=0, expected_mode="forward",
+                        expected_index=0, expected_source_commit="a" * 40,
+                        expected_backend_sha="c" * 64)
+
+
 
 if __name__ == "__main__":
     unittest.main()
