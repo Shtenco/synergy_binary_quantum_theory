@@ -16,6 +16,7 @@ from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 from pl_lorentzian_48_collect_v2 import validate_term_record
+from pl_lorentzian_group_worker import validate_term_diagnostics
 
 
 class V21C1Tests(unittest.TestCase):
@@ -781,6 +782,38 @@ class V21C1Tests(unittest.TestCase):
                 read_v2(spec, expected_source=0, expected_mode="forward",
                         expected_index=0, expected_source_commit="a" * 40,
                         expected_backend_sha="c" * 64)
+
+
+    def test_73_v2_term_requires_all_physical_diagnostics(self):
+        with self.assertRaisesRegex(ValueError, "MISSING_TERM_DIAGNOSTIC_CV_COMPLETE_BASIS_LEAKAGE"):
+            validate_term_diagnostics({}, 1.0, 0.0)
+
+    def test_74_v2_term_rejects_negative_or_nonfinite_leakage(self):
+        good = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+        }
+        for key, bad in (("CV_complete_basis_leakage", -1e-9),
+                         ("CK_complete_charge_basis_leakage", float("nan"))):
+            with self.subTest(key=key, value=bad):
+                diag = dict(good, **{key: bad})
+                with self.assertRaisesRegex(ValueError, "INVALID_TERM_DIAGNOSTIC_"):
+                    validate_term_diagnostics(diag, 1.0, 0.0)
+
+    def test_75_v2_term_rejects_negative_or_nonfinite_projection_norms(self):
+        good = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+        }
+        for accepted, rejected in ((-1.0, 0.0), (1.0, -1.0),
+                                   (float("inf"), 0.0), (1.0, float("nan"))):
+            with self.subTest(accepted=accepted, rejected=rejected):
+                with self.assertRaisesRegex(ValueError, "INVALID_PROJECTION_NORM_"):
+                    validate_term_diagnostics(good, accepted, rejected)
 
 
 
