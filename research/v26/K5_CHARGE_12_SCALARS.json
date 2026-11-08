@@ -1,0 +1,102 @@
+{
+  "source_git_blob_sha": "078c311c74c0131d09ecacefe57b9eb7735b30ea",
+  "upstream_run": 42136642363,
+  "rows": [
+    {
+      "index": 0,
+      "raw2": 0,
+      "projected2": 5.889667896363758e-32,
+      "incoherent2": 0.45747859028324306,
+      "branch_count": 6144,
+      "stability": "CANCELLATION_DOMINATED_NOT_CERTIFIED"
+    },
+    {
+      "index": 1,
+      "raw2": 0.2880719102464116,
+      "projected2": 0.2880719102464117,
+      "incoherent2": 0.5162814259107774,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 2,
+      "raw2": 0.3047843701297579,
+      "projected2": 0.3047843701297579,
+      "incoherent2": 0.5336660897722763,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 3,
+      "raw2": 0,
+      "projected2": 6.321051845587835e-32,
+      "incoherent2": 0.4656904111884947,
+      "branch_count": 6144,
+      "stability": "CANCELLATION_DOMINATED_NOT_CERTIFIED"
+    },
+    {
+      "index": 4,
+      "raw2": 0.10822667038925252,
+      "projected2": 0.10822667038925253,
+      "incoherent2": 0.32181916651179077,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 5,
+      "raw2": 0.31402768949921445,
+      "projected2": 0.3140276894992148,
+      "incoherent2": 0.5236503214319458,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 6,
+      "raw2": 7.718124510711135e-19,
+      "projected2": 5.462260098408433e-32,
+      "incoherent2": 0.45531606300320676,
+      "branch_count": 6144,
+      "stability": "CANCELLATION_DOMINATED_NOT_CERTIFIED"
+    },
+    {
+      "index": 7,
+      "raw2": 0.110042250399475,
+      "projected2": 0.11004225039947499,
+      "incoherent2": 0.2952808808475979,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 8,
+      "raw2": 0.16837811051817203,
+      "projected2": 0.16837811051817222,
+      "incoherent2": 0.4818424728943138,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 9,
+      "raw2": 0.3610099324378871,
+      "projected2": 0.36100993243788715,
+      "incoherent2": 0.5547706014139067,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 10,
+      "raw2": 0.1033021669265251,
+      "projected2": 0.10330216692652522,
+      "incoherent2": 0.31618574604043054,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    },
+    {
+      "index": 11,
+      "raw2": 0.31190938780945376,
+      "projected2": 0.3119093878094544,
+      "incoherent2": 0.5279522742674269,
+      "branch_count": 6144,
+      "stability": "MEASURABLE_COHERENT_OUTPUT"
+    }
+  ]
+}
