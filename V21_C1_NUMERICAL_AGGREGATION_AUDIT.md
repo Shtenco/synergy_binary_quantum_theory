@@ -52,6 +52,6 @@ A source-level adversarial review found a Python/JSON type pitfall: bool is a su
 
 The V21 pair collector now rejects booleans and non-integer values in all three stage path metadata records for source_node, omit, cycle, Jmax2, and each of the three auxiliary indices. It also requires the three stage metadata records to describe exactly the same mode, order, and auxiliary tuple. Top-level manifest selectors are type-checked before use rather than coerced.
 
-Four path-metadata and three manifest-selector regressions were added (tests 50–56). The repository suite now contains 56 tests. These tests have not yet executed in CI: the latest GitHub Actions run failed before runner assignment (runner_id=0, empty step list), and the log endpoint is unavailable. This is an infrastructure-level no-execution result, not a test assertion failure.
+Four path-metadata and three manifest-selector regressions were added (tests 50–56). A further guard now requires checkpoint state_support to be a nonnegative JSON integer rather than accepting bool/float equality with a support count; test 57 covers this. The repository suite now contains 57 tests. These tests have not yet executed in CI: the latest GitHub Actions run failed before runner assignment (runner_id=0, empty step list), and the log endpoint is unavailable. This is an infrastructure-level no-execution result, not a test assertion failure.
 
 The independent local synthetic harness remains separate: its 17/17 PASS result does not validate the production collector or replace the 56 repository tests.
