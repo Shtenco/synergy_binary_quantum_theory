@@ -1,0 +1,173 @@
+{
+  "C3": {
+    "C3_commutators_retained_on_seed_by_W43": true,
+    "HDA_independent_D_not_measured": true,
+    "active_10_node_indices": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      12
+    ],
+    "max_direct_B_minus_A_minus_C_amplitude_defect": 1.1102230246251565e-15,
+    "maximum_commutator_singular": 3.170151511584989,
+    "measured_commutator_rank": 10,
+    "minimum_nonzero_commutator_singular": 1.324189319007516,
+    "one_hop_difference_conditional_gate": {
+      "dynamics_not_certified": "Only necessary cancellation condition; all Q=[S+R] amplitudes and independent D remain uncomputed",
+      "euclidean_commutator_combined_norm": 4.669546379737343,
+      "fraction_of_total_C_squared_norm": 0.37666508045113767,
+      "graph_distance_two_indices": [
+        3,
+        5,
+        6,
+        9,
+        10,
+        12
+      ],
+      "lapse_family": "N=delta_0, M=delta_r with graph distance two",
+      "minimum_required_even_Q_commutator_combined_norm_if_HDA_one_hop": 2.07535394654993,
+      "not_universal_continuum_HDA_test": true,
+      "one_hop_omega_is_zero": true
+    }
+  },
+  "Schur": {
+    "finite_z_odd_schur_formula": "-z*I+T†T/z",
+    "finite_z_resolvent_odd_error": 7.212096997059684e-17,
+    "warning": "Schur of measured E-only Galerkin ≠ Schur of full physical C=G+R; no ADM kinetic tensor",
+    "z": 0.25,
+    "zero_z_inversion_unsafe": true
+  },
+  "W43": {
+    "Hermiticity_defect_F": 0.0,
+    "Tgram_comparison_error_F": 4.02158307948e-14,
+    "chiral_compressed_dimension": 43,
+    "chirality_defect_F": 0.0,
+    "cross_run_defect_vector_in_odd_hilbert_norm": 2.01523824041828e-08,
+    "even_dim": 27,
+    "largest_nonzero_abs_eigen": 3.1266642323554468,
+    "negative_eigenvalues_ascending": [
+      -3.126664232355446,
+      -2.202986600860633,
+      -2.169479778517739,
+      -2.158637798462053,
+      -2.1442780534936428,
+      -2.144278052404694,
+      -2.1442780523405567,
+      -2.1442780502243712,
+      -2.1442780487833786,
+      -2.131456245582411,
+      -2.1234832595307145,
+      -2.109464050769509,
+      -2.1086605434935675,
+      -2.0571943509148483,
+      -2.0570173057830874,
+      -2.0081387278495715
+    ],
+    "nullity_compressed_E0": 11,
+    "odd_dim": 16,
+    "positive_eigenvalues_ascending": [
+      2.0081387278495693,
+      2.057017305783095,
+      2.057194350914846,
+      2.1086605434935675,
+      2.1094640507695095,
+      2.1234832595307145,
+      2.131456245582408,
+      2.1442780487833786,
+      2.144278050224373,
+      2.1442780523405562,
+      2.144278052404693,
+      2.1442780534936436,
+      2.158637798462053,
+      2.169479778517737,
+      2.2029866008606342,
+      3.1266642323554468
+    ],
+    "rank_compressed_E0": 32,
+    "seed_overlap_norm_with_chiral_kernel": 0.7269741390189574,
+    "seed_squared_projection_onto_chiral_11d_null": 0.5284913988023543,
+    "single_node_full_kernel_unknown": "11 zero eigenvalues are ONLY Galerkin zeros; full E0 action on depth2 even inputs is absent",
+    "smallest_nonzero_abs_eigen": 2.0081387278495693,
+    "source_Hermitian_cross_run_defect_max": 4.213106574724179e-08,
+    "unphysical_seed_resolvent_zero_pole_residue": 0.5284913988023543,
+    "zero_pole_interpretation": "Finite E-only Galerkin truncation pole, not a physical graviton or TT correlation",
+    "zero_pole_numeric_regulator_samples": {
+      "0.001": {
+        "imag": -3.8259753903219074e-32,
+        "real": 0.5284914472908849
+      },
+      "0.01": {
+        "imag": 8.474091755303838e-34,
+        "real": 0.5284962476057863
+      },
+      "0.1": {
+        "imag": -1.6370404527291506e-34,
+        "real": 0.5289757830689429
+      }
+    },
+    "zero_projector_idempotency_F": 1.4430490421606368e-15,
+    "zero_projector_rank_trace": 10.999999999999998
+  },
+  "checks": {
+    "16_positive_16_negative_11_zero": true,
+    "C1_full_V4_not_claimed": true,
+    "Tgram_matches_sparse_B_gram": true,
+    "artificial_zero_pole_residue_converges": true,
+    "complex_z_schur_exactness": true,
+    "crossrun_hermiticity_drift_exposed": true,
+    "distance_two_commutators_nonzero": true,
+    "hermitian_and_chiral": true,
+    "kernel_projector_valid": true,
+    "local_and_global_plaquette_masks_distinct": true,
+    "nonzero_spectrum_gap": true,
+    "original_v12_source_digests_verified": true,
+    "original_z2_solution_recovered": true,
+    "rank_even27_odd16": true,
+    "seed_zero_overlap_consistent": true,
+    "ten_independent_commutator_outputs": true,
+    "true_EE_commutator_identity": true
+  },
+  "explicit_not_measured": [
+    "full physical Lorentzian V4 state",
+    "independent V2/V4 pair equivalence",
+    "S and R action on W43",
+    "D generator",
+    "full off-shell HDA",
+    "physical TT propagator"
+  ],
+  "geometry": {
+    "E2_extra_outside_local_L": 132,
+    "all_pairs_even_grading": true,
+    "dual_edges": 32,
+    "global_E2_weight_census": {
+      "0": 1,
+      "6": 96,
+      "8": 180
+    },
+    "grading_mask_hex": "0x12a2a525",
+    "grading_weight": 12,
+    "incidence_rank": 17,
+    "local_lorentzian_mask_count": 145,
+    "local_lorentzian_weight_census": {
+      "0": 1,
+      "6": 96,
+      "8": 48
+    },
+    "plaquette_weight_census": {
+      "4": 24
+    },
+    "primal_edges": 24,
+    "tetrahedra": 16,
+    "unrestricted_E2_mask_count": 277
+  },
+  "passed": true,
+  "science_status": "REAL_E_ONLY_GALERKIN_THEOREM_WITH_CROSS_RUN_NUMERICAL_DRIFT",
+  "source": "Local v0.12 preserved GitHub Actions finite PL-S3 E and E2 columns",
+  "title": "BQG v0.13 real SU2 partial W43 chiral operator and reliable C1 collector audit"
+}
