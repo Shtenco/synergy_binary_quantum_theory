@@ -21,7 +21,7 @@ class V21C1Tests(unittest.TestCase):
     def setUp(self):
         self.st = {((1,) * 32, (0,) * 16, 0, 0, 1, 1): 1 + 2j}
         self.one = {
-            "stage": 1, "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY", "source_commit": "a" * 40,
+            "stage": 1, "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY", "state_support": 1, "source_commit": "a" * 40,
             "source_node": 0, "omit": 0, "cycle": 0, "mode": "forward",
             "order": "p", "aux": [0, 0, 1], "Jmax2": 7,
             "volume_backend": "prod", "volume_backend_sha256": "b" * 64,
@@ -583,6 +583,14 @@ class V21C1Tests(unittest.TestCase):
             }
             with self.assertRaisesRegex(ValueError, "BAD_STATE_SUPPORT_METADATA"):
                 read_stage(prefix, attestation)
+
+
+    def test_58_predecessor_support_must_be_positive_nonboolean_integer(self):
+        for invalid in (True, 1.0, 0, -1):
+            with self.subTest(state_support=invalid):
+                with self.assertRaisesRegex(ValueError, "BAD_PREDECESSOR_STATE_SUPPORT"):
+                    predecessor_ok(dict(self.one, state_support=invalid),
+                                   self.two, 2, ["CV", 4, 1, 0])
 
 
 
