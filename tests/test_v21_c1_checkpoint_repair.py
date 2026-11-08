@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+from random import Random
 import sys
 import tempfile
 import unittest
@@ -845,6 +846,26 @@ class V21C1Tests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "INVALID_PROJECTION_NORM_ACCEPTED2"):
             validate_term_diagnostics(diag, True, 0.0)
+
+
+    def test_79_exact_complex_aggregation_is_randomized_order_invariant(self):
+        rng = Random(20261108)
+        states = []
+        for _ in range(80):
+            state = {}
+            for key_index in range(5):
+                scale = 1e12 if rng.random() < 0.5 else 1.0
+                sign = -1.0 if rng.random() < 0.5 else 1.0
+                real = sign * scale + rng.choice((-1.0, 0.0, 1.0))
+                imag = rng.uniform(-2.0, 2.0)
+                state[((key_index,), (0,))] = complex(real, imag)
+            states.append(state)
+        expected = sum_states_exact(states)
+        for _ in range(32):
+            permuted = list(states)
+            rng.shuffle(permuted)
+            permuted = [dict(reversed(list(state.items()))) for state in permuted]
+            self.assertEqual(sum_states_exact(permuted), expected)
 
 
 
