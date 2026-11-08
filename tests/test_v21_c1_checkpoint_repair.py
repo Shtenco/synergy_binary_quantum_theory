@@ -450,7 +450,7 @@ class V21C1Tests(unittest.TestCase):
             metadata = {
                 "passed": True, "mode": "forward", "index": 3,
                 "operator_version": "tetrahedral-charged-volume-v2",
-                "source_node": 0, "Jmax": 3.5, "checks": {"ok": "yes"},
+                "source_node": 0, "Jmax": 3.5, "checks": {"ok": "yes"},\n                "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
                 "source_commit": "a" * 40,
                 "volume_backend": "tetrahedral-volume-v1",
                 "volume_backend_sha256": "c" * 64,
@@ -462,7 +462,7 @@ class V21C1Tests(unittest.TestCase):
                 "metadata_json": str(meta_path),
                 "metadata_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
             }
-            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_FAILED_ACCEPTANCE"):
+            with self.assertRaisesRegex(ValueError, "V2_PRIMITIVE_FAILED_ACCEPTANCE_OR_INCOMPLETE_CHECKS"):
                 read_v2(spec, expected_source=0, expected_mode="forward",
                         expected_index=3, expected_source_commit="a" * 40,
                         expected_backend_sha="c" * 64)
