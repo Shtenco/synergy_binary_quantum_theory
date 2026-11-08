@@ -4,8 +4,6 @@ from __future__ import annotations
 import argparse,hashlib,json,re,subprocess,traceback
 from pathlib import Path
 import pl_lorentzian_48_collect as BASE
-from pl_dual_complex import DualComplex,seed_16cell_boundary
-import pl_lorentzian_triple_worker as W
 VERSION='tetrahedral-charged-volume-v2'
 
 def _sha(value):
@@ -61,6 +59,8 @@ def preflight(root):
     if bad:
         raise RuntimeError(f'non-V2/superseded term metadata present: {bad[:8]}')
 
+    from pl_dual_complex import DualComplex,seed_16cell_boundary
+    import pl_lorentzian_triple_worker as W
     keys=[]
     commits=set()
     backend_ids=set()
