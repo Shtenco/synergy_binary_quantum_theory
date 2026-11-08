@@ -19,14 +19,17 @@ def validate_physical_stage(diag, state, stage, operator_signature,
                             threshold=BOUND):
     if not isinstance(diag, dict) or not isinstance(state, dict):
         raise ValueError("BAD_STAGE_OBJECT")
-    if stage not in (1, 2, 3):
+    if (not isinstance(stage, int) or isinstance(stage, bool)
+            or stage not in (1, 2, 3)):
         raise ValueError("BAD_STAGE")
     if (not isinstance(threshold, (int, float)) or isinstance(threshold, bool)
             or not math.isfinite(float(threshold)) or threshold <= 0):
         raise ValueError("BAD_THRESHOLD")
     if (not isinstance(operator_signature, (list, tuple))
             or len(operator_signature) != 4
-            or operator_signature[0] not in ("CV", "CK")):
+            or operator_signature[0] not in ("CV", "CK")
+            or any(not isinstance(value, int) or isinstance(value, bool)
+                   for value in operator_signature[1:])):
         raise ValueError("BAD_OPERATOR_SIGNATURE")
 
     for key, value in diag.items():
