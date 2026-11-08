@@ -378,7 +378,14 @@ class V21C1Tests(unittest.TestCase):
                 np.savez_compressed(npz, spins=np.array([[1] * 32]),
                                     Ks=np.array([[0] * 16]), amp=np.array([1 + 0j]))
                 metadata = {
-                    "passed": True, "checks": {"finite": True},
+                    "passed": True, "checks": {
+                "finite_covariant_norm": True, "finite_gauss_norm": True,
+                "finite_covariant_amplitudes": True, "finite_gauss_amplitudes": True,
+                "physical_basis_volume_leakage": True,
+                "scalar_closure_fraction_or_exact_zero": True,
+                "nonscalar_rejected_norm": True, "single_L_spin_wall": True,
+                "PL_orientation_coefficient": True,
+            },
                     "operator_version": "tetrahedral-charged-volume-v2",
                     "source_commit": "a" * 40,
                     "volume_backend": "tetrahedral-volume-v1",
@@ -712,7 +719,14 @@ class V21C1Tests(unittest.TestCase):
             "passed": True, "mode": "forward", "index": 0,
             "operator_version": "tetrahedral-charged-volume-v2",
             "source_node": 0, "Jmax": 3.5, "gauss_support": 1,
-            "checks": {"ok": True}, "source_commit": "a" * 40,
+            "checks": {
+                "finite_covariant_norm": True, "finite_gauss_norm": True,
+                "finite_covariant_amplitudes": True, "finite_gauss_amplitudes": True,
+                "physical_basis_volume_leakage": True,
+                "scalar_closure_fraction_or_exact_zero": True,
+                "nonscalar_rejected_norm": True, "single_L_spin_wall": True,
+                "PL_orientation_coefficient": True,
+            }, "source_commit": "a" * 40,
             "volume_backend": "tetrahedral-volume-v1",
             "volume_backend_sha256": "c" * 64, "npz_sha256": digest,
         }
