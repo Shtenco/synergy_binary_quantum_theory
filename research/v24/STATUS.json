@@ -1,0 +1,24 @@
+{
+  "version": "BQG_V24_FINITE_INDEX_CONSTRAINT_GATES",
+  "date": "2026-11-08",
+  "source_sha256": "950423420850c887f8facb747be66a44cc4ed007655c6b04aac8ce21b347dbc9",
+  "local_tests": {
+    "v22_archive": 57,
+    "v23_archive": 31,
+    "v24_new": 49,
+    "total": 137
+  },
+  "w5_exact_printed_eigen_intervals": 5,
+  "w17_compressed_chiral_index": 15,
+  "w43_compressed_chiral_index": 11,
+  "conditional_PL16_6_distance_two_min_nonEE_rank": 6,
+  "C1_original_v4_paths_new": 0,
+  "full_lorentzian_HL_computed": false,
+  "physical_kernel_proved": false,
+  "off_shell_HDA_proved": false,
+  "continuum_physical_projector_proved": false,
+  "interacting_TT_proved": false,
+  "scientific_scope": "Finite saved K5 W5 and distinct PL16 Euclidean-only data; genuine new Lorentzian SU2 amplitudes none",
+  "git_ci": "not verified; older Actions runs failed before runner start",
+  "local_package": "BQG_V24_FINITE_INDEX_HDA_CERTIFICATES.zip"
+}
