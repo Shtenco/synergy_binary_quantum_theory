@@ -1,7 +1,7 @@
-23 local synthetic tests PASS
+31 local synthetic tests PASS
 Python 3.13.5
-Runtime: 0.001 s
+Runtime: 0.012 s
 
-Scope: standalone synthetic numerical and metadata-guard primitives only.
-The metadata guard tests use isolated copies; they do not import production modules.
+Scope: standalone synthetic numerical, metadata-guard and V2 artifact-guard primitives only.
+The metadata and V2 artifact guard tests use isolated copies; they do not import production modules.
 Not repository tests; not production BQG computation.
