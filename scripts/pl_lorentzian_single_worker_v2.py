@@ -58,7 +58,9 @@ def run(mode,index,outdir,source=0):
     meta['execution_granularity']='one frozen ordered term per process'
     meta['execution_only_note']='No operator, coefficient, cutoff, pruning rule, orientation sign or hard threshold differs from preregistered V2.'
     outdir=Path(outdir);outdir.mkdir(parents=True,exist_ok=True)
-    W.save_state(outdir/f'term_{mode}_{index}.npz',state,len(G.EDGES),D.n_tets)
+    npz_path=outdir/f'term_{mode}_{index}.npz'
+    W.save_state(npz_path,state,len(G.EDGES),D.n_tets)
+    meta['npz_sha256']=hashlib.sha256(npz_path.read_bytes()).hexdigest()
     (outdir/f'term_{mode}_{index}.json').write_text(json.dumps(meta,indent=2,sort_keys=True)+'\n',encoding='utf-8')
     return meta
 
