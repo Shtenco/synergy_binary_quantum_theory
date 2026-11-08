@@ -25,7 +25,9 @@ def attest_manifest(manifest):
             meta_path = prefix.with_suffix(".json")
             npz_path = prefix.with_suffix(".npz")
             metadata = json.loads(meta_path.read_text("utf-8"))
-            if metadata.get("stage") != int(stage[-1]):
+            stage_number = metadata.get("stage")
+            if (not isinstance(stage_number, int) or isinstance(stage_number, bool)
+                    or stage_number != int(stage[-1])):
                 raise ValueError("STAGE_NUMBER_MISMATCH_" + stage.upper())
             if metadata.get("passed") is not True:
                 raise ValueError("STAGE_NOT_PASSED_" + stage.upper())
