@@ -1,2142 +1,492 @@
-# От бита к пространству-времени
 
-## Увлекательный урок «на пальцах»: как из двух вариантов могут вырасти пространство, время, гравитация, квантовая пена и зеркальная хиральность
+# Полное научное резюме БКГ, редакция 9 ноября 2026
 
-Представьте, что в самом глубоком слое природы **ещё нет привычного пространства**. Нет метров, координатной сетки, готового трёхмерного фона и даже заранее заданной геометрии.
+**Binary Quantum Gravity (BQG) / Бинарная квантовая гравитация** — конкретная исследовательская программа построения квантовой геометрии из дискретных информационных носителей. Она сочетает точную бинарную комбинаторику, симметрии S₄/S₅, SU(2) и Peter–Weyl-представления, graph-changing операторы, конечномерные гамильтоновы ограничения и методы исследования возможного континуального предела.
 
-Есть только элементарные различия: один переход может пойти одним способом или другим.
+> **Научное предупреждение.** БКГ пока **не является физически доказанной квантовой теорией гравитации**. Математические теоремы для выбранных конечных конструкций, успешные численные регрессии, условные EFT-мосты и программный код не заменяют доказанного физического пространства, полной лоренцевой HDA, безмассового взаимодействующего TT-полюса и проверки наблюдаемых. Актуальные флаги: \`structural_candidate_closed=false\`, \`physicalization_complete=false\`, \`experimentally_confirmed=false\`. Исторические заявления «core closed» сохраняются как история гипотез, но не являются текущим статусом.
 
-Самая маленькая единица такого различия — **бит**:
+## Навигация
 
-```text
-0   или   1
-```
+- [Короткое научное резюме и карта результатов](#краткая-научная-карта)
+- [Исследовательские открытия и теоремы](#ключевые-теоремы-и-вычислительные-результаты)
+- [Все 55 зарегистрированных структурных пунктов](#полный-каталог-утверждений-основной-ведомости)
+- [Девять обязательных физических условий](#девять-обязательных-физических-условий)
+- [Текущая научная ценность и возможные применения](#ценность-для-науки-и-новые-возможности)
+- [Воспроизводимость, исходники, лицензия](#воспроизводимость-и-права)
+- [Подробный исходный обзор всех направлений](#расширенный-обзор-базовых-ветвей)
 
-Главная идея проекта очень проста по формулировке и очень трудна по содержанию:
+## Краткая научная карта
 
-> если огромное число бинарных различий соединять по одному и тому же локальному правилу, может ли их коллективное поведение само стать пространством, временем и гравитацией?
+| Уровень | Что уже имеется | Чего не установлено |
+|---|---|---|
+| Бинарная геометрия | q=2-носитель, Walsh-тетраэдр, точная формула эффективной размерности | физическая универсальность и выбор природы |
+| Квантовая геометрия | локальные Gauss-носители, SU(2)/Peter–Weyl, конечная PL-склейка | единая непрерывная физическая метрика из динамики |
+| Канонические ограничения | точный master constraint и измеренные конечные Евклидовы HDA-карты | полный графоизменяющий лоренцев H и независимая off-shell HDA |
+| Носители и спектры | W5, W17, W43, S₄ multiplicity, depth-6 frontier | ненулевое совместное ядро полного H |
+| Уточнение | точные условные оценки, изометрии, intertwiner, chiral index | theory-specific физический continuum и rigging map |
+| TT/EFT | six-Wilson basis/extractor, свободные positive controls | физический взаимодействующий TT-полюс и собственные коэффициенты |
+| Физическая программа | определённый список критериев и внешних тестов | экспериментально проверенный новый закон природы |
 
-Мы не начинаем с уравнений Эйнштейна и не вставляем готовое четырёхмерное пространство в модель. Мы пытаемся пройти путь в обратную сторону:
+Числа основной ведомости: **23 proved, 21 tested_finite, 4 conditional, 4 external_extension, 2 experimental_test, 1 no_go** (всего 55). Это реестр **утверждений с разной областью действия**, а не 23 взаимосвязанные доказанные физические аксиомы и не процент закрытия природы. В отдельной ведомости физикализации **все 9 физических условий остаются open_physical**.
 
-```text
-бит
- -> локальная комбинаторика
- -> сфера вокруг точки
- -> глобальное 3D-пространство
- -> релятивистское время
- -> гладкий 4D-like предел
- -> квантовая SU(2)-геометрия
- -> spin-2 коллективный сектор
- -> гамильтонова гравитация
- -> HDA
- -> вакуумные флуктуации и квантовая пена
- -> зеркальная ориентация / chirality
- -> 16-cell mirror order
- -> здоровый mirror-force candidate
-```
+## Ключевые теоремы и вычислительные результаты
 
-Ниже — этот маршрут как последовательный урок: сначала школьная интуиция, затем строгая математика.
+### A. Вывод размерности 3 внутри замороженного бинарного правила
+
+Уравнение выбора целого q (для \`q≥1\`) \(q+2=2^q\) имеет решение \(q=2\). Выбранный закон роста:
+
+\[
+N_g=\frac{4\cdot8^g+10}{7},\qquad
+d_g=\log_2(N_g/N_{g-1})
+=3+\log_2\left(1-\frac{35}{16\cdot8^{g-1}+40}\right)
+\]
+
+даёт \(d_g<3\), монотонное возрастание и \(\lim_{g\to\infty}d_g=3\). Это **точная комбинаторная теорема**, но только для выбранной q=2-рекурсии. Она не доказывает, что любое информационное пространство обязано иметь три измерения. См. [исходное доказательство](Q2_DIMENSION3_FIXED_POINT_CLOSURE.md).
+
+### B. Тетраэдр без непрерывной подгонки
+
+Четыре состояния \(\mathbb Z_2^2\) через три нетривиальных Walsh-характера дают
+
+\[
+n_{ab}=\frac{1}{\sqrt3}((-1)^a,(-1)^b,(-1)^{a+b}),
+\quad
+\sum n_{ab}=0,\quad n_{ab}\cdot n_{cd}=-\tfrac13\;\;((a,b)\ne(c,d)),
+\]
+
+\[
+\sum_{ab}n_{ab}n_{ab}^{T}=\tfrac43 I_3.
+\]
+
+Полученный регулярный тетраэдр — математический факт кодирования. Через \(\rho_f=(I+n_f^i\sigma_i)/2\) он связывается с четырьмя face-qubit и Gauss-проекцией. Не следует автоматически называть такой носитель физическим пространством-временем. См. [Walsh bridge](MICRO_WALSH_QGEOM_BRIDGE.md).
+
+### C. Исправленный graph-link SU(2)-носитель
+
+Четыре активных бинарных состояния не реализуют endpoint-bi-doublet \((2,2)\) как необходимое звено. При добавлении уже допустимого no-link/\(j=0\) состояния получается точная структура \(\mathbf5=(\mathbf2,\mathbf2)\oplus(\mathbf1,\mathbf1)\). Это конкретное преодоление no-go четырёхсостоянийного представления, а не обнаружение новой фундаментальной частицы. См. [Q2 graph-link/Peter–Weyl](Q2_GRAPHLINK_PETER_WEYL_BRIDGE.md).
+
+### D. Глобальная геометрия и реконструкция Einstein-контроля
+
+Рассматривается граница четырёхмерного кросс-политопа: **16 тетраэдральных клеток, 32 общие грани, дуальный граф Q4**. Показана согласованная finite PL-склейка и отмена ориентированных потоков на общих гранях. Отдельные конечные положительные и отрицательные контроли реконструируют B/simplicity/Urbantke-метрику и соединение в заданной геометрии. Сама эта реконструкция **не доказывает** самостоятельный низкоэнергетический вывод ОТО из полного гравитационного гамильтониана. См. [единый Einstein-контроль](QUBIT_TO_EINSTEIN_END_TO_END.md).
+
+### E. Master constraint: точный математический принцип
+
+Для заданных конечных \(C_A\) и положительной матрицы \(G\):
+
+\[
+M_G=C^\dagger G C\ge0,\qquad
+\ker M_G=\bigcap_A\ker C_A.
+\]
+
+Значит точный нулевой спектральный проектор существует, если нулевой сектор присутствует. Но теорема **не гарантирует \(\ker C\ne0\)**, единственности континуального предела или физического времени. См. [master projector](MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md).
+
+### F. S₄ и TT: шесть физически независимых quartic структур
+
+В выбранном generic directed-momentum parity-even on-shell S₄ TT-квотиенте классифицировано **6 независимых структур**; зарегистрированный six-Wilson extractor имеет определитель \(1/699840000\), и первые три направления высокой симметрии имеют недостаточный ранг. Это теорема о базисе **в заявленном EFT-классе**, не вычисленные микроскопические гравитационно-волновые коэффициенты. Сами \((c_1,\dots,c_6)_{\rm IR}\) и один физический масштаб остаются открытыми.
+
+### G. Refinement, multiplicity и границы устойчивости
+
+В \(Inv_{SU(2)}(V_j^{\otimes4})\) multiplicity \(S_4[2,2]\) равно \(\lceil2j/3\rceil\), поэтому с \(j=2\) логический сектор уже не единственен. Изолированное простое собственное значение multiplicity-оператора и зазор \(\gamma\) позволяют устойчивый выбор канала; на подходящих областях проектор меняется не более порядка \(2\|E\|/\gamma\). Выведены оценки refinement residual, включая утечку из носителя, и допустимые SU(2)-intertwiner с ancilla spin-1/2. **Ни одна** из этих оценок сама не устанавливает theory-specific физическую последовательность уточнений с ненулевой предельной физической формой.
+
+### H. HDA: разница между finite relative-PASS и истинной алгеброй
+
+Полная HDA требует
+
+\[
+\frac{1}{i\hbar}[H[N],H[M]]
+\stackrel{?}{=}D[q^{ab}(N\partial_bM-M\partial_bN)]
+\]
+
+с независимо определённым \(D\), общей областью операторов и контролируемой регуляризацией. Старые двух- и трёхузловые тесты подтверждают определённые относительные закономерности, **не полное off-shell замыкание**. Относительная невязка может стремиться к 0 при ненулевой абсолютной невязке, если нормировка \(D\) расходится.
+
+Из настоящих E-only данных PL16 десять выходов \([E_0,E_r]\Omega\) имеют ранг 10 и \(\|C\|_F\simeq7.6084644\), \(\sigma_{\min}(C)\simeq1.3241893\). Для \(\mathcal R=(4/9)C+K\), если \(\mathrm{rank}K\le9\), \(\|\mathcal R\|_{\rm op}\ge(4/9)\sigma_{\min}(C)\simeq0.5885286\). Это **условное препятствие на одном конечном носителе**; реальный \(K\) со всеми S/R и независимым D не рассчитан.
+
+### I. W5, W17, W43: спектры, ядра и ложные нули
+
+Для сохранённой комплексной \(5\times5\) матрицы \(G_{EE}=A^\dagger A\) на K5/W5 получено \(\lambda_{\min}\approx32.4135645\), \(\sigma_{\min}(A)\approx5.6932912\). На **точных напечатанных десятичных элементах** построен рациональный сертификат \(\lambda_{\min}>32.41356\); для исходных SU(2)-коэффициентов требуется оценка их численной погрешности. Если \(H=-2A/3+Q\), появление хотя бы одного ядра на том же W5 требует \(\|Q\|\gtrsim3.795527\). Для ядра размерности \(k\) существуют более строгие операторные/Frobenius нижние оценки через первые \(k\) сингулярных чисел A.
+
+В PL16/W17 \(\mathrm{rank}(PE_0P)=2\) и \(\mathrm{rank}(E_0P)=17\), поэтому 15 нулей сжатия **не являются физическим ядром**. На \(K=\ker(PE_0P)\), \(\dim K=15\), полные выходы инъективно лежат вне W17; следовательно \(\dim \mathrm{span}(W17,E_0K)=32\). Из \(\sigma_{\min}(E_0P)\approx2.008139\) получена нижняя Frobenius-граница \(\|(I-P)E_0|_K\|_F\ge\sqrt{15}\cdot2.008139\).
+
+В W43 чётный/нечётный хиральный дисбаланс 27/16 математически заставляет минимум 11 нулей **сжатой** хиральной матрицы; измерено ровно 11 и 16 противоположных пар ненулевых собственных значений. Это важная отрицательная диагностика против ложного объявления физических состояний.
+
+**Не соединять численные нормы K5/W5 и PL16/W17/W43** без доказанного отображения между носителями.
+
+### J. Depth-6: большой вычислительный фронтир
+
+Gauss-допустимый набор — 264962 спиновых назначений; полная размерность \(\dim\mathcal H_{d=6}=3\,111\,637\). Конечные сертификаты зарегистрированы для \([5]\), \([1^5]\), \([4,1]\), \([2,1,1,1]\). Три S₅-представления \([3,2]\), \([3,1,1]\), \([2,2,1]\) имеют лишь структурное покрытие/частичные numerical witnesses и остаются открыты. Итог \(\ker M^{(d=6)}=\mathrm{span}\{|0\rangle\}\) **не доказан**. См. [depth6_frontier.json](depth6_frontier.json). Даже будущая finite theorem сама не даёт continuum gravity.
+
+### K. Зарядовая ковариантность и precision: реальная численная проблема
+
+Для одного выбранного K5 заряженного состояния сохранены 12 отдельных ориентированных \(H_E^{\rm sine}\)-расчётов (по 64 signed последовательности и 6144 примитивных ветвей). №0, №3, №6 помечены как cancellation dominated. В №6 отношение некогерентной квадрат-нормы к рассчитанной когерентной — порядка \(5.90\times10^{17}\); это не оценка ошибки, а показатель опасного сокращения. Одна лишь сумма скалярных норм разных ориентаций **не определяет** норму их комплексной когерентной суммы.
+
+В V26 реализован независимый прямой алгоритм высокоточного сложения полных тензорных комплексных компонент, с проверками на точных двоичных рациональных входах и fail-closed ограничением памяти. Он устраняет ложный нуль на специально построенных тестовых данных, **но не исправляет неизвестную погрешность исходных SU(2) элементов**. Оригинальные физические ориентации 0/3/6 новой программой пока не пересчитаны.
+
+### L. Лоренцев оператор: точная оставшаяся последовательность
+
+Одна физическая лоренцева пара на PL16 требует **32 финальных комплексных V4-пути**, получаемых из 12 уникальных первых, 32 вторых и 32 третьих действий. V20–V22 создали схемы сохраняемых checkpoint и V2/V4 comparisons; в них выявлены и исправлялись ошибки порядка/порогов/метаданных. Это программная инфраструктура, **не доказательство вычисленных физических амплитуд**. В V26 новыми реальными финальными путями остаются **0/32**.
+
+Необходимы: истинные 32/32 V4 и четыре независимо рассчитанных V2, комплексная сверка, затем физический \(H_L\) на общем носителе, \(H_E+H_L+R\), ненулевое совместное ядро и полный HDA-оператор с независимым D.
+
+### M. Континуальный предел и физический TT
+
+Разработана условная схема spectral projectors / rigging map при контролируемых master-зазорах, нормировках и вложениях. Эти условия ещё не выполнены для полного graph-changing семейства. Разделы о реляционной истории, \(Z[J]\to W[J]\to\Gamma\to K_{\rm TT}(\omega,k)\), свободном TT и Einstein–Hilbert являются математическими ориентирующими/положительными контролями. **Нельзя** приравнивать resolvent оператора ограничения к физическому гравитонному пропагатору без вывода времени и истории.
+
+### N. No-go и ограничения интерпретации
+
+В репозитории имеется строгое ограничение на получение канонического S₄-equivariant \(j=1/2\to j=1\) refinement с чистой четырёхкубитной Gauss-singlet ancilla. Отдельные проверки показывают, почему положительный Gram нельзя напрямую отождествить с неопределённым GR kinetic tensor и почему конечная положительная самосопряжённая точная Sp(2,R)-тройка не может быть нетривиальной. Эти результаты запрещают конкретные неудачные пути, **не всю БКГ**.
+
+## Ценность для науки и новые возможности
+
+**Что можно использовать уже сейчас, при соблюдении лицензии и воспроизводимости:**
+
+1. Компактные точные бинарные геометрические тестовые случаи для исследования связей информации, тетраэдральных потоков и квантовых носителей.
+2. Вычислительные критерии ложных нулевых мод Galerkin-сжатий (хиральный индекс, leakage и полная карта на входном пространстве).
+3. Проверяемые нижние границы норм и ранга необходимых компенсаторов в HDA, позволяющие отбрасывать заведомо недостаточные операторы до полного дорогого счёта.
+4. Численные инструменты SU(2) graph-changing composition, SHA-связанных checkpoint и устойчивого когерентного сложения при сильном сокращении.
+5. Схемы S₄-equivariant multiplicity selection / refinement и конкретные тестовые классы для представлений и tensor-network-style моделей.
+6. Полный базис шести TT-квартетных on-shell структур для заданного symmetry class, позволяющий строить будущие предрегистрационные протоколы.
+
+**Что может открыться только при успешном дальнейшем физическом выводе:**
+
+- вычисляемая теория динамического появления метрики из бинарного микроскопического состояния;
+- определённый континуальный физический проектор и взаимодействующий spin-2 сектор;
+- независимые коэффициенты поправок к гравитационно-волновой дисперсии/двойному лучепреломлению;
+- общие ограничения на космологию и линзирование, выведенные из одной физической history;
+- строгие тесты возможного информационного сектора / инфотона.
+
+Это **исследовательские перспективы**, не существующие приборы, открытые частицы, гарантированные будущие эффекты или подтверждённые космологические предсказания.
+
+### Что здесь действительно может быть новым
+
+Уже известные независимо формализмы (SU(2), Peter–Weyl, Regge, Plebanski, Urbantke, master constraints, Feshbach, TT EFT) не являются открытиями БКГ. Возможная оригинальность проекта — в **конкретном способе их интеграции** с выбранным q=2 route system, Walsh/PL носителем и набором вычислительных сертификатов, в том числе no-go и precision gates. Приоритет этих результатов относительно литературы пока не установлен независимым систематическим обзором и рецензированием. Научная новизна и физическая истинность — разные проверки.
+
+## Дорожная карта от результата к физической теории
+
+1. **C0: согласованная зарядовая ковариантность.** Высокоточно пересчитать 0/3/6 и когерентно сложить все 12 комплексных ориентаций до проекции, с доказанным бюджетом ошибки.
+2. **C1: настоящий Lorentzian.** Получить 32/32 финальных V4-пути с общей исходной SU(2)-базой, проверкой V2 и всех 12 физических пар без потери фаз.
+3. **C2: общее физическое ядро.** Построить полный \(H_E+H_L+R\) и master, учитывать полные выходы за W17/W43, доказать ненулевое ядро.
+4. **C3: полная HDA.** Вычислить EE, ES, SE, SS, ER, RE, SR, RS, RR и сравнить с независимо выведенным D в одинаковом носителе/регуляторе, с абсолютными и относительными невязками.
+5. **C4: continuum.** Контролировать refinement, домены, положительную физическую форму и независимость допустимых последовательностей.
+6. **C5: физическая история и TT.** Из той же физической меры получить \(Z[J]\), 1PI, положительный massless interacting TT-полюс и Einstein IR.
+7. **C6: слепой тест.** Заморозить шесть коэффициентов и общий физический масштаб до открытия независимых данных наблюдений.
+
+## Воспроизводимость и права
+
+- Канонические первичные реестры: [theory_gates.json](theory_gates.json), [physicalization_gates.json](physicalization_gates.json), [depth6_frontier.json](depth6_frontier.json), [THEORY_STATUS.md](THEORY_STATUS.md) и [AUDIT_CURRENT.md](AUDIT_CURRENT.md).
+- Код: [scripts](scripts), [tests](tests), [proof_tools](proof_tools); версии V12–V26 размещены в отдельных исследовательских ветках, а не обязательно в main. **Смешивать исходники и checkpoint из разных коммитов без проверки нельзя.**
+- Основные зависимости: \`numpy\`, \`scipy\`, \`sympy\`, \`networkx\`, \`pandas\`, \`torch\` из [requirements.txt](requirements.txt); \`mpmath\` дополнительно используется в V26.
+- Публичная доступность файлов не равна свободной лицензии: [LICENSE](LICENSE) — **PROPRIETARY / All Rights Reserved** (© 2026 Evgeniy Koshtenko), с сохранением отдельно применимых сторонних прав.
+- Научные результаты V22–V26 включают локальные программные регрессии, но эти счётчики не являются числом физических доказательств или независимых репликаций.
+- Для отчётности требуется отдельно хранить Git SHA, хеши исходных матриц, состав Hilbert-базиса, точные параметры \`Jmax\`, принятый volume backend, погрешности и классификацию выводов.
+
+### Гипотезы и специальные ветви
+
+Инфотон, дополнительные пространственные измерения, 2T, mirror/chirality, conditional mirror-force, информационная космология и сценарии quantum foam остаются **модельными исследовательскими расширениями**. Их отдельные положительные контроли не доказывают новые частицы, антигравитацию, вторую временную координату или измеримые эффекты. Для каждого требуется собственный оператор, физическая нормировка, контроль ghost/унитарности, причинности и экспериментальных ограничений.
+
+## Итог
+
+> **BQG уже имеет полезные математические и вычислительные результаты и конкретную проверяемую программу физикализации. Но пока нет полного вывода реальной квантовой гравитации из исходной бинарной модели.** Наиболее ценный следующий шаг — реальные полные комплексные Lorentzian/SU(2) амплитуды, совместное ядро и безаномальная HDA, а затем физическая история и TT-полюс.
 
 ---
 
-# Часть I. Как из битов появляется пространство
 
-## Урок 1. Один бит — это ещё не пространство
+## Полный каталог утверждений основной ведомости
 
-Бит умеет различать только два состояния.
+Этот перечень автоматически построен из сохранённого `theory_gates.json` ветки `main` на 09.11.2026. Метка `proved` относится **к заявленной области** соответствующего утверждения, а не к физической завершённости БКГ.
 
-Сам по себе он не знает, что такое «лево», «право», «далеко», «рядом» или «три измерения».
+### Доказанные в своей области утверждения — 23
 
-Поэтому первый настоящий вопрос звучит так:
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `DIM3_FIXED_POINT` | For the frozen q=2 refinement count N_g=(4*8^g+10)/7, the finite-step dimension increases monotonically from below to the exact fixed point d*=3. | `proved` |
+| `MICRO_WALSH_TETRA` | The three nontrivial Walsh characters of the frozen q=2 labels form an exact closed regular-tetrahedron flux frame and the declared qubit lift has exact Gauss-singlet geometry support. | `proved` |
+| `MICRO_GLOBAL_GLUE` | On the selected 16-cell PL completion, q=2 face carriers glue exactly with Q4 dual graph, alternating orientation and pairwise shared-face flux cancellation. | `proved` |
+| `Q2_GRAPHLINK_REP` | Four active q=2 states plus the graph-changing no-link singlet give the exact SO(5) (2,2)+(1,1) endpoint representation and factor the frozen q=2 Hamming adjacency through two graph-changing transporter steps. | `proved` |
+| `LOGICAL_METRIC_JACOBIAN` | The logical X/Z shape doublet maps with exact rank two to orthogonal equal-norm trace-free tangents of the reconstructed tetrahedral metric, with the same intrinsic Jacobian on both orientation branches. | `proved` |
+| `LHDA_COMP` | Under the explicitly stated fixed-cutoff habitat assumptions, composition gives cross/D=O(epsilon) and geometry-geometry/D=O(epsilon^2), reducing the full defect to the route defect in the regulator limit. | `proved` |
+| `DEWITT` | Within the declared local two-derivative canonical ansatz, the DeWitt/HDA signature and degree-counting results identify the GR kinetic structure required by first-class closure. | `proved` |
+| `S4_TT_QUARTIC` | The generic directed-momentum parity-even S4 quartic TT quotient has exactly six independent physical structures. | `proved` |
+| `SIX_WILSON_EXTRACTOR` | The frozen 100/110/111/120 extraction system has full rank six and exact determinant 1/699840000; the first three high-symmetry directions alone have rank five. | `proved` |
+| `NEAREST_BLOCK_S3` | A reciprocal face-sharing nearest-block transfer reduces to two symmetric 2x2 multiplicity matrices, giving six real amplitudes, and the regular tetrahedral stencil has the declared isotropic second and symmetry-resolved fourth moments. | `proved` |
+| `ON_SHELL_WILSON` | Four-derivative terms proportional to the leading TT equation of motion are field-redefinition redundant on shell, leaving the physical quartic pole quotient six-dimensional. | `proved` |
+| `FESHBACH` | For a specified Hermitian constraint operator and coarse carrier, the projected resolvent and K/A/B block-Krylov/Feshbach identities are exact. | `proved` |
+| `REAL_GW_MAP` | A frozen six-Wilson TT pole response maps algebraically to the two polarization eigenvalues, alpha=4 modified-dispersion coefficient, velocity and phase observables. | `proved` |
+| `REFINEMENT_PROJECTOR_STABILITY` | For finite positive master operators linked by an isometric refinement map, the physical-projector intertwining defect is bounded by the master intertwining residual divided by the minimum positive master gap. | `proved` |
+| `CANONICAL_REFINEMENT_RESIDUAL` | For the canonical S4 [2,2] j=1/2 to j=1 isometry W, the refinement residual splits exactly into orthogonal carrier-leakage and internal-dynamical-mismatch terms, R=L+WD with R^dag R=L^dag L+D^dag D. | `proved` |
+| `S4_LOGICAL_MULTIPLICITY` | For Inv_SU2(V_j^⊗4), the multiplicity of the S4 [2,2] irrep is ceil(2j/3); uniqueness holds only at j=1/2,1,3/2 and fails from j=2 onward. | `proved` |
+| `MULTIPLICITY_CHANNEL_SELECTION` | An isolated simple eigenchannel of the S4 multiplicity matrix A_j selects a unique S4-covariant logical copy; its projector is stable under perturbations with norm bounded by 2\|\|E\|\|/gamma. | `proved` |
+| `SCALE_FREE_REFINEMENT_RESIDUAL` | The physical-projector refinement defect is bounded by a scale-free master residual optimized over relative positive master normalization, yielding an invariant continuum diagnostic epsilon_sf. | `proved` |
+| `SELECTED_CHANNEL_INTERTWINER` | Once consecutive S4 [2,2] multiplicity channels are nondegenerately selected, the inter-scale S4 intertwiner is unique up to phase and can be constructed by group averaging plus normalization. | `proved` |
+| `CONSTRAINT_LEVEL_REFINEMENT_BOUND` | For matching Hermitian constraint families, one-hit constraint residuals bound the full master-refinement residual, reducing the expensive master comparison to single constraint applications. | `proved` |
+| `TWO_SIDED_HABITAT_REFINEMENT` | Graph-changing refinement requires compatible embeddings of the base carrier and the one-hit constraint habitat; forward and adjoint residuals give an exact bound on the full master residual. | `proved` |
+| `ANCILLA_PETER_WEYL_REFINEMENT` | No direct SU2 intertwiner V_j->V_{j+1/2} exists, but after adding one binary spin-1/2 strand the symmetric j+1/2 channel is selected by a unique SU2-equivariant inclusion/coisometry up to phase. | `proved` |
+| `MICROSCOPIC_BILINEAR_REFINEMENT` | The correct microscopic q2 refinement object is the unique bilinear S4 intertwiner [2,2]_old x [2,2]_anc -> [2,2]_coarse; the committed gate verifies exact covariance and rank two. | `proved` |
 
-> сколько независимых бинарных различий нужно локальному переходу, чтобы отношения между ними начали вести себя как геометрия?
+### Воспроизводимые конечномерные проверки — 21
 
-Обозначим это число через `q`.
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `BITQ2` | Frozen q=2 binary-route train/held-out dimensional and observer-smoothing controls pass in the declared protocol. | `tested_finite` |
+| `MAN3` | The selected q=2 cross-polytope PL completion is a recursive orientable 3-manifold completion with the declared link and homology checks. | `tested_finite` |
+| `Q2EIN` | A single-data-path Euclidean control reconstructs B, simplicity, Urbantke metric, compatible connection and Einstein curvature from face-qubit data, with an independent non-Einstein negative control. | `tested_finite` |
+| `L1_METRIC_PRECURSOR` | The certified L1 q4 six-edge S4 compression resolves E and T2 metric channels with lambda_E=1.1111917875584736, lambda_T2=1.0220278507464782, Delta_ET=0.08916393681199541 and mean-normalized relative_ET_split=0.08359564595312347. | `tested_finite` |
+| `REGGEEH` | The implemented Regge/Einstein-Hilbert refinement controls reproduce the declared finite continuum-scaling relations on their test geometries. | `tested_finite` |
+| `PLEBANSKI` | Finite simplicity/Urbantke/connection controls reconstruct the declared metric-sector quantities and distinguish Einstein from non-Einstein controls. | `tested_finite` |
+| `PWGEO` | Finite Peter-Weyl SU(2) geometry, Euclidean Hamiltonian, volume/extrinsic-curvature and covariant composition gates pass within the declared cutoff domains. | `tested_finite` |
+| `PW_MASTER32` | The nonlinear two-shell Peter-Weyl master normalization is applied on the complete 32D logical sector before environment tracing and its support-projector limit passes the finite control. | `tested_finite` |
+| `PW_HIGHER_SHELL` | The completed 32D higher-shell Lambda is positive and non-scalar with lambda_min=10.635759878291307, lambda_max=15.059927665966466 and block-Lanczos reconstruction at approximately 1e-13 residual scale. | `tested_finite` |
+| `PW_J1_S4` | The four-j=1 singlet space contains the multiplicity-one S4 [2,2] coarse doublet used as the representation-RG geometry carrier. | `tested_finite` |
+| `ROUTE` | Independent dual-cell sharp, path-diffeomorphism and route-normal HDA principal-symbol gates pass on the declared probes. | `tested_finite` |
+| `E2NODE` | The preregistered two-node Euclidean Peter-Weyl by route HDA regression exhibits the declared route, cross and pure-geometry scaling hierarchy without channel-dependent fitting. | `tested_finite` |
+| `HDA_3NODE` | The frozen three-node graph-changing Peter-Weyl by route regression retains j=0 outputs and reproduces route~epsilon, cross~epsilon, pure-geometry~epsilon^2 and joint~epsilon scaling across all node pairs. | `tested_finite` |
+| `LORENTZ` | The fixed real-beta Lorentzian coefficient control, spin-parity control and finite Peter-Weyl support bound pass through the declared regulator-safe window. | `tested_finite` |
+| `JOINT_FIXED_INPUT` | For the frozen all-j=1/2 finite HH family the exact hit-depth theorem makes truncation inactive above Jmax=5/2 in the Euclidean calculation while the measured joint HDA defect decreases as epsilon^1.00644; the declared Lorentzian support wall is Jmax=13/2. | `tested_finite` |
+| `REGGE_L6_HELDOUT` | The preregistered L=3,4,5 Regge TT residue continuation predicted the independently computed L=6 value with about 0.00714 percent relative error without refitting on L=6. | `tested_finite` |
+| `TT_PROPAGATOR` | The reduced TT positive-control kernel has a massless leading pole, positive residue and the expected inverse-momentum equal-time covariance, with exact bare lattice correction controls in the declared model. | `tested_finite` |
+| `TT_VACUUM` | The finite Gaussian TT vacuum two-point calculation reproduces the declared polarization covariance and equal-time scaling checks. | `tested_finite` |
+| `J2_MULTIPLICITY_VOLUME` | At j=2 the first multiplicity-two S4 [2,2] sector is resolved by the existing absolute-volume operator into two distinct doubly-degenerate multiplicity channels, giving a symmetry-compatible geometric multiplicity basis without fitted projectors. | `tested_finite` |
+| `J2_CONSTRAINT_MASTER_MULTIPLICITY` | The exact S4-twirled local Euclidean Peter-Weyl constraint master at j=2 has Schur form A2⊗I2 on the multiplicity-two [2,2] sector, with multiplicity eigenvalues 5.067680982953853 and 5.807713077901408 and gap 0.740032094947555; its preferred low channel is not aligned with the low-volume channel. | `tested_finite` |
+| `SERIAL_MULTIPLICITY_MASTER_RG` | The same S4-twirled local Euclidean Peter-Weyl constraint master was evaluated at j=2,5/2,3,7/2,4; the lowest [2,2] multiplicity channel remains isolated at all five scales, with explicit A_j spectra and positive gamma_j. | `tested_finite` |
 
-Для `q` бинарных выборов существует
+### Мосты с ещё не доказанными предпосылками — 4
 
-```text
-2^q
-```
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `PW_SYM_BLOCK_GROWTH` | Under the explicitly declared fully symmetric endpoint blocking, occupancy n=0..N supplies exactly the diagonal Peter-Weyl j=0,1/2,...,N/2 tower with correct dimensions and SU(2) Casimirs. | `conditional` |
+| `SCALE_MAP` | Given one common positive action/length normalization lambda_R_eff, the repository maps dimensionless TT coefficients to one common microscopic length and physical modified-dispersion units without per-observable fitting. | `conditional` |
+| `CORECERT` | The registered exact, finite-tested and explicitly conditional arrows compose into one internally closed candidate gravity package; conditional labels preserve their stated assumptions and do not imply experimental truth. | `conditional` |
+| `JHALF_J1_RETURN_RG` | A symmetry-matched 32D j=1/2 to j=1 Peter-Weyl return-kernel RG comparison is implemented using the exact S4 [2,2] embedding; numerical verdict is tracked separately until the workflow artifact is produced. | `conditional` |
 
-различных маршрутов.
+### Исследовательские расширения — 4
 
----
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `MICRO_DYNAMICAL_UNIQUENESS` | A stronger theorem could prove unique dynamical attraction from broad generic microscopic ensembles to the same Peter-Weyl geometric phase and blocking measure; this is not a blocker for the declared constructed candidate. | `external_extension` |
+| `HDA_ARBITRARY_GRAPH` | A theorem uniform over arbitrary graph families, arbitrary held-out habitats and the full Lorentzian graph-changing domain would strengthen universality beyond the finite declared HDA package. | `external_extension` |
+| `JOINT_UNBOUNDED_REFINEMENT` | A uniform theorem over unbounded graph size, collective spin and regulator refinement would strengthen the finite-word support and fixed-input joint-limit result. | `external_extension` |
+| `UNIVERSALITY` | Testing broad alternative microscopic ensembles, compatible blocking maps and larger graph families can measure the universality class of the closed candidate without redefining its current core. | `external_extension` |
 
-## Урок 2. Почему бинарное правило само выделяет q = 2
+### Протоколы экспериментов — 2
 
-У локальной route-оболочки есть два специальных полюса и `2^q` бинарных route-состояний.
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `BLIND_GW_TEST` | Freeze the theory commit, six-vector, common scale rule and likelihood before opening a held-out gravitational-wave dispersion/birefringence comparison. | `experimental_test` |
+| `INDEPENDENT_REPLICATION` | Independently written implementations should reproduce the key exact and numerical certificates without importing the implementation under test. | `experimental_test` |
 
-Каждый route отличается одним битом от `q` соседних routes и связан ещё с двумя полюсами. Поэтому степень route-вершины равна
+### Зарегистрированный отрицательный результат — 1
 
-```text
-q + 2
-```
+| Код доказательства/проверки | Зарегистрированное утверждение | Статус |
+|---|---|---|
+| `PURE_ANCILLA_NODE_REFINEMENT` | A fixed pure four-qubit Gauss-singlet ancilla cannot induce the canonical S4-equivariant j=1/2 to j=1 logical refinement map. | `no_go` |
 
-А каждый полюс связан со всеми `2^q` маршрутами:
+## Девять обязательных физических условий
 
-```text
-2^q
-```
-
-Если потребовать локальную однородность, получаем простое уравнение:
-
-```text
-q + 2 = 2^q
-```
-
-Для целых `q >= 1` единственное решение:
-
-```text
-q = 2
-```
-
-Проверка буквально школьная:
-
-```text
-q=1:  3 != 2
-q=2:  4  = 4
-q=3:  5 != 8
-q=4:  6 != 16
-...
-```
-
-После `q=2` экспонента `2^q` растёт быстрее линейной части `q+2`, поэтому нового пересечения уже не появляется.
-
-Это первый неожиданный момент проекта:
-
-> **мы не назначаем два бинарных направления вручную — минимальная однородная route-оболочка сама выбирает q=2.**
-
----
-
-## Урок 3. Из четырёх маршрутов возникает сфера вокруг точки
-
-При `q=2` routes имеют вид
-
-```text
-00, 01, 10, 11
-```
-
-Соединим маршруты, отличающиеся ровно одним битом. Получается квадрат `C4`.
-
-Теперь добавим два полюса, каждый из которых связан со всеми четырьмя route-состояниями.
-
-Получается граф октаэдра:
-
-```text
-Sigma Q2 = octahedral graph
-```
-
-У его поверхности:
-
-```text
-V = 6
-E = 12
-F = 8
-chi = 2
-```
-
-То есть это обычная сфера `S2`.
-
-Почему это так важно?
-
-В хорошем трёхмерном многообразии маленькая сфера вокруг обычной внутренней точки должна быть именно двумерной сферой `S2`.
-
-Значит локальный бинарный объект неожиданно имеет **правильную топологическую ссылку для точки трёхмерного пространства**.
-
-Есть ещё одна красивая связь: октаэдральный граф равен line graph тетраэдра `K4`. Его шесть вершин можно читать как шесть рёбер тетраэдра. Поэтому route-комбинаторика и минимальная тетраэдральная квантовая геометрия встречаются в одной шестисостоянийной структуре.
+| № | Условие | Необходимое свидетельство | Статус |
+|---|---|---|---|
+| 1 | `PHYSICAL_PROJECTOR_HISTORY` | Construct the theory-specific anomaly/refinement-compatible rigging-map or boundary-history amplitude from the actual graph-changing gravitational constraint family, with a derived clock only if the microscopic construction supplies one. | OPEN |
+| 2 | `CONNECTED_INTERBLOCK_HISTORY` | Compute connected multi-block/refinement metric cumulants with the theory-specific physical projector/history amplitude and remove vacuum-disconnected pieces through the generating functional. | OPEN |
+| 3 | `PHYSICAL_TT_KERNEL` | Derive the continuum/IR physical metric 1PI Hessian and its TT projection K_TT(omega,k) from the theory-specific physical generating functional, recovering the leading massless Einstein/Fierz-Pauli pole before reading quartic corrections. | OPEN |
+| 4 | `IR_SIX_VECTOR` | Freeze the six microscopic on-shell quartic TT Wilson coefficients from the derived physical TT pole without post-hoc reduction to a lower-dimensional ansatz. | OPEN |
+| 5 | `COMMON_SCALE_CALIBRATION` | After the dimensionless physical outputs are frozen, derive one common physical scale internally or calibrate exactly one declared datum and hold that scale fixed for all remaining observables. | OPEN |
+| 6 | `DYNAMICAL_MAXWELL_KERNEL` | Derive the theory-specific transverse photon 1PI kernel Gamma_AA^(2), Maxwell stiffness Z_A, massless deconfined photon pole and IR causal cone from the same connected physical history generating functional. | OPEN |
+| 7 | `PHYSICAL_BACKGROUND_COSMOLOGY` | Derive the physical homogeneous Gamma_FLRW and its rho_hist(a), p_hist(a), H(a) and w_hist(a) from the same connected history measure, with w inferred only after rho is derived. | OPEN |
+| 8 | `PHYSICAL_SCALAR_COSMOLOGY` | Derive the physical scalar metric kernel and stable Phi/Psi, growth, effective sound-speed and anisotropic-stress response from the same theory-specific effective action. | OPEN |
+| 9 | `LENSING_DYNAMICS_CLOSURE` | Show that one derived scalar metric response simultaneously predicts massive-body dynamics, weak/strong/CMB lensing, Fermat/time-delay phase and coherent gravitational wave-optics, with no independent lensing or interference potential. | OPEN |
 
 ---
 
-## Урок 4. Как локальные сферы складываются в глобальное 3D-пространство
+# Расширенный обзор базовых ветвей
 
-Локальной `S2` мало. Нужен глобальный объект без края, дыр и сингулярных швов.
+**Исследовательская программа. Актуальный обзор: 12 октября 2026 года.**
 
-Каноническое PL-завершение проекта — граница четырёхмерного cross-polytope, то есть **16-cell**.
+BQG исследует возможность построить геометрию пространства-времени и гравитацию из минимальных информационных состояний. Главные идеи проекта: бинарная микроструктура; первичность информации; возможная информационная мода — **инфотон**, связанная с гравитоном; гладкая макроскопическая геометрия как результат усреднения дискретной структуры. Дополнительные пространственные измерения и вторая временная координата рассматриваются как две отдельные гипотезы расширения.
 
-Для seed-комплекса:
+**Полный физический предел BQG не доказан.** Структурная замкнутость и физическая завершённость сейчас **false**. Девять обязательных физических условий остаются открытыми. В проекте есть точные математические результаты, конечные численные проверки, условные мосты и отрицательные результаты; ни один из этих классов не следует автоматически считать доказательством всей теории или экспериментальным подтверждением.
 
-```text
-(V,E,F,T) = (8,24,32,16)
-Betti     = (1,0,0,1)
-```
+## Как читать результаты
 
-Проверяются:
+| Метка | Значение |
+|---|---|
+| **Теорема** | Доказанное утверждение при явно заданных предпосылках и области определения |
+| **Конечная проверка** | Воспроизводимый расчёт на выбранном графе/срезе; не доказательство предела |
+| **Условный мост** | Заключение доказано, но необходимые предпосылки для BQG ещё открыты |
+| **Гипотеза** | Предложенная физическая конструкция, требующая вывода и проверки |
+| **Открыто** | Необходимое звено пока не установлено |
+| **Запрет / отрицательный результат** | Ограничение конкретного класса моделей; его область нельзя расширять без доказательства |
 
-- vertex links;
-- edge links;
-- face links;
-- двухсторонность треугольников;
-- ориентируемость;
-- `boundary^2 = 0`;
-- гомологии;
-- сохранение этих свойств после recursive PL refinement.
+Машинные реестры сохраняют собственный словарь статусов. Исторические декларации замкнутости не имеют приоритета над актуальными свидетельствами. [Текущий аудит](AUDIT_CURRENT.md), [физические условия](physicalization_gates.json), [структурные условия](theory_gates.json), [реестр глубины 6](depth6_frontier.json).
 
-На проверенных уровнях всё остаётся согласованным с `S3`.
+## Информация и бинарная микроструктура
 
-### Почему minimal+flag gluing почти неизбежно даёт именно 16-cell
+Исходная гипотеза: на минимальном уровне геометрия описывается информационными степенями свободы с бинарными состояниями. Классический бит, квантовый кубит, SU(2)-представление и физическая частица — разные понятия. Квантовое пространство состояний, правило вероятностей и динамику требуется задать или вывести; слово «бит» само по себе их не определяет.
 
-Если дополнительно использовать фактическую simplicial semantics проекта — **минимальные 8 вершин + flag/clique closure** — появляется короткое доказательство уникальности этой глобализации с точностью до переименования вершин.
+В проекте построены $q=2$ носители, Walsh-тетраэдральные структуры и конечные геометрические реализации. Dimension-three fixed point установлен внутри заданного правила построения; это не доказательство единственности трёхмерного пространства среди всех информационных систем. Бинарные носители являются основой конкретной конструкции, а не универсальным доказательством минимальности природы.
 
-Каждая вершина должна иметь октаэдральную ссылку, значит среди остальных семи вершин она соединена ровно с шестью.
+## От носителя к квантовой геометрии
 
-Следовательно у каждой вершины есть ровно **одна antipodal вершина**, с которой ребра нет.
+Локальная SU(2)-геометрия использует потоки, интертвинеры и Gauss-инвариантные состояния. Четыре spin-1/2 имеют двумерный синглетный сектор, который можно использовать как геометрический кубит. Peter–Weyl-представление, состояния отсутствующего ребра и graph-changing операции позволяют обсуждать изменение графов и спинов.
 
-Граф отсутствующих рёбер состоит из четырёх независимых пар:
+Глобальная PL-склейка и согласование общих граней — отдельные условия: локальная изометрия не гарантирует глобальной физической динамики. Дуальный граф Q4 границы четырёхмерного кросс-политопа описывает трёхмерную триангуляцию и сам не вводит дополнительную пространственную координату.
 
-```text
-4 antipodal pairs
-```
+Мосты «кубит → B-поле → Urbantke-метрика → Einstein», Plebanski/simplicity, Regge и Einstein–Hilbert дают геометрические ориентиры и условные конструкции. Полная гравитационная мера, физический выбор сектора и перенос от бинарных операторов остаются самостоятельными обязательствами.
 
-То есть 1-skeleton глобального комплекса — это
+## Ограничения и физическое пространство
 
-```text
-K8 minus 4 antipodal edges
-```
+Нужны единообразно определённые Gauss-, диффеоморфные и полные лоренцевы гамильтоновы ограничения, согласованные объём, ориентации, домены и порядок операторов. После изменения объёма необходимо пересчитывать оба $H_E$ и $H_L$, включая промежуточные состояния.
 
-А flag closure разрешает тетраэдр тогда и только тогда, когда мы выбираем по одной вершине из каждой antipodal пары.
+Основной вычислительный барьер: полные прямые и сопряжённые образы $H_L$, обе чётности, все узлы и выходные состояния. Частичные ветви и сжатые матрицы не являются полными колонками. Последовательные $H_0H_1$ и $H_1H_0$ нужно сравнивать с диффеоморфным ограничением при одинаковом размазывании.
 
-Число таких тетраэдров:
+Для конечного полного семейства с положительной метрикой ограничений точен результат
 
-```text
-2^4 = 16
-```
+$$
+\begin{aligned}
+M &= C_A^\dagger G^{AB}C_B \ge 0, \\
+\ker M &= \bigcap_A \ker C_A.
+\end{aligned}
+$$
 
-И снова получаем
+Он не гарантирует ненулевого совместного ядра и не выбирает предельное физическое скалярное произведение. Сжатие может создать ложные нули либо скрыть настоящий kernel. Алгебра деформаций гиперповерхности (HDA), структурные функции и отсутствие аномалий должны проверяться независимо.
 
-```text
-(V,E,F,T) = (8,24,32,16)
-```
+Глубина 6 остаётся открытой: необходимы свидетельства для [32], [311], [221]. Учёт фронтира и успешный структурный поиск не заменяют сертификат ранга.
 
-— границу 16-cell.
+## Ненулевой согласованный предел
 
-Точный scope результата важен: **minimal 8-vertex flag globalization уникальна**, но произвольная bare-causal nonflag completion без этих правил всё ещё может быть неединственной.
+Для спектральных проекторов и вложений тестового пространства рассматривается
 
----
+$$
+\begin{aligned}
+E_n &= \mathbf{1}_{[0,\delta_n]}(M_n), \\
+\eta_n(\psi,\phi)
+&= \frac{\langle E_n I_n\psi,E_n I_n\phi\rangle}{a_n}, \\
+\eta_n(\Omega,\Omega) &= 1.
+\end{aligned}
+$$
 
-## Урок 5. Но действительно ли пространство трёхмерное?
+Условный математический мост: если нормированные тестовые диагонали ограничены, master-форма контролирует каждое ограничение с коэффициентом $\kappa_{i,n}>0$, $\delta_n/\kappa_{i,n}\to0$ и нормированные ошибки переноса исчезают, то диагональный выбор подпоследовательности даёт ненулевую положительную предельную форму, обнуляющую ограничения. Факторизация по её нулю и завершение дают физическое гильбертово пространство.
 
-Топология говорит, как клетки склеены. Размерность требует отдельной проверки роста объёма и диффузии.
+**Это ещё не теорема физического предела BQG:** перечисленные предпосылки не установлены для её полного семейства. Единственность, независимость уточнений, домены и согласованность наблюдаемых требуют отдельных доказательств. Нормировка сама не даёт ограниченности; подпоследовательность сама не даёт единственности.
 
-Если пространство трёхмерное, число состояний внутри радиуса `r` должно масштабироваться как
+## Физическая история и наблюдаемые
 
-```text
-V(r) ~ r^3
-```
+Необходима связь физического пространства с реляционным временем и физическими амплитудами. Конечные Page–Wootters/history-модели показывают возможность условной эволюции, но их часы и гамильтонианы заданы извне.
 
-Frozen held-out результат:
+Рабочий порядок: физическая форма/история → источники Z[J] → W[J] → связные геометрические корреляторы → частотно-зависимый отклик и эффективное действие. Спектральный параметр master-оператора не является физической частотой, а его resolvent не становится гравитонным пропагатором без этого вывода.
 
-```text
-d_H = 2.999229782
-```
+## Дискретность, гладкость и синусы
 
-Независимая spectral-проверка пространственного среза:
+Аналогия со стеной формулируется через **разрешение**: микроскопическая структура сохраняется, но при $L\gg a$ становится неразличимой. Расстояние до наблюдателя может ухудшать разрешение; геометрия не обязана физически меняться от расстояния. Для масштабного предела необходимо окно $a\ll L\ll R$ и семейство уточняемых областей.
 
-```text
-d_s(slice) = 3.004393867
-```
+У свободного положительного соседнего решёточного гамильтониана
 
-Один измеритель смотрит на рост объёма, другой — на распространение диффузии, а оба дают практически три измерения.
+$$
+\begin{aligned}
+\omega_a^2(\mathbf{k})
+&= \frac{4c^2}{a^2}\sum_i \sin^2\!\left(\frac{k_i a}{2}\right), \\
+S_a(\mathbf{k}) &= \frac{\hbar}{2\omega_a(\mathbf{k})}.
+\end{aligned}
+$$
 
----
+Здесь S выведен из вакуума **этой выбранной модели**. Гауссово усреднение в бесконечном объёме даёт
 
-## Урок 6. Откуда появляется время
+$$
+V_a(L)=\frac{\hbar}{8\pi^2cL^2}
+\left[1+\frac{a^2}{40L^2}+\mathcal{O}\!\left(\frac{a^4}{L^4}\right)\right].
+$$
 
-Теперь системе нужно не только «быть пространством», но и меняться.
+Численная квадратура подтверждает ведущий коэффициент $1/40$. При $L=100a$ ведущая поправка дисперсии к гладкому результату — $2.5\times10^{-6}$. RMS убывает как $L^{-1}$. В другой, короткокоррелированной гауссовой модели RMS убывает как $L^{-3/2}$; различие определяется спектром, а не противоречием.
 
-Пусть пространственный масштаб увеличивается в `lambda_l` раз, а характерный временной масштаб — в `lambda_t` раз. Вводится динамический показатель `z`:
+Нулевая мода безмассового поля конечного тора не имеет нормируемого осцилляторного вакуума и должна обрабатываться явно. Квадрат центральной производной $\sin(ka)/a$ имеет дополнительные нули; это другой оператор, чем соседний $D^\dagger D$. При дискретном времени центральная схема требует контроля CFL, $c\Delta t/a\le1/\sqrt{3}$ в 3D.
 
-```text
-lambda_t ~ lambda_l^z
-```
+Сглаживание умножает коррелятор на аналитический фильтр: не создаёт отсутствующий spin-2 полюс и не исправляет отрицательную спектральную норму. [Полный вывод, код и результаты](docs/information_infoton_review/sine_correlations/DERIVATION_RU.md).
 
-Для релятивистского scaling нужен
+## Гравитон и гравитационный IR-предел
 
-```text
-z -> 1
-```
+Нужны положительный взаимодействующий TT-полюс, две физические поляризации в 3+1, диффеоморфные Ward-тождества, локальность и контролируемое разложение. Свободная TT/Fock-модель является ориентиром, а не результатом полной BQG-истории. Внутренний SU(2)-спин не равен автоматически пространственно-временному спину.
 
-Frozen тест даёт
+При доказанных предпосылках локальной метрической динамики ведущая двухпроизводная часть классифицируется как Einstein–Hilbert, с возможным космологическим членом и выбранной нормировкой. Это условное утверждение о ведущем IR-секторе. Оно не устанавливает всю UV-теорию, высшие вершины, материю и космологию.
 
-```text
-z = 0.998281156
-```
+## Инфотон и его связь с гравитоном
 
-То есть пространство и время масштабируются почти одинаково.
+Инфотон — предложенная информационная степень свободы. Пока не определено, является ли он фундаментальным регистром, коллективной модой или независимой частицей. Предложение о его первичности сохраняется как гипотеза; название не является доказательством существования.
 
-Добавляя такое causal/history направление к трёхмерному spatial slice, получаем spectral dimension истории
+Историческая ветка инфотона восстановлена для аудита. Четыре spin-1/2 дают $2\times(j=0)\oplus3\times(j=1)\oplus1\times(j=2)$, но локальные $j=0$ и $j=2$ ортогональны. Старые экстремальные состояния $j=2$ не являются Gauss-синглетами. Это препятствие конкретному локальному отождествлению, а не запрет коллективного гравитона на многих узлах.
 
-```text
-d_s(history) ~ 4.004393867
-```
+Физический критерий связи: вывести из одной истории матрицу корреляторов I и $h_{\mathrm{TT}}$; полюсы и ранг их остатков различат два оператора одной моды и дополнительную частицу. Простой постоянный массовый mixing с матрицей $\begin{pmatrix}0 & g \\ g & M^2\end{pmatrix}$ и положительной кинетикой при $g\ne0$ нестабилен ($\det=-g^2$). Стресс-тензорные, производные и gauge-завершённые взаимодействия требуют отдельного анализа. Модельный Mathieu-резонанс воспроизведён, но его связь и частота не выведены из BQG.
 
-И первая большая цепочка замыкается:
+[Обзор инфотона и восстановленные расчёты](docs/information_infoton_review/REVIEW_RU.md).
 
-```text
-binary routes
- -> q=2
- -> local S2
- -> global PL S3
- -> d_slice ~ 3
- -> z ~ 1
- -> d_history ~ 4
-```
+## Дополнительные измерения и 2T
 
----
+**Пространственная ветка:** требуется вывести координаты, компактность/радиус, спектр дополнительных мод, физические операторы и амплитуды переходов. Безмассовый spin-2 в $D=4,5,6$ имеет соответственно 2,5,9 поляризаций. Дополнительные низкоэнергетические векторные/скалярные моды нужно учесть либо подавить.
 
-# Часть II. Почему дискретный мир может выглядеть гладким
+**2T-ветка:** требуется родительская система, полные Sp(2,R)-ограничения, устранение отрицательных норм и положительная физическая редукция. Конечная положительная система с точными самосопряжёнными Sp(2,R)-коммутаторами допускает только нулевую тройку: цикличность $\mathrm{Tr}(Q_{11}[Q_{11},Q_{12}])$ и $[Q_{11},Q_{12}]=2i\hbar Q_{11}$ дают $\mathrm{Tr}(Q_{11}^2)=0$. Бесконечномерный предел требует контроля областей определения. Неэрмитова конечная матричная sl2-реализация не является положительной квантовой 2T-физикой.
 
-## Урок 7. Пиксели пространства исчезают при coarse-graining
+Калибровочные 2T shadows не равнозначны наблюдаемому путешествию во вторую временную координату. Обе гипотезы остаются открытыми расширениями, а не доказанными свойствами core.
 
-Представьте цифровую фотографию. Вплотную видны отдельные пиксели. Издалека — гладкая поверхность.
+## Информационная геометрия, причинность и уточнение
 
-Так же и здесь: макроскопический наблюдатель не различает отдельные микросостояния, а видит блоки размера `b`.
+В проекте исследуются entangled gluing, XX/free-fermion модели, критические и gapped режимы, QFI-проводимость, метрика сопротивлений, spectral dimension и топологические различители. Ориентированный объём и точные результаты ограничены заданными носителями. Скалярная mutual information не задаёт универсально геометрическое расстояние; отрицательные topology-free тесты сохраняются.
 
-В вычислительной модели дефекты гладкой геометрии убывают почти идеальными степенями:
+Динамическое расстояние, operator front и propagation cone установлены в конкретных моделях. Один физический projector не определяет причинность: нужна динамика. Multiplicity-space selection, S4-каналы, ancilla и межмасштабные карты исследуют уточнение. Невозможность выбранного прямого spin-refinement или pure-ancilla ansatz не является запретом всех уточнений. [Предыдущий подробный обзор](docs/archive/README_BEFORE_SYNTHESIS_2026-10-12.md) сохраняет эти направления и их источники; исторические статусы нужно читать вместе с текущим аудитом.
 
-```text
-delta g       ~ b^-2.001707
-grad(delta g) ~ b^-3.001458
-delta R       ~ b^-4.000524
-simplicity    ~ b^-1.994838
-Urbantke g    ~ b^-2.019746
-```
+## Компактные голономии, материя и космология
 
-То есть крупномасштабная гладкость не вводится командой «сделать пространство гладким». Она возникает потому, что множество микроскопических различий взаимно усредняются.
+Семь загруженных пакетов включены с отдельными пространствами имён: общие A1–A32, LIN23, GRAPH24 и STAGE2. Поздний номер версии не означает, что одна модель включает другую. Синусные операторы, конечные gauge-модели, topology/chiral/quantum проверки и классические ADM-ориентиры полезны для независимых контролей.
 
-Но здесь появляется новый вопрос:
+В reduced holonomy ansatz $f_1=\sin^2(\delta K)/\delta^2$ согласование даёт $\beta=\cos(2\delta K)$: знак может меняться. Синусы сами не гарантируют лоренцеву гиперболичность. A48 MODEL_FAIL сохраняется; отсутствующие зависимости и ошибочные критерии старых артефактов перечислены в [интеграционном отчёте](docs/compact_holonomies/INTEGRATION_RU.md), [реестре](docs/compact_holonomies/EVIDENCE_REGISTRY.json).
 
-> если средняя геометрия становится гладкой, обязаны ли микроскопические флуктуации исчезнуть полностью?
+Maxwell/фотон, lensing, фоновая и скалярная космология, чёрные дыры и shadow-action остаются отдельными физическими задачами. Конформный/скалярный obstruction не снимается подстановкой фонового FRW. Шесть квартовых TT-наблюдаемых и observable translator не заменяют физический вывод коэффициентов.
 
-Нет.
+c, ℏ, G задают планковские масштабы; подстановка измеренного G калибрует действие, но не доказывает его происхождение. Безразмерную α нельзя вывести сменой единиц. Информационно-графовые формулы масс/констант и «слепые» предсказания остаются отдельными гипотезами: нужны размерностная нормировка, независимая фиксация параметров и заранее заданные критерии проверки. Совпадения и подгонки не повышают статусы BQG.
 
-Можно иметь одновременно
+## Пять маршрутов к доказательству
 
-```text
-<delta g> = 0
-<delta g^2> > 0
-```
+| Маршрут | Что требуется установить | Роль |
+|---|---|---|
+| **1. Спектральное физическое пространство** | Полные ограничения, нормированные переносы, ненулевой и согласованный предел | Первая основная преграда |
+| **2. Каноническая HDA** | Настоящие последовательные действия, структурные функции, отсутствие аномалий | Независимый контроль динамики |
+| **3. Holonomy/BF/Plebanski/Regge** | Simplicity, мера, физический сектор и предел | Альтернативная конструкция |
+| **4. История и масштабные корреляции** | Физическое состояние/время, связные корреляторы, locality и уточнение | Мост от пространства к наблюдаемой динамике |
+| **5. Interacting TT и Ward** | Положительный spin-2, вершины, симметрия и ведущий локальный IR action | Условный выход к Einstein–Hilbert |
 
-И это уже дверь к квантовой пене.
+Наиболее обоснованная последовательность **1 → 4 → 5**, с маршрутом 2 как независимой проверкой. Ранжирование основано на зависимостях и уже имеющихся конструкциях; доказанного сравнения общего времени нет. Дополнительные измерения и инфотон не должны подменять основные условия.
 
----
+[Подробный план с критериями завершения и остановки](PROOF_ROADMAP_RU.md).
 
-## Урок 8. Квантовая пена: не «хаос пространства», а флуктуации вокруг гладкого среднего
+## Свежая проверка и воспроизводимость
 
-Правильная картинка выглядит так:
+Пересмотр доступной истории: 121 ветка, 111 различных голов, 1969 достижимых коммитов, 2073 уникальных файловых blob. Все удалённые головы совпали с локальными remote refs. Из 756 исторических Python-версий 755 проходят AST; ошибка одной старой версии не означает ошибку текущего файла. Это статический учёт, не полное повторение всех архивных вычислений.
 
-```text
-smooth mean geometry
-+ zero-mean quantum fluctuations
-= microscopic quantum foam
-```
+Пять геометрических/квантовых core-скриптов в целевом повторе завершились с exit=0. Первоначальный отказ `k5_quantum_geometry_bridge` объяснён ложным ростом ранга при абсолютном пороге на ненормированных степенях Wilson-матрицы. Исправление использует нормированные столбцы и относительный SVD-порог: конечный запуск теперь имеет `passed=true`, ранг 1 и остаток $1/91$. Это floating-point контроль, не точный сертификат ранга и не доказательство BQG.
 
-Важное различие:
+[Последнее численное продолжение и переносимые данные](docs/numerical_continuation/README_RU.md): завершены 26/26 внутренних HE-образов и 16/16 компонент CK одного нового входа. Выбранный слабый обратный элемент согласован с прежним сопряжённым элементом с расхождением около $1.94\times10^{-16}$. Это проверка при primitive-adjoint identities, а не полная прямая reverse-колонка. Для второй стадии подготовлены 96 входов; вычислены 50 из 352 канонических HE-входов её прямой части. Полный бюджет ошибок и физический предел остаются открытыми.
 
-- **бит / qubit** задаёт дискретное внутреннее различие или поляризацию;
-- **bosonic oscillator / Fock sector** задаёт амплитуду и число квантов;
-- вакуум может иметь нулевое среднее поле, но ненулевую дисперсию.
-
-Поэтому «пространство кипит» не означает, что макроскопическая метрика хаотична. Микроскопические fluctuations могут быть сильными, но коррелированными так, что на больших масштабах почти исчезают.
-
-### Условное новое предсказание из уже измеренного smoothing exponent
-
-Если — и это дополнительная физическая гипотеза — измеренный закон
-
-```text
-delta g_RMS ~ R^-2.001707
-```
-
-интерпретировать именно как RMS стационарной трёхмерной квантовой metric fluctuation, а её low-k spectrum записать как
-
-```text
-P_delta_g(k) ~ k^n
-```
-
-то в трёх пространственных измерениях
-
-```text
-RMS ~ R^-(3+n)/2
-```
-
-и поэтому
-
-```text
-n = 2*2.001707 - 3
-  = 1.003414
-```
-
-Получается кандидатное предсказание:
-
-```text
-P_foam(k) ~ k^1.003414      as k -> 0
-```
-
-Это **не белый шум**. Для white noise было бы `n=0` и RMS exponent `3/2`.
-
-Если эта интерпретация подтвердится прямым вычислением quantum two-point function, вакуум проекта окажется hyperuniform-like: микроскопические флуктуации есть, но длинноволновый шум сильно подавлен.
-
-Именно так квантовая пена может быть бурной на микроуровне и почти идеально гладкой на больших масштабах.
-
-Этот вывод в проекте имеет статус **conditional prediction**, а не доказанного свойства физического вакуума.
-
----
-
-# Часть III. Как из qubits появляется квантовая геометрия и spin-2
-
-## Урок 9. Где появляется SU(2)-геометрия
-
-Гравитации недостаточно знать только граф связей. Нужны площади, объёмы, ориентации и генераторы деформаций.
-
-Здесь появляется `SU(2)` и Peter-Weyl язык.
-
-На link/vertex-секторах строятся:
-
-```text
-flux operators
-intertwiners
-volume V
-Euclidean Hamiltonian H_E
-K = [V, H_E]
-C(V) = h [h^-1, V]
-C(K) = h [h^-1, K]
-```
-
-Finite gates отдельно проверяют:
-
-- gauge covariance;
-- Gauss sectors;
-- настоящий volume operator;
-- spin-support;
-- charged recoupling;
-- отсутствие запрещённой leakage;
-- exact cutoff staircase.
-
-Это уже не просто комбинаторика графа, а квантовая геометрия.
-
----
-
-## Урок 10. Четыре микроскопических qubits содержат spin-2
-
-Четыре spin-1/2 qubits разлагаются по полному угловому моменту так:
-
-```text
-(1/2)^4 = 2 x j=0 + 3 x j=1 + 1 x j=2
-```
-
-По размерностям:
-
-```text
-2 + 9 + 5 = 16
-```
-
-То есть в четырёх-qubit Hilbert space существует **ровно один j=2 irrep**.
-
-Для него
-
-```text
-J^2 = j(j+1) = 6
-```
-
-а крайние состояния имеют
-
-```text
-m = +2
-m = -2
-```
-
-Finite gate проверяет, что
-
-```text
-|up up up up>
-```
-
-и
-
-```text
-|down down down down>
-```
-
-лежат в `j=2` секторе с нулевой projector leakage.
-
-Почему четыре — минимальное число?
-
-Для `N` spin-1/2 объектов максимальный полный spin равен
-
-```text
-j_max = N/2
-```
-
-Чтобы получить `j=2`, нужно минимум
-
-```text
-N = 4
-```
-
----
-
-## Урок 11. Почему физическая поляризация гравитона — это один logical qubit
-
-У массивного spin-2 объекта было бы пять spin projections. Но у безмассового гравитона gauge redundancy убирает нефизические компоненты и оставляет две распространяющиеся helicity:
-
-```text
-h = +2
-h = -2
-```
-
-Поэтому физическая polarization space одного massless spin-2 кванта двумерна:
-
-```text
-|R> = |h=+2>
-|L> = |h=-2>
-```
-
-То есть **поляризация гравитона — logical qubit**.
-
-Это не означает, что весь гравитон — обычный двухуровневый объект. Полный mode всё равно бозонный:
-
-```text
-Fock occupation  x  C^2_helicity
-```
-
-Именно Fock sector даёт vacuum occupation statistics, а helicity-qubit говорит, в какой spin-2 polarization живёт возбуждение.
-
-Точная цепочка:
-
-```text
-4 microscopic spin-1/2 qubits
- -> collective j=2 sector
- -> massless TT reduction
- -> helicity +2/-2
- -> one logical graviton-polarization qubit
-```
-
----
-
-## Урок 12. Что такое «инфотон» в этой кандидатной теории
-
-Слово `infoton` здесь используется только как **внутреннее название проекта** для возможного бозонного collective mode информационного/route-сектора.
-
-Сам факт бинарной polarization ещё не делает его spin-2.
-
-Есть два случая:
-
-```text
-scalar/vector information mode
-    -> не может линейно смешиваться с graviton h=+/-2
-
-TT rank-2 information mode
-    -> может иметь j=2 и helicity +2/-2
-```
-
-Отсюда появляется сильный falsifier:
-
-> если route/information sector не содержит ненулевого TT spin-2 компонента, прямой graviton-infoton helicity mixing запрещён representation mismatch.
-
-То есть идея резонанса не является «всё может взаимодействовать со всем». Она требует конкретного spin-2 канала.
-
----
-
-# Часть IV. Как из квантовой геометрии получается каноническая гравитация
-
-## Урок 13. Зачем нужен Lorentzian член
-
-Евклидова часть `H_E` ещё не является полной лоренцевой гравитацией для вещественного параметра Барберо–Иммирци.
-
-Полный локальный geometry operator имеет вид
-
-```text
-G_v = H_E,v + (1 + beta^2) H_L,v
-```
-
-где `H_L` строится из ковариантных `K`- и `V`-legs.
-
-Отдельный classical control фиксирует правильную beta-комбинацию — её нельзя подгонять под HDA.
-
-Support-анализ показывает, что для all-`j=1/2` input полный Lorentzian HH-проход безопасен при
-
-```text
-Jmax = 13/2
-```
-
-То есть достижимое пространство при таком cutoff конечно и контролируемо.
-
----
-
-## Урок 14. Самый жёсткий тест: HDA
-
-Общая теория относительности — это не только одна формула действия. Её гамильтоновы ограничения должны правильно описывать композицию деформаций пространственного среза.
-
-Схематически:
-
-```text
-[ H[N], H[M] ]
-      ->
- i*hbar * D[ sharp(N dM - M dN) ]
-```
-
-Интуиция простая.
-
-Сначала слегка «подтолкните» spatial slice по нормали с профилем `N`, затем с профилем `M`.
-
-Теперь поменяйте порядок.
-
-Разница двух последовательностей не должна создавать новую степень свободы. Она должна быть просто **сдвигом вдоль самого пространства**.
-
-Именно этот tangential shift генерирует `D`.
-
-В проекте объект
-
-```text
-sharp(N dM - M dN)
-```
-
-строится независимо через discrete cochain/Hodge/flux map, а path-register реализует соответствующий diffeomorphism generator.
-
-Отдельный factorization no-go показывает: если geometry Hamiltonian действует только на geometry sector и совсем не чувствует route register, правильный off-shell HDA получить нельзя.
-
-Поэтому route-normal sector — не украшение, а необходимый канал.
-
----
-
-# Часть V. Кульминация: почему лишние Lorentzian каналы исчезают
-
-## Урок 15. Последняя проверка fixed-cutoff HDA в трёх строках
-
-На frozen habitat берём
-
-```text
-N = Nbar + epsilon*n
-M = Mbar + epsilon*m
-Omega_Q = epsilon^-1 * OmegaTilde_Q
-```
-
-### Шаг A. Geometry x route
-
-На первый взгляд cross-коммутатор содержит опасный член порядка `epsilon^-1`.
-
-Но ведущий коэффициент одинаков в двух противоположных lapse-orderings и сокращается **state by state**.
-
-Поэтому
-
-```text
-C_cross = O(1)
-```
-
-### Шаг B. Geometry x geometry
-
-Для двух узлов antisymmetric lapse-smear имеет вид
-
-```text
-N0*M1 - N1*M0 = O(epsilon)
-```
-
-Следовательно
-
-```text
-C_GG = O(epsilon)
-```
-
-### Шаг C. Правильный diffeomorphism target растёт как inverse regulator
-
-На frozen WKB carrier физическая производная даёт `epsilon^-1`, поэтому
-
-```text
-D[ sharp(N dM - M dN) ] = O(epsilon^-1)
-```
-
-Делим паразитные geometry-каналы на правильный target:
-
-```text
-C_cross / D = O(epsilon)
-C_GG    / D = O(epsilon^2)
-```
-
-И получаем certificate:
-
-```text
-Delta_full(epsilon)
- <=
-Delta_route(epsilon)
- + C_cross*epsilon
- + C_GG*epsilon^2
-
-            -> 0
-```
-
-То есть при fixed regulator-safe Peter-Weyl cutoff полная локальная геометрия
-
-```text
-H_E + (1 + beta^2) H_L
-```
-
-не создаёт surviving off-shell anomaly поверх уже независимо проверенного route-normal HDA limit.
-
-Поэтому прямой `11.3M-state [H_L,H_L]` brute-force остаётся полезным regression cross-check, но не является логически обязательным для fixed-cutoff composition theorem.
-
----
-
-## Урок 16. Можно ли одновременно убирать regulator и поднимать spin cutoff?
-
-Fixed cutoff — сильный результат, но естественный следующий вопрос:
-
-> можно ли сделать `epsilon -> 0` и одновременно `Jmax -> infinity`?
-
-Получается консервативная диагональная оценка.
-
-На fixed-valence SU(2) узле:
-
-```text
-||E||    = O(J)
-||V||    = O(J^(3/2))
-||H_E||  = O(J^(3/2))
-||K||    = O(J^3)
-||C(K)|| = O(J^3)
-||H_L||  = O(J^(15/2))
-```
-
-Для nondegenerate fixed-shape family flux metric масштабируется как
-
-```text
-Q = O(J^2)
-```
-
-поэтому route target имеет scale
-
-```text
-D = O(J^2 / epsilon)
-```
-
-Из уже доказанного cancellation structure следует грубая верхняя оценка
-
-```text
-C_cross / D = O(epsilon * J^(13/2))
-C_GG    / D = O(epsilon^2 * J^13)
-```
-
-Положим
-
-```text
-Jmax(epsilon) = epsilon^-alpha
-```
-
-Оба лишних канала исчезают, если
-
-```text
-0 < alpha < 2/13
-```
-
-То есть существует допустимый simultaneous diagonal path, например
-
-```text
-Jmax = epsilon^-1/8
-```
-
-для которого
-
-```text
-C_cross / D = O(epsilon^(3/16))
-C_GG    / D = O(epsilon^(3/8))
-```
-
-Это снимает fixed-cutoff ограничение **вдоль целого класса диагональных траекторий**:
-
-```text
-Jmax = o(epsilon^-2/13)
-```
-
-Но это ещё не uniform theorem для абсолютно любого способа одновременно отправлять `Jmax -> infinity` и `epsilon -> 0`.
-
----
-
-# Часть VI. Почему гравитационные волны могут «раскачивать» квантовую пену
-
-## Урок 17. Гравитационная волна как pump
-
-Пусть существует бозонный information/route mode с частотой `omega_I` и ненулевым TT coupling к метрике.
-
-Проходящая gravitational wave может периодически менять его effective frequency:
-
-```text
-q_ddot
- + omega_I^2 * [1 + xi*h*cos(Omega_GW*t)] * q
- = 0
-```
-
-Это Mathieu equation.
-
-Первая parametric instability band находится около
-
-```text
-Omega_GW ~= 2*omega_I
-```
-
-При слабой модуляции:
-
-```text
-mu ~= |xi*h| * omega_I / 4
-```
-
-где `mu` — Floquet/squeezing growth exponent, а `xi` — микроскопический coupling, который теория пока **не вывела**.
-
-Finite gate использует тестовую модуляцию
-
-```text
-xi*h = 0.02
-omega_I = 1
-```
-
-и получает на резонансе
-
-```text
-mu_numeric = 0.004999941407...
-mu_leading = 0.005
-relative error ~ 1.17e-5
-```
-
-А при `Omega=1.8*omega_I` и `2.2*omega_I` Floquet growth исчезает на gate tolerance.
-
-То есть сам математический механизм резонанса воспроизводится очень точно.
-
-Но это **не доказательство существования физического инфотона** и не измерение `xi`.
-
----
-
-## Урок 18. Почему это не «бесплатная энергия из вакуума»
-
-GW здесь является pump — источником энергии.
-
-На резонансе эффективный квантовый Hamiltonian имеет squeezing-форму
-
-```text
-H_sq ~ i*hbar*kappa/2 * (b_dagger^2 - b^2)
-```
-
-Он эрмитов при правильной фазовой записи, поэтому его эволюция унитарна.
-
-Вакуум не превращается в энергию «из ничего». Он превращается в squeezed state, а энергия приходит из внешней gravitational-wave pump.
-
-Идея поэтому звучит так:
-
-```text
-existing vacuum fluctuations
- + coherent gravitational-wave pumping
- -> squeezed / amplified fluctuation quadrature
-```
-
----
-
-## Урок 19. Два разных резонанса — важный экспериментальный fingerprint
-
-Если information mode действительно имеет тот же spin-2 TT quantum number, возможны два разных механизма.
-
-### 1. Direct spin-2 conversion
-
-Bilinear mixing вида
-
-```text
-a_g^dagger a_I + a_I^dagger a_g
-```
-
-резонирует около
-
-```text
-omega_g ~= omega_I
-```
-
-То есть это **1:1 resonance**.
-
-### 2. Vacuum parametric squeezing
-
-Периодическая modulation частоты даёт
-
-```text
-Omega_GW ~= 2*omega_I
-```
-
-То есть **2:1 resonance**.
-
-Если когда-нибудь будет построен физический infoton sector и вычислен coupling, эти два разных положения резонанса дадут конкретный спектральный falsifier.
-
----
-
-# Часть VII. Зеркальная ветвь: что действительно переворачивается
-
-## Урок 20. В логическом geometry-qubit есть точный ориентационный бит
-
-У четырёх spin-1/2 face qubits gauge-invariant singlet sector двумерен. В естественном basis два shape-оператора выражаются через `X_L` и `Z_L`, а ориентированный triple product имеет вид
-
-```text
-Q = (sqrt(3)/4) * Y_L
-```
-
-Теперь возьмём mirror operation как complex conjugation:
-
-```text
-M = K
- i -> -i
-```
-
-Тогда точно:
-
-```text
-X_L -> +X_L
-Z_L -> +Z_L
-Y_L -> -Y_L
-Q   -> -Q
-```
-
-То есть mirror не стирает геометрию. Он меняет **только ориентационный знак**.
-
-Естественный binary label:
-
-```text
-chi = sign(Q) = +1 or -1
-```
-
-Точные eigenvalues:
-
-```text
-Q_+ = +sqrt(3)/4 = +0.433012701892...
-Q_- = -sqrt(3)/4 = -0.433012701892...
-```
-
-Новый finite gate проверяет, что complex conjugation меняет эти состояния местами с overlap
-
-```text
-0.9999999999999998
-```
-
-при этом shape observables и absolute-volume information совпадают до machine precision.
-
-Так возникает строгая версия идеи «биты разворачиваются от нуля в другую сторону»:
-
-```text
-bit state
- + orientation chi=+1/-1
-```
-
-Но `chi=-1` пока означает **mirror orientation**, а не отрицательную энергию.
-
----
-
-## Урок 21. Что значит «число pi идёт в зеркальном порядке»
-
-Само число
-
-```text
-pi = 3.14159265...
-```
-
-не становится другим и его десятичные цифры не переворачиваются.
-
-Зато у фазы есть направление обхода:
-
-```text
-theta -> -theta
-```
-
-или
-
-```text
-exp(i*theta) -> exp(-i*theta)
-```
-
-Поэтому можно ввести **ориентированный угол**
-
-```text
-pi_chi = chi*pi
-```
-
-где
-
-```text
-pi_+ = +pi
-pi_- = -pi
-```
-
-Два пути вокруг unit circle противоположны по orientation, но их endpoint одинаков:
-
-```text
-exp(+i*pi) = exp(-i*pi) = -1
-```
-
-Новый gate проверяет `theta -> -theta` через complex conjugation точно; остаток на `+pi/-pi` равен лишь floating-point roundoff около
-
-```text
-2.45e-16
-```
-
-То есть физически осмысленная версия «зеркального pi» — **обратная ориентация фазы**, не обратный порядок цифр.
-
----
-
-## Урок 22. Зеркальный тетраэдр имеет другую ориентацию, но ту же метрику
-
-Пусть три edge-вектора образуют matrix
-
-```text
-A = (a,b,c)
-```
-
-а intrinsic metric
-
-```text
-G = A^T A
-```
-
-Возьмём reflection `R`:
-
-```text
-R^T R = I
-det(R) = -1
-A' = R A
-```
-
-Тогда
-
-```text
-G' = A'^T A'
-   = A^T R^T R A
-   = A^T A
-   = G
-```
-
-но
-
-```text
-det(A') = -det(A)
-```
-
-То есть:
-
-```text
-orientation flips
-metric stays the same
-absolute volume stays the same
-```
-
-Новый finite gate прогоняет 256 deterministic random nondegenerate tetrahedra и получает:
-
-```text
-max metric-Gram error       = 0
-max absolute-volume error   = 0
-max orientation-flip error  = 0
-max face-flux-Gram error    = 0
-```
-
-Это очень важный результат.
-
-**Текущая микрогеометрия умеет различать зеркальную ориентацию, но физическая metric geometry не меняет знак.**
-
----
-
-## Урок 23. Почему из зеркальности пока НЕ следует антигравитация
-
-В ADM metric variables
-
-```text
-g_00 = -N^2 + q_ab N^a N^b
-```
-
-Здесь нет отдельного множителя `chi`.
-
-И Hamiltonian, который выбран HDA/DeWitt gate, строится из
-
-```text
-q_ab
-pi_ab*pi^ab
-pi^2
-R[q]
-```
-
-то есть из parity-even metric contractions.
-
-Поэтому для mirror-related configurations с одной и той же физической metric data текущая архитектура даёт
-
-```text
-g_00(+chi) = g_00(-chi)
-```
-
-и, следовательно,
-
-```text
-delta g_00^mirror = 0
-```
-
-Это **negative result**, но очень полезный:
-
-> ориентационный бит существует, однако сам по себе он не переворачивает гравитационный знак.
-
-В существующей ветке
-
-```text
-mirror orientation != negative gravitational mass
-```
-
----
-
-## Урок 24. Какой именно новый эффект потребовался бы для антигравитации
-
-Пусть будущая теория добавит orientation-odd gravitational response:
-
-```text
-a_chi = a_even + chi*a_odd
-```
-
-Калибруем обычную `chi=+1` ветвь на измеренное Newton gravity:
-
-```text
-a_+ = g_N
-```
-
-Введём долю
-
-```text
-f = a_odd / g_N
-```
-
-Тогда противоположная mirror branch имеет
-
-```text
-a_- / g_N = 1 - 2*f
-```
-
-И сразу получаем точные пороги:
-
-```text
-f = 0      -> обе ориентации гравитируют одинаково
-f = 1/2    -> полное экранирование mirror branch
-f > 1/2    -> mirror branch становится repulsive
-f = 1      -> равная по модулю противоположная gravity
-```
-
-Текущий mirror-even geometry gate соответствует
-
-```text
-f_current = 0
-```
-
-Поэтому antigravity не «спрятана» в уже построенной метрике. Для неё нужен **новый оператор**.
-
-Самый простой mirror-odd local geometry operator — `Y_L`:
-
-```text
-H_odd = lambda_chi * Y_L
-```
-
-Но здесь появляется главный killer-test.
-
-Полный constraint станет
-
-```text
-H = H_0 + lambda_chi*H_chi
-```
-
-а его algebra:
-
-```text
-[H,H]
- = [H_0,H_0]
- + lambda_chi * ([H_0,H_chi] + [H_chi,H_0])
- + lambda_chi^2 * [H_chi,H_chi]
-```
-
-Каждый новый канал обязан снова замкнуться в правильный diffeomorphism generator либо образовать новую согласованную first-class constraint.
-
-Поэтому настоящий antigravity criterion такой:
-
-```text
-nonzero mirror gravity response
-AND
-stable Hamiltonian
-AND
-first-class modified HDA
-```
-
-Без последнего условия можно получить красивый знак, но не согласованную гравитационную теорию.
-
----
-
-# Часть VIII. Зеркальность, материя и аномалии
-
-## Урок 25. Chirality может возникнуть без отрицательной энергии
-
-Mirror orientation особенно естественно связывается не с negative energy, а с **left/right chirality**.
-
-У fermion axial density
-
-```text
-J5^0 = psi_bar gamma^0 gamma^5 psi
-```
-
-parity меняет знак.
-
-Наш oriented geometry coordinate `Y_L` тоже mirror-odd.
-
-Поэтому product
-
-```text
-H_chi-psi = lambda * Y_L * J5^0
-```
-
-parity-even.
-
-Это даёт очень естественную кандидатную цепочку:
-
-```text
-orientation bit chi
- -> local handedness
- -> left/right fermion preference
-```
-
-при этом metric и energy sign могут оставаться обычными.
-
-То есть зеркальная ветвь может оказаться гораздо полезнее для **происхождения хиральности материи**, чем для антигравитации.
-
----
-
-## Урок 26. Mirror-conjugate pair автоматически меняет знак perturbative gauge anomaly
-
-Для left-handed Weyl fermion в representation `R` cubic gauge anomaly пропорциональна
-
-```text
-d_R^(abc) = Tr[ T^a {T^b,T^c} ]
-```
-
-Для conjugate representation
-
-```text
-T_Rbar^a = -(T_R^a)^T
-```
-
-поэтому алгебраически
-
-```text
-d_Rbar^(abc) = -d_R^(abc)
-```
-
-и точная mirror-conjugate pair даёт
-
-```text
-d_R + d_Rbar = 0
-```
-
-Новый finite stress-test на deterministic noncommuting Hermitian generators получает residual
-
-```text
-~2.3e-15
-```
-
-То есть сам **знак anomaly действительно зеркалится**.
-
-Это не вывод Standard Model и не доказательство всех global anomalies. Но это реальный механизм:
-
-```text
-chiral sector R
- + mirror-conjugate sector Rbar
- -> perturbative cubic anomaly cancellation
-```
-
-Главная открытая задача теперь не «может ли зеркало менять anomaly sign?» — может.
-
-Главный вопрос:
-
-> почему видимый low-energy мир остаётся chiral, а mirror sector не делает всю теорию просто vector-like и где этот sector физически находится?
-
----
-
-## Урок 27. Антиматерия — не то же самое, что mirror orientation
-
-Здесь особенно важно не смешать разные симметрии:
-
-```text
-C   charge conjugation: particle <-> antiparticle
-P   parity: spatial mirror / left <-> right
-chi project orientation: sign of oriented geometry Q
-```
-
-Физическая antiparticle имеет положительную excitation energy. Антиматерия в современной QFT не означает макроскопическую отрицательную энергию.
-
-Есть и прямой experimental reality check: ALPHA Collaboration измерила motion antihydrogen в поле Земли. Антиводород ускорялся **к Земле**, согласованно с обычным притяжением; repulsive gravity magnitude `1g` для antihydrogen была исключена.
-
-Reference:
-
-```text
-E. K. Anderson et al. (ALPHA Collaboration)
-Observation of the effect of gravity on the motion of antimatter
-Nature 621, 716-722 (2023)
-DOI: 10.1038/s41586-023-06527-1
-```
-
-Поэтому если в CIMFIG когда-нибудь появится mirror-antigravity sector, его нельзя автоматически назвать обычной антиматерией. Он должен быть **другим квантовым сектором**, отличающимся от standard charge-conjugated matter.
-
----
-
-# Часть IX. Как всё-таки построить здоровую mirror-repulsion
-
-## Урок 28. Почему просто заменить H на -H не работает
-
-Самый простой соблазн — объявить, что для зеркальной ветви
-
-```text
-H_chi[N] = s_chi * H_GR[N].
-```
-
-Но HDA тут же даёт строгий тест.
-
-Если
-
-```text
-{H_GR[N],H_GR[M]} = D[beta],
-```
-
-то
-
-```text
-{H_chi[N],H_chi[M]} = s_chi^2 * D[beta].
-```
-
-Чтобы сохранить тот же `D` и ту же нормировку lapse, нужно
-
-```text
-s_chi^2 = 1.
-```
-
-Остаются только
-
-```text
-s=+1
-s=-1.
-```
-
-Но
-
-```text
--H[N] = H[-N].
-```
-
-То есть `s=-1` просто разворачивает нормальное/time направление эволюции. Статическая ньютоновская сила от этого не становится отталкивающей.
-
-Итак:
-
-```text
-H -> -H
-```
-
-**не является антигравитацией**.
-
----
-
-## Урок 29. Почему отрицательный Newton sign почти сразу создаёт ghost
-
-Второй соблазн — сделать коэффициент при Einstein-Hilbert term отрицательным:
-
-```text
-S_grav ~ F_chi * integral sqrt(-g) R
-```
-
-и выбрать
-
-```text
-F_- < 0.
-```
-
-Тогда формально можно говорить об opposite sign effective Newton coupling.
-
-Но этот же `F_chi` стоит перед кинетическим членом линейного spin-2 поля.
-
-Поэтому
-
-```text
-F_- < 0
-```
-
-означает отрицательную kinetic energy гравитона относительно обычной positive-energy matter.
-
-Получается ghost instability.
-
-То есть прямой metric-sign flip даёт нужный знак ценой разрушения устойчивости.
-
-Это второй no-go.
-
----
-
-## Урок 30. Здоровая альтернатива: orientation order parameter sigma и mediator phi
-
-Вместо отрицательной массы оставим Einstein gravity обычной и положительно-энергетической.
-
-Микроскопически у нас уже есть
-
-```text
-chi = sign(Q)
-Q ~ Y_L.
-```
-
-На coarse scale используем pseudoscalar order parameter
-
-```text
-sigma ~ +v  -> chi=+1
-sigma ~ -v  -> chi=-1.
-```
-
-И второй pseudoscalar `phi`, который будет mediator.
-
-Mirror действует как
-
-```text
-(phi,sigma) -> (-phi,-sigma).
-```
-
-Возьмём action
-
-```text
-S = integral sqrt(-g) [
-      Mpl^2 R/2
-    - (d phi)^2/2
-    - (d sigma)^2/2
-    - U(phi,sigma)
-]
-```
-
-с
-
-```text
-U = mu^2 phi^2/2
-  + lambda phi^4/4
-  + g phi sigma
-  + kappa (sigma^2-v^2)^2/4.
-```
-
-При
-
-```text
-mu^2 > 0
-lambda > 0
-kappa > 0
-```
-
-оба kinetic terms положительные, а quartic potential bounded at large field.
-
-То есть две mirror branches существуют без отрицательной excitation energy.
-
-### И теперь главный тест: HDA
-
-Для canonical two-field sector
-
-```text
-H[N] = integral N [
-    p_phi^2/2 + (phi')^2/2
-  + p_sigma^2/2 + (sigma')^2/2
-  + U(phi,sigma)
-].
-```
-
-В antisymmetric bracket все local potential terms сокращаются.
-
-Остаётся
-
-```text
-{H[N],H[M]}
- = D[N M' - M N'].
-```
-
-Новый spectral gate при `L=512` получает
-
-```text
-H-H bracket = 0.0007282211771021175
-D target    = 0.0007282211771021123
-abs error   = 5.204170427930421e-18
-rel error   = 7.146414566848946e-15
-```
-
-То есть новый mirror/orientation matter sector воспроизводит canonical HDA principal identity практически до machine precision.
-
-Это уже принципиальное отличие от произвольного `lambda_chi Y_L` term: мы построили continuum extension, у которой constraint structure заранее правильного типа.
-
----
-
-## Урок 31. Как из orientation bit возникает реальное отталкивание
-
-Пусть coarse object несёт orientation charge
-
-```text
-Q_chi = eta * m * chi.
-```
-
-Важно:
-
-```text
-m > 0
-```
-
-для обеих ветвей.
-
-Меняется знак **charge**, а не знак энергии.
-
-Exchange mediator `phi` даёт potential
-
-```text
-U_12(r)
- = -G_T m1 m2/r
-   -alpha G_T m1 m2 chi1 chi2 exp(-m_phi r)/r.
-```
-
-Для одинаковых orientations
-
-```text
-chi1*chi2 = +1
-```
-
-новый канал добавляет притяжение.
-
-Для противоположных
-
-```text
-chi1*chi2 = -1
-```
-
-он становится отталкивающим.
-
-Положим
-
-```text
-x = m_phi*r.
-```
-
-Тогда magnitude orientation force относительно bare tensor gravity:
-
-```text
-F_chi/F_T = alpha*(1+x)*exp(-x).
-```
-
-Полное screening происходит ровно при
-
-```text
-alpha_crit(x) = exp(x)/(1+x).
-```
-
-А repulsion начинается при
-
-```text
-alpha > alpha_crit(x).
-```
-
-Несколько точных порогов:
-
-```text
-m_phi*r = 0.0 -> alpha_crit = 1.0000000000
-m_phi*r = 0.1 -> alpha_crit = 1.0047008346
-m_phi*r = 0.5 -> alpha_crit = 1.0991475138
-m_phi*r = 1.0 -> alpha_crit = 1.3591409142
-m_phi*r = 2.0 -> alpha_crit = 2.4630186996
-m_phi*r = 5.0 -> alpha_crit = 24.7355265171
-```
-
-В long-range limit:
-
-```text
-m_phi*r << 1
-```
-
-получаем очень простой результат:
-
-```text
-alpha = 1 -> complete screening
-alpha > 1 -> opposite-chi repulsion.
-```
-
-Тестовый пример:
-
-```text
-alpha = 2
-m_phi*r = 0.1
-```
-
-даёт
-
-```text
-orientation repulsion / bare tensor gravity
-= 1.990642319679...
-```
-
-поэтому после вычитания обычного притяжения остаётся
-
-```text
-net outward force / bare tensor gravity
-= 0.990642319679...
-```
-
-Это уже настоящий математический **antigravity-like cross-sector effect**, но без negative mass и без ghost graviton.
-
----
-
-## Урок 32. Почему это пока называется mirror-force, а не доказанная антигравитация
-
-Новая конструкция не меняет непосредственно
-
-```text
-g_00 -> -g_00.
-```
-
-Она даёт
-
-```text
-tensor gravity
-+
-orientation-dependent fifth force.
-```
-
-Поэтому её правильное название на текущем этапе:
-
-```text
-healthy mirror-force candidate
-```
-
-или
-
-```text
-antigravity-like cross-sector repulsion.
-```
-
-Это даже сильнее с точки зрения устойчивости: spin-2 sector остаётся positive-energy, а repulsion несёт отдельный canonical mediator.
-
-Но теперь возникает последний неудобный вопрос:
-
-> откуда в микроскопической теории вообще берётся поле `sigma`? Не вставили ли мы его руками?
-
-Оказалось, что minimal 16-cell даёт на этот вопрос очень конкретный ответ.
-
----
-
-## Урок 33. Как сам 16-cell создаёт зеркальный order parameter sigma
-
-У 16-cell есть четыре antipodal пары вершин. Каждый из его 16 тетраэдров выбирает по одной вершине из каждой пары.
-
-Поэтому каждый тетраэдр естественно кодируется **четырьмя битами**:
-
-```text
-b = b1 b2 b3 b4
-```
-
-и всего таких клеток ровно
-
-```text
-2^4 = 16.
-```
-
-Два тетраэдра имеют общую треугольную грань тогда и только тогда, когда их строки отличаются ровно одним битом.
-
-Значит dual graph этих 16 клеток — не произвольный граф, а точно
-
-```text
-Q4 = 4D hypercube
-```
-
-с
-
-```text
-16 vertices
-32 edges
-degree 4.
-```
-
-Это снова неожиданная встреча бинарности и геометрии.
-
-### Почему локальные ориентации чередуются, но глобальный mirror bit всё равно существует
-
-Правильная склейка соседних тетраэдров требует противоположных outward orientations. В logical geometry-qubit это соответствует
-
-```text
-Y_v * Y_w = -1
-```
-
-на каждом dual edge.
-
-`Q4` — bipartite graph. Определим
-
-```text
-eta_v = (-1)^popcount(v).
-```
-
-На каждом ребре
-
-```text
-eta_v * eta_w = -1.
-```
-
-Теперь введём staggered variable
-
-```text
-sigma_v = eta_v * Y_v.
-```
-
-Тогда геометрическое условие
-
-```text
-Y_v * Y_w = -1
-```
-
-превращается в обычный uniform order:
-
-```text
-sigma_v * sigma_w = +1.
-```
-
-И появляется настоящий block order parameter
-
-```text
-Sigma = (1/16) * sum_v eta_v * Y_v.
-```
-
-У него есть две точные mirror-вакуумные ветви:
-
-```text
-Y_v = +eta_v  -> Sigma = +1
-Y_v = -eta_v  -> Sigma = -1.
-```
-
-Mirror меняет их местами:
-
-```text
-Sigma -> -Sigma.
-```
-
-То есть цепочка
-
-```text
-Y_L / Q
- -> Sigma=+/-1
- -> coarse sigma(x)
-```
-
-теперь имеет **конкретный finite microscopic bridge**.
-
-### Сколько энергии стоит испортить mirror order
-
-Для orientation part gluing Hamiltonian
-
-```text
-H_Y = J * sum_<vw> Y_v Y_w
-```
-
-идеальная ветвь имеет
-
-```text
-E0 = -32J.
-```
-
-Если перевернуть один local orientation bit, портятся четыре соседних bond. Каждый стоит `2J`, поэтому
-
-```text
-Delta E_single = 8J.
-```
-
-Если сделать domain wall, перевернув половину hypercube, пересекаются восемь связей:
-
-```text
-Delta E_wall = 16J.
-```
-
-Новый gate получает эти числа **точно**.
-
-### А переживает ли mirror order квантовые флуктуации?
-
-Проверяется полный 16-qubit transverse-field Hamiltonian
-
-```text
-H = -J * sum_<vw> sigma_v sigma_w
-    -h * sum_v X_v.
-```
-
-Его Hilbert space уже имеет
-
-```text
-2^16 = 65536
-```
-
-состояний.
-
-Sparse Lanczos diagonalization при
-
-```text
-h/J = 0.2
-```
-
-даёт
-
-```text
-<Sigma^2>  = 0.9976539474
-<|Sigma|>  = 0.9987478253
-```
-
-две нижние mirror-состояния образуют практически вырожденный doublet со splitting меньше `1e-12 J`, а gap до следующего уровня равен примерно
-
-```text
-7.970087877 J.
-```
-
-То есть на минимальном 16-cell block зеркальный order не только существует классически — он **очень устойчив квантово** при слабом flip field.
-
-Для negative control увеличиваем quantum flipping до
-
-```text
-h/J = 4
-```
-
-и получаем
-
-```text
-<Sigma^2> = 0.1462741385.
-```
-
-Order разрушается, как и должен.
-
-Поэтому `sigma` больше не является полностью придуманным continuum полем. Естественный кандидат:
-
-```text
-sigma(x)
- ~ coarse block average of eta_v Y_v.
-```
-
-Более того, soft fluctuations самого `Sigma/sigma` могут оказаться mediator mode, поэтому отдельный `phi` в консервативной двухполевой конструкции, возможно, не фундаментален.
-
-Теперь главный bottleneck уже не
-
-```text
-откуда взять sigma?
-```
-
-а
-
-```text
-какова физическая normalization sigma
-и как она связывается с matter charge?
-```
-
-Именно из этого должно выйти главное число
-
-```text
-alpha
-```
-
-без ручной подгонки.
-
----
-
-# Феерический итог: вся теория в одной лестнице
-
-Теперь весь рассказ можно собрать в одну цепочку:
-
-```text
-BITS
- -> q=2 binary selector
- -> C4 route shell
- -> octahedral S2 link
- -> minimal flag 16-cell globalization
- -> recursive PL S3
- -> d_H ~ 3
- -> d_s(slice) ~ 3
- -> z ~ 1
- -> d_s(history) ~ 4
- -> smooth IR metric
- -> SU(2) Peter-Weyl quantum geometry
- -> 4 qubits contain a unique j=2 sector
- -> helicity +2/-2 logical graviton qubit
- -> H_E
- -> K=[V,H_E]
- -> C(V), C(K)
- -> H_E + (1+beta^2) H_L
- -> route-normal generator
- -> sharp(N dM - M dN)
- -> HDA composition certificate
- -> admissible joint Jmax(epsilon) continuum paths
- -> quantum metric fluctuations
- -> candidate hyperuniform foam spectrum
- -> possible GW-driven squeezing/resonance
- -> mirror K: i -> -i
- -> orientation bit chi=+/-1
- -> Q -> -Q but metric -> same metric
- -> mirror-conjugate anomaly sign cancellation
- -> current metric antigravity falsifier: f_current = 0
- -> H->-H no-go: only time orientation reversal
- -> negative Einstein-Hilbert sign no-go: graviton ghost
- -> 16-cell tetrahedra form dual Q4
- -> staggered Sigma=(1/16)sum eta_v Y_v
- -> two exact mirror sectors Sigma=+/-1
- -> finite 16-qubit ordered mirror doublet
- -> coarse sigma(x)
- -> positive-kinetic mediator sector
- -> canonical mirror-sector HDA identity
- -> exact alpha_crit = exp(m_phi r)/(1+m_phi r)
- -> healthy cross-sector repulsion if alpha > alpha_crit
- -> physical normalization and first-principles alpha are the next killer gate
-```
-
-Самая короткая HDA-кульминация остаётся:
-
-```text
-C_cross = O(1)
-C_GG    = O(epsilon)
-D       = O(epsilon^-1)
-```
-
-поэтому
-
-```text
-C_cross / D = O(epsilon)
-C_GG    / D = O(epsilon^2)
-```
-
-и
-
-```text
-Delta_full
- <= Delta_route
-  + C_cross*epsilon
-  + C_GG*epsilon^2
- -> 0
-```
-
-А если одновременно увеличивать spin cutoff достаточно медленно,
-
-```text
-Jmax = o(epsilon^-2/13)
-```
-
-то эта иерархия сохраняется вдоль допустимого joint-limit family.
-
-Mirror calculation добавляет:
-
-```text
-M X M^-1 = +X
-M Z M^-1 = +Z
-M Y M^-1 = -Y
-```
-
-но
-
-```text
-metric(+chi) = metric(-chi).
-```
-
-Microscopic mirror-order gate добавляет:
-
-```text
-Sigma = (1/16) sum eta_v Y_v
-Sigma = +/-1
-Delta E_single = 8J
-Delta E_wall   = 16J.
-```
-
-А healthy-force branch добавляет:
-
-```text
-{H_mirror[N],H_mirror[M]}
- = D_mirror[N dM - M dN]
-```
-
-и
-
-```text
-opposite-chi repulsion
-<=>
-alpha*(1+m_phi*r)*exp(-m_phi*r) > 1.
-```
-
-То есть **ориентация бинарна, стандартная метрика mirror-even, глобальный mirror order уже возникает на минимальном 16-cell block, а дополнительная положительно-энергетическая mirror-charge dynamics математически может давать отталкивание.**
-
----
-
-# Что именно утверждает проект
-
-## Статус: кандидатная теория / candidate theory
-
-Репозиторий содержит несколько разных классов результатов, и их нельзя смешивать.
-
-### Exact / algebraic
-
-Например:
-
-- бинарный selector `q=2`;
-- SU(2) representation decompositions;
-- `4 spin-1/2 qubits -> unique j=2 irrep`;
-- operator-ordering identities;
-- fixed-cutoff composition scaling theorem в заявленном habitat;
-- mirror algebra `X,Z even; Y,Q odd`;
-- conjugate-representation identity `d(Rbar) = -d(R)`;
-- 16-cell tetrahedron dual graph `Q4`;
-- exact staggered mirror vacua `Sigma=+/-1`;
-- exact defect costs `8J` и `16J`;
-- rescaling no-go `H_chi=sH_GR => same HDA only if s^2=1`;
-- Yukawa screening threshold `alpha_crit=exp(x)/(1+x)`.
-
-### Tested finite
-
-Например:
-
-- recursive PL manifold gates;
-- held-out dimensional scaling;
-- Peter-Weyl covariance/support;
-- two-node geometry x route HDA regression;
-- graviton-helicity qubit projector gate;
-- Mathieu/Floquet resonance gate;
-- 256-tetrahedron mirror metric/orientation gate;
-- mirror-state swap and oriented-phase gate;
-- numerical conjugate-anomaly cancellation stress-test;
-- full 16-qubit `2^16=65536` mirror-order sparse diagonalization;
-- ordered mirror doublet with `<Sigma^2>=0.9976539474` at `h/J=0.2`;
-- disordered control `<Sigma^2>=0.1462741385` at `h/J=4`;
-- two-pseudoscalar canonical HDA gate with relative defect `~7.15e-15`;
-- mirror-force screening/repulsion threshold regression.
-
-### Conditional physical interpretations
-
-Например:
-
-- отождествление старого `delta g` smoothing exponent с quantum RMS;
-- из него следует кандидатный `P_foam(k) ~ k^1.003414`;
-- существование физического TT infoton mode;
-- ненулевой microscopic coupling `xi` к gravitational waves;
-- возможный `Y_L J5^0` bridge к fermion chirality;
-- continuum normalization и propagation law derived `Sigma/sigma` mode;
-- coupling derived `sigma` к physical matter charge;
-- существование отдельного physical mediator `phi` либо доказательство, что soft `sigma` mode сам является mediator;
-- first-principles value `alpha`;
-- microscopic Peter-Weyl x route x orientation HDA closure.
-
-### Что расчёт уже опровергает внутри текущей архитектуры
-
-Текущая mirror-even geometry **не** даёт
-
-```text
-chi -> -chi
-   =>
-g_00 -> -g_00.
-```
-
-Также простое
-
-```text
-H -> -H
-```
-
-не даёт статическую антигравитацию, а negative Einstein-Hilbert coefficient даёт ghost tensor sector.
-
-То есть здоровая ветка должна быть сложнее прямого sign flip.
-
-### Что теперь впервые построено положительно
-
-Построен finite microscopic mirror-order bridge
-
-```text
-Y_L/Q -> staggered Sigma -> coarse sigma(x)
-```
-
-и continuum canonical mirror sector с positive kinetic energy и exact HDA principal identity. Он допускает orientation-charge Yukawa force, которая для opposite `chi` становится repulsive и может превысить tensor attraction при
-
-```text
-alpha > exp(m_phi*r)/(1+m_phi*r).
-```
-
-Это **кандидатный стабильный mirror-force mechanism**, а не экспериментально обнаруженная антигравитация.
-
-**Проект не утверждает, что фундаментальная физика природы экспериментально доказана.**
-
-Корректная формулировка результата:
-
-> **В репозитории построена математически и вычислительно проверяемая кандидатная схема перехода от бинарной дискретной микроструктуры к 3D/4D-like гладкому пределу, SU(2)/Peter-Weyl квантовой геометрии и канонической HDA-гравитационной архитектуре. Дополнительно построены exact finite мост от четырёх microscopic qubits к spin-2 сектору, условная модель квантовой пены и GW-squeezing, mirror/chirality gate, finite 16-cell mirror-order bridge и continuum healthy mirror-force extension. Последняя сохраняет положительные kinetic terms, проходит canonical matter-HDA gate и допускает cross-sector repulsion выше точного порога `alpha_crit`; однако physical normalization и microscopic force coupling ещё не выведены. Это кандидатная теория, а не установленный экспериментальный закон природы.**
-
----
-
-# Что ещё действительно остаётся открытым
-
-После последних результатов список стал уже, но не исчез.
-
-Остаются, среди прочего:
-
-- настоящий uniform joint theorem для максимально общего `Jmax -> infinity`, `epsilon -> 0`, а не только admissible diagonal family;
-- вывод Lorentzian quantum history measure и глобальной unitarity;
-- вывод microscopic TT information-mode action и coupling `xi`;
-- прямой quantum two-point function вакуума для проверки или опровержения `P(k) ~ k^1.003414`;
-- реалистичная matter sector: gauge group, masses, generations, chirality и Yukawa structure;
-- полная anomaly cancellation, включая global anomalies, не только exact `R/Rbar` cubic pair identity;
-- объяснение, почему mirror sector скрыт/decoupled, если он существует;
-- physical normalization, kinetic coefficient и propagation speed derived `Sigma/sigma` mode;
-- derivation coupling of `Sigma/sigma` к matter и charge-to-mass coefficient `eta`;
-- first-principles prediction of `alpha` и mediator mass/range;
-- full Peter-Weyl x route x orientation quantum HDA regression;
-- проверка fifth-force/equivalence-principle/cosmological bounds после появления physical scale;
-- literal metric antigravity branch, если она всё ещё нужна после healthy mirror-force construction;
-- physical scale и Newton constant;
-- blind predictions в физических единицах;
-- независимая внешняя репликация другой группой/кодом/экспериментом.
-
-Отдельно: произвольная bare-causal nonflag globalization всё ещё может быть неединственной; доказанная выше уникальность относится к minimal 8-vertex flag semantics.
-
----
-
-# Где смотреть строгие доказательства и проверки
-
-- `THEORY_STATUS.md` — канонический человеческий ledger;
-- `theory_gates.json` — machine-readable proof ledger;
-- `FINAL_CORE_ARCHITECTURE_CERTIFICATE.md` — fixed-cutoff HDA composition theorem;
-- `GRAVITON_INFOTON_FOAM_BRIDGE.md` — spin-2/helicity, foam и GW-resonance bridge;
-- `MIRROR_CHIRALITY_GRAVITY.md` — mirror orientation, chirality, anomaly sign и antigravity falsifier;
-- `MICROSCOPIC_MIRROR_ORDER.md` — Q4 dual 16-cell, staggered Sigma, defect/domain-wall energies и 16-qubit ordered phase;
-- `ORIENTATION_ODD_HDA_CONSTRUCTION.md` — healthy mirror-force construction, HDA control и exact repulsion threshold;
-- `SPATIAL_QUBIT_GEOMETRY_BRIDGE.md` — exact four-qubit geometry decomposition;
-- `GLOBAL_MANIFOLD_Q2_COMPLETION.md` — q=2 PL globalization;
-- `bcqg_bit_to_gravity_final.py` — executable canonical status aggregator;
-- `bcqg_observer_smoothing_unified.py` — bit -> scaling -> smoothing;
-- `bcqg_global_manifold_gate.py` — recursive PL-manifold gate;
-- `scripts/path_normal_hda_gate.py` — route-normal HDA;
-- `scripts/peter_weyl_two_node_euclidean_joint_gate.py` — two-node Peter-Weyl x route regression;
-- `scripts/lorentzian_hit_depth_bound.py` — Lorentzian support wall;
-- `scripts/graviton_infoton_foam_gate.py` — exact j=2 projector + Floquet resonance checks;
-- `scripts/mirror_chirality_gravity_gate.py` — mirror/chirality/phase/anomaly finite gate;
-- `scripts/mirror_order_16cell_gate.py` — microscopic 16-cell staggered mirror-order gate;
-- `scripts/orientation_odd_hda_gate.py` — continuum mirror-sector HDA + Yukawa screening/repulsion gate.
-
-Запуск канонического статуса:
+Минимальные воспроизводимые команды из корня репозитория (Python с NumPy; дополнительным скриптам могут требоваться SciPy/SymPy и другие зависимости):
 
 ```bash
-python bcqg_bit_to_gravity_final.py --strict
+python -m unittest discover -s tests -p test_audit_status.py
+python scripts/verify_sine_bridge.py --output /tmp/bqg_sine_gate.json
+python docs/information_infoton_review/sine_correlations/calculate.py
+python docs/information_infoton_review/check_hypotheses.py
 ```
 
-Spin-2 / foam bridge:
+Последние две команды обновляют JSON рядом со своими файлами. Эти проверки подтверждают только описанные области применимости. Архивные программы могут иметь отдельные или недостающие зависимости; универсальная воспроизводимость всей истории не заявляется.
 
-```bash
-python scripts/graviton_infoton_foam_gate.py
-```
+## Девять обязательных физических условий
 
-Mirror/chirality gate:
+Физическая история/projector; связная межблочная история; физический TT kernel; IR-вектор шести наблюдаемых; общая физическая шкала; динамический Maxwell kernel; фоновая космология; скалярная космология; замыкание lensing-динамики. Все обязательны для объявленной полной физикализации и остаются открытыми в [physicalization_gates.json](physicalization_gates.json).
 
-```bash
-python scripts/mirror_chirality_gravity_gate.py \
-  --trials 256 \
-  --output verification_results/MIRROR_CHIRALITY_GRAVITY.json
-```
+Доказательство гравитационного IR-предела — более узкая цель, чем завершение всех девяти условий. Проверка должна учитывать весь обязательный список; неполный агрегатор не имеет права объявлять всю теорию завершённой.
 
-Microscopic mirror-order gate:
+## Навигация
 
-```bash
-python scripts/mirror_order_16cell_gate.py \
-  --output verification_results/MIRROR_ORDER_16CELL.json
-```
+- [Текущий научный аудит](AUDIT_CURRENT.md), [исторический реестр статусов](THEORY_STATUS.md).
+- [Аудит инфотона и обеих размерностных гипотез](docs/information_infoton_review/REVIEW_RU.md), [состояние свидетельств](docs/information_infoton_review/EVIDENCE_STATUS.json).
+- [Синусная динамика и корреляции](docs/information_infoton_review/sine_correlations/DERIVATION_RU.md).
+- [Семь пакетов компактных голономий](docs/compact_holonomies/INTEGRATION_RU.md).
+- [Архив предыдущего подробного README](docs/archive/README_BEFORE_SYNTHESIS_2026-10-12.md).
 
-Healthy orientation-force gate:
+**Цель — вывести наблюдаемую гравитацию из информационной микроструктуры. Текущий результат — исследовательская конструкция с проверяемыми конечными моделями и явно открытым физическим пределом.**
 
-```bash
-python scripts/orientation_odd_hda_gate.py \
-  --L 512 \
-  --output verification_results/ORIENTATION_ODD_HDA.json
-```
 
-Если canonical aggregator возвращает
+---
 
-```text
-core_candidate_architecture_closed: true
-```
-
-это означает закрытие заявленной **candidate architecture в её доказанном scope**, а не экспериментальное подтверждение окончательной теории природы.
+**Историческая научно-популярная версия с 33 уроками и mirror/chirality-ветвями:** [архивное повествование](docs/README_STORY_ARCHIVE_20261109.md). Её гипотезы и заявленная область доказанности должны сверяться с актуальными машинными реестрами.
