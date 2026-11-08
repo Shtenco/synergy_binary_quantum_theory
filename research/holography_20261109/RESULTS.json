@@ -1,0 +1,33 @@
+{
+  "kind": "finite_math_bridge_not_physical_holography",
+  "walsh_pairwise_dot": "-1/3",
+  "walsh_frame_operator": "4/3 I_3",
+  "bulk_classical_states": 4,
+  "boundary_parity_codewords": [
+    "000",
+    "011",
+    "101",
+    "110"
+  ],
+  "any_two_classical_flags_recover_label": {
+    "12": true,
+    "01": true,
+    "02": true
+  },
+  "boundary_encoding_isometry_rank": 4,
+  "operator_reconstruction_on_global_code_subspace": true,
+  "quantum_erasure_correction_for_any_two_qubit_logical_state": false,
+  "wall_microstate_count_with_4_of_8_lit": 70,
+  "wall_missing_information_bits": 6.129283016944967,
+  "Q4_vertices": 16,
+  "Q4_edges": 32,
+  "Q4_coordinate_cut_edges": 8,
+  "Q4_bond_dimension_assumed": 2,
+  "Q4_schmidt_rank_bound": 256,
+  "Q4_von_neumann_entropy_bound_bits": 8,
+  "Q4_bell_pair_saturation_pure_state": true,
+  "original_BQG_S_U_2_amplitudes_computed": false,
+  "physical_Bekenstein_Hawking_law_derived_from_BQG": false,
+  "AdS_CFT_duality_established_for_BQG": false,
+  "physical_quantum_gravity_proved": false
+}
