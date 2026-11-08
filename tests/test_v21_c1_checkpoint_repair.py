@@ -816,6 +816,37 @@ class V21C1Tests(unittest.TestCase):
                     validate_term_diagnostics(good, accepted, rejected)
 
 
+    def test_76_v2_diagnostic_rejects_boolean_numeric_value(self):
+        diag = {
+            "CV_complete_basis_leakage": True,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+        }
+        with self.assertRaisesRegex(ValueError, "INVALID_TERM_DIAGNOSTIC_CV_COMPLETE_BASIS_LEAKAGE"):
+            validate_term_diagnostics(diag, 1.0, 0.0)
+
+    def test_77_v2_diagnostic_rejects_numeric_string(self):
+        diag = {
+            "CV_complete_basis_leakage": "0.0",
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+        }
+        with self.assertRaisesRegex(ValueError, "INVALID_TERM_DIAGNOSTIC_CV_COMPLETE_BASIS_LEAKAGE"):
+            validate_term_diagnostics(diag, 1.0, 0.0)
+
+    def test_78_v2_projection_norm_rejects_boolean(self):
+        diag = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+        }
+        with self.assertRaisesRegex(ValueError, "INVALID_PROJECTION_NORM_ACCEPTED2"):
+            validate_term_diagnostics(diag, True, 0.0)
+
+
 
 if __name__ == "__main__":
     unittest.main()
