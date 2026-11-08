@@ -12,7 +12,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from v21_stage_logic import all_32_specs, first_leg_census, operations, predecessor_ok
 from v21_checkpoint_guard import validate_physical_stage
-from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned
+from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned, validate_path_metadata
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 
@@ -523,6 +523,30 @@ class V21C1Tests(unittest.TestCase):
                 item[f"stage{stage}"] = str(prefix)
             with self.assertRaisesRegex(ValueError, "STAGE_NUMBER_MISMATCH_STAGE1"):
                 attest_manifest({"paths": [item]})
+
+
+    def test_50_path_auxiliary_indices_reject_boolean_values(self):
+        meta = {"mode": "forward", "order": "p", "aux": [False, 0, 1],
+                "source_node": 0, "omit": 0, "cycle": 0, "Jmax2": 7}
+        with self.assertRaisesRegex(ValueError, "INVALID_PATH_INDEX"):
+            validate_path_metadata(meta)
+
+    def test_51_path_provenance_indices_reject_boolean_values(self):
+        meta = {"mode": "forward", "order": "p", "aux": [0, 0, 1],
+                "source_node": True, "omit": 0, "cycle": 0, "Jmax2": 7}
+        with self.assertRaisesRegex(ValueError, "BAD_STAGE_INTEGER_METADATA_SOURCE_NODE"):
+            validate_path_metadata(meta)
+
+    def test_52_path_metadata_requires_exact_integer_auxiliary_values(self):
+        meta = {"mode": "forward", "order": "p", "aux": [0, 1.0, 1],
+                "source_node": 0, "omit": 0, "cycle": 0, "Jmax2": 7}
+        with self.assertRaisesRegex(ValueError, "INVALID_PATH_INDEX"):
+            validate_path_metadata(meta)
+
+    def test_53_valid_path_metadata_is_canonicalized(self):
+        meta = {"mode": "adjoint", "order": "q", "aux": [1, 0, 1],
+                "source_node": 0, "omit": 2, "cycle": 1, "Jmax2": 7}
+        self.assertEqual(validate_path_metadata(meta), ("adjoint", "q", (1, 0, 1)))
 
 
 
