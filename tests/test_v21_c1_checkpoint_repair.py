@@ -12,7 +12,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from v21_stage_logic import all_32_specs, first_leg_census, operations, predecessor_ok
 from v21_checkpoint_guard import validate_physical_stage
-from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned, validate_path_metadata
+from pl_v21_pair_collector import compare_states, read_stage, read_v2, assemble_pair_exact, sum_states_exact, sum_states_legacy_pruned, validate_path_metadata, validate_manifest_indices
 from pl_v20_stage_worker import save_charged, load_charged
 from v21_stage_attestation import attest_manifest
 
@@ -547,6 +547,21 @@ class V21C1Tests(unittest.TestCase):
         meta = {"mode": "adjoint", "order": "q", "aux": [1, 0, 1],
                 "source_node": 0, "omit": 2, "cycle": 1, "Jmax2": 7}
         self.assertEqual(validate_path_metadata(meta), ("adjoint", "q", (1, 0, 1)))
+
+
+    def test_54_manifest_source_node_rejects_boolean(self):
+        manifest = {"source_node": True, "omit": 0, "cycle": 0, "Jmax2": 7}
+        with self.assertRaisesRegex(ValueError, "BAD_MANIFEST_INTEGER_SOURCE_NODE"):
+            validate_manifest_indices(manifest)
+
+    def test_55_manifest_cycle_rejects_boolean(self):
+        manifest = {"source_node": 0, "omit": 0, "cycle": False, "Jmax2": 7}
+        with self.assertRaisesRegex(ValueError, "BAD_MANIFEST_INTEGER_CYCLE"):
+            validate_manifest_indices(manifest)
+
+    def test_56_manifest_indices_accept_canonical_integers(self):
+        manifest = {"source_node": 0, "omit": 2, "cycle": 1, "Jmax2": 7}
+        self.assertEqual(validate_manifest_indices(manifest), (0, 2, 1))
 
 
 
