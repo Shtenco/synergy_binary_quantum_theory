@@ -105,6 +105,7 @@ def certify_triple(item, shared, p_targets, q_targets):
 def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=None,
             expected_source_commit=None, expected_backend_sha=None):
     file = Path(spec["npz"])
+    meta = None
     if hashlib.sha256(file.read_bytes()).hexdigest() != spec["sha256"]:
         raise ValueError("INDEPENDENT_V2_SHA256_MISMATCH")
     if expected_source is not None:
@@ -131,7 +132,9 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
             raise ValueError("V2_VOLUME_BACKEND_MISMATCH")
         if meta.get("volume_backend") != "tetrahedral-volume-v1":
             raise ValueError("V2_WRONG_VOLUME_BACKEND")
-        if float(meta.get("Jmax", -1)) != 3.5:
+        cutoff = meta.get("Jmax")
+        if (not isinstance(cutoff, (int, float)) or isinstance(cutoff, bool)
+                or not math.isfinite(float(cutoff)) or float(cutoff) != 3.5):
             raise ValueError("V2_PRIMITIVE_WRONG_CUTOFF")
         checks = meta.get("checks")
         if (not isinstance(checks, dict) or not checks
@@ -145,6 +148,10 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
                 or spins.dtype.kind not in "iu" or Ks.dtype.kind not in "iu"
                 or amp.ndim != 1 or amp.dtype.kind != "c" or not np.isfinite(amp).all()):
             raise ValueError("V2_BAD_SHAPE_DTYPE_OR_NONFINITE")
+        if expected_source is not None:
+            support = meta.get("gauss_support")
+            if type(support) is not int or support != len(amp):
+                raise ValueError("V2_PRIMITIVE_SUPPORT_MISMATCH")
         result = {}
         for sp, ks, z in zip(spins, Ks, amp):
             key = tuple(map(int, sp)), tuple(map(int, ks))
