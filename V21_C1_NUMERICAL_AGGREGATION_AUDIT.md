@@ -90,3 +90,6 @@ The local synthetic archive now contains 41/41 passing checks, including five di
 ## 11. Seeded randomized aggregation stress test
 
 A further production regression (test 79) permutes 80 complex state maps over five sparse keys and compares the exact aggregation against the baseline for 32 deterministic state-order and per-map insertion-order permutations. The local synthetic harness separately ran 1000 deterministic permutations using seed 20261108; all produced exactly equal result maps. This is a numerical reproducibility stress test, not a physical V4 calculation.
+
+
+Latest CI observation: run `42496087585` for the 79-test randomized-aggregation commit ended in failure; its job `128778637789` exposes `steps=null` and `logs_url=null`. This provides no evidence of assertion failures and no confirmation that compilation or tests started.
