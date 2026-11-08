@@ -43,6 +43,21 @@ def read_stage(prefix, attestation):
     return meta, state
 
 
+def validate_path_metadata(meta):
+    """Reject malformed path indices and bool-as-int metadata before keying a path."""
+    if not isinstance(meta, dict):
+        raise ValueError("INVALID_PATH_METADATA")
+    mode, order, aux = meta.get("mode"), meta.get("order"), meta.get("aux")
+    if (mode not in ("forward", "adjoint") or order not in ("p", "q")
+            or not isinstance(aux, list) or len(aux) != 3
+            or any(type(value) is not int or value not in (0, 1) for value in aux)):
+        raise ValueError("INVALID_PATH_INDEX")
+    for key in ("source_node", "omit", "cycle", "Jmax2"):
+        if type(meta.get(key)) is not int:
+            raise ValueError("BAD_STAGE_INTEGER_METADATA_" + key.upper())
+    return mode, order, tuple(aux)
+
+
 def certify_triple(item, shared, p_targets, q_targets):
     attestations = item.get("stage_attestations")
     if not isinstance(attestations, dict):
@@ -50,11 +65,10 @@ def certify_triple(item, shared, p_targets, q_targets):
     m1, _ = read_stage(item["stage1"], attestations.get("stage1"))
     m2, _ = read_stage(item["stage2"], attestations.get("stage2"))
     m3, s3 = read_stage(item["stage3"], attestations.get("stage3"))
-    mode, order, aux = m3["mode"], m3["order"], m3["aux"]
-    if (mode not in ("forward", "adjoint") or order not in ("p", "q")
-            or not isinstance(aux, list) or len(aux) != 3
-            or any(x not in (0, 1) for x in aux)):
-        raise ValueError("INVALID_PATH_INDEX")
+    mode, order, aux = validate_path_metadata(m3)
+    for meta in (m1, m2, m3):
+        if validate_path_metadata(meta) != (mode, order, aux):
+            raise ValueError("STAGE_PATH_METADATA_MISMATCH")
     expected_ops = operations(p_targets if order == "p" else q_targets, mode, aux)
     for meta, stage, op in ((m1, 1, expected_ops[0]),
                             (m2, 2, expected_ops[1]),
@@ -69,7 +83,7 @@ def certify_triple(item, shared, p_targets, q_targets):
         raise ValueError("STAGE1_INPUT_IS_NOT_DECLARED_SEED")
     predecessor_ok(m1, m2, 2, expected_ops[0], expected_ops[1])
     predecessor_ok(m2, m3, 3, expected_ops[0], expected_ops[1])
-    return (mode, order, tuple(aux)), s3
+    return (mode, order, aux), s3
 
 
 def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=None,
