@@ -5,5 +5,6 @@ Runtime: 0.012 s
 Scope: standalone synthetic numerical, metadata-guard and V2 artifact-guard primitives only.
 The metadata and V2 artifact guard tests use isolated copies; they do not import production modules.
 Not repository tests; not production BQG computation.
+Repository guard inventory: 78 tests; GitHub Actions currently exposes no step/log output, so execution is unverified.
 
 The diagnostic guard requires four explicit finite nonnegative numeric leakage diagnostics and finite nonnegative numeric projection norms; bool and strings are rejected.
