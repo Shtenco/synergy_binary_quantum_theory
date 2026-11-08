@@ -31,10 +31,16 @@ def validate_term_record(path, metadata, expected_source=0):
     if (not isinstance(jmax, (int, float)) or isinstance(jmax, bool)
             or float(jmax) != 3.5):
         raise RuntimeError("V2_TERM_BAD_CUTOFF")
+    required_checks = {
+        "finite_covariant_norm", "finite_gauss_norm",
+        "finite_covariant_amplitudes", "finite_gauss_amplitudes",
+        "physical_basis_volume_leakage", "scalar_closure_fraction_or_exact_zero",
+        "nonscalar_rejected_norm", "single_L_spin_wall", "PL_orientation_coefficient",
+    }
     checks = metadata.get("checks")
-    if (not isinstance(checks, dict) or not checks
+    if (not isinstance(checks, dict) or set(checks) != required_checks
             or not all(value is True for value in checks.values())):
-        raise RuntimeError("V2_TERM_CHECKS_NOT_BOOLEAN_TRUE")
+        raise RuntimeError("V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE")
     npz_path = Path(path).with_suffix(".npz")
     digest = metadata.get("npz_sha256")
     if not _sha(digest) or not npz_path.is_file():
@@ -71,7 +77,14 @@ class V2ArtifactGuardAudit(unittest.TestCase):
         metadata = {
             "passed": True, "mode": "forward", "index": 0, "source_node": 0,
             "PL_epsilon_coefficient": 1, "Jmax": 3.5, "gauss_support": 1,
-            "checks": {"finite": True},
+            "checks": {
+                "finite_covariant_norm": True, "finite_gauss_norm": True,
+                "finite_covariant_amplitudes": True, "finite_gauss_amplitudes": True,
+                "physical_basis_volume_leakage": True,
+                "scalar_closure_fraction_or_exact_zero": True,
+                "nonscalar_rejected_norm": True, "single_L_spin_wall": True,
+                "PL_orientation_coefficient": True,
+            },
             "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
         }
         metadata.update(overrides)
@@ -127,6 +140,12 @@ class V2ArtifactGuardAudit(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path, meta = self._record(d, gauss_support=True)
             with self.assertRaisesRegex(RuntimeError, "V2_TERM_NPZ_SUPPORT_MISMATCH"):
+                validate_term_record(path, meta)
+
+    def test_incomplete_acceptance_check_inventory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            path, meta = self._record(d, checks={"finite_covariant_norm": True})
+            with self.assertRaisesRegex(RuntimeError, "V2_TERM_CHECKS_INCOMPLETE_OR_NOT_BOOLEAN_TRUE"):
                 validate_term_record(path, meta)
 
     def test_canonical_v2_artifact_is_accepted(self):
