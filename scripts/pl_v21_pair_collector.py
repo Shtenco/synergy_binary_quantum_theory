@@ -115,6 +115,8 @@ def read_v2(spec, *, expected_source=None, expected_mode=None, expected_index=No
         if (meta.get("passed") is not True or meta.get("mode") != expected_mode
                 or meta.get("operator_version") != "tetrahedral-charged-volume-v2"):
             raise ValueError("V2_PRIMITIVE_FAILED_OR_WRONG_MODE_OR_VERSION")
+        if meta.get("npz_sha256") != spec["sha256"]:
+            raise ValueError("V2_METADATA_NPZ_DIGEST_MISMATCH")
         for field in ("index", "source_node"):
             value = meta.get(field)
             if not isinstance(value, int) or isinstance(value, bool):
