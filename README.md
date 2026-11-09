@@ -239,6 +239,7 @@ $$
 **Следующий конечный тест полного лоренцева сектора на W5:** [совместный Gram-тест и точные требования к исходным амплитудам](BQG_LORENTZIAN_W5_JOINT_GRAM_GATE.md). Вычислительный gate: [скрипт](scripts/bqg_lorentzian_w5_joint_gram_gate.py).
 
 **Аудит первичного Lorentzian pipeline:** [несовпадение all-j=1/2 и W5 j=2, адаптер сырых K-K-V амплитуд и ограничения Hermitian completion](BQG_W5_LORENTZIAN_PIPELINE_AUDIT.md). Код: [W5 raw-column runner](scripts/bqg_v09_w5_lorentzian_raw_column.py), [структурный Gram aggregator](scripts/bqg_v09_w5_lorentzian_gram_aggregate.py).
+**Adjoint audit K-K-V:** [точное сопряжение и запрет циклического переноса частичного auxiliary trace](BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md); [unit-тест](tests/test_bqg_v09_w5_lorentzian_adjoint.py).
 
 У этой программы есть не только образ дискретной сетки, которая становится гладкой. Уже сейчас мы можем выделить два разных математических направления, которые должны войти в будущий вывод континуального пространства-времени.
 
