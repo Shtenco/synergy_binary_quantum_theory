@@ -6,7 +6,6 @@ on:
     paths:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
-      - 'tests/test_bqg_v09_w5_lorentzian_hermiticity.py'
       - 'scripts/bqg_v09_w5_lorentzian_gram_aggregate.py'
       - 'tests/test_bqg_v09_w5_lorentzian_gram_aggregate.py'
       - 'tests/test_bqg_v09_w5_lorentzian_hermiticity.py'
@@ -17,6 +16,8 @@ on:
     paths:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
+      - 'tests/test_bqg_v09_w5_lorentzian_hermiticity.py'
+      - 'BQG_LORENTZIAN_EPSILON_KKV_HERMITICITY_THEOREM.md'
       - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
 
 jobs:
