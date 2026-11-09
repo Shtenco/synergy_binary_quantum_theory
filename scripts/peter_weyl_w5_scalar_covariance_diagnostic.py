@@ -25,7 +25,7 @@ import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_covariant_composition_gate as COMP
 
 
-def add(dst, src, scale=1.0, tol=1e-11):
+def add(dst, src, scale=1.0, tol=0.0):
     CK.add_state(dst, src, scale, tol)
 
 
@@ -119,7 +119,7 @@ def evaluate(cutoff, node, input_k):
             spec_volume_leak = max(spec_volume_leak, float(vleak))
             for branch in branches:
                 projected, bleak = CK.project_branch_complete_charges(
-                    branch, (node,)
+                    branch, (node,), tol=0.0
                 )
                 spec_basis_leak = max(spec_basis_leak, float(bleak))
                 add(spec_t, projected, coef)
