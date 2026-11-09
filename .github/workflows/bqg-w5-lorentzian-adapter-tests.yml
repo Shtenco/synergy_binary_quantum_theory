@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
+      - 'scripts/bqg_v09_w5_lorentzian_gram_aggregate.py'
+      - 'tests/test_bqg_v09_w5_lorentzian_gram_aggregate.py'
       - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
   pull_request:
     branches: [main]
@@ -23,4 +25,4 @@ jobs:
         with:
           python-version: '3.11'
       - name: Run W5 adapter unit tests
-        run: python -m unittest discover -s tests -p 'test_bqg_v09_w5_lorentzian_raw_column.py' -v
+        run: python -m unittest discover -s tests -p 'test_bqg_v09_w5_lorentzian_*.py' -v
