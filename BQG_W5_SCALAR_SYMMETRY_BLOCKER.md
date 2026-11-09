@@ -31,6 +31,48 @@ J=1, M=0 component. A genuinely gauge-scalar local Euclidean Hamiltonian must
 preserve the source-node total-J sector (and M). Therefore the current W5
 sine-ordered action has not yet passed its scalar-sector covariance gate.
 
+## Quantified follow-up: the rejected sector is tiny, but not yet cleared
+
+A later five-seed pilot (run 42702071445, node 0, Jmax2=10) reached the
+same scalar-restoration guard and reported the complete weight distribution:
+
+- expected source sector J=0, M=0: 6.641081550043974;
+- rejected J=1, M=0 weight: 5.390512613173637e-20;
+- rejected component count: 15.
+
+Thus the rejected-to-expected weight ratio is
+8.116919770602643e-21, and the corresponding relative amplitude level is
+9.00939496892141e-11. This is numerically tiny, but the existing guard is an
+exact nonzero test. It is not valid to call this either a physical symmetry
+violation or harmless roundoff until the independent full-magnetic diagnostic
+has tested its cutoff and aggregation dependence.
+
+A second run after the initial diagnostic additions (42702605894) produced
+the same values. It still produced no W5 columns or JSON pilot artifact.
+
+## Diagnostic implementation and preservation of frozen replay
+
+The independent runner
+`scripts/peter_weyl_w5_scalar_covariance_diagnostic.py` evaluates the full
+magnetic output before highest-weight restoration, separates T and T-dagger,
+and compares H-plus and H-sine for the same W5 seed. It reports per-oriented-
+spec sector weights and cutoff-to-cutoff sparse-map differences. Intermediate
+state accumulation uses zero pruning; support is reported separately at
+1e-13, 1e-11, and 1e-9.
+
+Completed cutoffs are now checkpointed to the requested JSON file as they
+finish, so a later timeout does not erase earlier numerical evidence. The
+workflow is still computing the 10/12/14 cutoff sweep; no cutoff-convergence
+result is claimed yet.
+
+The diagnostic expansion of
+`peter_weyl_covariant_K_composition_cached_gate.py` temporarily invalidated
+the preregistered numerical-continuation backend hash. That file has now been
+restored byte-for-byte from its frozen source commit
+`54c5d907338679cdafe1b9c612ae02c1ee684186`; the diagnostic information is
+preserved in the runner and CI logs rather than by modifying the frozen
+backend. The post-restoration replay is pending.
+
 ## Interpretation and non-claims
 
 This is a hard structural blocker. It must not be bypassed by:
