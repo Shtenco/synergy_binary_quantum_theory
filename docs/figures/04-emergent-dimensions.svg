@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+<title id="title">Размерность и время: разные диагностические вопросы</title><desc id="desc">Комбинаторный рост, spatial slice и динамический показатель не следует смешивать</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#071326"/><stop offset="1" stop-color="#111d3c"/></linearGradient>
+ <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#48e0df"/><stop offset="1" stop-color="#4f8cff"/></linearGradient>
+ <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ad8cff"/><stop offset="1" stop-color="#6c6bff"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd479"/><stop offset="1" stop-color="#ff9f63"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#7d95bd" opacity=".24"/></pattern>
+</defs>
+<rect width="1400" height="820" rx="28" fill="url(#bg)"/><rect width="1400" height="820" rx="28" fill="url(#dots)"/>
+<text x="72" y="78" fill="#f5f8ff" font-size="38" font-weight="700" font-family="Inter,Arial,sans-serif">Размерность и время: разные диагностические вопросы</text>
+<text x="74" y="118" fill="#a9bad9" font-size="19" font-family="Inter,Arial,sans-serif">Комбинаторный рост, spatial slice и динамический показатель не следует смешивать</text>
+
+<rect x="80" y="190" width="360" height="150" rx="20" fill="#142746" stroke="url(#cyan)" stroke-width="2"/><text x="104" y="233" fill="#f3f7ff" font-size="25" font-weight="700" font-family="Inter,Arial,sans-serif">Комбинаторная размерность</text><text x="104" y="270" fill="#b3c4e0" font-size="17" font-family="Inter,Arial,sans-serif">d_g → 3 в выбранной q = 2 рекурсии</text>
+<rect x="520" y="190" width="360" height="150" rx="20" fill="#142746" stroke="url(#violet)" stroke-width="2"/><text x="544" y="233" fill="#f3f7ff" font-size="25" font-weight="700" font-family="Inter,Arial,sans-serif">Пространственная диагностика</text><text x="544" y="270" fill="#b3c4e0" font-size="17" font-family="Inter,Arial,sans-serif">d_H ≈ 3 и d_s(slice) ≈ 3</text>
+<rect x="960" y="190" width="360" height="150" rx="20" fill="#142746" stroke="url(#gold)" stroke-width="2"/><text x="984" y="233" fill="#f3f7ff" font-size="25" font-weight="700" font-family="Inter,Arial,sans-serif">История и масштаб времени</text><text x="984" y="270" fill="#b3c4e0" font-size="17" font-family="Inter,Arial,sans-serif">z → 1; d_s(history) ≈ 4</text>
+<line x1="440" y1="265" x2="520" y2="265" stroke="#48dede" stroke-width="4"  /><line x1="880" y1="265" x2="960" y2="265" stroke="#48dede" stroke-width="4"  />
+<path d="M130 600C250 590 300 520 420 470S620 390 760 350" fill="none" stroke="#48dede" stroke-width="5" filter="url(#glow)"/>
+<path d="M130 600C260 600 340 570 450 530S660 460 760 350" fill="none" stroke="#ad8cff" stroke-width="4" stroke-dasharray="10 10"/>
+<path d="M130 600L760 350" stroke="#6f8cb8" stroke-width="1" stroke-dasharray="4 12"/>
+<text x="150" y="675" fill="#b3c4e0" font-size="18" font-family="Inter,Arial,sans-serif">Малый масштаб</text><text x="690" y="320" fill="#b3c4e0" font-size="18" font-family="Inter,Arial,sans-serif">Крупный масштаб</text>
+<text x="990" y="520" fill="#ffd479" font-size="22" font-weight="700" font-family="Inter,Arial,sans-serif">Важно</text><text x="990" y="558" fill="#d4def0" font-size="18" font-family="Inter,Arial,sans-serif">Численные значения относятся</text><text x="990" y="588" fill="#d4def0" font-size="18" font-family="Inter,Arial,sans-serif">к конкретным конечным тестам,</text><text x="990" y="618" fill="#d4def0" font-size="18" font-family="Inter,Arial,sans-serif">а не к измеренной природе.</text>
+
+<path d="M72 760H1328" stroke="#344565" stroke-width="1"/><text x="74" y="790" fill="#91a4c7" font-size="15" font-family="Inter,Arial,sans-serif">BINARY QUANTUM GRAVITY · research visualization · schematic, not a claim of physical confirmation</text>
+</svg>
