@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="ttl dsc">
+<title id="ttl">От четырёх битовых меток к тетраэдру</title><desc id="dsc">Точная геометрия Walsh-носителя q=2 в трёхмерном пространстве</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#06101e"/><stop offset=".55" stop-color="#0b1930"/><stop offset="1" stop-color="#111a36"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#43d9d0" stop-opacity=".32"/><stop offset="1" stop-color="#8c78ef" stop-opacity=".12"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe19a"/><stop offset="1" stop-color="#d18b42"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L9 3L0 6" fill="none" stroke="#73dcd5" stroke-width="1.5"/></marker>
+</defs>
+<style>
+ text{font-family:Inter,Arial,sans-serif;fill:#eaf3ff}.eyebrow{font-size:17px;font-weight:700;letter-spacing:4px;fill:#68d9d1}.heading{font-size:39px;font-weight:750}.sub{font-size:20px;fill:#b3c5dc}.label{font-size:17px;font-weight:700}.small{font-size:15px;fill:#a8bbd2}.tiny{font-size:13px;fill:#91a8c3}.edge{stroke:#68d9d1;stroke-width:2.2;fill:none;opacity:.85}.edge2{stroke:#a58af7;stroke-width:2;fill:none;opacity:.75}.gold{stroke:#f4c66e;stroke-width:2.4;fill:none}.panel{fill:#0a1729;stroke:#2c4664;stroke-width:1.5}.face{fill:#48cfc7;fill-opacity:.13;stroke:#69d8d1;stroke-width:1.6}.faceV{fill:#9b83ed;fill-opacity:.16;stroke:#ad98ff;stroke-width:1.5}.node{fill:#ffe09a;stroke:#fff0c6;stroke-width:1.4}.muted{stroke:#526b88;stroke-width:1.5;fill:none}.axis{stroke:#f4c66e;stroke-width:2;fill:none;marker-end:url(#arr)}
+</style>
+<rect width="1600" height="1000" fill="url(#bg)"/>
+<g opacity=".12" stroke="#42607d"><path d="M0 160H1600M0 840H1600"/><path d="M80 0V1000M1520 0V1000"/></g>
+<text x="76" y="70" class="eyebrow">BINARY QUANTUM GEOMETRY · 3D VISUAL SERIES</text>
+<text x="76" y="132" class="heading">От четырёх битовых меток к тетраэдру</text>
+<text x="76" y="174" class="sub">Точная геометрия Walsh-носителя q=2 в трёхмерном пространстве</text>
+<rect x="90" y="235" width="1420" height="610" rx="26" class="panel"/><polygon class="face" points="800.0,520.0 1129.1,710.0 470.9,710.0" /><polygon class="faceV" points="800.0,520.0 1129.1,710.0 800.0,140.0" /><polygon class="face" points="800.0,520.0 470.9,710.0 800.0,140.0" /><polygon class="faceV" points="1129.1,710.0 470.9,710.0 800.0,140.0" /><path class="edge" d="M800.0,520.0 L1129.1,710.0" /><path class="edge" d="M800.0,520.0 L470.9,710.0" /><path class="gold" d="M800.0,520.0 L800.0,140.0" /><path class="gold" d="M1129.1,710.0 L470.9,710.0" /><path class="edge" d="M1129.1,710.0 L800.0,140.0" /><path class="edge" d="M470.9,710.0 L800.0,140.0" /><circle cx="800" cy="520" r="12" class="node"/><text x="815" y="505" class="label" text-anchor="start">00</text><circle cx="1129.08" cy="710" r="12" class="node"/><text x="1144.08" y="695" class="label" text-anchor="start">01</text><circle cx="470.92" cy="710" r="12" class="node"/><text x="485.92" y="695" class="label" text-anchor="start">10</text><circle cx="800" cy="140" r="12" class="node"/><text x="815" y="125" class="label" text-anchor="start">11</text><text x="1240" y="320" class="label" text-anchor="start">Walsh-векторы</text><text x="1240" y="354" class="small" text-anchor="start">nₐ ∈ ℝ³, |nₐ| = 1</text><text x="1240" y="388" class="small" text-anchor="start">nₐ · nᵦ = −1/3, a ≠ b</text><text x="1240" y="422" class="small" text-anchor="start">Σₐ nₐ = 0</text><text x="1240" y="520" class="label" text-anchor="start">Точный результат</text><text x="1240" y="554" class="small" text-anchor="start">регулярный тетраэдр</text><text x="1240" y="588" class="small" text-anchor="start">из 4 меток Z₂²</text><text x="1240" y="650" class="label" text-anchor="start">Квантовый подъём</text><text x="1240" y="684" class="small" text-anchor="start">ρₐ = ½(I + nₐ·σ)</text>
+<path d="M76 914H1524" stroke="#29435f"/>
+<text x="76" y="950" class="tiny">Точная геометрия внутри объявленной конструкции; сама по себе не доказывает, что природа обязана выбирать этот носитель.</text>
+<text x="1520" y="950" text-anchor="end" class="tiny">BQG · FIGURE SERIES II</text>
+</svg>
