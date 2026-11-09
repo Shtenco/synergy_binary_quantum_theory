@@ -38,6 +38,11 @@ The adjoint reverses the product and contributes two minus signs from the two K 
 
 This is the safe identity. It does **not** imply `T_abc† = T_bac`.
 
+In explicit auxiliary indices, write the forward contraction as
+`T_abc = Σ_(i,j,k) A_ij B_jk C_ki`, with (A=C_a(K)), (B=C_b(K)), and (C=C_c(V)). The adjoint is therefore
+`T_abc† = Σ_(i,j,k) C_ik B_kj A_ji`.
+The two minus signs from the anti-Hermitian K legs cancel. This is the exact right-to-left action order implemented by the v10 runner: first (A_{ji}), then (B_{kj}), then (C_{ik}). This index derivation does not invoke cyclicity of the partial trace.
+
 For ordinary complex-number matrices, the trace is cyclic. Here the matrix entries are operators on the gravitational Hilbert space. The partial auxiliary trace
 
 `Tr_aux(XY) = Σ_(i,j) X_ij Y_ji`
