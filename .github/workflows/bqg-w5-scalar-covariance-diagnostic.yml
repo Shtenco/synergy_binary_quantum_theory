@@ -1,0 +1,36 @@
+name: BQG W5 scalar covariance diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bqg-w5-scalar-covariance-diagnostic.yml'
+      - 'scripts/peter_weyl_w5_scalar_covariance_diagnostic.py'
+      - 'scripts/peter_weyl_*.py'
+
+permissions:
+  contents: read
+
+jobs:
+  w5-scalar-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Run W5 scalar covariance diagnostic at increasing cutoffs
+        run: |
+          python scripts/peter_weyl_w5_scalar_covariance_diagnostic.py \
+            --node 0 --input-K 0 --cutoffs 10 12 14 \
+            --output verification_results/W5_SCALAR_COVARIANCE_K0_NODE0_CUTOFF_10_12_14.json
+      - name: Upload numerical result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-scalar-covariance-k0-node0-cutoff-10-12-14
+          path: verification_results/W5_SCALAR_COVARIANCE_K0_NODE0_CUTOFF_10_12_14.json
+          if-no-files-found: warn
