@@ -336,6 +336,9 @@ Urbantke g    ~ b^-2.019746
 
 ## Урок 8. Квантовая пена: не «хаос пространства», а флуктуации вокруг гладкого среднего
 
+![Coarse-graining и квантовые флуктуации](figures/13-coarse-graining-foam.svg)
+
+
 Правильная картинка выглядит так:
 
 ```text
@@ -772,6 +775,9 @@ Jmax = o(epsilon^-2/13)
 
 ## Урок 17. Гравитационная волна как pump
 
+![Гравитационная волна как pump](figures/14-gravitational-wave-pump.svg)
+
+
 Пусть существует бозонный information/route mode с частотой `omega_I` и ненулевым TT coupling к метрике.
 
 Проходящая gravitational wave может периодически менять его effective frequency:
@@ -1051,6 +1057,9 @@ max face-flux-Gram error    = 0
 ---
 
 ## Урок 23. Почему из зеркальности пока НЕ следует антигравитация
+
+![Зеркальная ориентация и no-go](figures/15-mirror-chirality-no-go.svg)
+
 
 В ADM metric variables
 
