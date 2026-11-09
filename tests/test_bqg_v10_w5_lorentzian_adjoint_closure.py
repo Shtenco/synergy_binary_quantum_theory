@@ -131,6 +131,30 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertEqual(err, 0.0)
         self.assertGreater(scale, 0.0)
 
+    def test_antihermitian_commutator_to_hermitian_K_sign_and_hbar(self):
+        rng = np.random.default_rng(20261110)
+        x = rng.normal(size=(4, 4)) + 1j * rng.normal(size=(4, 4))
+        y = rng.normal(size=(4, 4)) + 1j * rng.normal(size=(4, 4))
+        V = x + x.conj().T
+        HE = y + y.conj().T
+        hbar = 1.37
+        Kcomm = V @ HE - HE @ V
+        self.assertTrue(np.allclose(Kcomm.conj().T, -Kcomm, atol=2e-13))
+        KH = Kcomm / (1j * hbar)
+        self.assertTrue(np.allclose(KH.conj().T, KH, atol=2e-13))
+        np.testing.assert_allclose(
+            KH @ KH,
+            -(Kcomm @ Kcomm) / (hbar ** 2),
+            rtol=2e-13,
+            atol=2e-13,
+        )
+
+    def test_symmetric_completion_is_hermitian(self):
+        rng = np.random.default_rng(20261111)
+        B = rng.normal(size=(5, 5)) + 1j * rng.normal(size=(5, 5))
+        Bsym = 0.5 * (B + B.conj().T)
+        np.testing.assert_allclose(Bsym, Bsym.conj().T, atol=2e-13)
+
     def test_covariant_scalar_mapping_rejects_open_channels(self):
         spins = (4,) * 10
         valid = (spins, (-1, 0, 0, 0, 0), 0, 0, 0, 0)
