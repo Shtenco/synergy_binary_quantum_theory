@@ -1,4 +1,12 @@
+import sys
 import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
 from bqg_v09_w5_lorentzian_raw_column import (
     w5_input_key, covariant_scalar_to_gauss, ordered_epsilon_triples
 )
