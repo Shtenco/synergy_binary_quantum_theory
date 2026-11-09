@@ -1,6 +1,12 @@
-# Hermiticity theorem for the epsilon-oriented K-K-V block
+# Adjoint audit of the epsilon-oriented K-K-V block
 
 Date: 2026-11-10
+
+## Executive result
+
+The raw 24-term epsilon-oriented K-K-V block is **not proven anti-Hermitian or Hermitian by the available leg identities alone**. A tempting proof by cyclically rotating the auxiliary trace is invalid: the trace is only over auxiliary indices, while its entries are operators on the gravitational Hilbert space and generally do not commute.
+
+This note records the exact adjoint identity, explains the failed shortcut, and defines the numerical test required before any Hermitian completion is chosen. The earlier claim that the full epsilon sum is automatically anti-Hermitian and that multiplying it by \\(i\\) is therefore justified is withdrawn.
 
 ## Purpose and scope
 
