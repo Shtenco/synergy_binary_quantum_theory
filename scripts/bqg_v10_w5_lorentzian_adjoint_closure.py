@@ -259,6 +259,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     queue = deque(seeds)
     forward_columns, adjoint_columns = [], []
     leakage_max = {}
+    aggregate_leakage = {}
     rejected_count = 0
     rejected_norm2 = 0.0
     truncated = False
@@ -289,6 +290,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     )
                     aggregate_diag[name] = max(
                         aggregate_diag.get(name, 0.0), float(value)
+                    )
+                    aggregate_leakage[name] = max(
+                        aggregate_leakage.get(name, 0.0), float(value)
                     )
 
             # Store only amplitudes above the declared support tolerance.
@@ -321,10 +325,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 (max(key[0]) for key in closure_keys), default=0
             ) / 2,
             "max_diagnostics": {
-                "CV_complete_basis_leakage": leakage_max.get("CV_complete_basis_leakage", 0.0),
-                "CK_outer_complete_basis_leakage": leakage_max.get("CK_outer_complete_basis_leakage", 0.0),
-                "CK_internal_volume_sector_leakage": leakage_max.get("CK_internal_volume_sector_leakage", 0.0),
-                "CK_complete_charge_basis_leakage": leakage_max.get("CK_complete_charge_basis_leakage", 0.0),
+                "CV_complete_basis_leakage": aggregate_leakage.get("CV_complete_basis_leakage", 0.0),
+                "CK_outer_complete_basis_leakage": aggregate_leakage.get("CK_outer_complete_basis_leakage", 0.0),
+                "CK_internal_volume_sector_leakage": aggregate_leakage.get("CK_internal_volume_sector_leakage", 0.0),
+                "CK_complete_charge_basis_leakage": aggregate_leakage.get("CK_complete_charge_basis_leakage", 0.0),
             },
         }
 
