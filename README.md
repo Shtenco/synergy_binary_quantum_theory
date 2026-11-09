@@ -240,7 +240,7 @@ $$
 
 **Аудит первичного Lorentzian pipeline:** [несовпадение all-j=1/2 и W5 j=2, адаптер сырых K-K-V амплитуд и ограничения Hermitian completion](BQG_W5_LORENTZIAN_PIPELINE_AUDIT.md). Код: [W5 raw-column runner](scripts/bqg_v09_w5_lorentzian_raw_column.py), [структурный Gram aggregator](scripts/bqg_v09_w5_lorentzian_gram_aggregate.py).
 **Adjoint audit K-K-V:** [точное сопряжение и запрет циклического переноса частичного auxiliary trace](BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md); [unit-тест](tests/test_bqg_v09_w5_lorentzian_adjoint.py).
-**W5 adjoint-closed basis runner:** [строит достижимый базис под KKV и его независимо вычисленным сопряжённым оператором](scripts/bqg_v10_w5_lorentzian_adjoint_closure.py); [тесты индексного порядка и сопряжения](tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py). Результат ограничен объявленным cutoff и лимитами closure.
+**W5 adjoint-closed basis runner:** [строит W5-достижимый базис под когерентной суммой пяти узлов KKV и её независимо вычисленным сопряжением](scripts/bqg_v10_w5_lorentzian_adjoint_closure.py); [тесты индексного порядка и сопряжения](tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py). Результат ограничен объявленным cutoff и лимитами closure.
 **Описание adjoint-closure gate:** [алгоритм замыкания, критерий полноты и границы интерпретации](BQG_W5_LORENTZIAN_ADJOINT_CLOSURE.md).
 
 У этой программы есть не только образ дискретной сетки, которая становится гладкой. Уже сейчас мы можем выделить два разных математических направления, которые должны войти в будущий вывод континуального пространства-времени.
