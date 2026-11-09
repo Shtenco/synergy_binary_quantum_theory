@@ -60,7 +60,7 @@ class TestEpsilonKKVAdjoint(unittest.TestCase):
         self.assertLess(hermitian_residual, 2e-14)
 
     def test_epsilon_sign_flips_under_first_two_leg_exchange(self):
-        triples = dict(epsilon_triples((1, 2, 3, 4)))
+        triples = {p: sign for sign, p in epsilon_triples((1, 2, 3, 4))}
         for (a, b, c), sign in triples.items():
             self.assertEqual(triples[(b, a, c)], -sign)
 
