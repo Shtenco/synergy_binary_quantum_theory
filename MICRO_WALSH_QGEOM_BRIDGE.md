@@ -35,6 +35,9 @@ More generally, all \(2^q-1\) nontrivial real characters of \(\mathbb Z_2^q\) em
 
 ## Quantum carrier
 
+![Walsh-кодирование и тетраэдральный носитель](docs/figures/02-walsh-tetrahedron.svg)
+
+
 For each derived unit vector \(n_f\), define the face-qubit density matrix
 
 \[
@@ -58,6 +61,9 @@ orientation-reversed logical Bloch   ≈ (0,-1,0)
 Thus the binary-derived coherent face state has nonzero singlet support and projects to an exact logical volume eigenstate in the declared four-spin geometry-qubit representation.
 
 ## Global gluing on the selected q=2 PL completion
+
+![Локальная q=2-структура и глобальная 16-cell-комплектация](docs/figures/03-q2-to-16cell.svg)
+
 
 The boundary of the 4D cross-polytope has 16 tetrahedral cells and 32 triangular faces. Each tetrahedron contains one signed vertex from each of four coordinate axes. Its four faces are canonically labelled by the omitted axis; those four colours are identified with the four q=2 labels.
 
