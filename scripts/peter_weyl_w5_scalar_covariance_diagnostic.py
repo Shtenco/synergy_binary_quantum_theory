@@ -226,8 +226,46 @@ def main():
         raise ValueError("W5 cutoffs must be even doubled-spin walls >= 10")
 
     rows = []
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+
+    def checkpoint(status):
+        # Persist completed cutoffs immediately. A long W5 run must leave
+        # recoverable evidence even if a later cutoff times out.
+        partial = {
+            "status": status,
+            "physical_joint_kernel_computed": False,
+            "five_node_closure_computed": False,
+            "physical_coefficients_fitted": False,
+            "node": args.node,
+            "input_K": args.input_K,
+            "cutoffs_requested": list(args.cutoffs),
+            "cutoffs_completed": [row["cutoff_doubled_spin"] for row in rows],
+            "cutoff_runs": [
+                {k: v for k, v in row.items() if k != "_maps"}
+                for row in rows
+            ],
+            "cutoff_trends": [],
+            "interpretation_rule": (
+                "A nonzero wrong-sector weight is diagnostic evidence, not "
+                "grounds for projection or threshold tuning. Compare H_plus "
+                "and H_sine and inspect oriented-spec and T/Tdag contributions."
+            ),
+        }
+        args.output.write_text(json.dumps(partial, indent=2) + "\\n", encoding="utf-8")
+
+    checkpoint("RUNNING_W5_SCALAR_COVARIANCE_DIAGNOSTIC")
     for cutoff in args.cutoffs:
-        rows.append(evaluate(cutoff, args.node, args.input_K))
+        row = evaluate(cutoff, args.node, args.input_K)
+        rows.append(row)
+        checkpoint("PARTIAL_W5_SCALAR_COVARIANCE_DIAGNOSTIC")
+        print(json.dumps({
+            "completed_cutoff": cutoff,
+            "H_plus": row["H_plus"],
+            "H_sine": row["H_sine"],
+            "max_volume_leakage": row["max_volume_leakage"],
+            "max_complete_basis_leakage": row["max_complete_basis_leakage"],
+            "output": str(args.output),
+        }, indent=2), flush=True)
 
     convergence = []
     for prev, curr in zip(rows, rows[1:]):
