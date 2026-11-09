@@ -273,7 +273,6 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         while queue:
             key = queue.popleft()
             f_total, ad_total = {}, {}
-            aggregate_diag = {}
             for source_v in source_nodes:
                 f_cov, a_cov, diag = node_kkv_maps(
                     {key: 1.0 + 0j}, source_v, Jmax2, PW, CV, RAW
@@ -288,9 +287,6 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     leakage_max[f"node_{source_v}_{name}"] = max(
                         leakage_max.get(f"node_{source_v}_{name}", 0.0),
                         float(value),
-                    )
-                    aggregate_diag[name] = max(
-                        aggregate_diag.get(name, 0.0), float(value)
                     )
                     aggregate_leakage[name] = max(
                         aggregate_leakage.get(name, 0.0), float(value)
