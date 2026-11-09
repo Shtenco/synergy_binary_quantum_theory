@@ -235,9 +235,10 @@ def sparse_sum_difference_norm(columns_a, columns_b, sign=1.0):
     return math.sqrt(total2)
 
 
-def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
-    if source_v not in NODES:
-        raise ValueError("source_v must be 0..4")
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
+    source_nodes = tuple(sorted(set(source_nodes)))
+    if not source_nodes or any(v not in NODES for v in source_nodes):
+        raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
     if max_states < len(W5_K) or max_depth < 0 or amp_tol <= 0:
@@ -265,27 +266,38 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
 
     old_raw_run = RAW.run
 
-    def closure_executor(source_v=0, a=None, b=None, c=None):
+    def closure_executor(_engine_node=0, a=None, b=None, c=None):
         nonlocal rejected_count, rejected_norm2, truncated, omitted_support
         while queue:
             key = queue.popleft()
-            f_cov, a_cov, diag = node_kkv_maps(
-                {key: 1.0 + 0j}, source_v, Jmax2, PW, CV, RAW
-            )
-            f, nf, nfnorm = covariant_to_gauss_map(f_cov, source_v)
-            ad, na, nanorm = covariant_to_gauss_map(a_cov, source_v)
-            rejected_count += nf + na
-            rejected_norm2 += nfnorm**2 + nanorm**2
-            for name, value in diag.items():
-                leakage_max[name] = max(leakage_max.get(name, 0.0), float(value))
+            f_total, ad_total = {}, {}
+            aggregate_diag = {}
+            for source_v in source_nodes:
+                f_cov, a_cov, diag = node_kkv_maps(
+                    {key: 1.0 + 0j}, source_v, Jmax2, PW, CV, RAW
+                )
+                f, nf, nfnorm = covariant_to_gauss_map(f_cov, source_v)
+                ad, na, nanorm = covariant_to_gauss_map(a_cov, source_v)
+                rejected_count += nf + na
+                rejected_norm2 += nfnorm**2 + nanorm**2
+                add_sparse(f_total, f)
+                add_sparse(ad_total, ad)
+                for name, value in diag.items():
+                    leakage_max[f"node_{source_v}_{name}"] = max(
+                        leakage_max.get(f"node_{source_v}_{name}", 0.0),
+                        float(value),
+                    )
+                    aggregate_diag[name] = max(
+                        aggregate_diag.get(name, 0.0), float(value)
+                    )
 
             # Store only amplitudes above the declared support tolerance.
-            f = {k: z for k, z in f.items() if abs(z) > amp_tol}
-            ad = {k: z for k, z in ad.items() if abs(z) > amp_tol}
-            forward_columns.append(f)
-            adjoint_columns.append(ad)
+            f_total = {k: z for k, z in f_total.items() if abs(z) > amp_tol}
+            ad_total = {k: z for k, z in ad_total.items() if abs(z) > amp_tol}
+            forward_columns.append(f_total)
+            adjoint_columns.append(ad_total)
 
-            for output in set(f) | set(ad):
+            for output in set(f_total) | set(ad_total):
                 if output not in seen:
                     if len(closure_keys) >= max_states or depth[key] >= max_depth:
                         truncated = True
@@ -320,7 +332,9 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
     try:
         # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
         # cache wrappers once for the entire closure walk.
-        LSINE.run(source_v)
+        # One invocation installs the sine K engine once; the intercepted
+        # executor coherently sums the selected node maps on every basis key.
+        LSINE.run(source_nodes[0])
     finally:
         RAW.run = old_raw_run
 
@@ -328,7 +342,7 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
     if not complete:
         return {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
-            "source_node": source_v,
+            "source_nodes": list(source_nodes),
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
@@ -382,7 +396,7 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
     )
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
-        "source_node": source_v,
+        "source_nodes": list(source_nodes),
         "Jmax2": Jmax2,
         "Jmax": Jmax2 / 2,
         "seed_count": len(seeds),
@@ -410,25 +424,26 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
             "full_physical_HL": False,
             "physical_joint_kernel_verdict": False,
         },
-        "claim_scope": "finite W5-seeded reachable component at declared Jmax2; raw structural KKV and independently ordered adjoint only",
+        "node_sum": "unweighted coherent sum of selected source-node KKV maps and their direct adjoints",
+        "claim_scope": "finite W5-seeded reachable component at declared Jmax2; raw structural node-summed KKV and independently ordered adjoint only",
     }
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--node", type=int, default=0)
+    ap.add_argument("--nodes", type=int, nargs="+", default=list(NODES))
     ap.add_argument("--Jmax2", type=int, default=10)
     ap.add_argument("--max-states", type=int, default=500)
     ap.add_argument("--max-depth", type=int, default=8)
     ap.add_argument("--amp-tol", type=float, default=1e-12)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    result = run_closure(args.node, args.Jmax2, args.max_states, args.max_depth, args.amp_tol)
+    result = run_closure(args.nodes, args.Jmax2, args.max_states, args.max_depth, args.amp_tol)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": result["status"],
-        "source_node": result["source_node"],
+        "source_nodes": result["source_nodes"],
         "Jmax2": result["Jmax2"],
         "closure_size": result.get("closure_size", result.get("closure_size_discovered")),
         "direct_adjoint_relative_residual": result.get("diagnostics", {}).get("direct_adjoint_relative_residual"),
