@@ -131,6 +131,15 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertEqual(err, 0.0)
         self.assertGreater(scale, 0.0)
 
+    def test_covariant_scalar_mapping_rejects_open_channels(self):
+        spins = (4,) * 10
+        valid = (spins, (-1, 0, 0, 0, 0), 0, 0, 0, 0)
+        mapped = gate.covariant_scalar_to_gauss(valid, 0)
+        self.assertEqual(mapped, (spins, (0, 0, 0, 0, 0)))
+        invalid = (spins, (-1, 0, 0, 0, 0), 2, 0, 0, 0)
+        with self.assertRaises(ValueError):
+            gate.covariant_scalar_to_gauss(invalid, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
