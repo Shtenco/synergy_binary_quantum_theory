@@ -108,6 +108,29 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertEqual(len(triples), 24)
         self.assertEqual(len({triple for _, triple in triples}), 24)
 
+    def test_sparse_closed_matrix_adjoint_indexing(self):
+        keys = [("basis", 0), ("basis", 1), ("basis", 2)]
+        # Columns of a complex 3x3 forward matrix, represented sparsely.
+        F = [
+            {keys[0]: 1 + 2j, keys[2]: -0.5j},
+            {keys[1]: 3 - 1j},
+            {keys[0]: 2 + 0.25j, keys[1]: -4j},
+        ]
+        index = {key: i for i, key in enumerate(keys)}
+        expected = gate._matrix_adjoint_expected_columns(F, keys, index)
+        dense_F = np.column_stack([
+            np.array([col.get(k, 0j) for k in keys], dtype=complex)
+            for col in F
+        ])
+        dense_expected = np.column_stack([
+            np.array([col.get(k, 0j) for k in keys], dtype=complex)
+            for col in expected
+        ])
+        np.testing.assert_allclose(dense_expected, dense_F.conj().T)
+        err, scale = gate.sparse_matrix_residual(expected, expected)
+        self.assertEqual(err, 0.0)
+        self.assertGreater(scale, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
