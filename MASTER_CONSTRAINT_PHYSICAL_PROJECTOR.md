@@ -53,6 +53,9 @@ Thus the *zero-sector* is independent of the arbitrary positive constraint metri
 
 ## 2. Exact finite physical projector
 
+![Master constraint и точное ядро](docs/figures/06-master-constraint.svg)
+
+
 At finite regulator, when zero is an isolated eigenvalue, define
 
 \[
@@ -188,6 +191,9 @@ If such a clock is derived, its physical propagator must agree with gauge-invari
 ---
 
 ## 7. Exact finite gate versus open physical gate
+
+![Девять физических ворот](docs/figures/12-nine-physical-gates.svg)
+
 
 ### Closed now
 
