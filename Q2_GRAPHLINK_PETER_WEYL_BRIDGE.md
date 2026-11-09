@@ -61,6 +61,9 @@ and toggles active link ↔ no-link with unit norm.
 
 ## 3. Exact graph-changing factorization of the frozen q=2 adjacency
 
+![SU(2) и Peter–Weyl representation bridge](docs/figures/05-su2-peter-weyl.svg)
+
+
 For the four transporter components \(U_a=M_{a4}\),
 
 \[
