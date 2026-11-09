@@ -89,7 +89,7 @@ E_\pm(k)=\pm\sqrt{4m^2+9\cos^2 k}.
 
 ## 3. W5: точный рациональный сертификат конечного евклидова зазора
 
-Источник матрицы: [\`V04_CROSS_BRANCH_REAL_EUCLIDEAN_W5_LOG_EVIDENCE.json\`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/bqg-v26-multiprecision-charge-20261109/research/node1_fullstate_gate_2026_10_31/V04_CROSS_BRANCH_REAL_EUCLIDEAN_W5_LOG_EVIDENCE.json), ветка \`research/bqg-v26-multiprecision-charge-20261109\`.
+Источник матрицы: [\`V04_CROSS_BRANCH_REAL_EUCLIDEAN_W5_LOG_EVIDENCE.json\`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/bqg-v26-multiprecision-charge-20261109/research/node1_fullstate_gate_2026_10_31/V04_CROSS_BRANCH_REAL_EUCLIDEAN_W5_LOG_EVIDENCE.json), ветка \`research/bqg-v26-multiprecision-charge-20261109\`. В метаданных источник помечен \`SCIENTIFIC_COMPUTATION_SUCCEEDED_ARTIFACT_UPLOAD_FAILED_QUOTA\`: сохранён компактный JSON-журнал с Gram-матрицей и спектром, но не полный исходный массив SU(2) выходных колонок.
 
 В источнике указаны:
 - входной носитель \(W5\): \(K=(0,2,4,6,8)\), \(j=2\), K5;
@@ -134,30 +134,25 @@ q=32.41356=\frac{810339}{25000}.
 
 ### 3.2. Необходимая сила Lorentzian-компенсатора
 
-Для оператора на том же входном \(W5\) и в том же полном выходном пространстве рассмотрим
-\[
-H=-\frac23A+Q.
-\]
-Из неравенства для минимального сингулярного значения
+В нормировке исходного V04 cancellation-gate рассматривается \(H=A+\lambda B\), где \(B\) — ещё не вычисленная полная Lorentzian-карта на том же входном \(W5\) и в том же полном выходном пространстве. Из неравенства для минимального сингулярного значения
 \[
 \sigma_{\min}(H)\ge
 \frac23\sigma_{\min}(A)-\|Q\|_{\rm op}
 \]
-следует: если
+поэтому если
 \[
-\|Q\|_{\rm op}<\frac23\sqrt{32.41356},
+|\lambda|\,\|B\|_{\rm op}<\sqrt{32.41356},
 \]
-то нулевого направления в этом \(W5\) быть не может. Значит, для компенсации необходимо
+то нулевого направления в этом \(W5\) быть не может. Для компенсации необходимо
 \[
-\boxed{\|Q\|_{\rm op}>
-3.795527192191707.}
+\boxed{|\lambda|\,\|B\|_{\rm op}>5.69329078828756.}
 \]
 
-В нормировке \(H=A+\lambda B\) аналогично необходимо
+Отдельно, если использовать ранее записанную нормировку \(H=-\tfrac23A+Q\), соответствующий порог равен
 \[
-\boxed{|\lambda|\,\|B\|_{\rm op}>
-5.69329078828756.}
+\boxed{\|Q\|_{\rm op}>\frac23\sqrt{32.41356}=3.795527192191707.}
 \]
+Это два варианта записи одного и того же сингулярно-значного барьера при разных коэффициентах перед евклидовой картой; не следует считать их двумя независимо измеренными физическими величинами.
 
 Это строгие **необходимые пороги**, а не измеренная величина Lorentzian-вклада. В W5 evidence-файле блока \(B\), cross-Gram \(A^\dagger B\) и полного Lorentzian оператора нет.
 
