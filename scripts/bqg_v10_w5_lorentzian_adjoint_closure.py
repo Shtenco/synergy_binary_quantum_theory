@@ -152,6 +152,18 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
         )
         _merge_diag(diagnostics, diag_f)
         _merge_diag(diagnostics, diag_a)
+    diagnostics["CK_outer_complete_basis_leakage"] = max(
+        float(diagnostics.get("outer_complete_basis_leakage", 0.0)),
+        float(diagnostics.get("CK_outer_complete_basis_leakage", 0.0)),
+    )
+    diagnostics["CK_internal_volume_sector_leakage"] = max(
+        float(diagnostics.get("internal_volume_sector_leakage", 0.0)),
+        float(diagnostics.get("CK_internal_volume_sector_leakage", 0.0)),
+    )
+    diagnostics["CK_complete_charge_basis_leakage"] = max(
+        float(diagnostics.get("complete_charge_basis_leakage", 0.0)),
+        float(diagnostics.get("CK_complete_charge_basis_leakage", 0.0)),
+    )
     return B, Bdag, diagnostics
 
 
