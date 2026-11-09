@@ -15,11 +15,11 @@
 
 ## Редакционные проверки
 
-![Девять физических ворот](docs/figures/12-nine-physical-gates.svg)
+![Девять физических ворот](figures/12-nine-physical-gates.svg)
 
-![W5 W17 W43](docs/figures/08-spectral-carriers.svg)
+![W5 W17 W43](figures/08-spectral-carriers.svg)
 
-![Depth-6 frontier](docs/figures/09-depth6-frontier.svg)
+![Depth-6 frontier](figures/09-depth6-frontier.svg)
 
 
 - Предыдущая техническая версия сохранена: [README_TECHNICAL_ARCHIVE_20261109.md](README_TECHNICAL_ARCHIVE_20261109.md).
