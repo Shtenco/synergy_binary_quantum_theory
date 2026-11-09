@@ -25,7 +25,7 @@ For the default unit-lapse case it forms `B = Σ_v B_v` and `B† = Σ_v B_v†`
 
 Starting from the five W5 seed states, breadth-first search adds every output key with amplitude above the declared `--amp-tol` from either the coherent forward map or its direct reversed-order adjoint. Each discovered key is processed once.
 
-If `--max-states` or `--max-depth` is reached, the result is explicitly `INCOMPLETE_CLOSURE_LIMIT_REACHED`; no adjoint verdict is returned.
+If `--max-states` or `--max-depth` is reached, the result is explicitly `INCOMPLETE_CLOSURE_LIMIT_REACHED`; no adjoint verdict is returned. The incomplete result nevertheless preserves computed forward/direct-adjoint column norms, support sizes, leakage diagnostics, rejected scalar-projection weight, and the ten largest amplitudes in each computed column. This lets a bounded pilot report real matrix-element information without mislabelling a truncated subspace as closed.
 
 When closure completes, all columns are reordered into one deterministic Gauss-key basis. The runner compares the direct reversed-order columns with the conjugate transpose of the assembled forward matrix:
 
