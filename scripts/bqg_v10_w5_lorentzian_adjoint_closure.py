@@ -361,8 +361,8 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
     relative = err / max(scale, 1e-30)
     bnorm = sparse_frobenius(forward_sorted)
     bdag_norm = sparse_frobenius(adjoint_sorted)
-    sym_norm = sparse_sum_difference_norm(forward_sorted, expected_adj, sign=-1.0)
-    anti_norm = sparse_sum_difference_norm(forward_sorted, expected_adj, sign=+1.0)
+    sym_norm = sparse_sum_difference_norm(forward_sorted, expected_adj, sign=+1.0)
+    anti_norm = sparse_sum_difference_norm(forward_sorted, expected_adj, sign=-1.0)
     basis_payload = "\n".join(repr(k) for k in basis_keys).encode("utf-8")
     basis_id = hashlib.sha256(basis_payload).hexdigest()
 
