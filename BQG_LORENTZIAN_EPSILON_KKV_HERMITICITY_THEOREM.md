@@ -6,105 +6,81 @@ Date: 2026-11-10
 
 The raw 24-term epsilon-oriented K-K-V block is **not proven anti-Hermitian or Hermitian by the available leg identities alone**. A tempting proof by cyclically rotating the auxiliary trace is invalid: the trace is only over auxiliary indices, while its entries are operators on the gravitational Hilbert space and generally do not commute.
 
-This note records the exact adjoint identity, explains the failed shortcut, and defines the numerical test required before any Hermitian completion is chosen. The earlier claim that the full epsilon sum is automatically anti-Hermitian and that multiplying it by \\(i\\) is therefore justified is withdrawn.
+This note records the exact adjoint identity, explains the failed shortcut, and defines the numerical test required before any Hermitian completion is chosen. The earlier claim that the full epsilon sum is automatically anti-Hermitian and that multiplying it by (i) is therefore justified is withdrawn.
 
-## Purpose and scope
+## Scope and definitions
 
-This note closes one algebraic gap in the W5 Lorentzian pipeline. It derives the adjoint of the complete 24-term epsilon-oriented K-K-V contraction. It does **not** claim that the current numerical runner has already computed the full W5 matrix, that all truncations are converged, or that the physical normalization has been fixed.
-
-The statement is conditional on the adjoint identities of the implemented covariant legs holding on one common, sufficiently complete Hilbert space.
-
-## Definitions
-
-At a fixed source vertex, let the matrix-covariant legs obey
-
-\[
-C_e(K)^\dagger=-C_e(K),\qquad C_e(V)^\dagger=C_e(V).
-\]
-
-The first identity follows from the current sine convention
-\[
+With the sine convention
+[
 H_E^{\rm sine}=\frac{T-T^\dagger}{2i},\qquad
 K_{\rm sine}=[V,H_E^{\rm sine}],
-\]
-provided the volume is self-adjoint and the commutator is represented without an adjoint-breaking projection. The second follows from self-adjointness of the volume and unitary holonomy conjugation in
-\[
-C_{ij}(V)=\delta_{ij}V-h_{ik}Vh^{-1}_{kj}.
-\]
+]
+the gravitational operator (K_{\rm sine}) is anti-Hermitian when (V) and (H_E^{\rm sine}) are Hermitian and the commutator is represented on a common domain.
 
-For three distinct incident edges define
-\[
-T_{abc}:=\operatorname{Tr}_{aux}
-  [C_a(K)C_b(K)C_c(V)].
-\]
-The trace is over the two-dimensional auxiliary fundamental index; multiplication order is the displayed operator order.
+The expected matrix-covariant leg identities are
+[
+C_e(K)^\dagger=-C_e(K),\qquad C_e(V)^\dagger=C_e(V).
+]
+Here the dagger reverses both auxiliary matrix indices and the Hilbert-space operator.
 
-For the four-valent source vertex, the epsilon set \(\mathcal O_v\) contains the 24 signed ordered triples obtained by choosing one omitted neighbor and permuting the other three. Its sign is alternating under exchange of any two entries. Define
-\[
-B_v^{raw}:=\sum_{(a,b,c)\in\mathcal O_v}
- \epsilon(a,b,c)T_{abc}.
-\]
+For one ordered triple,
+[
+T_{abc}=\operatorname{Tr}_{aux}[C_a(K)C_b(K)C_c(V)].
+]
+The raw node block is
+[
+B^{raw}=\sum_{(a,b,c)\in\mathcal O_v}\epsilon(a,b,c)T_{abc},
+]
+where (mathcal O_v) contains the 24 signed ordered triples.
 
-## Adjoint derivation
+## Exact adjoint identity
 
-Using the two leg-adjoint identities and reversing the product,
-\[
+The adjoint reverses the product and contributes two minus signs from the two K legs:
+[
 T_{abc}^\dagger
-=\operatorname{Tr}_{aux}
- [C_c(V)(-C_b(K))(-C_a(K))].
-\]
-The two minus signs cancel. By cyclicity of the finite-dimensional auxiliary trace,
-\[
-T_{abc}^\dagger
-=\operatorname{Tr}_{aux}
- [C_b(K)C_a(K)C_c(V)]
-=T_{bac}.
-\]
-Now relabel \(a\leftrightarrow b\) in the full epsilon sum. Since the ordered-triple set is closed under this exchange and epsilon is alternating,
-\[
-(B_v^{raw})^\dagger
-=\sum_{(a,b,c)}\epsilon(a,b,c)T_{bac}
-=-\sum_{(a,b,c)}\epsilon(a,b,c)T_{abc}
-=-B_v^{raw}.
-\]
+=\operatorname{Tr}_{aux}[C_c(V)C_b(K)C_a(K)].
+]
+This is the safe identity. It does **not** imply
+[
+T_{abc}^\dagger=T_{bac}.
+]
 
-Thus the **complete** epsilon-oriented raw block is anti-Hermitian. The corresponding Hermitian structural operator is
-\[
-H_{L,v}^{struct}:=iB_v^{raw},
-\qquad (H_{L,v}^{struct})^\dagger=H_{L,v}^{struct}.
-\]
+For ordinary complex-number matrices, the trace is cyclic. Here the matrix entries are operators on the gravitational Hilbert space. The partial auxiliary trace
+[
+\operatorname{Tr}_{aux}(XY)=\sum_{i,j}X_{ij}Y_{ji}
+]
+is not cyclic when the entries do not commute. Cyclicity is available only for a full trace over auxiliary and gravitational spaces (when trace-class conditions hold), or under additional commutation hypotheses not established here.
 
-No \(B+B^\dagger\) completion is appropriate under these conventions: it would annihilate the exact anti-Hermitian block. Nor should one symmetrize individual ordered triples independently; the Hermiticity property is produced by the signed complete epsilon sum.
+Consequently, the alternating epsilon sign under (a\leftrightarrow b) is insufficient to infer ((B^{raw})^\dagger=-B^{raw}). The actual adjoint reverses the order of all three legs and leaves the auxiliary trace in that reversed order.
 
-## Conditions that must be checked in the implementation
+## What a valid completion requires
 
-1. **Leg adjoints:** test \(C_e(K)^\dagger=-C_e(K)\) and \(C_e(V)^\dagger=C_e(V)\) as full matrix identities, not merely scalar norms or a few diagonal elements.
-2. **Common domain/codomain:** input and output basis conventions must be identical for the operator and its adjoint. The W5 adapter maps final scalar covariant states back to Gauss keys; that map must be isometric and complete on the retained subspace.
-3. **No hidden projection:** any charge, spin, or scalar-channel pruning must commute with the adjoint, or be proven exact. A cutoff projection can break the identities at its boundary.
-4. **Complete epsilon orbit:** all 24 distinct signed triples must be included exactly once. Partial shards cannot be treated as an operator or used for an adjoint test until coherently assembled.
-5. **Numerical residual:** after assembly, compute
-\[
-r_{AH}=\frac{\|B+B^\dagger\|_F}{\max(\|B\|_F,\epsilon_{num})}.
-\]
-Also test \(iB-(iB)^\dagger\). Report both residuals and the cutoff leakage.
+1. **Adjoint matrix construction.** Assemble the complete raw map in a common orthonormal basis and independently assemble its adjoint using the reversed-order formula above. Check that the computed adjoint agrees with the conjugate transpose of the assembled matrix.
+2. **Physical ordering choice.** Identify the precise Hermitian Lorentzian operator ordering from the chosen quantization prescription or primary reference. If that prescription is symmetric ordering of the raw operator, its Hermitian part is ((B^{raw}+(B^{raw})^\dagger)/2). If it specifies a different ordering, implement that ordering instead. Do not assume that (iB^{raw}), (B+B^\dagger), or any other completion is physically correct without this derivation.
 
-The randomized finite-matrix unit test added alongside this note verifies the algebraic identity and the epsilon sign convention. It is a unit test of the derivation, **not** a substitute for item 1 on the actual Peter-Weyl legs.
+A Hermitian part can always be formed algebraically for a finite matrix, but that fact alone does not establish that it is the intended quantization of the classical Lorentzian constraint.
 
-## Physical normalization remains separate
+## Required numerical gates
 
-The factor \(i\) above is fixed by the adjoint convention and is not a fit parameter. It does not determine the remaining physical coefficient. The classical Thiemann Lorentzian term is proportional to the epsilon contraction of two \(\{A,K\}\) factors and one \(\{A,V\}\) factor, with convention-dependent powers of \(\beta\), \(\kappa\), and \(\hbar\), as well as regulator and trace-normalization factors. These must be transcribed from one declared convention ledger and checked dimensionally. They must not be tuned to force a joint kernel.
+1. Verify the full matrix adjoints of (C_e(K)) and (C_e(V)), including auxiliary indices and Hilbert-space matrix elements.
+2. Ensure input and output basis conventions are identical and orthonormal. Check the covariant-scalar-to-Gauss map as an isometry on the retained subspace.
+3. Prove that all charge/spin/scalar pruning is adjoint-compatible, or include the omitted sectors in the matrix.
+4. Assemble all 24 epsilon terms coherently. Partial shards are not operators and cannot be adjoint-tested as complete blocks.
+5. Compute the residual between the adjoint of the assembled raw matrix and the independently assembled reversed-order expression:
+[
+r_{adj}=\frac{\|B_{assembled}^\dagger-B_{reversed}^\dagger\|_F}
+{\max(\|B_{assembled}\|_F,\epsilon_{num})}.
+]
+6. Compare increasing cutoffs and report leakage, matrix residuals, and singular-value stability.
 
-In particular, a paper using \(\beta=1\), a different definition of \(K\), or a different normalization of the SU(2) generators cannot be copied coefficient-for-coefficient into this code without conversion.
+## Literature cross-check (not a coefficient transplant)
 
-## Next numerical gate
+Yang and Ma, *New Hamiltonian constraint operator for loop quantum gravity*, Phys. Lett. B 751 (2015), DOI: https://doi.org/10.1016/j.physletb.2015.10.062, display the classical Lorentzian term with an explicit (1+\beta^2) factor and derive a regulated operator with convention-specific (eta), (kappa), (hbar), representation-trace, and inverse-volume factors (their Eqs. (1), (9)–(12)). They separately define a symmetric Hamiltonian by (	frac12(\hat H+\hat H^\dagger)) (their Eq. (19)). This supports the general requirement to specify an adjoint-based symmetric ordering; it does not determine the coefficient or precise ordering for this repository's KKV implementation. Their regulator and operator definitions must not be copied without a full convention conversion.
 
-For each W5 input and node:
+## Physical normalization remains open
 
-1. Assemble all 24 raw epsilon terms coherently at a fixed cutoff.
-2. Form the matrix \(B_v^{raw}\) in the same complete retained Gauss basis for rows and columns.
-3. Verify the anti-Hermitian residual above.
-4. Only then define \(H_{L,v}^{struct}=iB_v^{raw}\).
-5. Repeat at increasing cutoffs and compare both matrix entries and singular values.
-6. Apply the independently derived physical prefactor only after the convention ledger is audited.
+The factor multiplying the Lorentzian term, including the dependence on (eta), (kappa), (hbar), trace normalization, and regulator conventions, remains a separate audit. A literature formula must be translated into the exact definitions of (K), SU(2) generators, holonomy orientation, and commutator normalization used by this code. No coefficient may be fitted to force a joint kernel.
 
-Until these gates pass, the W5 Euclidean certificate remains valid on its own, but there is no Lorentzian or joint-kernel verdict.
+## Current conclusion
+
+The prior suggestion that the 24-term epsilon sum is automatically anti-Hermitian was too strong and is withdrawn. The accompanying unit test checks the reversed-order adjoint and demonstrates that an auxiliary partial trace of operator-valued matrices is generally not cyclic. The actual W5 Lorentzian matrix, its physical Hermitian ordering, cutoff convergence, and the joint-kernel test remain uncomputed.
