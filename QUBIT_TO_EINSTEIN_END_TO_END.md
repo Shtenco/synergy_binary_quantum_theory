@@ -105,6 +105,9 @@ Therefore the end-to-end chain is not merely recognizing a smooth metric or a si
 
 ## What is now mathematically connected
 
+![Маршрут к физическому TT и IR action](docs/figures/10-continuum-tt.svg)
+
+
 The finite control establishes composability of
 
 \[
