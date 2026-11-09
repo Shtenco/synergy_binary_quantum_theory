@@ -113,6 +113,26 @@ pipeline have not demonstrated the required invariance on the tested W5 input.
 6. Repeat at Jmax2=10,12,14 with identical amplitude tolerance and complete
    closure conditions. Only then expand to all five source nodes.
 
+## Frozen second-stage replay after backend restoration
+
+The numerical-continuation workflow on the restored backend (run 42704881970)
+completed successfully. This is an integrity/replay result, not a completed
+second-stage physical calculation. Its inventory reports:
+
+- 419 saved records and 50 second-stage charge checks;
+- 50 available direct-H_E records against 352 required;
+- zero new H_E records generated in this run;
+- zero second-stage C_K actions completed;
+- direct reverse-H_L column incomplete;
+- full error not certified;
+- physicalization incomplete.
+
+The weak reverse-H_L diagnostic has components
+`[-3.322481021219022e-17, 0.08463553933259263]`, and the reported
+conjugacy difference is `1.9429155614935588e-16`. The small conjugacy
+difference does not overcome the incomplete direct-reverse column or certify
+the full error. This result is kept separate from the W5 Lorentzian pilot.
+
 ## Gate ordering remains frozen
 
 No all-five-node closure, physical Hermitian ordering selection, physical
