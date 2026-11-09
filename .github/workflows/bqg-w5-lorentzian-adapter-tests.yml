@@ -12,6 +12,7 @@ on:
       - 'tests/test_bqg_v09_w5_lorentzian_adjoint.py'
       - 'tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md'
+      - 'BQG_W5_LORENTZIAN_ADJOINT_CLOSURE.md'
       - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
   pull_request:
     branches: [main]
@@ -19,7 +20,10 @@ on:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_adjoint.py'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md'
+      - 'BQG_W5_LORENTZIAN_ADJOINT_CLOSURE.md'
       - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
 
 jobs:
