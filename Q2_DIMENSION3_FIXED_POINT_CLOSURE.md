@@ -44,6 +44,9 @@ This value is fixed before any dimension measurement below.
 
 ## 2. Exact recursive growth law
 
+![Комбинаторная размерность и динамический масштаб](docs/figures/04-emergent-dimensions.svg)
+
+
 In one generation every active causal edge produces `B` intermediate route vertices and two causal child edges per route. Therefore
 
 \[
