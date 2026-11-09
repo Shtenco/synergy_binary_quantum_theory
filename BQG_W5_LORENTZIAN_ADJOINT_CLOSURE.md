@@ -41,6 +41,7 @@ It also reports the Frobenius norms of the Hermitian and anti-Hermitian parts wi
 - The Gauss-to-covariant embedding is a one-to-one relabeling of the source-node singlet into the J=0, M=0, K12=K34 covariant key. Its norm is preserved by construction; the scalar output map is its inverse on that sector.
 - The existing sine-ordering module installs the exact K_sine=[V,H_E^sine] implementation once around the full closure walk, preserving its local caches during the walk.
 - Component cutoff leakage is aggregated across every processed state, direction, and selected node.
+- The historical fixed-index `complete_charge_basis_leakage` diagnostic is recorded separately with `hard_acceptance=false`, following the sine-K gate's explicit convention. It is not silently treated as physical leakage; actual nonscalar output after the full auxiliary trace is independently rejected and counted.
 - Amplitude pruning is deferred until the complete node-summed forward and adjoint columns have been coherently assembled.
 
 ## Invocation
