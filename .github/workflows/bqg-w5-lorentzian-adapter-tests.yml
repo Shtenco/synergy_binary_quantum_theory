@@ -1,0 +1,26 @@
+name: BQG W5 Lorentzian adapter tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
+      - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
+      - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
+      - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
+      - '.github/workflows/bqg-w5-lorentzian-adapter-tests.yml'
+
+jobs:
+  adapter-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run W5 adapter unit tests
+        run: python -m unittest discover -s tests -p 'test_bqg_v09_w5_lorentzian_raw_column.py' -v
