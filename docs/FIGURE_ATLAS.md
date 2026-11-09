@@ -46,3 +46,12 @@
 - Фигуры масштабируются без потери качества и могут редактироваться как текст.
 - Числа и статусы следует сверять с theory_gates.json, physicalization_gates.json, depth6_frontier.json, THEORY_STATUS.md и AUDIT_CURRENT.md.
 - Не переносить значения между W5, W17 и W43 без доказанного отображения между соответствующими носителями.
+
+## 13. Coarse-graining и квантовая пена
+![Coarse-graining foam](figures/13-coarse-graining-foam.svg)
+
+## 14. Гравитационная волна как pump
+![Gravitational wave pump](figures/14-gravitational-wave-pump.svg)
+
+## 15. Зеркальная ориентация и ограничения antigravity
+![Mirror chirality no-go](figures/15-mirror-chirality-no-go.svg)
