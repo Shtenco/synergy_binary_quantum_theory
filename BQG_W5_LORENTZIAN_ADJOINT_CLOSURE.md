@@ -5,7 +5,7 @@ Date: 2026-11-10
 ## Purpose
 
 The v09 adapter computes five W5 input columns but does not close its output space under the raw Lorentzian map or its adjoint. The v10 runner constructs the *reachable finite component* generated from the exact W5 seed set
-`((4,)*10, (K,0,0,0,0))`, K in {0,2,4,6,8}, for one selected source node.
+`((4,)*10, (K,0,0,0,0))`, K in {0,2,4,6,8}, for a selected set of source nodes (by default all five K5 nodes). For the default all-node run, it coherently sums the five node contributions before closing the basis.
 
 At each basis state it computes both:
 
@@ -45,7 +45,7 @@ python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
   --output verification_results/W5_ADJOINT_CLOSURE_NODE0_J10_PILOT.json
 ```
 
-A larger run can raise the state and depth limits. Cutoff convergence must use separate runs at `Jmax2=10,12,14`, with the same amplitude tolerance and sufficiently large closure limits. A result is cutoff-comparable only when each run reports a complete closure and the omitted-support count is zero.
+A node-local diagnostic can pass a subset such as `--nodes 0`. A larger run can raise the state and depth limits. Cutoff convergence must use separate runs at `Jmax2=10,12,14`, with the same amplitude tolerance and sufficiently large closure limits. A result is cutoff-comparable only when each run reports a complete closure and the omitted-support count is zero.
 
 ## What a PASS does and does not mean
 
