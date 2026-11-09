@@ -131,7 +131,7 @@ def evaluate(cutoff, node, input_k):
             spec_volume_leak = max(spec_volume_leak, float(adj_vleak))
             for branch in adj_branches:
                 projected, bleak = CK.project_branch_complete_charges(
-                    branch, (node,)
+                    branch, (node,), tol=0.0
                 )
                 spec_basis_leak = max(spec_basis_leak, float(bleak))
                 add(spec_tdag, projected, coef)
