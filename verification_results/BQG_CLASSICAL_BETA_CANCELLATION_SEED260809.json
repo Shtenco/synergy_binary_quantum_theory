@@ -1,0 +1,55 @@
+{
+  "status": "PASS_CLASSICAL_BETA_CANCELLATION",
+  "seed": 260809,
+  "trials": 64,
+  "beta_values": [0.0, 0.2, 0.5773502691896258, 1.0, 2.0, 5.0],
+  "evaluations": 384,
+  "max_relative_errors": {
+    "HE_plus_beta2_HDW": 1.44361527e-12,
+    "HL_minus_1plusbeta2_HDW": 2.71647340e-12,
+    "HE_plus_HL_minus_HDW": 1.80775452e-12
+  },
+  "first_sample": [
+    {
+      "beta": 0.0,
+      "H_E_kin": 0.0,
+      "H_L_corr": 4.423955443580238,
+      "H_DeWitt": 4.423955443580243
+    },
+    {
+      "beta": 0.2,
+      "H_E_kin": -0.17695821774320977,
+      "H_L_corr": 4.600913661323448,
+      "H_DeWitt": 4.423955443580243
+    },
+    {
+      "beta": 0.5773502691896258,
+      "H_E_kin": -1.4746518145267478,
+      "H_L_corr": 5.898607258106985,
+      "H_DeWitt": 4.423955443580243
+    },
+    {
+      "beta": 1.0,
+      "H_E_kin": -4.423955443580243,
+      "H_L_corr": 8.847910887160475,
+      "H_DeWitt": 4.423955443580243
+    },
+    {
+      "beta": 2.0,
+      "H_E_kin": -17.695821774320972,
+      "H_L_corr": 22.119777217901188,
+      "H_DeWitt": 4.423955443580243
+    },
+    {
+      "beta": 5.0,
+      "H_E_kin": -110.59888608950602,
+      "H_L_corr": 115.0228415330862 
+    }
+  ],
+  "identities": {
+    "euclidean_kinetic": "H_E^kin = - beta^2 H_DeWitt",
+    "lorentzian_correction": "H_L^corr = (1 + beta^2) H_DeWitt",
+    "sum": "H_E^kin + H_L^corr = H_DeWitt = sqrt(q) (K_ab K^ab - K^2)"
+  },
+  "scope": "Classical homogeneous kinetic-sector regression only. Derivative/spatial-curvature terms are excluded. This does not fix the quantum Peter-Weyl operator normalization, regulator, Hermitian ordering, or physical W5 joint kernel."
+}
