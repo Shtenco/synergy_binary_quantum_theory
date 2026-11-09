@@ -251,7 +251,7 @@ def main():
                 "and H_sine and inspect oriented-spec and T/Tdag contributions."
             ),
         }
-        args.output.write_text(json.dumps(partial, indent=2) + "\\n", encoding="utf-8")
+        args.output.write_text(json.dumps(partial, indent=2) + "\n", encoding="utf-8")
 
     checkpoint("RUNNING_W5_SCALAR_COVARIANCE_DIAGNOSTIC")
     for cutoff in args.cutoffs:
