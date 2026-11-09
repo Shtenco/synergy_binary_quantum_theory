@@ -440,7 +440,7 @@ $$
 \mathcal{R}=\frac{4}{9}C+K.
 $$
 
-где $K$ — **все** ещё не вычисленные компенсирующие вклады плюс независимо определённая правая часть HDA. Если $\mathrm{rank}(K)\leq9$, то математически необходимо
+Здесь $K$ — **все** ещё не вычисленные компенсирующие вклады плюс независимо определённая правая часть HDA. Если $\mathrm{rank}(K)\leq9$, то математически необходимо
 
 $$
 \|\mathcal{R}\|_{\mathrm{op}}
@@ -836,7 +836,7 @@ $$
 
 ### Научные первоисточники
 
-1. J. A. Wheeler, *Information, Physics, Quantum: The Search for Links* — [обзор и библиография INSPIRE](https://inspirehep.net/literature/1806513).
+1. J. A. Wheeler, *Information, Physics, Quantum: The Search for Links* (1990) — [библиографическая запись](https://books.google.com/books?id=IbkkHQAACAAJ); см. также *Recent Thinking about the Nature of the Physical World: It from Bit* (1992) — [DOI](https://doi.org/10.1111/j.1749-6632.1992.tb17083.x).
 2. J. D. Bekenstein, *Black Holes and Entropy*, Phys. Rev. D 7 (1973) — [DOI](https://doi.org/10.1103/PhysRevD.7.2333).
 3. S. W. Hawking, *Particle Creation by Black Holes*, Commun. Math. Phys. 43 (1975) — [DOI](https://doi.org/10.1007/BF02345020).
 4. G. ’t Hooft, *Dimensional Reduction in Quantum Gravity* (1993) — [arXiv](https://arxiv.org/abs/gr-qc/9310026).
