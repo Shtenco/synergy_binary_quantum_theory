@@ -63,55 +63,21 @@ def canonicalize_scalar_charge_M(key,charged_nodes):
 
 
 def restore_scalar_charge_M(state,charged_nodes,original):
-    # Validate the complete output before relabelling anything.  On failure,
-    # report the full (J2,M2) weight distribution, not only the first bad key.
-    jm_weight={v:{} for v in charged_nodes}
-    bad=[]
-    for key,amp in state.items():
-        spins,labels=key
-        for v in charged_nodes:
-            lab=labels[v]
-            if lab[0] != 'C':
-                raise RuntimeError('scalar H_E lost charged endpoint label')
-            _,J2,M2,K12,K34=lab
-            jm=(int(J2),int(M2))
-            jm_weight[v][jm]=jm_weight[v].get(jm,0.0)+abs(amp)**2
-            Jin,Min=original[v]
-            if int(J2) != Jin or int(M2) != Jin:
-                bad.append((v,int(J2),int(M2),abs(amp)**2,repr(key)))
-    if bad:
-        diagnostics={}
-        for v,weights in jm_weight.items():
-            total=sum(weights.values())
-            diagnostics[str(v)]={
-                f'J2={J2},M2={M2}':float(weight)
-                for (J2,M2),weight in sorted(weights.items())
-            }
-            diagnostics[str(v)]['total_weight']=float(total)
-        bad_weight=sum(item[3] for item in bad)
-        total_weight=max(
-            (sum(weights.values()) for weights in jm_weight.values()),
-            default=0.0,
-        )
-        first=bad[0]
-        raise RuntimeError(
-            'scalar H_E violated canonical J,M preservation: '
-            f'first_bad_node={first[0]}, input_J2={original[first[0]][0]}, '
-            f'canonical_M2={original[first[0]][0]}, '
-            f'first_output={(first[1],first[2])}, '
-            f'bad_component_count={len(bad)}, '
-            f'bad_weight_sum={bad_weight:.16g}, '
-            f'reference_node_weight={total_weight:.16g}, '
-            f'output_JM_weight_distribution={diagnostics}'
-        )
-
     out={}
     for key,amp in state.items():
         spins,labels=key
         labs=list(labels)
         for v in charged_nodes:
-            _,J2,M2,K12,K34=labs[v]
-            _,Min=original[v]
+            lab=labs[v]
+            if lab[0] != 'C':
+                raise RuntimeError('scalar H_E lost charged endpoint label')
+            _,J2,M2,K12,K34=lab
+            Jin,Min=original[v]
+            if int(J2) != Jin or int(M2) != Jin:
+                raise RuntimeError(
+                    f'scalar H_E violated canonical J,M preservation at node {v}: '
+                    f'input J2={Jin}, canonical M2={Jin}, output={(J2,M2)}'
+                )
             labs[v]=CKCOMP.CK.label_charge(J2,Min,K12,K34)
         ko=(spins,tuple(labs))
         out[ko]=out.get(ko,0j)+amp
