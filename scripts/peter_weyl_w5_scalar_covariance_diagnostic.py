@@ -205,6 +205,12 @@ def evaluate(cutoff, node, input_k):
         "max_volume_leakage": max_volume_leak,
         "max_complete_basis_leakage": max_basis_leak,
         "per_oriented_spec": per_spec,
+        "_maps": {
+            "T_total": total_t,
+            "Tdag_total": total_tdag,
+            "H_plus": total_plus,
+            "H_sine": total_sine,
+        },
     }
 
 
@@ -230,11 +236,7 @@ def main():
                 "from_cutoff": prev["cutoff_doubled_spin"],
                 "to_cutoff": curr["cutoff_doubled_spin"],
                 "map": op,
-                **compare_maps(
-                    # Reconstruct maps are intentionally not serialized in this summary.
-                    # Scalar norm/support trends remain available in the rows.
-                    {}, {}
-                ),
+                **compare_maps(prev["_maps"][op], curr["_maps"][op]),
                 "norm_ratio": (
                     curr[op]["norm"] / max(prev[op]["norm"], 1e-300)
                 ),
@@ -252,7 +254,10 @@ def main():
         "physical_coefficients_fitted": False,
         "node": args.node,
         "input_K": args.input_K,
-        "cutoff_runs": rows,
+        "cutoff_runs": [
+            {k: v for k, v in row.items() if k != "_maps"}
+            for row in rows
+        ],
         "cutoff_trends": convergence,
         "interpretation_rule": (
             "A nonzero wrong-sector weight is a hard scalar-covariance blocker. "
