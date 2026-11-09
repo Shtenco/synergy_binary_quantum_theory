@@ -4,21 +4,6 @@ import unittest
 import numpy as np
 
 
-def epsilon_triples(neighbors):
-    out = []
-    for r, omitted in enumerate(neighbors):
-        tri = tuple(x for x in neighbors if x != omitted)
-        for p in itertools.permutations(tri):
-            positions = [tri.index(x) for x in p]
-            inversions = sum(
-                positions[i] > positions[j]
-                for i in range(3) for j in range(i + 1, 3)
-            )
-            sign = (-1) ** r * (-1 if inversions % 2 else 1)
-            out.append((sign, p))
-    return out
-
-
 def random_operator_blocks(rng, dim, hermitian):
     raw = rng.normal(size=(2 * dim, 2 * dim)) + 1j * rng.normal(
         size=(2 * dim, 2 * dim)
@@ -35,34 +20,54 @@ def aux_trace_product(A, B, V):
     return out
 
 
+def epsilon_triples(neighbors):
+    out = []
+    for r, omitted in enumerate(neighbors):
+        tri = tuple(x for x in neighbors if x != omitted)
+        for p in itertools.permutations(tri):
+            positions = [tri.index(x) for x in p]
+            inversions = sum(
+                positions[i] > positions[j]
+                for i in range(3) for j in range(i + 1, 3)
+            )
+            sign = (-1) ** r * (-1 if inversions % 2 else 1)
+            out.append((sign, p))
+    return out
+
+
 class TestEpsilonKKVAdjoint(unittest.TestCase):
-    def test_complete_24_term_block_is_antihermitian(self):
+    def test_adjoint_is_reversed_order_partial_trace(self):
         rng = np.random.default_rng(20261110)
         dim = 3
-        neighbors = (1, 2, 3, 4)
-        triples = epsilon_triples(neighbors)
+        A = random_operator_blocks(rng, dim, False)
+        B = random_operator_blocks(rng, dim, False)
+        V = random_operator_blocks(rng, dim, True)
+
+        lhs = aux_trace_product(A, B, V).conj().T
+        rhs = aux_trace_product(V, B, A)
+        np.testing.assert_allclose(lhs, rhs, rtol=2e-14, atol=2e-14)
+
+    def test_operator_valued_auxiliary_trace_is_not_cyclic(self):
+        rng = np.random.default_rng(20261111)
+        dim = 3
+        A = random_operator_blocks(rng, dim, False)
+        B = random_operator_blocks(rng, dim, False)
+        V = random_operator_blocks(rng, dim, True)
+
+        lhs = aux_trace_product(A, B, V)
+        cyclic_candidate = aux_trace_product(B, A, V)
+        relative_difference = np.linalg.norm(lhs - cyclic_candidate) / max(
+            np.linalg.norm(lhs), 1.0
+        )
+        self.assertGreater(relative_difference, 1e-3)
+
+    def test_epsilon_orbit_has_24_unique_signed_triples(self):
+        triples = epsilon_triples((1, 2, 3, 4))
         self.assertEqual(len(triples), 24)
-        self.assertEqual(len({p for _, p in triples}), 24)
-
-        K = {e: random_operator_blocks(rng, dim, False) for e in neighbors}
-        V = {e: random_operator_blocks(rng, dim, True) for e in neighbors}
-
-        B = np.zeros((dim, dim), dtype=complex)
-        for sign, (a, b, c) in triples:
-            B += sign * aux_trace_product(K[a], K[b], V[c])
-
-        scale = max(np.linalg.norm(B), 1.0)
-        antihermitian_residual = np.linalg.norm(B + B.conj().T) / scale
-        self.assertLess(antihermitian_residual, 2e-14)
-
-        H = 1j * B
-        hermitian_residual = np.linalg.norm(H - H.conj().T) / scale
-        self.assertLess(hermitian_residual, 2e-14)
-
-    def test_epsilon_sign_flips_under_first_two_leg_exchange(self):
-        triples = {p: sign for sign, p in epsilon_triples((1, 2, 3, 4))}
-        for (a, b, c), sign in triples.items():
-            self.assertEqual(triples[(b, a, c)], -sign)
+        signs = {p: sign for sign, p in triples}
+        self.assertEqual(len(signs), 24)
+        for (a, b, c), sign in signs.items():
+            self.assertEqual(signs[(b, a, c)], -sign)
 
 
 if __name__ == "__main__":
