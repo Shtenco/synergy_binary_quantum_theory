@@ -376,7 +376,10 @@ def run_closure(source_v=0, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12
         return encoded
 
     max_leak = max(leakage_max.values(), default=0.0)
-    passed = relative < 1e-8 and rejected_count == 0 and max_leak < 1e-9
+    passed = (
+        bnorm > 1e-10 and bdag_norm > 1e-10
+        and relative < 1e-8 and rejected_count == 0 and max_leak < 1e-9
+    )
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
         "source_node": source_v,
