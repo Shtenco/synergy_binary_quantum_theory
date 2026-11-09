@@ -341,6 +341,25 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
     if not complete:
+        # Preserve the real amplitudes computed before a closure cap is hit.
+        # This makes bounded pilots scientifically useful without pretending
+        # that a truncated basis supports a full matrix-adjoint verdict.
+        def top_amplitudes(columns, limit=10):
+            rows = []
+            for col_index, state in enumerate(columns):
+                ranked = sorted(state.items(), key=lambda kv: abs(kv[1]), reverse=True)
+                rows.append({
+                    "input_key": repr(closure_keys[col_index]),
+                    "support_size": len(state),
+                    "column_norm": sparse_norm(state),
+                    "largest_amplitudes": [
+                        {"output_key": repr(key), "real": float(z.real),
+                         "imag": float(z.imag), "abs": float(abs(z))}
+                        for key, z in ranked[:limit]
+                    ],
+                })
+            return rows
+
         return {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "source_nodes": list(source_nodes),
@@ -352,8 +371,22 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "max_states": max_states,
             "max_depth": max_depth,
             "omitted_new_support_keys": omitted_support,
+            "partial_diagnostics": {
+                "forward_frobenius_norm": sparse_frobenius(forward_columns),
+                "direct_adjoint_frobenius_norm": sparse_frobenius(adjoint_columns),
+                "forward_column_support_sizes": [len(x) for x in forward_columns],
+                "direct_adjoint_column_support_sizes": [len(x) for x in adjoint_columns],
+                "forward_column_norms": [sparse_norm(x) for x in forward_columns],
+                "direct_adjoint_column_norms": [sparse_norm(x) for x in adjoint_columns],
+                "scalar_projection_rejected_terms": rejected_count,
+                "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
+                "component_leakage_by_node_and_type": leakage_max,
+                "component_leakage_max_by_type": aggregate_leakage,
+            },
+            "partial_forward_columns_top_amplitudes": top_amplitudes(forward_columns),
+            "partial_direct_adjoint_columns_top_amplitudes": top_amplitudes(adjoint_columns),
             "adjoint_residual": None,
-            "claim_scope": "truncated reachable subspace only; no full adjoint-consistency verdict",
+            "claim_scope": "real computed columns and diagnostics on a truncated reachable subspace; no full adjoint-consistency verdict",
         }
 
     basis_keys = sorted(closure_keys, key=repr)
