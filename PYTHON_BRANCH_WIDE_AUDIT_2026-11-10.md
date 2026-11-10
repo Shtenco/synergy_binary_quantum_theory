@@ -3,9 +3,9 @@
 ## Scope and reproducibility
 
 Repository: `Shtenco/synergy_binary_quantum_theory`  
-Audit head on `main`: `c48941f1e0034232402aefa731ef285116ca48a2`  
-Audit workflow: [python-all-branches-audit](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802111888)  
-Machine-readable artifact: [PYTHON_ALL_BRANCHES_AUDIT.json](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802111888/artifacts/13756647023)
+Audit head on `main`: `d3c51ec466a724726c299cb07aef2a05445eb509`  
+Audit workflow: [python-all-branches-audit](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802977103)  
+Machine-readable artifact: [PYTHON_ALL_BRANCHES_AUDIT.json](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802111888/artifacts/13755569812)
 
 The audit enumerated every branch head returned by GitHub, deduplicated identical commit heads, fetched every distinct Python-source blob reachable from those snapshots, and parsed the sources with Python's AST. The scan did not execute repository code.
 
@@ -13,15 +13,15 @@ The audit enumerated every branch head returned by GitHub, deduplicated identica
 |---|---:|
 | Branches | 157 |
 | Unique branch-head commits | 146 |
-| Python-file occurrences across branch snapshots | 18,672 |
-| Unique Python paths | 672 |
-| Unique path/content versions | 753 |
-| Unique source blobs fetched | 750 |
-| Sources parsed successfully | 748 |
+| Python-file occurrences across branch snapshots | 18,674 |
+| Unique Python paths | 674 |
+| Unique path/content versions | 757 |
+| Unique source blobs fetched | 754 |
+| Sources parsed successfully | 752 |
 | Syntax errors | 2 |
 | Total tree entries across unique branch heads | 46,179 |
 
-The current `main` snapshot is smaller: 723 tree entries and 195 `.py` files. The larger repository-wide count comes from the many historical and experimental branches. The 18,672 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 672 distinct paths and 753 path/content versions.
+The current `main` snapshot is smaller: 728 tree entries and 198 `.py` files. The larger repository-wide count comes from the many historical and experimental branches. The 18,672 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 672 distinct paths and 753 path/content versions.
 
 ## Findings
 
@@ -38,8 +38,8 @@ The later V26 branch has a different, parseable worker version; this does not re
 
 Across branch-head source versions the scanner found:
 
-- 14 archive-extraction call sites using `extractall`;
-- 31 `pickle.load/loads` calls across 23 paths.
+- 16 archive-extraction call sites using `extractall`;
+- 33 `pickle.load/loads` calls across 23 paths.
 
 The most important current-`main` cases are:
 
