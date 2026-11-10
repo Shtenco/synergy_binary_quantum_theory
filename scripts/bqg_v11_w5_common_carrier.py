@@ -137,7 +137,10 @@ def build_carrier(
 
     forward_cols = closure["forward_B_columns_sparse"]
     sym_cols = closure["hermitian_ordering_candidate"]["B_comm_symmetric_columns"]
-    if len(forward_cols) != len(basis_keys) or len(sym_cols) != len(basis_keys):
+    anti_cols = closure["hermitian_ordering_candidate"]["B_comm_antihermitian_columns"]
+    if (len(forward_cols) != len(basis_keys)
+            or len(sym_cols) != len(basis_keys)
+            or len(anti_cols) != len(basis_keys)):
         raise ValueError("V10 matrix column count does not match its basis")
 
     A_by_K = {K: {} for K in W5_K}
@@ -186,13 +189,16 @@ def build_carrier(
 
     B_forward_by_K = {}
     B_sym_by_K = {}
+    B_anti_by_K = {}
     crosschecks = []
     for K, seed in zip(W5_K, seed_keys):
         col = row_index[seed]
         b_forward = _decode_v10_column(forward_cols[col], basis_repr, "V10 forward")
         b_sym = _decode_v10_column(sym_cols[col], basis_repr, "V10 symmetric")
+        b_anti = _decode_v10_column(anti_cols[col], basis_repr, "V10 anti-Hermitian")
         B_forward_by_K[K] = b_forward
         B_sym_by_K[K] = b_sym
+        B_anti_by_K[K] = b_anti
         residual, absolute, scale = _relative_residual(B_v09_by_K[K], b_forward)
         crosschecks.append({
             "input_K": K,
@@ -223,6 +229,7 @@ def build_carrier(
         common_keys.update(A_by_K[K])
         common_keys.update(B_sym_by_K[K])
         common_keys.update(B_forward_by_K[K])
+        common_keys.update(B_anti_by_K[K])
     common_keys = sorted(common_keys, key=repr)
     if not common_keys:
         raise ValueError("common W5 output carrier is empty")
@@ -234,6 +241,7 @@ def build_carrier(
     A_matrix = []
     Bsym_matrix = []
     Braw_matrix = []
+    Banti_matrix = []
     for key in common_keys:
         A_matrix.append([
             [float(A_by_K[K].get(key, 0j).real), float(A_by_K[K].get(key, 0j).imag)]
@@ -247,6 +255,26 @@ def build_carrier(
             [float(B_forward_by_K[K].get(key, 0j).real), float(B_forward_by_K[K].get(key, 0j).imag)]
             for K in W5_K
         ])
+        Banti_matrix.append([
+            [float(B_anti_by_K[K].get(key, 0j).real), float(B_anti_by_K[K].get(key, 0j).imag)]
+            for K in W5_K
+        ])
+
+    seed_payload = "\n".join(repr(v10.w5_input_key(K)) for K in W5_K).encode("utf-8")
+    source_names = (
+        "bqg_v09_w5_lorentzian_raw_column.py",
+        "bqg_v10_w5_lorentzian_adjoint_closure.py",
+        "peter_weyl_lorentzian_sine_ordered_triple_gate.py",
+        "peter_weyl_lorentzian_ordered_triple_gate.py",
+        "peter_weyl_euclidean_sine_ordering_gate.py",
+        "peter_weyl_covariant_volume_leg_gate.py",
+        "peter_weyl_zeroaware_volume_migration_experiment.py",
+        "k5_peter_weyl_safe_hda_column.py",
+    )
+    source_hashes = {
+        name: hashlib.sha256((here / name).read_bytes()).hexdigest()
+        for name in source_names
+    }
 
     result = {
         "status": "PASS_STRUCTURAL_COMMON_CARRIER",
@@ -257,6 +285,11 @@ def build_carrier(
         "Jmax": Jmax2 / 2,
         "amp_tol": amp_tol,
         "crosscheck_tolerance": crosscheck_tol,
+        "leakage_tolerance": leakage_tol,
+        "node_weights": {str(node): 1.0 for node in nodes},
+        "node_sum_convention": "unweighted coherent sum; unit lapse at every selected K5 source node",
+        "input_seed_id_sha256": hashlib.sha256(seed_payload).hexdigest(),
+        "source_modules_sha256": source_hashes,
         "v10_closure": {
             "basis_id_sha256": closure["basis_id_sha256"],
             "closure_size": closure["closure_size"],
@@ -274,6 +307,7 @@ def build_carrier(
         "A": A_matrix,
         "B": Bsym_matrix,
         "B_raw_forward": Braw_matrix,
+        "B_antihermitian": Banti_matrix,
         "normalization": {
             "A": "V09 sum over declared source nodes; Euclidean sine-Hermitian structural map",
             "B": "V10 direct-adjoint symmetric completion of raw epsilon KKV map",
