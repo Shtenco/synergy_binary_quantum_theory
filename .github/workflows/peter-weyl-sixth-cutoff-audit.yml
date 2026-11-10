@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: peter-weyl-sixth-cutoff-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sixth-cutoff:
