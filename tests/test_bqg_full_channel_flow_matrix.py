@@ -51,6 +51,11 @@ class FullChannelFlowGuardTests(unittest.TestCase):
         self.assertLess(result["frobenius_singular_spectrum_defect"], 1e-12)
         self.assertAlmostEqual(result["frobenius_norm"] ** 2, 0.8**2 + 0.4**2)
 
+    def test_induced_refinement_tensor_rejects_zero_rank(self):
+        T = np.zeros((2, 3), dtype=complex)
+        with self.assertRaisesRegex(RuntimeError, "zero numerical rank"):
+            FLOW.refinement_tensor_diagnostics(T, "zero tensor test")
+
     def test_induced_refinement_tensor_rejects_nonfinite_entries(self):
         T = np.array([[1.0, np.nan]], dtype=complex)
         with self.assertRaisesRegex(RuntimeError, "non-finite"):
