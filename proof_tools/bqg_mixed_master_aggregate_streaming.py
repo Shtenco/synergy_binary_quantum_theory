@@ -4,7 +4,7 @@ import argparse,json,tarfile,itertools
 from pathlib import Path
 import numpy as np
 try:
-    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
+    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename
     from .safe_archive import safe_extract_tar
     from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
@@ -71,11 +71,11 @@ def load_index(ds,key,expected):
         s=json.load(open(ss[0]));summ.append(s)
         if s['irrep']!=key or s['shell_states']!=264962 or s['s5_orbits']!=2757 or s['failed_blocks']!=0 or s['ok_blocks']!=s['assigned_blocks']:raise SystemExit(('bad summary',s))
         for r in s['records']:
-            i=int(r['orbit_index'])
+            i=validate_index_value(r.get('orbit_index'), f"mixed-master {key} record index")
             if i in rec:raise SystemExit(('dup record',i))
             rec[i]=r
         for p in d.rglob('b*.pkl'):
-            i=int(p.stem[1:])
+            i=parse_indexed_map_filename(p.stem, f"mixed-master {key} map filename")
             if i in paths:raise SystemExit(('dup map',i))
             paths[i]=p
     validate_shard_coverage(
