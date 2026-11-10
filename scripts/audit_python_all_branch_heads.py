@@ -240,7 +240,7 @@ def iter_inline_python_blocks(source: str, path: str):
 
     if suffix in {".md", ".rst"}:
         i = 0
-        fence_open = re.compile(r"^[ \\t]{0,3}(`{3,}|~{3,})[ \\t]*([A-Za-z0-9_+.-]+)?(?:[ \\t].*)?$")
+        fence_open = re.compile(r"""^[ \t]{0,3}([\x60]{3,}|~{3,})[ \t]*([A-Za-z0-9_+.-]+)?(?:[ \t].*)?$""")
         while i < len(lines):
             match = fence_open.match(lines[i])
             if not match:
@@ -253,20 +253,22 @@ def iter_inline_python_blocks(source: str, path: str):
                 continue
             marker = fence[0]
             minimum = len(fence)
-            close = re.compile(r"^[ \\t]{0,3}" + re.escape(marker) + "{" + str(minimum) + r",}[ \\t]*$")
+            close = re.compile(
+                r"^[ \t]{0,3}" + re.escape(marker) + "{" + str(minimum) + r",}[ \t]*$"
+            )
             start = i + 1
             j = start
             while j < len(lines) and not close.match(lines[j]):
                 j += 1
             if j < len(lines):
-                yield (f"fence-{language}", i + 1, "\\n".join(lines[start:j]))
+                yield (f"fence-{language}", i + 1, "\n".join(lines[start:j]))
                 i = j + 1
             else:
                 i += 1
 
     if suffix in {".yml", ".yaml", ".sh"}:
         heredoc = re.compile(
-            r"^[ \\t]*python(?:3)?(?:[ \\t]+-[A-Za-z]+)*[ \\t]+-[ \\t]*<<[\\\"']?([A-Za-z_][A-Za-z0-9_]*)[\\\"']?[ \\t]*$"
+            r"""^[ \t]*python(?:3)?(?:[ \t]+-[A-Za-z]+)*[ \t]+-[ \t]*<<['"]?([A-Za-z_][A-Za-z0-9_]*)['"]?[ \t]*$"""
         )
         i = 0
         while i < len(lines):
@@ -280,7 +282,7 @@ def iter_inline_python_blocks(source: str, path: str):
             while j < len(lines) and lines[j].strip() != delimiter:
                 j += 1
             if j < len(lines):
-                yield (f"heredoc-{delimiter}", i + 1, "\\n".join(lines[start:j]))
+                yield (f"heredoc-{delimiter}", i + 1, "\n".join(lines[start:j]))
                 i = j + 1
             else:
                 i += 1
