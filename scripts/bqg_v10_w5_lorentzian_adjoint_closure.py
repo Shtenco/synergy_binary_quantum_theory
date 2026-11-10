@@ -234,6 +234,28 @@ def sparse_sum_difference_norm(columns_a, columns_b, sign=1.0):
         total2 += sum(abs(a.get(k, 0j) + sign * b.get(k, 0j)) ** 2 for k in keys)
     return math.sqrt(total2)
 
+def closure_acceptance(
+    forward_norm,
+    adjoint_norm,
+    adjoint_relative_residual,
+    scalar_projection_rejected_terms,
+    max_component_leakage,
+    max_spin_reached,
+    sine_engine_result,
+):
+    """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate."""
+    return bool(
+        forward_norm > 1e-10
+        and adjoint_norm > 1e-10
+        and adjoint_relative_residual < 1e-8
+        and scalar_projection_rejected_terms == 0
+        and max_component_leakage < 1e-9
+        and max_spin_reached <= 3.5 + 1e-12
+        and isinstance(sine_engine_result, dict)
+        and sine_engine_result.get("passed") is True
+    )
+
+
 def sparse_ordering_parts(forward_columns, adjoint_columns):
     """Return B_sym=(B+B†)/2, B_anti=(B-B†)/2 and B_H,sym at hbar=1.
 
@@ -469,9 +491,15 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         {"value": aggregate_leakage.get("CK_complete_charge_basis_leakage", 0.0),
          "hard_acceptance": False},
     )
-    passed = (
-        bnorm > 1e-10 and bdag_norm > 1e-10
-        and relative < 1e-8 and rejected_count == 0 and max_leak < 1e-9
+    max_spin_reached = max((max(key[0]) for key in basis_keys), default=0) / 2
+    passed = closure_acceptance(
+        forward_norm=bnorm,
+        adjoint_norm=bdag_norm,
+        adjoint_relative_residual=relative,
+        scalar_projection_rejected_terms=rejected_count,
+        max_component_leakage=max_leak,
+        max_spin_reached=max_spin_reached,
+        sine_engine_result=sine_engine_result,
     )
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
@@ -509,6 +537,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "scalar_projection_rejected_terms": rejected_count,
             "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
             "max_component_leakage": max_leak,
+            "max_spin_reached": max_spin_reached,
+            "sine_engine_gate_passed": sine_engine_result.get("passed") is True,
+            "sine_engine_gate_diagnostics": sine_engine_result.get("max_diagnostics", {}),
             "component_leakage_by_type": leakage_max,
             "historical_primitive_charge_basis_diagnostic": historical_charge_diag,
             "hard_leakage_gate_names": list(hard_leak_names),

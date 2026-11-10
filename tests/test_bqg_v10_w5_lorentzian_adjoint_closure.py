@@ -103,6 +103,38 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 D[:, n] += sign * dense(d, self.dim)
         np.testing.assert_allclose(D, F.conj().T, rtol=5e-13, atol=5e-13)
 
+    def test_final_closure_gate_requires_lsine_gate(self):
+        common = dict(
+            forward_norm=1.0,
+            adjoint_norm=1.0,
+            adjoint_relative_residual=0.0,
+            scalar_projection_rejected_terms=0,
+            max_component_leakage=0.0,
+            max_spin_reached=3.5,
+        )
+        self.assertTrue(gate.closure_acceptance(
+            **common, sine_engine_result={"passed": True}
+        ))
+        self.assertFalse(gate.closure_acceptance(
+            **common, sine_engine_result={"passed": False}
+        ))
+        self.assertFalse(gate.closure_acceptance(
+            **common, sine_engine_result=None
+        ))
+
+    def test_final_closure_gate_rejects_spin_wall_violation(self):
+        common = dict(
+            forward_norm=1.0,
+            adjoint_norm=1.0,
+            adjoint_relative_residual=0.0,
+            scalar_projection_rejected_terms=0,
+            max_component_leakage=0.0,
+            sine_engine_result={"passed": True},
+        )
+        self.assertFalse(gate.closure_acceptance(
+            **common, max_spin_reached=3.5000001
+        ))
+
     def test_epsilon_orbit_contains_24_unique_terms(self):
         triples = gate.epsilon_triples((1, 2, 3, 4))
         self.assertEqual(len(triples), 24)
