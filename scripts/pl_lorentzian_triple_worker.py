@@ -59,12 +59,10 @@ def update_diag(dst,d):
 def ordered_dagger_state(seed,source,a,b,c):
     """Exact component-adjoint ordering for one raw triple."""
     psi=LP.CV.gauss_to_covariant({seed:1+0j},source)
-    total={};diag={
-      'CV_complete_basis_leakage':0.0,
-      'CK_outer_complete_basis_leakage':0.0,
-      'CK_internal_volume_sector_leakage':0.0,
-      'CK_complete_charge_basis_leakage':0.0,
-    }
+    total={}
+    # Do not prefill diagnostics: if a stage never ran, its leakage is unknown
+    # until explicitly classified as an empty-input stage by a separate rule.
+    diag={}
     for i,j,k in itertools.product(range(2),repeat=3):
         s1,d1=LP.RAW.KCOMP.C_K_component(psi,source,a,j,i,JMAX2)
         update_diag(diag,{
