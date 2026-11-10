@@ -345,6 +345,43 @@ def run(root: Path, out_dir: Path, source_commit: str):
     return package
 
 
+def verify_package(manifest_path: Path):
+    manifest_path = Path(manifest_path)
+    package = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if package.get("schema") != SCHEMA or package.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("unknown L1 amplitude package schema/version")
+    recorded = package.get("package_sha256")
+    unsigned = dict(package)
+    unsigned.pop("package_sha256", None)
+    if not recorded or canonical_json_sha(unsigned) != recorded:
+        raise ValueError("package manifest SHA256 mismatch")
+    archive = manifest_path.with_name("L1_AMPLITUDE_PACKAGE.npz")
+    if not archive.is_file() or sha256_file(archive) != package.get("amplitude_archive_sha256"):
+        raise ValueError("amplitude archive missing or SHA256 mismatch")
+    if package.get("complete_physical_package") is not False:
+        raise ValueError("v1 E-only verifier refuses an unrecognized completeness claim")
+    if package.get("science_status") != "L1_EUCLIDEAN_E_ONLY_PRECURSOR_NOT_FULL_PHYSICS":
+        raise ValueError("unexpected science status")
+    expected = set()
+    for edge in REPS:
+        for prefix in ("u", "v"):
+            expected.update({f"{prefix}_{edge}_spins", f"{prefix}_{edge}_Ks", f"{prefix}_{edge}_amp"})
+        for node in NODES:
+            for prefix in ("u_shard", "v_shard"):
+                expected.update({f"{prefix}_{edge}_{node}_spins", f"{prefix}_{edge}_{node}_Ks",
+                                 f"{prefix}_{edge}_{node}_amp"})
+    with np.load(archive, allow_pickle=False) as z:
+        if set(z.files) != expected:
+            raise ValueError("amplitude archive member set mismatch")
+        for prefix in sorted(expected):
+            arr = z[prefix]
+            if arr.dtype.kind in "fc" and not np.isfinite(arr).all():
+                raise ValueError(f"non-finite archive array: {prefix}")
+    return {"passed": True, "schema": SCHEMA, "package_sha256": recorded,
+            "amplitude_archive_sha256": package["amplitude_archive_sha256"],
+            "array_count": len(expected), "package_status": package.get("package_status")}
+
+
 def self_test():
     # Demonstrate the exact failure mode of intermediate thresholding:
     # a small term is discarded before a later term makes the total material.
@@ -372,7 +409,15 @@ def main():
     ap.add_argument("--output-dir", type=Path, default=Path("verification_results/l1_amplitude_package"))
     ap.add_argument("--source-commit", default=os.environ.get("GITHUB_SHA", ""))
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--verify-manifest", type=Path)
     args = ap.parse_args()
+    if args.verify_manifest:
+        try:
+            out = verify_package(args.verify_manifest)
+        except Exception as exc:
+            out = {"passed": False, "error_type": type(exc).__name__, "error": str(exc)}
+        print(json.dumps(out, indent=2))
+        return 0 if out.get("passed") else 1
     if args.self_test:
         out = self_test()
         print(json.dumps(out, indent=2))
