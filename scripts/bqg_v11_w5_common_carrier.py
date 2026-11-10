@@ -154,6 +154,11 @@ def build_carrier(
                 raise RuntimeError(f"V09 incomplete column: node={node}, K={K}, status={result.get('status')}")
             if result.get("epsilon_terms_completed") != 24:
                 raise RuntimeError(f"V09 did not complete all 24 epsilon terms: node={node}, K={K}")
+            if result.get("sine_wrapper_gate_passed") is not True:
+                raise RuntimeError(
+                    f"V09 sine-wrapper gate failed: node={node}, K={K}, "
+                    f"diagnostics={result.get('sine_wrapper_diagnostics', {})}"
+                )
             if result.get("B_scalar_projection_rejections"):
                 raise RuntimeError(f"V09 scalar projection rejected terms: node={node}, K={K}")
             max_term_leakage = max(
