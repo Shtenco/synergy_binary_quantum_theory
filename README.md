@@ -21,6 +21,7 @@
 
 **W5 Lorentzian continuation (11 ноября 2026):** [ledger Hermitian ordering и коэффициентов](BQG_W5_HERMITIAN_ORDERING_COEFFICIENT_LEDGER.md) фиксирует точный знак \\( -\\hbar^{-2} \\) для двух anti-Hermitian commutator legs, минимальную symmetric completion и отделяет известный классический множитель \\(1+\\beta^2\\) от ещё не выведенной абсолютной регуляризационной нормировки. На исследовательскую ветку добавлены full-node V10 closure jobs для \\(J_{\\max,2}=10,12,14\\) и отдельный adapter-test workflow; на момент фиксации оба workflow были queued, а не пройдены.
 **Интеграция существующих W5-модулей (11 ноября 2026):** [аудит V09/V10/common-carrier](BQG_W5_EXISTING_MODULE_INTEGRATION_AUDIT_20261111.md) связывает уже имеющиеся генераторы и фиксирует точный порядок получения единого (A,B)-носителя, условия сравнения cutoff и блокеры физической нормировки. Отдельно исправлен joint-Gram gate: обязательные явные коэффициенты, идентификаторы базиса и корректный подсчёт структурного правого ядра.
+**V11 common carrier (11 ноября 2026):** [сборщик общего W5-носителя](scripts/bqg_v11_w5_common_carrier.py), [регрессионные тесты](tests/test_bqg_v11_w5_common_carrier.py), [pilot workflow](.github/workflows/bqg-v11-w5-common-carrier-pilot.yml). Включает независимую проверку V09 node-sum против V10 forward, контроль (B=B_{sym}+B_{anti}), единый Gauss-носитель и SHA-256 ledger. Исправлен executor-контракт V09/LSINE; см. интеграционный аудит.
 
 ---
 
