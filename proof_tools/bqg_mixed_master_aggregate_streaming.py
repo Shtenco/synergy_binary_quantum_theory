@@ -4,11 +4,11 @@ import argparse,json,tarfile,itertools
 from pathlib import Path
 import numpy as np
 try:
-    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage
+    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
     from .safe_archive import safe_extract_tar
     from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
-    from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage
+    from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
     from safe_archive import safe_extract_tar
     from safe_pickle import safe_load_numpy_pickle
 import bqg_depth6_41 as Z
@@ -81,6 +81,7 @@ def load_index(ds,key,expected):
     validate_shard_coverage(
         [s.get('shard') for s in summ], expected, f"mixed-master {key}"
     )
+    validate_index_coverage(rec.keys(), paths.keys(), TARGET[key][1], f"mixed-master {key}")
     target,active=TARGET[key]
     if len(summ)!=expected or len(rec)!=active or len(paths)!=active or sum(int(r['m']) for r in rec.values())!=target:
         raise SystemExit(('coverage',len(summ),len(rec),len(paths),sum(int(r['m']) for r in rec.values()),target,active))

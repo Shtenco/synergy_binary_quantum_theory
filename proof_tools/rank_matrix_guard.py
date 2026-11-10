@@ -39,3 +39,9 @@ def validate_shard_coverage(shard_ids, expected_shards: int, context: str):
             f"with no duplicates; got {sorted(ids)!r}"
         )
     return tuple(sorted(ids))
+
+
+def validate_index_coverage(record_ids, map_ids, expected_count: int, context: str):
+    """Require complete zero-based record and map indices with no gaps."""
+    validate_shard_coverage(record_ids, expected_count, f"{context} records")
+    validate_shard_coverage(map_ids, expected_count, f"{context} maps")

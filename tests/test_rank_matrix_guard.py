@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
-from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage
+from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
 
 
 class RankMatrixGuardTests(unittest.TestCase):
@@ -52,6 +52,21 @@ class RankMatrixGuardTests(unittest.TestCase):
     def test_rejects_boolean_shard_ids(self):
         with self.assertRaisesRegex(ValueError, "must be integers"):
             validate_shard_coverage([False, 1], 2, "test")
+
+    def test_accepts_complete_record_and_map_indices(self):
+        self.assertIsNone(validate_index_coverage([0, 1, 2], [2, 0, 1], 3, "test"))
+
+    def test_rejects_record_index_gap(self):
+        with self.assertRaisesRegex(ValueError, "records"):
+            validate_index_coverage([0, 2, 3], [0, 1, 2], 3, "test")
+
+    def test_rejects_map_index_gap(self):
+        with self.assertRaisesRegex(ValueError, "maps"):
+            validate_index_coverage([0, 1, 2], [0, 2, 3], 3, "test")
+
+    def test_rejects_boolean_index(self):
+        with self.assertRaisesRegex(ValueError, "integers"):
+            validate_index_coverage([False, 1], [0, 1], 2, "test")
 
     def test_rejects_boolean_or_nonpositive_expected_dimension(self):
         for value in (True, 0, -1, 2.0):
