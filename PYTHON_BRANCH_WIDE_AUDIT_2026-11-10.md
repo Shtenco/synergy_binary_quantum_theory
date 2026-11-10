@@ -410,9 +410,9 @@ Regression tests in `tests/test_python_audit_inline_blocks.py` cover:
 The audit reports both repository-wide and main-only finding counts, and
 separates inline syntax errors from standalone-module syntax errors. The
 current audit run is
-[42821910697](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821910697);
+[42822081116](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42822081116);
 it was pending when this note was written. Earlier expanded-scan runs
-42821334886 and 42821558904 were cancelled by successive pushes before
+42821334886, 42821558904 and 42821910697 were cancelled by successive pushes before
 producing a completed artifact. Do not treat their missing artifacts as
 audit failures or as successful scans.
 
@@ -429,6 +429,15 @@ contains no `ast.Assert` node, that a false condition still raises under
 optimization, and that the full gate completes under `python -O`.
 `numerical-continuation.yml` invokes the gate. No operator, identity,
 coefficient, basis, or tolerance changed.
+
+A second active numerical-continuation gate,
+`docs/numerical_continuation/verify_volume_blocks.py`, also had six
+optimization-sensitive assertions covering the recoupling-basis isometry,
+volume-operator carrier preservation, characteristic-polynomial identities,
+and agreement with frozen exact blocks. These are now explicit `require`
+checks as well. The optimization regression test parses this script's AST
+and executes it under `python -O`. The exact SU(2) operators, matrices,
+and symbolic equalities are unchanged.
 
 This is one corrected gate, not a blanket clearance of the other
 assert-based gates. The branch-wide report previously counted 171
@@ -464,7 +473,7 @@ confirmed by a completed matrix job.
 
 ### CI state at this update
 
-- Branch-wide Python audit: run 42821910697 pending.
+- Branch-wide Python audit: run 42822081116 pending.
 - Numerical continuation: latest run 42821910672 queued.
 - Core regression: latest run 42821910573 queued.
 - Mixed Stage-A push matrix: run 42821076917 queued; it predates removal
