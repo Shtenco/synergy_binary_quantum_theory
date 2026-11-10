@@ -237,7 +237,7 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
 
     # Installs the exact same sine-H_E -> K_sine=[V,H_E^sine] engine used by
     # the all-jhalf raw KKV code; only the incoming W5 state and cutoff differ.
-    LSINE.run(source_v, executor=executor)
+    sine_engine_result = LSINE.run(source_v, executor=executor)
 
     B_gauss = {}
     scalar_rejection = []
@@ -261,6 +261,8 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
         "epsilon_terms_requested": count,
         "epsilon_terms_completed": len(term_rows),
         "term_diagnostics": term_rows,
+        "sine_wrapper_gate_passed": bool(sine_engine_result.get("passed", False)),
+        "sine_wrapper_diagnostics": sine_engine_result.get("max_diagnostics", {}),
         "A_Euclidean_sine_Gauss": serialize_sparse(A),
         "B_Lorentzian_raw_KKV_Gauss": serialize_sparse(B_gauss),
         "B_Lorentzian_raw_KKV_covariant": serialize_sparse(B_cov),
