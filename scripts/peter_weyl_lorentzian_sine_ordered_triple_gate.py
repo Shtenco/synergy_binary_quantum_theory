@@ -35,7 +35,7 @@ def freeze(state):
     return tuple(sorted(state.items(),key=lambda kv:repr(kv[0])))
 
 
-def run(v=0,a=None,b=None,c=None):
+def run(v=0,a=None,b=None,c=None,executor=None):
     old_he=KC.CK.apply_HE_complete_key
     old_gauss=KC.KG.apply_HE_local
     old_k=KC.apply_K_complete_custom
@@ -115,7 +115,9 @@ def run(v=0,a=None,b=None,c=None):
     if hasattr(KC.CK.HE_complete_cached,'cache_clear'):
         KC.CK.HE_complete_cached.cache_clear()
     try:
-        out=RAW.run(v,a,b,c)
+        out=executor() if executor is not None else RAW.run(v,a,b,c)
+        if not isinstance(out,dict):
+            raise TypeError('raw KKV executor must return the standard diagnostics dictionary')
         infos={
             'HE_reduced':he_reduced.cache_info(),
             'K_complete':k_cached.cache_info(),
