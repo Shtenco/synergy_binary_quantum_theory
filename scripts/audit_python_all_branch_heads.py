@@ -583,6 +583,22 @@ def main():
         for k, v in totals.items() if k.startswith("import:")
     }
     category_counts = Counter(x["category"] for x in findings)
+    main_findings = [
+        item for item in findings
+        if any(loc["commit"] == main_head for loc in item.get("locations", []))
+    ]
+    main_finding_counts = Counter(item["category"] for item in main_findings)
+    inline_syntax_errors = sum(
+        1 for item in findings
+        if item["category"] == "syntax_error"
+        and ("#fence-" in item["path"] or "#heredoc-" in item["path"])
+    )
+    main_inline_syntax_errors = sum(
+        1 for item in findings
+        if item["category"] == "syntax_error"
+        and ("#fence-" in item["path"] or "#heredoc-" in item["path"])
+        and any(loc["commit"] == main_head for loc in item.get("locations", []))
+    )
     result = {
         "repo": args.repo,
         "branch_count": len(branches),
@@ -621,6 +637,9 @@ def main():
         "explicit_random_seeds": totals["explicit_random_seeds"],
         "imports": dict(sorted(imports.items())),
         "finding_counts": dict(sorted(category_counts.items())),
+        "main_finding_counts": dict(sorted(main_finding_counts.items())),
+        "inline_syntax_errors": inline_syntax_errors,
+        "main_inline_syntax_errors": main_inline_syntax_errors,
         "findings": sorted(findings, key=lambda x: (x["category"], x["path"], x["line"] or 0)),
         "snapshots": sorted(snapshots, key=lambda x: x["commit"]),
         "elapsed_seconds": round(time.time() - t0, 2),
@@ -644,7 +663,9 @@ def main():
         "embedded_archive_file_occurrences", "unique_embedded_archive_blobs",
         "embedded_archives_scanned", "embedded_archive_members",
         "embedded_python_sources", "embedded_archive_unsafe_members",
-        "embedded_archive_errors", "finding_counts", "elapsed_seconds",
+        "embedded_archive_errors", "inline_python_blocks", "inline_syntax_errors",
+        "main_inline_syntax_errors", "finding_counts", "main_finding_counts",
+        "elapsed_seconds",
     )}, indent=2))
     return 1 if main_syntax_errors or totals["embedded_archive_errors"] else 0
 
