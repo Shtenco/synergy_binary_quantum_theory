@@ -14,6 +14,7 @@ import importlib
 import json
 import math
 import sys
+import traceback
 from pathlib import Path
 
 W5_K = (0, 2, 4, 6, 8)
@@ -394,18 +395,36 @@ def main():
     ap.add_argument("--normalization-source")
     args = ap.parse_args()
 
-    carrier = build_carrier(
-        Jmax2=args.Jmax2,
-        source_nodes=args.nodes,
-        max_states=args.max_states,
-        max_depth=args.max_depth,
-        amp_tol=args.amp_tol,
-        crosscheck_tol=args.crosscheck_tol,
-        leakage_tol=args.leakage_tol,
-    )
+    try:
+        carrier = build_carrier(
+            Jmax2=args.Jmax2,
+            source_nodes=args.nodes,
+            max_states=args.max_states,
+            max_depth=args.max_depth,
+            amp_tol=args.amp_tol,
+            crosscheck_tol=args.crosscheck_tol,
+            leakage_tol=args.leakage_tol,
+        )
+    except Exception as exc:
+        carrier = {
+            "status": "V11_BUILD_ERROR",
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+            "traceback": traceback.format_exc(),
+            "Jmax2": args.Jmax2,
+            "source_nodes": args.nodes,
+            "physical_status": {
+                "unique_hermitian_ordering_selected": False,
+                "absolute_beta_kappa_hbar_regulator_prefactor_fixed": False,
+                "physical_joint_kernel_verdict": False,
+                "physical_causal_cone": False,
+            },
+        }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(carrier, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     if args.joint_output:
+        if carrier.get("status") != "PASS_STRUCTURAL_COMMON_CARRIER":
+            raise ValueError("cannot create a joint-Gram input from a failed V11 carrier")
         if args.c_e is None or args.c_l is None or not args.normalization_source:
             raise ValueError("--joint-output requires --c-e, --c-l and --normalization-source")
         joint = joint_gram_input(carrier, args.c_e, args.c_l, args.normalization_source)
