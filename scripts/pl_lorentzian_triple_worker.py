@@ -15,7 +15,7 @@ S=-i(L_raw-L_raw^dag)/2.  This worker never fits a coefficient and never drops a
 representation using a GR target.  Exact-zero ordered terms are valid.
 """
 from __future__ import annotations
-import argparse,itertools,json,math,sys,traceback
+import argparse,itertools,json,math,sys,traceback,hashlib
 from pathlib import Path
 import numpy as np
 HERE=Path(__file__).resolve().parent
@@ -114,14 +114,22 @@ def run(index,mode='forward',source=0):
             restore();LP.JMAX2=oldJ
     total=accepted2+rejected2
     scalar_fraction=1.0 if total<1e-30 else accepted2/total
-    physical=max(float(diag.get('CV_complete_basis_leakage',0.0)),float(diag.get('CK_outer_complete_basis_leakage',0.0)),float(diag.get('CK_internal_volume_sector_leakage',0.0)))
-    charge=float(diag.get('CK_complete_charge_basis_leakage',0.0))
+    required_diag={
+      'CV_complete_basis_leakage':diag.get('CV_complete_basis_leakage'),
+      'CK_outer_complete_basis_leakage':diag.get('CK_outer_complete_basis_leakage'),
+      'CK_internal_volume_sector_leakage':diag.get('CK_internal_volume_sector_leakage'),
+      'CK_complete_charge_basis_leakage':diag.get('CK_complete_charge_basis_leakage')}
+    if any(v is None or isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(float(v)) or float(v)<0.0 for v in required_diag.values()):
+        raise RuntimeError(f'incomplete or invalid required leakage diagnostics: {required_diag}')
+    physical=max(float(v) for v in required_diag.values())
+    charge=float(required_diag['CK_complete_charge_basis_leakage'])
     cn=math.sqrt(norm2(cov));gn=math.sqrt(norm2(gauss))
     checks={
       'finite_covariant_norm':math.isfinite(cn),'finite_gauss_norm':math.isfinite(gn),
       'finite_covariant_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in cov.values()),
       'finite_gauss_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in gauss.values()),
-      'physical_basis_volume_leakage':physical<1e-8,
+      'all_required_leakage_diagnostics_present_and_finite':True,
+      'physical_basis_and_charge_leakage':physical<1e-8,
       'scalar_closure_fraction_or_exact_zero':scalar_fraction>1-1e-10,
       'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0))<1e-8,
       'single_L_spin_wall':max_spin(gauss)<=JMAX2/2+1e-12,
@@ -147,5 +155,7 @@ def main():
     except Exception as exc:
         state={};out={'status':'worker exception','passed':False,'mode':a.mode,'index':a.index,'error_type':type(exc).__name__,'error':str(exc),'traceback':traceback.format_exc()};code=1
     D=DualComplex(seed_16cell_boundary());save_state(a.state_output,state,len(D.dual_edges()),D.n_tets)
+    if out.get('passed') is True:
+        out['state_sha256']=hashlib.sha256(a.state_output.read_bytes()).hexdigest()
     a.json_output.parent.mkdir(parents=True,exist_ok=True);a.json_output.write_text(json.dumps(out,indent=2,sort_keys=True)+'\n',encoding='utf-8');print(json.dumps(out,indent=2,sort_keys=True));return code
 if __name__=='__main__':raise SystemExit(main())
