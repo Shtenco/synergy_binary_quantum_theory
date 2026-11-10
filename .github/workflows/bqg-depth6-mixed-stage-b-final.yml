@@ -38,7 +38,7 @@ jobs:
           fi
           actual_commit="$(git -C "$source_dir" rev-parse HEAD)"
           test "$actual_commit" = "f6bfcd775b8c3cd33c6c235d48293e40657baf9d"
-          actual_bundle="$(git -C "$source_dir" hash-object "$source_dir/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64")"
+          actual_bundle="$(git -C "$source_dir" hash-object mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64)"
           test "$actual_bundle" = "cbbaa80f6b6b61d353458db1fa1f03f824730532"
           echo "Verified frozen mixed source commit: $actual_commit"
       - uses: actions/setup-python@v5
@@ -92,7 +92,7 @@ jobs:
           fi
           actual_commit="$(git -C "$source_dir" rev-parse HEAD)"
           test "$actual_commit" = "f6bfcd775b8c3cd33c6c235d48293e40657baf9d"
-          actual_bundle="$(git -C "$source_dir" hash-object "$source_dir/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64")"
+          actual_bundle="$(git -C "$source_dir" hash-object mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64)"
           test "$actual_bundle" = "cbbaa80f6b6b61d353458db1fa1f03f824730532"
           echo "Verified frozen mixed source commit: $actual_commit"
       - uses: actions/setup-python@v5
