@@ -20,7 +20,7 @@ on:
 
 concurrency:
   group: pl48-v4-direct-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   preflight:
