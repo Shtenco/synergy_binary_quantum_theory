@@ -155,6 +155,35 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         Bsym = 0.5 * (B + B.conj().T)
         np.testing.assert_allclose(Bsym, Bsym.conj().T, atol=2e-13)
 
+    def test_sparse_ordering_parts_have_correct_adjoint_signs(self):
+        rng = np.random.default_rng(20261112)
+        B = rng.normal(size=(4, 4)) + 1j * rng.normal(size=(4, 4))
+        keys = [("state", i) for i in range(4)]
+        forward = [
+            {keys[row]: B[row, col] for row in range(4) if B[row, col] != 0}
+            for col in range(4)
+        ]
+        Bdag = B.conj().T
+        adjoint = [
+            {keys[row]: Bdag[row, col] for row in range(4) if Bdag[row, col] != 0}
+            for col in range(4)
+        ]
+        sym, anti, kh = gate.sparse_ordering_parts(forward, adjoint)
+
+        def dense_columns(columns):
+            return np.column_stack([
+                np.array([col.get(key, 0j) for key in keys], dtype=complex)
+                for col in columns
+            ])
+
+        S = dense_columns(sym)
+        A = dense_columns(anti)
+        KH = dense_columns(kh)
+        np.testing.assert_allclose(S, S.conj().T, rtol=2e-13, atol=2e-13)
+        np.testing.assert_allclose(A, -A.conj().T, rtol=2e-13, atol=2e-13)
+        np.testing.assert_allclose(KH, -S, rtol=2e-13, atol=2e-13)
+        np.testing.assert_allclose(S + A, B, rtol=2e-13, atol=2e-13)
+
     def test_covariant_scalar_mapping_rejects_open_channels(self):
         spins = (4,) * 10
         valid = (spins, (-1, 0, 0, 0, 0), 0, 0, 0, 0)
