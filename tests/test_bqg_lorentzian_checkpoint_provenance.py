@@ -109,6 +109,27 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "provenance mismatch"):
             BASE.validate_operator_provenance(meta)
 
+    def test_accumulated_leakage_must_dominate_current_stage_diagnostic(self):
+        meta = {
+            "operator_input_support": 1,
+            "operator_stage_applied": True,
+            "exact_empty_input_zero_fields": [],
+            "diagnostic_provenance_scope": "current_operator_stage",
+            "stage_leakage_diagnostics": {
+                "CK_outer_complete_basis_leakage": 1e-6,
+                "CK_internal_volume_sector_leakage": 0.0,
+                "CK_complete_charge_basis_leakage": 0.0,
+            },
+            "leakage_max": {
+                "CV_complete_basis_leakage": 0.0,
+                "CK_outer_complete_basis_leakage": 0.0,
+                "CK_internal_volume_sector_leakage": 0.0,
+                "CK_complete_charge_basis_leakage": 0.0,
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "below current-stage diagnostic"):
+            BASE.validate_operator_provenance(meta)
+
     def test_operator_skipped_flag_must_match_input_support(self):
         meta = {
             "operator_input_support": 0,
