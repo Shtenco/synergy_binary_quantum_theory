@@ -191,3 +191,47 @@ were completed, the direct reverse-H_L column is incomplete, the full error
 is not certified, and physicalization is incomplete. Therefore this is a
 successful frozen-backend integrity/replay check only; it does not advance
 the W5 scalar gate or certify the second-stage physical operator.
+
+## Diagnostic scope correction and exact failure-context probe (2026-11-10)
+
+The partial artifact from scalar diagnostic run
+[42781449616](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449616)
+was recovered from artifact 13746947390. It contains the completed
+K=0, node-0, Jmax2=10 slice and all 12 oriented specifications. The 12/14
+cutoffs did not complete in that run.
+
+A numerical issue was found in the diagnostic reducer: forbidden-sector weight
+was computed as total_weight minus expected_sector_weight. When the forbidden
+weight is around 1e-30 and the expected sector is O(1), this subtraction can
+round to zero. Commit
+[4d017688370ba2da33944a1b20f2cadede8bbc95](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/4d017688370ba2da33944a1b20f2cadede8bbc95)
+changes the diagnostic to sum forbidden J,M entries directly and records them
+separately. This changes only diagnostic arithmetic.
+
+The recovered one-node K=0 slice gives direct forbidden weights:
+- T: 8.684036835017698e-30;
+- T-dagger: 7.814664597259229e-30;
+- H-plus: 4.529569123612589e-30;
+- H-sine: 3.719781592525875e-30.
+
+These are not a reproduction of the five-seed failure. Source inspection shows
+that the standalone diagnostic constructs a one-endpoint covariant seed and
+projects with charged_nodes=(node,). The failing W5 KKV path reaches
+C_K_component, applies inverse_complete, and then evaluates K with both
+(source_v,target_v) charged endpoints. Thus the one-node diagnostic does not
+test the exact two-endpoint state at which restore_scalar_charge_M fails.
+Its tiny residual must not be used to explain or dismiss the five-seed
+5.390512613173637e-20 wrong-sector weight.
+
+A separate one-seed CI probe was added in commits
+[1dbcce60b53f2e64bfc4757a787d785c0d45c15f](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/1dbcce60b53f2e64bfc4757a787d785c0d45c15f)
+and
+[49a539f24077c860894dab9269356f84a0011272](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/49a539f24077c860894dab9269356f84a0011272).
+It runs the real one-seed W5 KKV path and captures, without disabling the guard:
+- the exact input and canonical keys;
+- source and target charged endpoints;
+- whether the failing H_E is before or after the volume action in K=[V,H_E];
+- the complete output J,M weight distribution and largest components.
+
+This probe is diagnostic only. It does not alter the operator, projection, tolerance,
+or acceptance criteria. Its result is pending; no cause is assigned yet.
