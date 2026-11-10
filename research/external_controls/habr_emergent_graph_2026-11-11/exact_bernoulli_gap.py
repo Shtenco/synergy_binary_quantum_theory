@@ -127,7 +127,8 @@ def main():
     rows = []
     for L in args.sizes:
         start = time.time()
-        batch = [measure(L, args.seed + 1000*L + r) for r in range(args.reps)]
+        seed_offset = 0 if L <= 16 else (1000 if L <= 32 else 2000)
+        batch = [measure(L, args.seed + seed_offset + r) for r in range(args.reps)]
         rows.extend(batch)
         x = np.asarray([r["lambda2"] for r in batch])
         mean = float(x.mean())
