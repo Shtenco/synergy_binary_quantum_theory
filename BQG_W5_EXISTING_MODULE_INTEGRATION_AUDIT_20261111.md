@@ -26,7 +26,7 @@ The recursive Git tree at the audited branch contained 727 tracked blobs:
 - 40 workflow \`.yml\` files;
 - 8 zip files.
 
-This is the inventory of this branch snapshot, not a claim about untracked/generated files, other repositories, or every historical branch. The user's broader 1500+ module inventory is not established by this one Git tree.
+This is the inventory of this branch snapshot, not a claim about untracked/generated files or other repositories. Cross-checks of the repository's `main` tree found 210 tracked Python files; the historical `research/bqg-v26-multiprecision-charge-20261109` tree found 278. None of these checked Git trees exposes 1500+ tracked Python modules. The broader 1500+ inventory may refer to another workspace, generated modules, or repositories not represented by these refs; it must be located before it can be audited rather than assumed to be present here.
 
 ## Task A — W5 V10 closure and cutoff study
 
