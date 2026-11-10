@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: v26-checkpoint-provenance-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   provenance:
     runs-on: ubuntu-latest
