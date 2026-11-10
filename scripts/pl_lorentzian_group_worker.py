@@ -22,6 +22,9 @@ import pl_lorentzian_triple_worker as W
 
 JMAX2=W.JMAX2;TOL=W.TOL
 
+from v2_term_guards import validate_term_diagnostics
+
+
 def term_indices(D,source,mode,slot):
     out=[]
     for idx in range(24):
@@ -36,9 +39,14 @@ def evaluate(D,G,seed,source,idx,mode,caches):
     if mode=='forward':cov,diag=LP.ordered_triple_state(seed,source,*targets)
     else:cov,diag=W.ordered_dagger_state(seed,source,*targets)
     gauss,accepted2,rejected2=LGA.project_scalar_gauss(cov,source,TOL)
+    validated=validate_term_diagnostics(diag,accepted2,rejected2)
+    accepted2=validated['accepted2'];rejected2=validated['rejected2']
     total=accepted2+rejected2;frac=1.0 if total<1e-30 else accepted2/total
-    physical=max(float(diag.get('CV_complete_basis_leakage',0.0)),float(diag.get('CK_outer_complete_basis_leakage',0.0)),float(diag.get('CK_internal_volume_sector_leakage',0.0)))
-    charge=float(diag.get('CK_complete_charge_basis_leakage',0.0));cn=math.sqrt(W.norm2(cov));gn=math.sqrt(W.norm2(gauss))
+    physical=max(validated['CV_complete_basis_leakage'],
+                 validated['CK_outer_complete_basis_leakage'],
+                 validated['CK_internal_volume_sector_leakage'])
+    charge=validated['CK_complete_charge_basis_leakage']
+    cn=math.sqrt(W.norm2(cov));gn=math.sqrt(W.norm2(gauss))
     checks={
       'finite_covariant_norm':math.isfinite(cn),'finite_gauss_norm':math.isfinite(gn),
       'finite_covariant_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in cov.values()),

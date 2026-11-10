@@ -16,7 +16,7 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-from v21_checkpoint_guard import validate_physical_stage
+from v21_checkpoint_guard import BOUND, validate_physical_stage
 from v21_stage_logic import predecessor_ok
 
 JMAX2 = 7
@@ -78,8 +78,10 @@ def load_charged(path, digest, n_edges=32, n_vertices=16):
         if not (s.shape == (len(a), n_edges)
                 and k.shape == (len(a), n_vertices)
                 and c.shape == (len(a), 4)
+                and s.dtype.kind in "iu" and k.dtype.kind in "iu"
+                and c.dtype.kind in "iu"
                 and a.ndim == 1 and a.dtype.kind == "c"):
-            raise ValueError("BAD_CHECKPOINT_SHAPE")
+            raise ValueError("BAD_CHECKPOINT_SHAPE_OR_INDEX_DTYPE")
         if not np.isfinite(a).all():
             raise ValueError("BAD_CHECKPOINT_AMPLITUDES")
         state = {}
@@ -108,8 +110,8 @@ def run(opts):
     """Only production SU(2) primitives, original order and scalar filter."""
     if not re.fullmatch("[0-9a-f]{40}", opts.commit):
         raise ValueError("NEED_FROZEN_SOURCE_COMMIT")
-    if not opts.volume_backend:
-        raise ValueError("NEED_VOLUME_BACKEND_IDENTITY")
+    if opts.volume_backend != "tetrahedral-volume-v1":
+        raise ValueError("WRONG_OR_MISSING_VOLUME_BACKEND_IDENTITY")
     try:
         actual_head = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], text=True, timeout=10
@@ -118,6 +120,12 @@ def run(opts):
         raise ValueError("REPOSITORY_COMMIT_NOT_VERIFIABLE") from exc
     if actual_head != opts.commit:
         raise ValueError("CHECKOUT_SOURCE_COMMIT_MISMATCH")
+    dirty = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        text=True, timeout=10
+    )
+    if dirty.strip():
+        raise ValueError("TRACKED_WORKTREE_NOT_CLEAN")
     if opts.stage not in (1, 2, 3):
         raise ValueError("BAD_STAGE")
     if len(opts.aux) != 3 or any(x not in (0, 1) for x in opts.aux):
@@ -152,18 +160,33 @@ def run(opts):
     }
     if opts.stage == 1:
         seed = ((1,) * len(G.EDGES), (0,) * D.n_tets)
-        meta["input_state_sha256"] = hashlib.sha256(repr(seed).encode("utf-8")).hexdigest()
+        seed_digest = hashlib.sha256(repr(seed).encode("utf-8")).hexdigest()
+        meta["seed_state_sha256"] = seed_digest
+        meta["input_state_sha256"] = seed_digest
     else:
         if not opts.previous_prefix:
             raise ValueError("MISSING_PREVIOUS_STAGE")
         prevpath = opts.previous_prefix.with_suffix(".json")
         previous = json.loads(prevpath.read_text("utf-8"))
+        previous_npz = opts.previous_prefix.with_suffix(".npz")
+        actual_previous_digest = hashlib.sha256(previous_npz.read_bytes()).hexdigest()
+        if actual_previous_digest != previous.get("npz_sha256"):
+            raise ValueError("PREDECESSOR_CHECKPOINT_FILE_DIGEST_MISMATCH")
+        meta["input_state_sha256"] = actual_previous_digest
+        meta["seed_state_sha256"] = previous.get("seed_state_sha256")
         predecessor_ok(previous, meta, opts.stage, allops[0], allops[1])
-        meta["input_state_sha256"] = previous["input_state_sha256"]
         state = load_charged(
-            opts.previous_prefix.with_suffix(".npz"),
-            previous["npz_sha256"], len(G.EDGES), D.n_tets
+            previous_npz, actual_previous_digest, len(G.EDGES), D.n_tets
         )
+        previous_guard = validate_physical_stage(
+            previous.get("diagnostics"), state, previous.get("stage"),
+            previous.get("operator_signature"),
+            BOUND
+        )
+        if previous.get("guard") != previous_guard:
+            raise ValueError("PREDECESSOR_GUARD_RECOMPUTATION_MISMATCH")
+        if len(state) != previous.get("state_support"):
+            raise ValueError("PREDECESSOR_STATE_SUPPORT_MISMATCH")
 
     with install_tetrahedral_volume_backend():
         with install_pl_graph(G):
@@ -184,15 +207,21 @@ def run(opts):
 
     if opts.stage == 2:
         after = scalar_filter(after)
-    guard = validate_physical_stage(diag, after, opts.stage)
+    guard = validate_physical_stage(
+        diag, after, opts.stage, meta["operator_signature"]
+    )
     digest = save_charged(
         opts.output_prefix.with_suffix(".npz"),
         after, len(G.EDGES), D.n_tets
     )
+    state_norm = 0.0
+    for amplitude in after.values():
+        state_norm = math.hypot(state_norm, abs(amplitude))
     meta.update({
         "passed": True, "status": "REAL_ORIGINAL_STAGE_ONLY",
-        "npz_sha256": digest, "state_support": len(after),
-        "state_norm": math.sqrt(sum(abs(z)**2 for z in after.values())),
+        "npz_sha256": digest, "output_state_sha256": digest,
+        "state_support": len(after),
+        "state_norm": state_norm,
         "diagnostics": diag, "guard": guard,
         "physical_full_pair_completed": False,
         "physical_HDA_proved": False
@@ -221,9 +250,13 @@ def main():
         print(json.dumps(run(a), indent=2))
         return 0
     except Exception as e:
+        failure = str(e)
         report = {
-            "status": "STAGE_FAILED_NOT_PHYSICS", "passed": False,
-            "error": str(e), "error_type": type(e).__name__,
+            "status": ("EXACT_ZERO_STAGE_OUTPUT_STOPPED"
+                       if failure == "EXACT_ZERO_STAGE_OUTPUT"
+                       else "STAGE_FAILED_NOT_PHYSICS"),
+            "passed": False, "failure_code": failure,
+            "error": failure, "error_type": type(e).__name__,
             "traceback": traceback.format_exc()
         }
         a.output_prefix.parent.mkdir(parents=True, exist_ok=True)

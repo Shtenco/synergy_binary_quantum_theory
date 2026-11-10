@@ -15,7 +15,7 @@ S=-i(L_raw-L_raw^dag)/2.  This worker never fits a coefficient and never drops a
 representation using a GR target.  Exact-zero ordered terms are valid.
 """
 from __future__ import annotations
-import argparse,itertools,json,math,sys,traceback
+import argparse,hashlib,itertools,json,math,subprocess,sys,traceback
 from pathlib import Path
 import numpy as np
 HERE=Path(__file__).resolve().parent
@@ -26,6 +26,7 @@ import peter_weyl_lorentzian_gauss_action_gate as LGA
 from pl_dual_complex import DualComplex,seed_16cell_boundary
 from pl_peter_weyl_euclidean import PLPeterWeylEuclidean
 from pl_covariant_backend import install_pl_graph
+from tetrahedral_volume_backend import install_tetrahedral_volume_backend
 
 JMAX2=7
 TOL=1e-10
@@ -40,7 +41,23 @@ def add(dst,src,scale=1.0,tol=1e-11):
         z=dst.get(k,0j)+scale*a
         if abs(z)>tol:dst[k]=z
         elif k in dst:del dst[k]
-def norm2(s):return float(sum(abs(a)**2 for a in s.values()))
+def norm2(s):
+    """Historical squared-norm API used by the V2 group worker."""
+    return float(sum(abs(amplitude)**2 for amplitude in s.values()))
+
+def state_norm(s):
+    norm=0.0
+    for amplitude in s.values():
+        norm=math.hypot(norm,abs(amplitude))
+    return norm
+
+def projection_rejected_norm(state,source):
+    norm=0.0
+    for key,amplitude in state.items():
+        if LGA.covariant_scalar_to_gauss_key(key,source) is None:
+            norm=math.hypot(norm,abs(amplitude))
+    return norm
+
 def max_spin(s):return max((max(k[0]) for k in s),default=0)/2.0
 
 def ordered_spec(D,source,index):
@@ -100,8 +117,22 @@ def run(index,mode='forward',source=0):
     D=DualComplex(seed_16cell_boundary());G=PLPeterWeylEuclidean(D)
     omit,base,perm,targets,coef=ordered_spec(D,source,index)
     seed=((1,)*len(G.EDGES),(0,)*D.n_tets)
+    try:
+        source_commit=subprocess.check_output(
+            ['git','rev-parse','HEAD'],text=True,timeout=10).strip()
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise ValueError('V2_SOURCE_COMMIT_NOT_VERIFIABLE') from exc
+    if len(source_commit)!=40 or any(ch not in '0123456789abcdef' for ch in source_commit):
+        raise ValueError('BAD_V2_SOURCE_COMMIT')
+    dirty=subprocess.check_output(
+        ['git','status','--porcelain','--untracked-files=no'],text=True,timeout=10)
+    if dirty.strip():
+        raise ValueError('V2_TRACKED_WORKTREE_NOT_CLEAN')
+    backend_file=HERE/'tetrahedral_volume_backend.py'
+    backend_sha=hashlib.sha256(backend_file.read_bytes()).hexdigest()
     oldJ=LP.JMAX2
-    with install_pl_graph(G):
+    with install_tetrahedral_volume_backend():
+      with install_pl_graph(G):
         LP.JMAX2=JMAX2
         restore,caches=LP.install_sine_cached_stack()
         try:
@@ -112,29 +143,34 @@ def run(index,mode='forward',source=0):
             cache_info={name:{'hits':fn.cache_info().hits,'misses':fn.cache_info().misses,'currsize':fn.cache_info().currsize} for name,fn in caches.items()}
         finally:
             restore();LP.JMAX2=oldJ
-    total=accepted2+rejected2
-    scalar_fraction=1.0 if total<1e-30 else accepted2/total
     physical=max(float(diag.get('CV_complete_basis_leakage',0.0)),float(diag.get('CK_outer_complete_basis_leakage',0.0)),float(diag.get('CK_internal_volume_sector_leakage',0.0)))
     charge=float(diag.get('CK_complete_charge_basis_leakage',0.0))
-    cn=math.sqrt(norm2(cov));gn=math.sqrt(norm2(gauss))
+    cn=state_norm(cov);gn=state_norm(gauss)
+    rejected_norm=projection_rejected_norm(cov,source)
+    scalar_fraction=1.0 if cn==0.0 else gn/cn
     checks={
       'finite_covariant_norm':math.isfinite(cn),'finite_gauss_norm':math.isfinite(gn),
+      'finite_projection_diagnostics':all(math.isfinite(float(x)) for x in (accepted2,rejected2)),
       'finite_covariant_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in cov.values()),
       'finite_gauss_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in gauss.values()),
       'physical_basis_volume_leakage':physical<1e-8,
       'scalar_closure_fraction_or_exact_zero':scalar_fraction>1-1e-10,
-      'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0))<1e-8,
+      'nonscalar_rejected_norm':rejected_norm<1e-8,
       'single_L_spin_wall':max_spin(gauss)<=JMAX2/2+1e-12,
       'PL_orientation_coefficient':coef in (-1,1),
     }
     return gauss,{
       'status':'exact distributed PL-S3 Lorentzian ordered triple','passed':bool(all(checks.values())),
       'mode':mode,'index':index,'source_node':source,'omitted_local_slot':omit,
+      'source_commit':source_commit,'volume_backend':'tetrahedral-volume-v1',
+      'volume_backend_sha256':backend_sha,
       'base_local_slots':list(base),'permuted_local_slots':list(perm),'ordered_target_nodes':list(targets),
       'PL_epsilon_coefficient':coef,'Jmax':JMAX2/2,'input_key':repr(seed),
       'covariant_support':len(cov),'covariant_norm':cn,'gauss_support':len(gauss),'gauss_norm':gn,
-      'gauss_max_spin':max_spin(gauss),'exact_zero_ordered_term':len(cov)==0 and len(gauss)==0,
-      'scalar_closure_fraction':scalar_fraction,'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0)),
+      'gauss_max_spin':max_spin(gauss),
+      'exact_zero_ordered_term':not any(z != 0j for z in cov.values()) and not any(z != 0j for z in gauss.values()),
+      'scalar_closure_fraction':scalar_fraction,'nonscalar_rejected_norm':rejected_norm,
+      'accepted2_legacy_diagnostic':float(accepted2),'rejected2_legacy_diagnostic':float(rejected2),
       'physical_acceptance_max_leakage':physical,'complete_charge_diagnostic':charge,
       'cache_info':cache_info,'checks':checks,'weighted_here':False,
       'orientation_note':'Coefficient = tetrahedral local orientation sign times permutation parity; on boundary-4-simplex this reduces to orientation[v] times the historical K5 epsilon orbit.',
