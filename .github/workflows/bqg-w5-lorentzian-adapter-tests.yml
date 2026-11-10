@@ -17,6 +17,7 @@ on:
       - 'scripts/bqg_v11_w5_common_carrier.py'
       - 'tests/test_bqg_v11_w5_common_carrier.py'
       - 'tests/test_lorentzian_sine_executor_dispatch.py'
+      - 'tests/test_lorentzian_sine_executor_dispatch.py'
       - 'scripts/peter_weyl_*.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md'
@@ -56,6 +57,7 @@ jobs:
           python -m py_compile scripts/bqg_v09_w5_lorentzian_raw_column.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_v11_w5_common_carrier.py
+          python -m py_compile scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py
           python -m py_compile scripts/bqg_lorentzian_w5_joint_gram_gate.py
       - name: Run V09/V10/V11 and joint-Gram regression tests
         run: |
