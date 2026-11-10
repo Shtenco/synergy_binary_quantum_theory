@@ -62,7 +62,12 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
         self.assertIn("CV_complete_basis_leakage", diag)
         self.assertNotIn("CK_outer_complete_basis_leakage", diag)
         self.assertNotIn("CK_internal_volume_sector_leakage", diag)
-        self.assertNotIn("CK_complete_charge_basis_leakage", diag)
+        self.assertIn("CK_complete_charge_basis_leakage", diag)
+        self.assertEqual(set(diag["exact_empty_input_zero_fields"]), {
+            "CK_outer_complete_basis_leakage",
+            "CK_internal_volume_sector_leakage",
+            "CK_complete_charge_basis_leakage",
+        })
 
     def test_dagger_volume_stage_not_run_is_not_reported_as_zero(self):
         ck_diag = {
@@ -78,7 +83,8 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
         self.assertIn("CK_outer_complete_basis_leakage", diag)
         self.assertIn("CK_internal_volume_sector_leakage", diag)
         self.assertIn("CK_complete_charge_basis_leakage", diag)
-        self.assertNotIn("CV_complete_basis_leakage", diag)
+        self.assertIn("CV_complete_basis_leakage", diag)
+        self.assertEqual(diag["exact_empty_input_zero_fields"], ["CV_complete_basis_leakage"])
 
 
 if __name__ == "__main__":
