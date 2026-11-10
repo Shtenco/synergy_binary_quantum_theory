@@ -54,8 +54,9 @@ The producer recomputes the Git blob SHA-1 of its worker and collector source
 files and rejects any mismatch with the frozen source identities. The manifest
 retains source Git commit, worker/collector/producer blob identifiers, and
 SHA256 hashes of all 216 consumed shard JSON/NPZ files. The verifier checks the
-216-entry shard digest, the complete archive member set, and both package and
-archive hashes.
+216 source files against their SHA256, the producer Git blob and SHA256
+identities, the complete archive member set, and both package and archive
+hashes.
 
 ## Aggregation
 
@@ -113,7 +114,8 @@ python scripts/collective_l1_amplitude_producer.py \
 python scripts/validate_l1_amplitude_package.py \
   --manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json \
   --archive verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.npz \
-  --producer-source scripts/collective_l1_amplitude_producer.py
+  --producer-source scripts/collective_l1_amplitude_producer.py \
+  --shard-root SHARD_DIR
 ```
 
 The producer's regression comparison is against the historical collector and

@@ -32,13 +32,17 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                     arrays[f"{stem}_amp"] = np.zeros((0,), np.complex128)
         archive = root / "L1_AMPLITUDE_PACKAGE.npz"
         np.savez_compressed(archive, **arrays)
-        shard_hashes = {
-            name: "0" * 64
-            for e in validator.EDGES for n in validator.NODES
-            for name in (f"edge_{e}_node_{n}.json",
-                         f"u_{e}_node_{n}.npz",
-                         f"v_{e}_node_{n}.npz")
-        }
+        shard_root = root / "shards"
+        shard_root.mkdir()
+        shard_hashes = {}
+        for e in validator.EDGES:
+            for n in validator.NODES:
+                for name in (f"edge_{e}_node_{n}.json",
+                             f"u_{e}_node_{n}.npz",
+                             f"v_{e}_node_{n}.npz"):
+                    item = shard_root / name
+                    item.write_bytes((name + "\\n").encode())
+                    shard_hashes[name] = validator.sha256(item)
         package = {
             "schema": "L1_AMPLITUDE_PACKAGE",
             "schema_version": 1,
@@ -54,6 +58,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 "shard_manifest_sha256": validator.canonical_sha(shard_hashes),
                 "source_collector_blob_sha": "3ba2514ecd553fc54a59d3b56c1c43ce24aae09f",
                 "producer_source_sha256": validator.sha256(ROOT / "scripts/collective_l1_amplitude_producer.py"),
+                "producer_blob_sha": validator.git_blob_sha(ROOT / "scripts/collective_l1_amplitude_producer.py"),
                 "worker_identity_limitation": "worker/collector source blobs are pinned by this schema, but legacy shard metadata does not self-attest its generating source blob",
             },
             "operator_registry": {
@@ -71,23 +76,23 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
         package["package_sha256"] = validator.canonical_sha(package)
         manifest = root / "L1_AMPLITUDE_PACKAGE.json"
         manifest.write_text(json.dumps(package, indent=2), encoding="utf-8")
-        return manifest, archive
+        return manifest, archive, shard_root
 
     def test_valid_integrity_fixture(self):
         with tempfile.TemporaryDirectory() as td:
-            manifest, archive = self._fixture(Path(td))
-            result = validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py")
+            manifest, archive, shard_root = self._fixture(Path(td))
+            result = validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
             self.assertTrue(result["passed"])
             self.assertFalse(result["physical_completeness"])
-            self.assertEqual(result["checked_sparse_states"], 150)
+            self.assertEqual(result["checked_sparse_state_groups"], 150)
 
     def test_archive_tampering_is_detected(self):
         with tempfile.TemporaryDirectory() as td:
-            manifest, archive = self._fixture(Path(td))
+            manifest, archive, shard_root = self._fixture(Path(td))
             with archive.open("ab") as f:
                 f.write(b"tamper")
             with self.assertRaisesRegex(ValueError, "archive SHA256 mismatch"):
-                validator.validate(manifest, archive)
+                validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
 
 
 if __name__ == "__main__":

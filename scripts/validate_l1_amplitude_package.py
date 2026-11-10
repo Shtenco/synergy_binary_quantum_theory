@@ -24,6 +24,11 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def git_blob_sha(path: Path) -> str:
+    data = Path(path).read_bytes()
+    return hashlib.sha1(f"blob {len(data)}\\0".encode("ascii") + data).hexdigest()
+
+
 def canonical_sha(obj) -> str:
     raw = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     return hashlib.sha256(raw).hexdigest()
@@ -42,7 +47,7 @@ def expected_names():
     return names
 
 
-def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path):
+def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path, shard_root: Path):
     manifest_path, archive_path = Path(manifest_path), Path(archive_path)
     p = json.loads(manifest_path.read_text(encoding="utf-8"))
     if p.get("schema") != SCHEMA or p.get("schema_version") != VERSION:
@@ -80,8 +85,15 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
         raise ValueError("expected exact hashes for all 72 shard JSON/NPZ triplets")
     if provenance.get("shard_manifest_sha256") != canonical_sha(hashes):
         raise ValueError("shard manifest digest mismatch")
-    if provenance.get("producer_source_sha256") != sha256(Path(producer_source_path)):
+    producer_source_path, shard_root = Path(producer_source_path), Path(shard_root)
+    if provenance.get("producer_source_sha256") != sha256(producer_source_path):
         raise ValueError("producer source SHA256 mismatch")
+    if provenance.get("producer_blob_sha") != git_blob_sha(producer_source_path):
+        raise ValueError("producer Git blob SHA mismatch")
+    for name, expected_hash in hashes.items():
+        candidate = shard_root / name
+        if not candidate.is_file() or sha256(candidate) != expected_hash:
+            raise ValueError(f"missing or modified source shard file: {name}")
     if "worker_identity_limitation" not in provenance:
         raise ValueError("worker source self-attestation limitation must remain explicit")
     registry = p.get("operator_registry", {})
@@ -119,7 +131,8 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
     return {
         "passed": True,
         "science_status": "PACKAGE_INTEGRITY_VALID_E_ONLY_PRECURSOR",
-        "checked_sparse_states": checked_states,
+        "checked_sparse_state_groups": checked_states,
+        "verified_source_shard_files": len(hashes),
         "archive_sha256": p["amplitude_archive_sha256"],
         "package_sha256": claimed_package_sha,
         "physical_completeness": False,
@@ -149,9 +162,10 @@ def main():
     ap.add_argument("--manifest", type=Path, required=True)
     ap.add_argument("--archive", type=Path, required=True)
     ap.add_argument("--producer-source", type=Path, required=True)
+    ap.add_argument("--shard-root", type=Path, required=True)
     a = ap.parse_args()
     try:
-        result = validate(a.manifest, a.archive, a.producer_source)
+        result = validate(a.manifest, a.archive, a.producer_source, a.shard_root)
     except Exception as exc:
         print(json.dumps({"passed": False, "science_status": "PACKAGE_INTEGRITY_FAIL",
                           "error_type": type(exc).__name__, "error": str(exc)}, indent=2))
