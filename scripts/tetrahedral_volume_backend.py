@@ -33,6 +33,11 @@ import peter_weyl_lorentzian_K_block_gate as KG
 import peter_weyl_zeroaware_volume_migration_experiment as ZVM
 
 NORM=0.25
+HERMITICITY_TOL=1e-10
+M_INDEPENDENCE_TOL=1e-10
+RECONSTRUCTION_TOL=1e-10
+TETRA_Q_DIAGNOSTICS={}
+TETRA_VOLUME_DIAGNOSTICS={}
 
 def apply_q_tetra(T,spins_local):
     spins_local=tuple(spins_local);mats=[PW.spin_mats_cached(s) for s in spins_local]
@@ -61,21 +66,71 @@ def tetra_q_block(spins_local,J2,M2):
         recon=sum((c*A for c,A in zip(coeff,basis)),np.zeros_like(QB))
         Q[:,j]=coeff;err=float(np.linalg.norm(QB-recon));rel=err/max(float(np.linalg.norm(QB)),1e-30)
         max_abs=max(max_abs,err);max_rel=max(max_rel,rel)
+    herm=float(np.linalg.norm(Q-Q.conj().T,ord="fro"))
+    scale=max(float(np.linalg.norm(Q,ord="fro")),1.0)
+    if not math.isfinite(herm) or herm > HERMITICITY_TOL*scale:
+        raise RuntimeError(f"raw tetrahedral Q block is not Hermitian before symmetrization: {herm}")
+    TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M2))]={
+        "raw_hermiticity_defect":herm,"raw_frobenius_norm":scale,
+        "absolute_sector_leakage":max_abs,"relative_sector_leakage":max_rel}
     return 0.5*(Q+Q.conj().T),max_abs,max_rel
 
 @functools.lru_cache(maxsize=None)
 def tetra_volume_block_general(spins_local,J2):
-    spins_local=tuple(spins_local);blocks=[]
-    for M2 in PW.m2vals_t(J2):blocks.append(tetra_q_block(spins_local,J2,M2)[0])
-    Q=sum(blocks)/len(blocks);Q=0.5*(Q+Q.conj().T)
-    return ZVM.zeroaware_sqrt_abs(Q)[0]
+    spins_local=tuple(spins_local);m_values=tuple(PW.m2vals_t(J2));blocks=[]
+    for M2 in m_values:blocks.append(tetra_q_block(spins_local,J2,M2)[0])
+    Q0=blocks[0]
+    scale=max(float(np.linalg.norm(Q0,ord="fro")),1.0)
+    m_defects=[float(np.linalg.norm(Q-Q0,ord="fro")) for Q in blocks]
+    max_m_defect=max(m_defects,default=0.0)
+    if not math.isfinite(max_m_defect) or max_m_defect > M_INDEPENDENCE_TOL*scale:
+        raise RuntimeError(f"raw tetrahedral Q block depends on M before averaging: {max_m_defect}")
+    Q=sum(blocks)/len(blocks)
+    # Symmetrization is now only a roundoff cleanup after raw Hermiticity passed.
+    Q=0.5*(Q+Q.conj().T)
+    eigenvalues=np.linalg.eigvalsh(Q)
+    V=ZVM.zeroaware_sqrt_abs(Q)[0]
+    Vherm=float(np.linalg.norm(V-V.conj().T,ord="fro"))
+    Vmin=float(np.min(np.linalg.eigvalsh(V))) if V.size else 0.0
+    V2=V@V; V4=V2@V2; Q2=Q@Q
+    functional_error=float(np.linalg.norm(V4-Q2,ord="fro")/max(float(np.linalg.norm(Q2,ord="fro")),1.0))
+    if (not np.isfinite(eigenvalues).all() or not np.isfinite(V).all()
+        or Vherm>HERMITICITY_TOL*max(float(np.linalg.norm(V,ord="fro")),1.0)
+        or Vmin < -HERMITICITY_TOL
+        or functional_error > 1e-9):
+        raise RuntimeError("tetrahedral volume spectral functional-calculus validation failed")
+    TETRA_VOLUME_DIAGNOSTICS[(spins_local,int(J2))]={
+        "M_values_doubled":list(m_values),
+        "raw_Q_M_block_defects":m_defects,
+        "max_raw_Q_M_block_defect":max_m_defect,
+        "raw_Q_hermiticity_defects":[TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["raw_hermiticity_defect"] for M in m_values],
+        "Q_eigenvalues":[float(x) for x in eigenvalues],
+        "Q_min_eigenvalue":float(np.min(eigenvalues)) if eigenvalues.size else 0.0,
+        "Q_max_eigenvalue":float(np.max(eigenvalues)) if eigenvalues.size else 0.0,
+        "V_eigenvalues":[float(x) for x in np.linalg.eigvalsh(V)],
+        "V_min_eigenvalue":Vmin,"V_hermiticity_defect":Vherm,
+        "V4_minus_Q2_relative_error":functional_error,
+        "zero_aware_functional_calculus":True}
+    return V
+
+def tetra_volume_diagnostics(spins_local,J2):
+    key=(tuple(spins_local),int(J2))
+    tetra_volume_block_general(*key)
+    return dict(TETRA_VOLUME_DIAGNOSTICS[key])
 
 def tetra_charged_volume(spins_local):
     return tetra_volume_block_general(tuple(spins_local),1)
 
 def apply_tetra_volume_tensor(T,spins_local):
     """Apply V_tet to an arbitrary local magnetic tensor via complete J blocks."""
-    spins_local=tuple(spins_local);Y=np.zeros_like(T,dtype=complex);recon=np.zeros_like(T,dtype=complex)
+    spins_local=tuple(spins_local)
+    T=np.asarray(T,dtype=complex)
+    expected_shape=tuple(s+1 for s in spins_local)
+    if T.shape!=expected_shape:
+        raise ValueError(f"volume tensor shape {T.shape} does not match {expected_shape}")
+    if not np.isfinite(T.real).all() or not np.isfinite(T.imag).all():
+        raise ValueError("volume input tensor contains non-finite values")
+    Y=np.zeros_like(T,dtype=complex);recon=np.zeros_like(T,dtype=complex)
     for J2 in CV.all_total_J2(spins_local):
         labels=CH.allowed_charged_labels(spins_local,J2)
         if not labels:continue
@@ -86,10 +141,17 @@ def apply_tetra_volume_tensor(T,spins_local):
             for c,B in zip(coeff,basis):recon+=c*B
             out=V@coeff
             for c,B in zip(out,basis):Y+=c*B
+    residual=float(np.linalg.norm(T-recon))
+    relative=residual/max(float(np.linalg.norm(T)),1e-30)
+    if not math.isfinite(relative) or relative>RECONSTRUCTION_TOL:
+        raise RuntimeError(f"tetrahedral volume magnetic-basis reconstruction incomplete: {relative}")
+    if not np.isfinite(Y.real).all() or not np.isfinite(Y.imag).all():
+        raise RuntimeError("tetrahedral volume output contains non-finite values")
     return Y
 
 def clear_tetra_caches():
     tetra_q_block.cache_clear();tetra_volume_block_general.cache_clear()
+    TETRA_Q_DIAGNOSTICS.clear();TETRA_VOLUME_DIAGNOSTICS.clear()
 
 @contextmanager
 def install_tetrahedral_volume_backend():
