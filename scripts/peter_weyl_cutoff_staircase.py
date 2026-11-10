@@ -16,9 +16,12 @@ import sympy as sp
 from sympy.physics.wigner import clebsch_gordan
 
 @lru_cache(None)
-def _cg(a,b,c,d,e,f):
-    return complex(clebsch_gordan(*[sp.Rational(x,2) for x in (a,b,c,d,e,f)]).evalf())
-def CG(j1,j2,J,m1,m2,M):return _cg(*(int(round(2*x)) for x in (j1,j2,J,m1,m2,M)))
+def _cg_exact(a,b,c,d,e,f):
+    return clebsch_gordan(*[sp.Rational(x,2) for x in (a,b,c,d,e,f)])
+def CG_exact(j1,j2,J,m1,m2,M):
+    return _cg_exact(*(int(round(2*x)) for x in (j1,j2,J,m1,m2,M)))
+def CG(j1,j2,J,m1,m2,M):
+    return complex(CG_exact(j1,j2,J,m1,m2,M).evalf())
 def mvals(j):return np.array([j-r for r in range(int(round(2*j))+1)],float)
 def spin_mats(j):
     ms=mvals(j);d=len(ms);Jz=np.diag(ms);Jp=np.zeros((d,d),complex)
@@ -54,8 +57,14 @@ def build_link(jmax):
                     if J<0 or J>jmax+1e-12:continue
                     MM=m+a;NN=n+b
                     if abs(MM)>J+1e-12 or abs(NN)>J+1e-12:continue
-                    c=math.sqrt((2*j+1)/(2*J+1))*CG(j,.5,J,m,a,MM)*CG(j,.5,J,n,b,NN)
-                    if c != 0.0:M[idx[(float(J),float(MM),float(NN))],col]+=c
+                    c1_exact=CG_exact(j,.5,J,m,a,MM)
+                    c2_exact=CG_exact(j,.5,J,n,b,NN)
+                    c_exact=sp.sqrt(sp.Rational(int(round(2*j))+1, int(round(2*J))+1))*c1_exact*c2_exact
+                    # Decide structural zero in exact arithmetic; retain every
+                    # nonzero coefficient until the explicit state-pruning stage.
+                    if c_exact != 0:
+                        c=complex(c_exact.evalf())
+                        M[idx[(float(J),float(MM),float(NN))],col]+=c
             U[(ai,bi)]=M;Ud[(ai,bi)]=M.conj().T
     return basis,idx,L,R,U,Ud
 
