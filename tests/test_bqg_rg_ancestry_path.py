@@ -108,6 +108,21 @@ class TestBQGRGAncestryPath(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "zero numerical rank"):
             ancestry.validate_refinement_spectrum(item, "zero tensor test")
 
+    def test_refinement_spectrum_rejects_zero_mass(self):
+        item = {
+            "refinement_tensor_diagnostics": {
+                "shape": [2, 2],
+                "numerical_rank": 0,
+                "rank_tolerance": 1e-12,
+                "singular_values": [0.0, 0.0],
+                "row_gram_eigenvalues": [0.0, 0.0],
+                "column_gram_nonzero_eigenvalues": [],
+                "frobenius_norm": 0.0,
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "zero spectral mass"):
+            ancestry.validate_refinement_spectrum(item, "zero tensor")
+
     def test_loader_requires_explicit_pass(self):
         source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
         item = json.loads(source.read_text(encoding="utf-8"))
