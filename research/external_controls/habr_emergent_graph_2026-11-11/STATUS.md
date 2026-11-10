@@ -5,7 +5,7 @@
 - Repository: Shtenco/synergy_binary_quantum_theory
 - Branch: audit/habr-emergent-graph-independent-control-20261111
 - Base: main
-- Canonical BQG branch/main was not modified.
+- No audit artifacts remain on canonical main. A transient FINDINGS_013.md add/delete pair was accidentally committed to main and then reverted; the net main tree is unchanged, but its commit history contains those two no-op-content commits.
 
 ## Artifacts committed
 
