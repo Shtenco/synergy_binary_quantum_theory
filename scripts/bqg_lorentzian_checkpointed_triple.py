@@ -208,10 +208,12 @@ def main():
             for i,j,k in selected(args):
                 x,meta=load_result(args.checkpoint_dir,prev,(i,j,k),freeze)
                 diag=meta["leakage_max"]
-                if not x:
+                exact_empty_input = not bool(x)
+                if exact_empty_input:
                     out={}
-                    # An exact empty input means this operator stage was not applied;
-                    # its leakage is analytically zero, not a missing measurement.
+                    # Exact empty input is a mathematical zero, not an absent
+                    # measurement. Persist its provenance separately from the
+                    # numerical value so the finish gate can audit the reason.
                     d={"outer_complete_basis_leakage":0.0,
                        "internal_volume_sector_leakage":0.0,
                        "complete_charge_basis_leakage":0.0}
@@ -225,16 +227,33 @@ def main():
                 before=len(out)
                 if args.stage=="kb":
                     out={key:amp for key,amp in out.items() if key[2] in (0,2)}
+                zero_fields = (["CK_outer_complete_basis_leakage",
+                                "CK_internal_volume_sector_leakage",
+                                "CK_complete_charge_basis_leakage"]
+                               if exact_empty_input else [])
                 save_result(args.checkpoint_dir,args.stage,(i,j,k),out,freeze,diag,
-                            {"pruned_by_frozen_scalar_channel":before-len(out)})
+                            {"pruned_by_frozen_scalar_channel":before-len(out),
+                             "operator_stage_applied":not exact_empty_input,
+                             "exact_empty_input_zero_fields":zero_fields})
         else:
             total={};diag={};branch=[]
             for i,j,k in itertools.product(range(2),repeat=3):
                 state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
                 LP.add(total,state) # exactly old pruning/TOL semantics
                 diag=maxdiag(diag,meta["leakage_max"])
+                expected_zero_fields = ({"CK_outer_complete_basis_leakage",
+                                          "CK_internal_volume_sector_leakage",
+                                          "CK_complete_charge_basis_leakage"}
+                                         if not state else set())
+                recorded_zero_fields = set(meta.get("exact_empty_input_zero_fields", []))
+                if recorded_zero_fields != expected_zero_fields:
+                    raise ValueError(f"ka_{i}{j}{k}: empty-input diagnostic provenance mismatch")
+                if meta.get("operator_stage_applied") is not bool(state):
+                    raise ValueError(f"ka_{i}{j}{k}: operator-stage execution flag mismatch")
                 branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
-                              "support":len(state),"sha256":meta["sha256"]})
+                              "support":len(state),"sha256":meta["sha256"],
+                              "operator_stage_applied":meta["operator_stage_applied"],
+                              "exact_empty_input_zero_fields":sorted(recorded_zero_fields)})
             diag = validate_leakage_map(diag, require_all=True, context="finish stage")
             if not all(np.isfinite([z.real, z.imag]).all() for z in total.values()):
                 raise ValueError("finish stage covariant state contains non-finite amplitudes")
