@@ -1,76 +1,58 @@
 # BQG ancestry-consistent RG path
 
-The local master spectrum alone does not identify the physical refinement
-lineage.  The first multiplicity branch already shows that microscopic binary
-blocking can preferentially enter a non-lowest master eigenchannel.
+The local master spectrum alone does not identify the refinement lineage. The first multiplicity branch already shows that microscopic binary blocking can preferentially enter a non-lowest master eigenchannel.
 
 Given full channel-flow matrices
 
 \[
 \mathcal F_j^{ab}
-=
-\frac12\operatorname{Tr}
+=\frac12\operatorname{Tr}
 (P^{\rm block}_{j,a}P^{\rm master}_{j+1/2,b}),
 \]
 
-the finite ancestry path is selected *without fitting* by maximizing
+the finite ancestry path is selected without fitting by maximizing
+
+\[
+\prod_j\mathcal F_j^{a_j a_{j+1}},
+\]
+
+or equivalently the sum of logarithms. The dynamic-programming implementation validates each matrix's dimensions against the source and target multiplicities, checks finiteness, row stochasticity, pass flags, and consecutive spin steps.
+
+## Five-step result (2026-11-10)
+
+The five consecutive matrices s2=3,4,5,6,7 pass their finite row-completeness, paired-spectrum, generated-pair and Gauss-projection checks. The maximum-product ancestry path is
 
 \[
 \boxed{
-\prod_j\mathcal F_j^{a_j a_{j+1}}
-}
-\]
-
-from the unique pre-branch source channel.
-
-Equivalently maximize
-
-\[
-\boxed{
-\sum_j\log\mathcal F_j^{a_j a_{j+1}}.
-}
-\]
-
-A dynamic-programming gate computes this path exactly once all finite flow
-matrices are available.
-
-This criterion is not a physical-time probability principle.  It is a
-representation-RG ancestry criterion: among discrete master eigenchannels, it
-finds the lineage most compatible with the already-fixed microscopic binary
-refinement tensor.
-
-The resulting path can then be used as the candidate finite lineage on which
-the graph-changing habitat residuals \(E_a,F_a\) and ultimately
-\(\epsilon_j^{\rm sf}\) are evaluated.
-
-
-## First four-shard ancestry prefix (2026-11-10)
-
-The first four consecutive full channel-flow matrices, (s_2=3,4,5,6), now pass their row-completeness, paired-spectrum and Gauss-projection checks. Applying the maximum-product ancestry rule gives the finite prefix
-
-```math
 a_0^{(j=3/2)}
 \to a_1^{(j=2)}
 \to a_1^{(j=5/2)}
 \to a_1^{(j=3)}
-\to a_2^{(j=7/2)}.
-```
+\to a_2^{(j=7/2)}
+\to a_2^{(j=4)}.
+}
+\]
 
 The step overlaps are
 
-```math
+\[
 0.9459578674471627,\quad
 0.8688492971205302,\quad
 0.8826884371011211,\quad
-0.7836251466890334,
-```
+0.7836251466890334,\quad
+0.866888447374884,
+\]
 
-with cumulative product
+and the cumulative product is
 
-```math
-0.5685020686576171.
-```
+\[
+\boxed{0.49282787562801145}.
+\]
 
-For comparison, the all-low-channel path has cumulative product (4.732255132750176\times10^{-5}) over the same four steps. The maximum-overlap ancestry prefix is therefore about (1.20\times10^4) times larger.
+The all-low-channel path over the same five steps has product 4.694570240506031e-05, so the maximum-overlap path product is about 1.0498e4 times larger.
 
-The path is a finite representation-RG lineage, not a physical-time trajectory or probability. The fifth shard (s_2=7) is still required for the complete five-step path; after that, the lineage must still pass the graph-changing (E_a,F_a) habitat-refinement and scale-free master-residual tests.
+The lineage changes channel index at the first split and again at j=3 -> 7/2, where the target multiplicity increases. It then continues on channel 2 for the final step. Thus the correct finite object is the full matrix ancestry, not a rule that follows the lowest eigenvalue or keeps a fixed channel index.
+
+## What this does and does not establish
+
+This is a finite representation-RG lineage derived from the fixed binary refinement tensor. It is not a physical-time trajectory, a probability, or a continuum theorem. The next required tests are the full graph-changing habitat residuals E_a,F_a, the off-carrier leakage, and independently defined master gaps. Only after those are available can the scale-free physical-projector refinement criterion be assessed.
