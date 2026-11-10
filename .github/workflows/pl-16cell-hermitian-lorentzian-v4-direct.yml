@@ -16,6 +16,10 @@ on:
       - '.github/workflows/pl-16cell-hermitian-lorentzian-v4-direct.yml'
   workflow_dispatch:
 
+concurrency:
+  group: pl48-v4-direct-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   preflight:
     runs-on: ubuntu-latest
@@ -53,7 +57,7 @@ jobs:
     needs: preflight
     strategy:
       fail-fast: false
-      max-parallel: 12
+      max-parallel: 3
       matrix:
         omit: [0,1,2,3]
         cycle: [0,1,2]
