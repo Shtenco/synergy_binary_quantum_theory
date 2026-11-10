@@ -110,10 +110,12 @@ def run(root):
     wrong=sum(1 for k in S if sum(k[0])%2!=seed_parity)
     finite=all(np.isfinite([z.real,z.imag]).all() for st in (L,Ld,S) for z in st.values())
     max_leak=max(float(d['physical_acceptance_max_leakage']) for *_,d in metas)
+    max_charge=max(float(d['complete_charge_diagnostic']) for *_,d in metas)
     max_rej=max(float(d['nonscalar_rejected_norm']) for *_,d in metas)
     checks={
       'all_48_workers_loaded':True,'full_24x2_orbit_unique':seen==expect,
       'finite_combined_amplitudes':finite,'max_worker_leakage_below_1e-8':max_leak<1e-8,
+      'max_worker_charge_leakage_below_1e-8':max_charge<1e-8,
       'max_worker_nonscalar_rejection_below_1e-8':max_rej<1e-8,
       'S_preserves_even_valence_seed_parity':wrong==0,
       'S_diagonal_matrix_element_real':abs(sdiag.imag)<1e-9,
@@ -129,7 +131,8 @@ def run(root):
       'S_support':len(S),'S_norm':norm(S),'S_seed_diagonal_amplitude':[float(sdiag.real),float(sdiag.imag)],
       'S_is_nonzero_science_output':bool(norm(S)>1e-10),'wrong_seed_parity_outputs':wrong,
       'max_spin_forward':max_spin(L),'max_spin_adjoint':max_spin(Ld),'max_spin_S':max_spin(S),
-      'max_worker_physical_leakage':max_leak,'max_worker_nonscalar_rejected_norm':max_rej,
+      'max_worker_physical_leakage':max_leak,'max_worker_complete_charge_leakage':max_charge,
+      'max_worker_nonscalar_rejected_norm':max_rej,
       'terms':rows,
       'definition':'S=-i(L_raw-L_raw^dagger)/2 using the complete 24-term forward and adjoint PL epsilon worker-index orbits',
       'interpretation':'Physical Hermitian Lorentzian amplitude column on the independent 16-cell PL-S3 habitat. Nonzero magnitude is reported, not required for an infrastructure PASS.',
