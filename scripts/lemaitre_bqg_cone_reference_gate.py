@@ -15,6 +15,18 @@ from pathlib import Path
 # Pinned external reference: Data/planner_neighbor_metric.json in
 # AntiPhoton47/Learning-Spacetime-from-Quantum-Info.
 LEMAITRE = {
+    "run_id": "20261017_141731",
+    "master_seed": 20260727,
+    "agent_seeds": [399, 410, 982, 979, 839],
+    "environment_seeds": [944, 303, 238, 477, 151],
+    "evaluation_seed": 12345,
+    "evaluation_blob_shas": {
+        "agent_0": "64b6fd913c0f6161defd87656c37c8eec2f61b5c",
+        "agent_1": "e6fddfa6f6b0bc5988162df8d84cdbddd75fc94f",
+        "agent_2": "26a0e0f0ea81bed9d0d8cf0fe6b8d360aae98056",
+        "agent_3": "577dab5284b3ce411150966043ab1ed2b0ca6f77",
+        "agent_4": "2030e0942839b904771f6c230003f8305f2a2633",
+    },
     "g_tt": -0.9998780957794325,
     "g_tx": 7.786653464611928e-08,
     "g_xx": 1.0,
