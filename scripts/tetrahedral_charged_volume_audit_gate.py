@@ -23,7 +23,7 @@ import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_lorentzian_logical_projection_gate as LP
 import peter_weyl_zeroaware_volume_migration_experiment as ZVM
-from tetrahedral_volume_backend import tetra_q_block,tetra_volume_block_general,install_tetrahedral_volume_backend
+from tetrahedral_volume_backend import tetra_q_block,tetra_volume_block_general,tetra_volume_diagnostics,install_tetrahedral_volume_backend
 from pl_dual_complex import DualComplex,boundary_4simplex,seed_16cell_boundary
 from pl_peter_weyl_euclidean import PLPeterWeylEuclidean
 from pl_covariant_backend import install_pl_graph
@@ -103,6 +103,9 @@ def run():
       'tetra_CV_all_slots_nonzero':min(newnorm)>1e-3,
       'tetra_CV_slot_covariance_restored':newspread<1e-12,
       'tetra_CV_basis_complete':max(x['max_complete_basis_leakage'] for x in newslots)<1e-10,
+      'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=0.0)<1e-10,
+      'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=0.0)<1e-10,
+      'charged_volume_spectral_functional_calculus':max((x['diagnostics']['V4_minus_Q2_relative_error'] for x in spectral_rows),default=0.0)<1e-9,
     }
     return {'status':'tetrahedral charged-volume covariance correction audit','passed':bool(all(checks.values())),
             'science_status':'PRE_LORENTZIAN_OPERATOR_CORRECTION','definition':'Q_tet=(1/4) sum_r (-1)^r q_{omit r}; V_tet=sqrt(abs(Q_tet)) with production zero-aware spectral convention',
