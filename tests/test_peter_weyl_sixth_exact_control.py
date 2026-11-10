@@ -3,12 +3,14 @@ import unittest
 from pathlib import Path
 
 import numpy as np
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from peter_weyl_cutoff_sixth_audit import (
     exact_quaternion_haar_control,
     sparse_transitions_without_hidden_threshold,
 )
+import peter_weyl_cutoff_staircase as PW
 
 
 class ExactQuaternionHaarControlTests(unittest.TestCase):
@@ -25,6 +27,15 @@ class ExactQuaternionHaarControlTests(unittest.TestCase):
         self.assertEqual(len(transitions[0]), 2)
         self.assertEqual(transitions[0][1][1], 1e-16)
         self.assertEqual(diag["transition_entries_at_or_below_1e-14"], 1)
+
+    def test_link_builder_preserves_tiny_nonzero_cg_coefficients(self):
+        with patch.object(PW, "CG", return_value=1e-16):
+            _, _, _, _, U, _ = PW.build_link(0.5)
+        self.assertTrue(any(
+            value != 0.0 and abs(value) < 1e-14
+            for matrix in U.values()
+            for value in matrix.ravel()
+        ))
 
     def test_exact_sixth_moment(self):
         self.assertEqual(exact_quaternion_haar_control(6), 1250089632)
