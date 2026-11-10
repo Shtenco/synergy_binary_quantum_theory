@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: research/depth6-s4sign-proof
+          ref: f6bfcd775b8c3cd33c6c235d48293e40657baf9d
           path: proofsrc
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -62,6 +62,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          actual_commit="$(git -C proofsrc rev-parse HEAD)"
+          test "$actual_commit" = "f6bfcd775b8c3cd33c6c235d48293e40657baf9d"
+          actual_bundle="$(git -C proofsrc hash-object mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64)"
+          test "$actual_bundle" = "cbbaa80f6b6b61d353458db1fa1f03f824730532"
+          echo "Verified frozen proof source commit: $actual_commit"
           verify_blob() {
             local path="$1"
             local expected="$2"
