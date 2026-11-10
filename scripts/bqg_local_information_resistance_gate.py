@@ -108,6 +108,9 @@ for m in masses:
     rows.append((m, mi, gb, fq, gq, ell_q))
 
 # Critical finite-size value must approach the exact thermodynamic value.
+if not __debug__:
+    raise RuntimeError("Refusing optimized execution: this gate uses assert-based scientific checks")
+
 assert abs(rows[0][3] / FQ_CRIT_EXACT - 1.0) < 0.01
 
 # All three local information conductances are positive in both phases.
