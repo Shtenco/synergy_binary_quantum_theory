@@ -33,6 +33,26 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
         self.assertTrue(result["complete"])
         self.assertEqual(result["maximum"], 4e-12)
 
+    def test_one_term_missing_charge_cannot_be_masked_by_another_term(self):
+        complete = {
+            "CV_complete_basis_leakage": 1e-12,
+            "CK_outer_complete_basis_leakage": 2e-12,
+            "CK_internal_volume_sector_leakage": 3e-12,
+            "CK_complete_charge_basis_leakage": 4e-12,
+        }
+        partial = dict(complete)
+        partial.pop("CK_complete_charge_basis_leakage")
+        aggregate = {}
+        missing_ever = set()
+        invalid_ever = set()
+        LP.merge_leakage_max(aggregate, missing_ever, invalid_ever, complete)
+        LP.merge_leakage_max(aggregate, missing_ever, invalid_ever, partial)
+        for key in missing_ever | invalid_ever:
+            aggregate.pop(key, None)
+        result = LP.leakage_summary(aggregate)
+        self.assertFalse(result["complete"])
+        self.assertIn("CK_complete_charge_basis_leakage", result["missing"])
+
     def test_forward_stage_not_run_is_not_reported_as_zero(self):
         with patch.object(LP.CV, "gauss_to_covariant", return_value={"seed": 1 + 0j}), \
              patch.object(LP.RAW.COMP, "C_volume_component", return_value=({}, 0.0)):
