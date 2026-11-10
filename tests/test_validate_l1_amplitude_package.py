@@ -47,11 +47,14 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             "complete_physical_package": False,
             "missing_required_operators": ["S", "R"],
             "source_commit": "a" * 40,
+            "source_commit_attestation": "caller-supplied; must equal git rev-parse HEAD at production time; not independently queried by this script",
             "amplitude_archive_sha256": validator.sha256(archive),
             "provenance": {
                 "shard_file_sha256": shard_hashes,
                 "shard_manifest_sha256": validator.canonical_sha(shard_hashes),
                 "source_collector_blob_sha": "3ba2514ecd553fc54a59d3b56c1c43ce24aae09f",
+                "producer_source_sha256": validator.sha256(ROOT / "scripts/collective_l1_amplitude_producer.py"),
+                "worker_identity_limitation": "worker/collector source blobs are pinned by this schema, but legacy shard metadata does not self-attest its generating source blob",
             },
             "operator_registry": {
                 "E": {"source_blob_sha": "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1",
@@ -73,7 +76,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
     def test_valid_integrity_fixture(self):
         with tempfile.TemporaryDirectory() as td:
             manifest, archive = self._fixture(Path(td))
-            result = validator.validate(manifest, archive)
+            result = validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py")
             self.assertTrue(result["passed"])
             self.assertFalse(result["physical_completeness"])
             self.assertEqual(result["checked_sparse_states"], 150)
