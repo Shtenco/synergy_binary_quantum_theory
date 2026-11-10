@@ -176,11 +176,15 @@ def run():
     checks = {
         "independent_exact_Haar_control_reproduces_first_five_values": exact_prefix == known,
         "independent_exact_sixth_control_is_integer": isinstance(exact, int),
-        "Jmax_3_reaches_no_spin_above_3": baseline["final_max_spin"] <= 3.0 + 1e-12,
+        "Jmax_3_reaches_exact_spin_3": math.isclose(baseline["final_max_spin"], 3.0, rel_tol=0.0, abs_tol=1e-12),
         "Jmax_7_2_overcutoff_has_no_support_above_3": high_spin_support == 0,
         "Jmax_3_and_7_2_states_agree": cutoff_comparison["max_amplitude_difference"] < 1e-10,
         "pruning_1e_14_stable_against_1e_13": tight_comparison["max_amplitude_difference"] < 1e-9,
         "pruning_1e_12_stable_against_1e_13": loose_comparison["max_amplitude_difference"] < 1e-9,
+        "all_three_pruning_norms_match_exact_control": max(
+            abs(x["final_norm_squared"] - exact)
+            for x in (baseline, tight, loose, overcut)
+        ) < 1e-3,
         "baseline_norm_matches_independent_exact_control": exact_error < 1e-3,
         "all_final_amplitudes_finite": all(
             np.isfinite([z.real, z.imag]).all()
