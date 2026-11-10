@@ -315,6 +315,9 @@ def solve(mats):
         "best_path_score_to_fixed_channel0_score_ratio": (
             float(best_product / lowest_product) if lowest_product > 0 else None
         ),
+        "ancestry_to_lowest_product_ratio": (
+            float(best_product / lowest_product) if lowest_product > 0 else None
+        ),
         "naive_lowest_steps": lowest_steps,
         "stages": stages,
         "claim_boundary": (
