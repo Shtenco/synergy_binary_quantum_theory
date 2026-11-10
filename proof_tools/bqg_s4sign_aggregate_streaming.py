@@ -3,6 +3,10 @@ from __future__ import annotations
 import argparse,json,pickle,tarfile
 from pathlib import Path
 import numpy as np
+try:
+    from .rank_matrix_guard import validate_full_column_matrix
+except ImportError:
+    from rank_matrix_guard import validate_full_column_matrix
 import itertools
 import bqg_depth6_41 as Z
 import bqg_safe_boundary_master_gate as R
@@ -72,7 +76,7 @@ def certify(records,paths,outfile):
             mats=[block[q] for q in uq if q in block]
             del block
             if not mats:continue
-            M=np.vstack(mats);d=int(records[i]['d'])
+            M=np.vstack(mats);d=int(records[i]['d']);M=validate_full_column_matrix(M,d,f"block {i}")
             if M.shape[0]<d:continue
             s=np.linalg.svd(M,compute_uv=False);smax=float(s[0]) if len(s) else 0.
             tol=max(M.shape)*np.finfo(float).eps*max(smax,1.)*100
