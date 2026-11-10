@@ -41,6 +41,16 @@ class FullChannelFlowGuardTests(unittest.TestCase):
         self.assertLess(result["column_gram_idempotence_defect"], 1e-12)
         self.assertIn("no unit-isometry assumption", result["normalization_claim"])
 
+    def test_refinement_spectrum_checks_actual_gram_eigenvalues(self):
+        T = np.array([[0.8, 0.0, 0.0], [0.0, 0.4, 0.0]], dtype=complex)
+        result = FLOW.refinement_tensor_diagnostics(T, "strict spectral test")
+        self.assertEqual(result["numerical_rank"], 2)
+        self.assertEqual(result["singular_values"], [0.8, 0.4])
+        self.assertLess(result["row_gram_singular_spectrum_defect"], 1e-12)
+        self.assertLess(result["column_gram_singular_spectrum_defect"], 1e-12)
+        self.assertLess(result["frobenius_singular_spectrum_defect"], 1e-12)
+        self.assertAlmostEqual(result["frobenius_norm"] ** 2, 0.8**2 + 0.4**2)
+
     def test_induced_refinement_tensor_rejects_nonfinite_entries(self):
         T = np.array([[1.0, np.nan]], dtype=complex)
         with self.assertRaisesRegex(RuntimeError, "non-finite"):
