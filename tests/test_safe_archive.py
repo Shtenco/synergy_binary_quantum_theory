@@ -91,6 +91,32 @@ class SafeArchiveTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "non-regular ZIP member"):
                     safe_extract_zip(zf, Path(tmp) / "out")
 
+    def test_rejects_zip_socket_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive_bytes = io.BytesIO()
+            info = zipfile.ZipInfo("socket")
+            info.create_system = 3
+            info.external_attr = (stat.S_IFSOCK | 0o600) << 16
+            with zipfile.ZipFile(archive_bytes, "w") as zf:
+                zf.writestr(info, b"not a socket")
+            archive_bytes.seek(0)
+            with zipfile.ZipFile(archive_bytes) as zf:
+                with self.assertRaisesRegex(ValueError, "non-regular ZIP member"):
+                    safe_extract_zip(zf, Path(tmp) / "out")
+
+    def test_rejects_zip_unix_type_name_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive_bytes = io.BytesIO()
+            info = zipfile.ZipInfo("directory-without-slash")
+            info.create_system = 3
+            info.external_attr = (stat.S_IFDIR | 0o755) << 16
+            with zipfile.ZipFile(archive_bytes, "w") as zf:
+                zf.writestr(info, b"payload")
+            archive_bytes.seek(0)
+            with zipfile.ZipFile(archive_bytes) as zf:
+                with self.assertRaisesRegex(ValueError, "type/name mismatch"):
+                    safe_extract_zip(zf, Path(tmp) / "out")
+
     def test_rejects_nonempty_destination(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp) / "out"
