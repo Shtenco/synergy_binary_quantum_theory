@@ -54,7 +54,14 @@ def ordered_spec(D,source,index):
 
 def update_diag(dst,d):
     for name,val in d.items():
-        if isinstance(val,(int,float)):dst[name]=max(dst.get(name,0.0),float(val))
+        if (isinstance(val,bool) or not isinstance(val,(int,float))
+                or not math.isfinite(float(val)) or float(val)<0.0):
+            raise ValueError(f'invalid leakage diagnostic {name}: {val!r}')
+        previous=dst.get(name)
+        if previous is not None and (isinstance(previous,bool) or not isinstance(previous,(int,float))
+                or not math.isfinite(float(previous)) or float(previous)<0.0):
+            raise ValueError(f'invalid accumulated leakage diagnostic {name}: {previous!r}')
+        dst[name]=max(float(previous) if previous is not None else 0.0,float(val))
 
 def ordered_dagger_state(seed,source,a,b,c):
     """Exact component-adjoint ordering for one raw triple."""
@@ -81,7 +88,7 @@ def ordered_dagger_state(seed,source,a,b,c):
         if not s2:continue
         volume_operator_called = True
         s3,leak=LP.RAW.COMP.C_volume_component(s2,source,c,i,k,JMAX2)
-        diag['CV_complete_basis_leakage']=max(diag.get('CV_complete_basis_leakage',0.0),float(leak))
+        LP.update_diag(diag,'CV_complete_basis_leakage',leak)
         add(total,s3)
     if not volume_operator_called:
         # The final CV operator had exactly empty input on every branch.
