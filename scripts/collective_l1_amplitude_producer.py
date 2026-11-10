@@ -125,9 +125,14 @@ def legacy_add(dst, src, tol=LEGACY_SUM_TOL):
 
 
 def inner(a, b):
+    # Compensated complex inner product; retain the full complex result.
     if len(a) <= len(b):
-        return sum(np.conj(v) * b.get(k, 0j) for k, v in a.items())
-    return sum(np.conj(a.get(k, 0j)) * v for k, v in b.items())
+        terms = (np.conj(v) * b.get(k, 0j) for k, v in a.items())
+    else:
+        terms = (np.conj(a.get(k, 0j)) * v for k, v in b.items())
+    terms = list(terms)
+    return complex(math.fsum(z.real for z in terms),
+                   math.fsum(z.imag for z in terms))
 
 
 def matrix(left, right):
@@ -370,7 +375,16 @@ def run(root: Path, out_dir: Path, source_commit: str):
             os.unlink(tmp_name)
     package["amplitude_archive_sha256"] = sha256_file(npz_path)
     package["package_sha256"] = canonical_json_sha(package)
-    json_path.write_text(json.dumps(package, indent=2, sort_keys=True)+"\n", encoding="utf-8")
+    manifest_text = json.dumps(package, indent=2, sort_keys=True)+"\n"
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=out_dir,
+                                     suffix=".json", delete=False) as tmp:
+        tmp.write(manifest_text)
+        manifest_tmp = tmp.name
+    try:
+        os.replace(manifest_tmp, json_path)
+    finally:
+        if os.path.exists(manifest_tmp):
+            os.unlink(manifest_tmp)
     return package
 
 
@@ -464,9 +478,12 @@ def self_test():
     s1, _ = stable_sum_states([x, y])
     s2, _ = stable_sum_states([y, x])
     check2 = state_relerr(s1, s2) == 0.0
-    # Duplicate sparse keys are rejected by the file loader contract (structural control).
+    # Complex inner product must preserve conjugation and imaginary parts.
+    ip = inner({b"z": 1.0+2.0j}, {b"z": 3.0-1.0j})
+    check3 = abs(ip - complex(1.0-2.0j) * complex(3.0-1.0j)) < 1e-14
     checks = {"intermediate_threshold_counterexample_detected": bool(check1),
-              "stable_aggregation_permutation_invariant": bool(check2)}
+              "stable_aggregation_permutation_invariant": bool(check2),
+              "complex_inner_product_preserves_phase": bool(check3)}
     return {"passed": all(checks.values()), "checks": checks}
 
 
