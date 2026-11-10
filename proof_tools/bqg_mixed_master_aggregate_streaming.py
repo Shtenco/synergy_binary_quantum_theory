@@ -3,6 +3,10 @@ from __future__ import annotations
 import argparse,json,pickle,tarfile,itertools
 from pathlib import Path
 import numpy as np
+try:
+    from .rank_matrix_guard import validate_full_column_matrix
+except ImportError:
+    from rank_matrix_guard import validate_full_column_matrix
 import bqg_depth6_41 as Z
 import bqg_depth6_generic_jucys_selector as J
 import bqg_depth6_generic_master_row as M
@@ -90,7 +94,7 @@ def certify(rec,paths,key,outfile):
             mats=[mp[q] for q in uq if q in mp]
             del mp
             if not mats:continue
-            A=np.vstack(mats);m=int(rec[i]['m'])
+            A=np.vstack(mats);m=int(rec[i]['m']);A=validate_full_column_matrix(A,m,f"orbit {i}")
             if A.shape[0]<m:continue
             s=np.linalg.svd(A,compute_uv=False);smax=float(s[0]) if len(s) else 0.
             tol=max(A.shape)*np.finfo(float).eps*max(smax,1.)*100
