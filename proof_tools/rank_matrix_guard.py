@@ -21,6 +21,29 @@ def validate_full_column_matrix(matrix, expected_columns: int, context: str):
     return array
 
 
+
+def validate_index_value(value, context: str) -> int:
+    """Reject bools, numeric strings and negative values as artifact indices."""
+    if type(value) is not int or value < 0:
+        raise ValueError(f"{context}: index must be a nonnegative JSON integer, got {value!r}")
+    return value
+
+
+def parse_indexed_map_filename(stem: str, context: str) -> int:
+    """Parse canonical b<index> map stems without coercive int() acceptance."""
+    if not isinstance(stem, str) or not stem.startswith("b"):
+        raise ValueError(f"{context}: map filename must start with 'b', got {stem!r}")
+    digits = stem[1:]
+    if (
+        not digits
+        or not digits.isascii()
+        or not digits.isdigit()
+        or (len(digits) > 1 and digits.startswith("0"))
+    ):
+        raise ValueError(f"{context}: map filename index is not canonical: {stem!r}")
+    return int(digits)
+
+
 def validate_shard_coverage(shard_ids, expected_shards: int, context: str):
     """Require one unique shard ID for every integer in [0, expected_shards)."""
     if type(expected_shards) is not int or expected_shards < 1:
