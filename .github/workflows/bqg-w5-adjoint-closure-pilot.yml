@@ -1,8 +1,10 @@
-name: BQG W5 adjoint closure pilot
+name: BQG W5 adjoint closure cutoff study
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - research/lemaitre-bqg-causal-cone-20261110
     paths:
       - '.github/workflows/bqg-w5-adjoint-closure-pilot.yml'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
@@ -13,26 +15,42 @@ permissions:
   contents: read
 
 jobs:
-  w5-seed-column-pilot:
+  w5-adjoint-closure:
+    name: W5 full-node closure Jmax2=${{ matrix.jmax2 }}
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        jmax2: [10, 12, 14]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install numerical dependencies
         run: python -m pip install --upgrade numpy sympy
-      - name: Run five W5 seeds at one K5 node
+      - name: Compile W5 closure and operator modules
         run: |
+          python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+          python -m py_compile scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py
+          python -m py_compile scripts/peter_weyl_lorentzian_ordered_triple_gate.py
+      - name: Run all five W5 seeds and all five K5 source nodes
+        run: |
+          mkdir -p verification_results
           python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
-            --nodes 0 --Jmax2 10 --max-states 5 --max-depth 0 \
+            --nodes 0 1 2 3 4 \
+            --Jmax2 ${{ matrix.jmax2 }} \
+            --max-states 500 --max-depth 8 \
             --amp-tol 1e-12 \
-            --output verification_results/W5_ADJOINT_NODE0_J10_SEED_PILOT.json
+            --output verification_results/W5_ADJOINT_CLOSURE_ALLNODES_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
       - name: Upload numerical result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-adjoint-node0-j10-seed-pilot
-          path: verification_results/W5_ADJOINT_NODE0_J10_SEED_PILOT.json
+          name: bqg-w5-adjoint-closure-j${{ matrix.jmax2 }}-run${{ github.run_id }}
+          path: verification_results/W5_ADJOINT_CLOSURE_ALLNODES_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
