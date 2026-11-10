@@ -62,6 +62,7 @@ def run(omit,cycle,source=0):
     primitive=[meta[x] for x in ('fp','fq','ap','aq')]
     finite=all(np.isfinite([z.real,z.imag]).all() for z in S.values())
     maxleak=max(float(x['physical_acceptance_max_leakage']) for x in primitive)
+    maxcharge=max(float(x['complete_charge_diagnostic']) for x in primitive)
     maxrej=max(float(x['nonscalar_rejected_norm']) for x in primitive)
     checks={
       'all_four_v2_primitives_pass':all(x['passed'] for x in primitive),
@@ -70,6 +71,7 @@ def run(omit,cycle,source=0):
       'same_omitted_slot':all(int(x['omitted_local_slot'])==omit for x in primitive),
       'finite_physical_pair_amplitudes':finite,
       'primitive_physical_leakage_below_1e-8':maxleak<1e-8,
+      'primitive_charge_leakage_below_1e-8':maxcharge<1e-8,
       'primitive_nonscalar_rejection_below_1e-8':maxrej<1e-8,
       'single_L_spin_wall':max_spin(S)<=JMAX2/2+1e-12,
     }
@@ -80,7 +82,8 @@ def run(omit,cycle,source=0):
       'cyclic_order':list(p),'first_two_swap':list(q),'forward_indices':[ip,iq],'adjoint_indices':[ip,iq],
       'epsilon_coefficients':[cp,cq],'Jmax':JMAX2/2,'checks':checks,
       'S_pair_support':len(S),'S_pair_norm':norm(S),'S_pair_max_spin':max_spin(S),
-      'max_primitive_physical_leakage':maxleak,'max_primitive_nonscalar_rejected_norm':maxrej,
+      'max_primitive_physical_leakage':maxleak,'max_primitive_charge_leakage':maxcharge,
+      'max_primitive_nonscalar_rejected_norm':maxrej,
       'primitive_metadata':primitive,'runtime_seconds':time.time()-t0,
       'definition':'S_pair=-i/2*(coef_p F_p + coef_q F_q - coef_p Fdag_p - coef_q Fdag_q)',
       'identity':'=-i/2 eta Tr_aux({[C_a(K),C_b(K)],C_c(V_tet)})|Omega>',
