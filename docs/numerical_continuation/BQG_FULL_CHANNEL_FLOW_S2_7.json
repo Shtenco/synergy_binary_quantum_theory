@@ -1,0 +1,86 @@
+{
+  "status": "full microscopic/master multiplicity channel-flow matrix",
+  "passed": true,
+  "source_s2": 7,
+  "source_j": 3.5,
+  "target_s2": 8,
+  "target_j": 4.0,
+  "source_master_eigenvalues": [
+    7.140843485221557,
+    9.459669912782038,
+    36.381268968404214
+  ],
+  "target_master_eigenvalues": [
+    7.8193428741406406,
+    14.040428696350158,
+    16.14026591974106
+  ],
+  "source_pair_spreads": [
+    1.3322676295501878e-14,
+    2.1316282072803006e-14,
+    2.1316282072803006e-14
+  ],
+  "target_pair_spreads": [
+    5.329070518200751e-15,
+    3.552713678800501e-15,
+    1.0658141036401503e-14
+  ],
+  "channel_flow_matrix": [
+    [
+      0.9920365890707494,
+      0.004565910960058209,
+      0.0033974999691912234
+    ],
+    [
+      0.001913524431710443,
+      0.8233707896877721,
+      0.17471568588051695
+    ],
+    [
+      0.0060241960817878195,
+      0.12708735654332728,
+      0.866888447374884
+    ]
+  ],
+  "row_sums": [
+    0.9999999999999989,
+    0.9999999999999996,
+    0.9999999999999991
+  ],
+  "row_stochasticity_error": 1.1102230246251565e-15,
+  "best_target_index_by_source": [
+    0,
+    1,
+    2
+  ],
+  "best_overlap_by_source": [
+    0.9920365890707494,
+    0.8233707896877721,
+    0.866888447374884
+  ],
+  "generated_singular_values": [
+    [
+      0.5195498268796463,
+      0.5195498268796461,
+      8.088235884261846e-16,
+      7.068934139761953e-16
+    ],
+    [
+      0.33438436099255436,
+      0.3343843609925542,
+      1.4049563841480936e-15,
+      1.19114336594952e-15
+    ],
+    [
+      0.45052399868145737,
+      0.4505239986814572,
+      6.682412716639557e-16,
+      2.3360345088828086e-16
+    ]
+  ],
+  "generated_pair_spread_max": 2.220446049250313e-16,
+  "Gauss_projection_leakage": 2.888738697057238e-30,
+  "workflow_run_id": 42797583866,
+  "workflow_commit": "890dc7051601008f5cb724928df9318f2e8654ce",
+  "claim_boundary": "F_ab is a representation-RG projector overlap, not a physical-time probability. It diagnoses which target master eigenchannel is naturally inherited from each source channel under the exact binary-ancilla blocking tensor."
+}
