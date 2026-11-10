@@ -173,6 +173,66 @@ def global_magnetic_operator_rows():
     return rows
 
 
+def permutation_parity(p):
+    inversions=sum(p[i]>p[j] for i in range(4) for j in range(i+1,4))
+    return -1 if inversions%2 else 1
+
+
+def full_magnetic_matrices(spins):
+    spins=tuple(spins)
+    shape=tuple(s+1 for s in spins)
+    dimension=int(np.prod(shape))
+    Q=np.zeros((dimension,dimension),complex)
+    V=np.zeros_like(Q)
+    for column in range(dimension):
+        basis=np.zeros(shape,dtype=complex)
+        basis.flat[column]=1.0
+        Q[:,column]=apply_q_tetra(basis,spins).reshape(-1)
+        V[:,column]=apply_tetra_volume_tensor(basis,spins).reshape(-1)
+    return Q,V
+
+
+def s4_covariance_rows():
+    """Check signed Q and even V covariance on complete charged magnetic spaces."""
+    rows=[]
+    cache={}
+    for base in ((1,1,1,1),(0,1,1,1),(2,1,1,1)):
+        for h in itertools.permutations(range(4)):
+            new_spins=[0]*4
+            for old_leg,new_leg in enumerate(h):
+                new_spins[new_leg]=base[old_leg]
+            new_spins=tuple(new_spins)
+            if base not in cache:
+                cache[base]=full_magnetic_matrices(base)
+            if new_spins not in cache:
+                cache[new_spins]=full_magnetic_matrices(new_spins)
+            Qold,Vold=cache[base]
+            Qnew,Vnew=cache[new_spins]
+            inv=[0]*4
+            for old_leg,new_leg in enumerate(h):
+                inv[new_leg]=old_leg
+            old_shape=tuple(s+1 for s in base)
+            new_shape=tuple(s+1 for s in new_spins)
+            dim=int(np.prod(old_shape))
+            P=np.zeros((dim,dim),complex)
+            for column in range(dim):
+                basis=np.zeros(old_shape,dtype=complex)
+                basis.flat[column]=1.0
+                P[:,column]=np.transpose(basis,axes=tuple(inv)).reshape(-1)
+            sign=permutation_parity(h)
+            qerr=float(np.linalg.norm(Qnew@P-sign*P@Qold,ord="fro")/
+                       max(float(np.linalg.norm(Qold,ord="fro")),1.0))
+            verr=float(np.linalg.norm(Vnew@P-P@Vold,ord="fro")/
+                       max(float(np.linalg.norm(Vold,ord="fro")),1.0))
+            unitary=float(np.linalg.norm(P.conj().T@P-np.eye(dim),ord="fro"))
+            rows.append({"base_spins":list(base),"permutation":list(h),
+                         "permutation_parity":sign,"mapped_spins":list(new_spins),
+                         "Q_signed_covariance_relative_error":qerr,
+                         "V_even_covariance_relative_error":verr,
+                         "permutation_unitarity_defect":unitary})
+    return rows
+
+
 def tensor_reconstruction_rows():
     rows=[]
     for spins in ((1,1,1,1),(0,1,1,1)):
@@ -200,6 +260,7 @@ def run():
     matrix_arrays,matrix_index=spectral_matrix_bundle()
     tensor_rows=tensor_reconstruction_rows()
     global_rows=global_magnetic_operator_rows()
+    s4_rows=s4_covariance_rows()
     oldnorm=[x['matrix_Frobenius_norm'] for x in oldslots];newnorm=[x['matrix_Frobenius_norm'] for x in newslots]
     oldspread=max(oldnorm)-min(oldnorm);newspread=max(newnorm)-min(newnorm)
     checks={
@@ -235,6 +296,10 @@ def run():
       'global_V_positive_and_functional_calculus':min(x['global_V_min_eigenvalue'] for x in global_rows)>-1e-10 and max(x['global_V4_minus_Q2_relative'] for x in global_rows)<1e-9,
       'global_Q_rotational_scalar':max(x['global_Q_rotation_commutator_max'] for x in global_rows)<1e-9,
       'global_operator_matrices_finite':all(x['all_finite'] for x in global_rows),
+      'full_S4_signed_Q_and_even_V_covariance':len(s4_rows)==72
+          and max(x['Q_signed_covariance_relative_error'] for x in s4_rows)<1e-10
+          and max(x['V_even_covariance_relative_error'] for x in s4_rows)<1e-10
+          and max(x['permutation_unitarity_defect'] for x in s4_rows)<1e-12,
     }
     return {'status':'tetrahedral charged-volume covariance correction audit','passed':bool(all(checks.values())),
             'science_status':'PRE_LORENTZIAN_OPERATOR_CORRECTION','definition':'Q_tet=(1/4) sum_r (-1)^r q_{omit r}; V_tet=sqrt(abs(Q_tet)) with production zero-aware spectral convention',
@@ -246,7 +311,7 @@ def run():
             'charged_spectral_rows':spectral_rows,'spectral_matrix_index':matrix_index,
             'spectral_matrix_array_count':len(matrix_arrays),
             'magnetic_tensor_reconstruction_rows':tensor_rows,
-            'global_magnetic_operator_rows':global_rows,
+            'global_magnetic_operator_rows':global_rows,'S4_covariance_rows':s4_rows,
             'old_CV_slot_norm_spread':oldspread,'tetra_CV_slot_norm_spread':newspread,
             'interpretation':'The fixed q_123 extension is valid for frozen Gauss absolute volume but not for charged intermediate states. The four-leg completion restores local tetrahedral slot covariance while leaving the gauge-invariant Euclidean Hamiltonian columns unchanged on both regulators.',
             'consequence':'All Lorentzian C(K)/S calculations that used the old charged q_123 extension are retained only as historical diagnostics and must be recomputed with the tetrahedral backend before physical promotion.',
