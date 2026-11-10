@@ -29,7 +29,7 @@ class ExactQuaternionHaarControlTests(unittest.TestCase):
         self.assertEqual(diag["transition_entries_at_or_below_1e-14"], 1)
 
     def test_link_builder_preserves_tiny_nonzero_cg_coefficients(self):
-        with patch.object(PW, "CG", return_value=1e-16):
+        with patch.object(PW, "CG_exact", return_value=PW.sp.Rational(1, 10**16)):
             _, _, _, _, U, _ = PW.build_link(0.5)
         self.assertTrue(any(
             value != 0.0 and abs(value) < 1e-14
