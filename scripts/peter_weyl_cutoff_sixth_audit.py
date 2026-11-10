@@ -134,8 +134,8 @@ def evolve_detailed(jmax: float, nmax: int, prune_tol: float):
     for key, matrix in Ud.items():
         Dt[key], transition_diag_ud[key] = sparse_transitions_without_hidden_threshold(matrix)
     transition_diagnostics = {
-        "fundamental": transition_diag_u,
-        "adjoint": transition_diag_ud,
+        "fundamental": {f"{key[0]},{key[1]}": value for key, value in transition_diag_u.items()},
+        "adjoint": {f"{key[0]},{key[1]}": value for key, value in transition_diag_ud.items()},
         "hidden_transition_threshold": 0.0,
     }
     zero = idx[(0.0, 0.0, 0.0)]
