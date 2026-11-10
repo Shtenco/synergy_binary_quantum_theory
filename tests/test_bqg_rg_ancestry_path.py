@@ -75,13 +75,13 @@ class TestBQGRGAncestryPath(unittest.TestCase):
     def test_refinement_singular_and_gram_spectra_are_cross_checked(self):
         item = {
             "refinement_tensor_diagnostics": {
-                "shape": [2, 3],
+                "shape": [3, 3],
                 "numerical_rank": 2,
                 "rank_tolerance": 8e-13,
-                "singular_values": [0.8, 0.4],
-                "row_gram_eigenvalues": [0.16, 0.64],
+                "singular_values": [0.8, 0.4, 1e-15],
+                "row_gram_eigenvalues": [0.0, 0.16, 0.64],
                 "column_gram_nonzero_eigenvalues": [0.16, 0.64],
-                "frobenius_norm": float((0.8**2 + 0.4**2) ** 0.5),
+                "frobenius_norm": float((0.8**2 + 0.4**2 + 1e-30) ** 0.5),
                 "row_gram_identity_defect": 0.9,
                 "column_gram_idempotence_defect": 0.3,
             }
@@ -89,6 +89,7 @@ class TestBQGRGAncestryPath(unittest.TestCase):
         result = ancestry.validate_refinement_spectrum(item, "synthetic test")
         self.assertEqual(result["rank"], 2)
         self.assertAlmostEqual(sum(result["normalized_squared_singular_values"]), 1.0)
+        self.assertEqual(len(result["normalized_squared_singular_values"]), 2)
         item["refinement_tensor_diagnostics"]["column_gram_nonzero_eigenvalues"] = [0.2, 0.6]
         with self.assertRaisesRegex(ValueError, "Gram spectra disagree"):
             ancestry.validate_refinement_spectrum(item, "tampered test")
