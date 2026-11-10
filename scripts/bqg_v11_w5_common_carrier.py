@@ -297,6 +297,7 @@ def build_carrier(
     source_names = (
         "bqg_v09_w5_lorentzian_raw_column.py",
         "bqg_v10_w5_lorentzian_adjoint_closure.py",
+        "bqg_v11_w5_common_carrier.py",
         "peter_weyl_lorentzian_sine_ordered_triple_gate.py",
         "peter_weyl_lorentzian_ordered_triple_gate.py",
         "peter_weyl_euclidean_sine_ordering_gate.py",
