@@ -175,6 +175,45 @@ def validate_operator_provenance(meta, context="checkpoint"):
             "stage_leakage_diagnostics": stage_diag}
 
 
+def validate_checkpoint_chain(cv_meta, kb_meta, ka_meta, cv_support, kb_support):
+    """Validate provenance and max aggregation across cv -> kb -> ka."""
+    cv_diag = validate_leakage_map(
+        cv_meta.get("leakage_max"), require_all=False, context="cv checkpoint"
+    )
+    if set(cv_diag) != {"CV_complete_basis_leakage"}:
+        raise ValueError("cv checkpoint must contain exactly the CV leakage diagnostic")
+
+    kb_provenance = validate_operator_provenance(kb_meta, context="kb checkpoint")
+    ka_provenance = validate_operator_provenance(ka_meta, context="ka checkpoint")
+    if kb_provenance["operator_input_support"] != cv_support:
+        raise ValueError("kb operator input support does not match cv output support")
+    if ka_provenance["operator_input_support"] != kb_support:
+        raise ValueError("ka operator input support does not match kb output support")
+
+    expected_kb = maxdiag(cv_diag, kb_provenance["stage_leakage_diagnostics"])
+    observed_kb = validate_leakage_map(
+        kb_meta.get("leakage_max"), require_all=True, context="kb cumulative leakage"
+    )
+    if observed_kb != expected_kb:
+        raise ValueError("kb cumulative leakage does not equal max(cv, kb-stage)")
+
+    expected_ka = maxdiag(observed_kb, ka_provenance["stage_leakage_diagnostics"])
+    observed_ka = validate_leakage_map(
+        ka_meta.get("leakage_max"), require_all=True, context="ka cumulative leakage"
+    )
+    if observed_ka != expected_ka:
+        raise ValueError("ka cumulative leakage does not equal max(kb-cumulative, ka-stage)")
+
+    return {
+        "cv_output_support": int(cv_support),
+        "kb_output_support": int(kb_support),
+        "kb_operator_provenance": kb_provenance,
+        "ka_operator_provenance": ka_provenance,
+        "cv_to_kb_max_aggregation_verified": True,
+        "kb_to_ka_max_aggregation_verified": True,
+    }
+
+
 def load_result(d,stage,ijk,freeze):
     stem=prefix(d,stage,ijk);path=stem.with_suffix(".npz");jpath=stem.with_suffix(".json")
     if not path.exists() or not jpath.exists():
@@ -277,16 +316,17 @@ def main():
         else:
             total={};diag={};branch=[]
             for i,j,k in itertools.product(range(2),repeat=3):
+                cv_state,cv_meta=load_result(args.checkpoint_dir,"cv",(i,j,k),freeze)
+                kb_state,kb_meta=load_result(args.checkpoint_dir,"kb",(i,j,k),freeze)
                 state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
+                chain_provenance = validate_checkpoint_chain(
+                    cv_meta, kb_meta, meta, len(cv_state), len(kb_state)
+                )
                 LP.add(total,state) # exactly old pruning/TOL semantics
                 diag=maxdiag(diag,meta["leakage_max"])
-                operator_provenance = validate_operator_provenance(
-                    meta, context=f"ka_{i}{j}{k}"
-                )
-                recorded_zero_fields = set(operator_provenance["exact_empty_input_zero_fields"])
                 branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
                               "support":len(state),"sha256":meta["sha256"],
-                              **operator_provenance})
+                              **chain_provenance})
             diag = validate_leakage_map(diag, require_all=True, context="finish stage")
             if not all(np.isfinite([z.real, z.imag]).all() for z in total.values()):
                 raise ValueError("finish stage covariant state contains non-finite amplitudes")
