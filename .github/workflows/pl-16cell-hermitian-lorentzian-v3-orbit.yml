@@ -40,7 +40,7 @@ jobs:
             scripts/lorentzian_pairing_stabilizer_orbit_gate.py \
             scripts/collective_16cell_pairing_stabilizer_covariance_gate.py \
             scripts/pl_lorentzian_orbit_reconstruct_v3.py \
-            scripts/pl_lorentzian_48_collect_v3.py \\
+            scripts/pl_lorentzian_48_collect_v3.py \
             scripts/pl_lorentzian_v2_v3_complex_state_compare.py
       - name: Tetrahedral charged-volume audit and raw spectral matrix export
         run: python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json --matrix-output verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
