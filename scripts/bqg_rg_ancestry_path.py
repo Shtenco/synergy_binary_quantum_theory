@@ -283,6 +283,14 @@ def solve(mats):
                 )
         refinement_evolution.append(entry)
 
+    selected_path_overlap_product = float(math.prod(step["overlap"] for step in steps))
+    local_maximum_per_step = [
+        float(np.max(np.asarray(item["channel_flow_matrix"], dtype=float)))
+        for item in mats
+    ]
+    independent_local_maxima_product = float(math.prod(local_maximum_per_step))
+    initial_uniform_prior_weight = 1.0 / n0
+
     return {
         "status": "maximum-fidelity ancestry path through BQG multiplicity channels",
         "provenance": {
@@ -297,6 +305,13 @@ def solve(mats):
         "best_log_fidelity": best_log,
         "best_cumulative_fidelity": best_product,
         "best_stepwise_ancestry_path_score": best_product,
+        "selected_path_local_projector_overlap_product": selected_path_overlap_product,
+        "initial_uniform_prior_weight": initial_uniform_prior_weight,
+        "selected_path_joint_weight_with_prior": float(
+            initial_uniform_prior_weight * selected_path_overlap_product
+        ),
+        "independent_local_maximum_per_step": local_maximum_per_step,
+        "product_of_independent_local_maxima_not_a_single_path": independent_local_maxima_product,
         "local_one_step_max_overlap_by_source": [
             [float(x) for x in np.max(np.asarray(item["channel_flow_matrix"], dtype=float), axis=1)]
             for item in mats
