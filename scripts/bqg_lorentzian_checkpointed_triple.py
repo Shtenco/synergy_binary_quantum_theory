@@ -140,6 +140,27 @@ def validate_leakage_map(diag, require_all=False, context="checkpoint"):
         clean[key] = value
     return clean
 
+def validate_operator_provenance(meta, context="checkpoint"):
+    if not isinstance(meta, dict):
+        raise ValueError(f"{context}: operator provenance must be an object")
+    input_support = meta.get("operator_input_support")
+    if isinstance(input_support, bool) or not isinstance(input_support, int) or input_support < 0:
+        raise ValueError(f"{context}: invalid operator input support")
+    applied = meta.get("operator_stage_applied")
+    if not isinstance(applied, bool) or applied is not (input_support > 0):
+        raise ValueError(f"{context}: operator-stage execution flag mismatch")
+    expected = ({"CK_outer_complete_basis_leakage",
+                 "CK_internal_volume_sector_leakage",
+                 "CK_complete_charge_basis_leakage"}
+                if input_support == 0 else set())
+    actual = meta.get("exact_empty_input_zero_fields")
+    if not isinstance(actual, list) or set(actual) != expected or len(actual) != len(expected):
+        raise ValueError(f"{context}: empty-input diagnostic provenance mismatch")
+    return {"operator_input_support": input_support,
+            "operator_stage_applied": applied,
+            "exact_empty_input_zero_fields": sorted(expected)}
+
+
 def load_result(d,stage,ijk,freeze):
     stem=prefix(d,stage,ijk);path=stem.with_suffix(".npz");jpath=stem.with_suffix(".json")
     if not path.exists() or not jpath.exists():
@@ -242,23 +263,13 @@ def main():
                 state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
                 LP.add(total,state) # exactly old pruning/TOL semantics
                 diag=maxdiag(diag,meta["leakage_max"])
-                input_support = meta.get("operator_input_support")
-                if isinstance(input_support, bool) or not isinstance(input_support, int) or input_support < 0:
-                    raise ValueError(f"ka_{i}{j}{k}: invalid operator input support")
-                skipped_exactly = input_support == 0
-                expected_zero_fields = ({"CK_outer_complete_basis_leakage",
-                                          "CK_internal_volume_sector_leakage",
-                                          "CK_complete_charge_basis_leakage"}
-                                         if skipped_exactly else set())
-                recorded_zero_fields = set(meta.get("exact_empty_input_zero_fields", []))
-                if recorded_zero_fields != expected_zero_fields:
-                    raise ValueError(f"ka_{i}{j}{k}: empty-input diagnostic provenance mismatch")
-                if meta.get("operator_stage_applied") is not (not skipped_exactly):
-                    raise ValueError(f"ka_{i}{j}{k}: operator-stage execution flag mismatch")
+                operator_provenance = validate_operator_provenance(
+                    meta, context=f"ka_{i}{j}{k}"
+                )
+                recorded_zero_fields = set(operator_provenance["exact_empty_input_zero_fields"])
                 branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
                               "support":len(state),"sha256":meta["sha256"],
-                              "operator_stage_applied":meta["operator_stage_applied"],
-                              "exact_empty_input_zero_fields":sorted(recorded_zero_fields)})
+                              **operator_provenance})
             diag = validate_leakage_map(diag, require_all=True, context="finish stage")
             if not all(np.isfinite([z.real, z.imag]).all() for z in total.values()):
                 raise ValueError("finish stage covariant state contains non-finite amplitudes")
