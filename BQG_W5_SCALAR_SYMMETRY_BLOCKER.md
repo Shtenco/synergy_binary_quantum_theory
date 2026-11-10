@@ -173,3 +173,21 @@ and the refreshed jhalf-to-j1 RG run
 [42781449706](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449706)
 were still running when this note was updated. No result from either is
 inferred from the five-seed failure.
+
+
+## Latest frozen-backend replay confirmation (2026-11-10)
+
+After the status-documentation commits, numerical-continuation run
+[42782890490](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42782890490)
+completed **SUCCESS** on commit
+`5b3f35b83348bdd8b854aee133e9987825963323`. The finite-evidence job
+repeated the corrected finite K5 control, replayed the saved weak element
+without amplitude regeneration, regenerated the three exact local volume
+blocks, and verified the resumable direct-stage inventory.
+
+The final inventory still says: 50 of 352 required direct-H_E records are
+available, zero new H_E records were generated, zero second-stage C_K actions
+were completed, the direct reverse-H_L column is incomplete, the full error
+is not certified, and physicalization is incomplete. Therefore this is a
+successful frozen-backend integrity/replay check only; it does not advance
+the W5 scalar gate or certify the second-stage physical operator.
