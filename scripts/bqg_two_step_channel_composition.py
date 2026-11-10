@@ -165,7 +165,13 @@ def run_pair(source_s2):
     saved_second = json.loads(saved_second_path.read_text(encoding="utf-8"))
     if saved_first.get("passed") is not True or saved_second.get("passed") is not True:
         raise RuntimeError("one-step reference matrix must explicitly pass with boolean true")
-    for label, item in (("first", saved_first), ("second", saved_second)):
+    expected_scales = (
+        (saved_first, source_s2, source_s2 + 1, "first"),
+        (saved_second, source_s2 + 1, source_s2 + 2, "second"),
+    )
+    for item, expected_source, expected_target, label in expected_scales:
+        if item.get("source_s2") != expected_source or item.get("target_s2") != expected_target:
+            raise RuntimeError(f"{label} reference scale labels do not match requested two-step chain")
         run_id = item.get("workflow_run_id")
         commit = item.get("workflow_commit")
         if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
@@ -180,6 +186,20 @@ def run_pair(source_s2):
     saved_second_source = np.asarray(saved_second["source_master_eigenvalues"], dtype=float)
     if saved_first_target.shape != saved_second_source.shape or not np.isfinite(saved_first_target).all() or not np.isfinite(saved_second_source).all():
         raise RuntimeError("adjacent one-step reference spectra are malformed")
+    if (not np.all(np.diff(saved_first_target) > 0.0)
+        or not np.all(np.diff(saved_second_source) > 0.0)):
+        raise RuntimeError("adjacent reference spectra must be strictly sorted ascending")
+    spectral_pairs = (
+        (np.asarray(saved_first["source_master_eigenvalues"], dtype=float), np.asarray(source["eigenvalues"], dtype=float), "first source"),
+        (saved_first_target, np.asarray(middle["eigenvalues"], dtype=float), "middle"),
+        (np.asarray(saved_second["target_master_eigenvalues"], dtype=float), np.asarray(target["eigenvalues"], dtype=float), "final target"),
+    )
+    for persisted, recomputed, label in spectral_pairs:
+        if persisted.shape != recomputed.shape or not np.isfinite(persisted).all() or not np.isfinite(recomputed).all():
+            raise RuntimeError(f"{label} persisted/recomputed spectrum shape or finiteness mismatch")
+        local_scale = max(float(np.max(np.abs(persisted))), float(np.max(np.abs(recomputed))), 1.0)
+        if float(np.max(np.abs(persisted - recomputed))) > 1e-10 * local_scale:
+            raise RuntimeError(f"{label} persisted/recomputed spectrum mismatch")
     spectral_stitch_defect = float(np.max(np.abs(saved_first_target - saved_second_source)))
     spectral_scale = max(float(np.max(np.abs(saved_first_target))), float(np.max(np.abs(saved_second_source))), 1.0)
     if spectral_stitch_defect > 1e-10 * spectral_scale:
