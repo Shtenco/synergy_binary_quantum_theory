@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -11,8 +12,14 @@ import numpy as np
 
 def load(paths, stochastic_tol=1e-8):
     mats = []
+    if not paths:
+        raise ValueError("at least one channel-flow file is required")
     for path in paths:
-        item = json.loads(Path(path).read_text(encoding="utf-8"))
+        source_path = Path(path)
+        raw = source_path.read_bytes()
+        item = json.loads(raw.decode("utf-8"))
+        item["_source_path"] = str(source_path)
+        item["_source_sha256"] = hashlib.sha256(raw).hexdigest()
         mats.append(item)
     mats.sort(key=lambda item: item["source_s2"])
 
@@ -32,6 +39,14 @@ def load(paths, stochastic_tol=1e-8):
             )
         if item.get("passed") is not True:
             raise ValueError("a channel-flow shard must explicitly pass its own gate")
+        run_id = item.get("workflow_run_id")
+        commit = item.get("workflow_commit")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            raise ValueError("workflow_run_id must be a positive integer")
+        if not isinstance(commit, str) or len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit.lower()):
+            raise ValueError("workflow_commit must be a full 40-character hexadecimal SHA")
+        if not np.all(np.diff(source_eigenvalues) > 0.0) or not np.all(np.diff(target_eigenvalues) > 0.0):
+            raise ValueError("source and target eigenvalues must be strictly sorted ascending")
 
         source_eigenvalues = np.asarray(item.get("source_master_eigenvalues"), dtype=float)
         target_eigenvalues = np.asarray(item.get("target_master_eigenvalues"), dtype=float)
@@ -68,6 +83,19 @@ def load(paths, stochastic_tol=1e-8):
     for left, right in zip(mats, mats[1:]):
         if left["target_s2"] != right["source_s2"]:
             raise ValueError("nonconsecutive flow matrices")
+        if left["workflow_run_id"] != right["workflow_run_id"]:
+            raise ValueError("workflow_run_id changes within the ancestry chain")
+        if left["workflow_commit"] != right["workflow_commit"]:
+            raise ValueError("workflow_commit changes within the ancestry chain")
+        left_spectrum = np.asarray(left["target_master_eigenvalues"], dtype=float)
+        right_spectrum = np.asarray(right["source_master_eigenvalues"], dtype=float)
+        if left_spectrum.shape != right_spectrum.shape:
+            raise ValueError("adjacent target/source spectrum dimensions do not match")
+        scale = max(float(np.max(np.abs(left_spectrum))), float(np.max(np.abs(right_spectrum))), 1.0)
+        spectral_defect = float(np.max(np.abs(left_spectrum - right_spectrum)))
+        if spectral_defect > 1e-10 * scale:
+            raise ValueError(f"adjacent target/source spectra are discontinuous: defect={spectral_defect}")
+        left["_spectral_stitch_defect_to_next"] = spectral_defect
     return mats
 
 
@@ -155,6 +183,12 @@ def solve(mats):
 
     return {
         "status": "maximum-fidelity ancestry path through BQG multiplicity channels",
+        "provenance": {
+            "workflow_run_id": mats[0]["workflow_run_id"],
+            "workflow_commit": mats[0]["workflow_commit"],
+            "input_files": [{"path": x["_source_path"], "sha256": x["_source_sha256"]} for x in mats],
+            "spectral_stitch_defects": [x.get("_spectral_stitch_defect_to_next", 0.0) for x in mats[:-1]],
+        },
         "channel_path": [int(x) for x in path],
         "best_log_fidelity": best_log,
         "best_cumulative_fidelity": best_product,
