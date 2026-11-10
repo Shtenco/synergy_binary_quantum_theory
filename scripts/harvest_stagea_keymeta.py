@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -101,6 +102,14 @@ def download(url: str, token: str, dst: Path):
             shutil.copyfileobj(r, f, length=8 * 1024 * 1024)
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--repo', required=True)
@@ -161,7 +170,7 @@ def main() -> int:
             expected_digest = str(art.get('digest') or '')
             if not expected_digest.startswith('sha256:'):
                 raise RuntimeError('artifact metadata has no SHA-256 digest')
-            actual_digest = hashlib.sha256(zpath.read_bytes()).hexdigest()
+            actual_digest = sha256_file(zpath)
             if actual_digest != expected_digest.split(':', 1)[1].lower():
                 raise RuntimeError('artifact ZIP SHA-256 mismatch')
             if zpath.stat().st_size != int(art.get('size_in_bytes') or -1):
