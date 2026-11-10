@@ -59,6 +59,36 @@ archive.
 The legacy collector is retained as a regression oracle only. Its intermediate
 threshold behavior is not the canonical aggregation rule.
 
+## Execution
+
+Run the deterministic aggregation self-test:
+
+```bash
+python scripts/collective_l1_amplitude_producer.py --self-test
+```
+
+Build the E-only package from a complete directory containing all 72 shard
+triplets:
+
+```bash
+python scripts/collective_l1_amplitude_producer.py \
+  --root <shard-directory> \
+  --source-commit <full-40-character-git-sha> \
+  --output-dir verification_results/l1_amplitude_package
+```
+
+Verify the emitted manifest and archive:
+
+```bash
+python scripts/collective_l1_amplitude_producer.py \
+  --verify-manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json
+```
+
+The producer compares each stable aggregate with the historical incremental
+collector and also compares the full (K,A,B) moment matrices. A successful
+self-test is only a unit-level numerical control; the E-only regression status
+requires the real 72-shard input set.
+
 ## Status semantics
 
 - `PASS_E_ONLY_REGRESSION_PRECURSOR`: the E-only ingestion and regression
