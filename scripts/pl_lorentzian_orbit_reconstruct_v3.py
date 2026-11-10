@@ -12,6 +12,7 @@ exact oriented Peter-Weyl state action U_h.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import itertools
 import json
 import math
@@ -342,6 +343,10 @@ def run(root: Path, out_dir: Path, source: int = 0):
                 )
                 reconstructed_count += 1
             W.save_state(out_npz, st, len(G.EDGES), D.n_tets)
+            # A transported state is a new artifact; never inherit the
+            # representative's NPZ digest into reconstructed-term provenance.
+            meta["state_sha256"] = hashlib.sha256(out_npz.read_bytes()).hexdigest()
+            meta["state_file"] = out_npz.name
             out_json.write_text(json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     checks = {
