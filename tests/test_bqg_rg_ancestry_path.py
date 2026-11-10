@@ -94,6 +94,21 @@ class TestBQGRGAncestryPath(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Gram spectra disagree"):
             ancestry.validate_refinement_spectrum(item, "tampered test")
 
+    def test_refinement_spectrum_rejects_numeric_strings(self):
+        item = {
+            "refinement_tensor_diagnostics": {
+                "shape": [2, 2],
+                "numerical_rank": 2,
+                "rank_tolerance": "1e-12",
+                "singular_values": [0.8, 0.4],
+                "row_gram_eigenvalues": [0.16, 0.64],
+                "column_gram_nonzero_eigenvalues": [0.16, 0.64],
+                "frobenius_norm": 0.894427190999916,
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "must be numeric"):
+            ancestry.validate_refinement_spectrum(item, "string type test")
+
     def test_refinement_spectrum_rejects_zero_rank(self):
         item = {
             "refinement_tensor_diagnostics": {
