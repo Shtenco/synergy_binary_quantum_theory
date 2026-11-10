@@ -1,4 +1,5 @@
 name: BQG full channel flow matrix
+# 2026-11-10: execute the complete ancestry matrix after the lowest-channel no-go.
 
 on:
   push:
