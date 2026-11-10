@@ -222,6 +222,10 @@ def run():
           len(x['diagnostics']['raw_Q_M_block_frobenius_norms'])==len(x['diagnostics']['M_values_doubled'])
           and all(math.isfinite(v) for v in x['diagnostics']['raw_Q_M_block_frobenius_norms'])
           for x in spectral_rows),
+      'raw_Q_JM_matrix_registry_complete':sum(x['kind']=='Q_JM_raw' for x in matrix_index)==sum(
+          len(x['diagnostics']['M_values_doubled']) for x in spectral_rows)
+          and all(np.isfinite(a.real).all() and np.isfinite(a.imag).all()
+                  for k,a in matrix_arrays.items() if k.endswith('_Q_raw')),
       'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=math.inf)<1e-10,
       'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=math.inf)<1e-10,
       'charged_Q_preserves_total_JM_sectors_before_reduction':max((x['diagnostics']['max_Q_sector_leakage_relative'] for x in spectral_rows),default=math.inf)<1e-10,
