@@ -79,7 +79,7 @@ def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": "BQG-branch-wide-python-audit"})
     with urllib.request.urlopen(req, timeout=90) as response:
         raw = response.read()
-    header = b"blob " + str(len(raw)).encode("ascii") + b"\\0"
+    header = b"blob " + str(len(raw)).encode("ascii") + b"\0"
     actual_sha = hashlib.sha1(header + raw).hexdigest()
     if actual_sha != sha:
         raise RuntimeError(
