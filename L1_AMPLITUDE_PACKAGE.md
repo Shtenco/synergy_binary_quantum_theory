@@ -45,8 +45,12 @@ A consumer must reject the package if:
 7. any required operator is marked missing when a full physical package is
    requested.
 
-The manifest must retain source Git commit, worker and collector source blob
-identifiers, and hashes of all consumed shard JSON/NPZ files.
+The producer recomputes the Git blob SHA-1 of its worker and collector source
+files and rejects any mismatch with the frozen source identities. The manifest
+retains source Git commit, worker/collector/producer blob identifiers, and
+SHA256 hashes of all 216 consumed shard JSON/NPZ files. The verifier checks the
+216-entry shard digest, the complete archive member set, and both package and
+archive hashes.
 
 ## Aggregation
 
