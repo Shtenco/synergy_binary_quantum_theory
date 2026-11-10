@@ -1,0 +1,42 @@
+name: Peter-Weyl sixth cutoff audit
+
+on:
+  push:
+    branches:
+      - audit/peter-weyl-sixth-cutoff-20261110
+    paths:
+      - 'scripts/peter_weyl_cutoff_staircase.py'
+      - 'scripts/peter_weyl_cutoff_sixth_audit.py'
+      - 'tests/test_peter_weyl_sixth_exact_control.py'
+      - '.github/workflows/peter-weyl-sixth-cutoff-audit.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: peter-weyl-sixth-cutoff-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sixth-cutoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip numpy sympy
+      - name: Verify independent exact SU(2)^3 Haar control
+        run: python -m unittest discover -s tests -p 'test_peter_weyl_sixth_exact_control.py'
+      - name: Compile sixth cutoff audit
+        run: python -m py_compile scripts/peter_weyl_cutoff_sixth_audit.py
+      - name: Compute Jmax=3 sixth-order state and pruning/cutoff controls
+        run: |
+          python scripts/peter_weyl_cutoff_sixth_audit.py \
+            --output verification_results/PETER_WEYL_SIXTH_CUTOFF_AUDIT.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peter-weyl-sixth-cutoff-audit
+          path: verification_results/PETER_WEYL_SIXTH_CUTOFF_AUDIT.json
+          if-no-files-found: warn
+          retention-days: 30
