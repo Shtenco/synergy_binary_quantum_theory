@@ -1,0 +1,55 @@
+name: BQG V11 W5 common carrier pilot
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/lemaitre-bqg-causal-cone-20261110
+    paths:
+      - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/bqg_v11_w5_common_carrier.py'
+      - 'scripts/peter_weyl_*.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'tests/test_bqg_v11_w5_common_carrier.py'
+      - '.github/workflows/bqg-v11-w5-common-carrier-pilot.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  w5-common-carrier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Compile V09/V10/V11 production path
+        run: |
+          python -m py_compile scripts/bqg_v09_w5_lorentzian_raw_column.py
+          python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+          python -m py_compile scripts/bqg_v11_w5_common_carrier.py
+      - name: Run V11 common W5 carrier (structural only)
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_v11_w5_common_carrier.py \
+            --nodes 0 1 2 3 4 \
+            --Jmax2 10 \
+            --max-states 500 --max-depth 8 \
+            --amp-tol 1e-12 \
+            --crosscheck-tol 1e-8 \
+            --leakage-tol 1e-9 \
+            --output verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN\${{ github.run_id }}.json
+      - name: Upload V11 common-carrier evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-v11-w5-common-carrier-j10-run\${{ github.run_id }}
+          path: verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN\${{ github.run_id }}.json
+          if-no-files-found: warn
