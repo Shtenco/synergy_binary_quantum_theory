@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/bcqg-core-candidate-v1
+      - audit/pl48-spectral-complete-20261110
     paths:
       - 'PL_16CELL_HERMITIAN_LORENTZIAN_PREREGISTRATION_V2.md'
       - 'scripts/tetrahedral_volume_backend.py'
@@ -30,7 +31,7 @@ jobs:
       - name: Syntax and forced-correction audit
         run: |
           python -m py_compile scripts/tetrahedral_volume_backend.py scripts/tetrahedral_charged_volume_audit_gate.py scripts/pl_lorentzian_group_worker_v2.py scripts/pl_lorentzian_48_collect_v2.py
-          python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT.json
+          python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT.json --matrix-output verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES.npz
       - name: Require covariance correction before heavy workers
         run: |
           python - <<'PY'
@@ -45,7 +46,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: tetrahedral-volume-preflight
-          path: verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT.json
+          path: |
+            verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT.json
+            verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES.npz
           if-no-files-found: error
 
   shards:
