@@ -47,6 +47,30 @@ class TestBQGRGAncestryPath(unittest.TestCase):
             places=12,
         )
 
+    def test_loader_requires_refinement_spectra_for_final_gate(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        with self.assertRaisesRegex(ValueError, "missing refinement_tensor_diagnostics"):
+            ancestry.load([source], require_refinement_spectra=True)
+
+    def test_refinement_singular_and_gram_spectra_are_cross_checked(self):
+        item = {
+            "refinement_tensor_diagnostics": {
+                "shape": [2, 3],
+                "numerical_rank": 2,
+                "rank_tolerance": 8e-13,
+                "singular_values": [0.8, 0.4],
+                "row_gram_eigenvalues": [0.16, 0.64],
+                "column_gram_nonzero_eigenvalues": [0.16, 0.64],
+                "frobenius_norm": float((0.8**2 + 0.4**2) ** 0.5),
+            }
+        }
+        result = ancestry.validate_refinement_spectrum(item, "synthetic test")
+        self.assertEqual(result["rank"], 2)
+        self.assertAlmostEqual(sum(result["normalized_squared_singular_values"]), 1.0)
+        item["refinement_tensor_diagnostics"]["column_gram_nonzero_eigenvalues"] = [0.2, 0.6]
+        with self.assertRaisesRegex(ValueError, "Gram spectra disagree"):
+            ancestry.validate_refinement_spectrum(item, "tampered test")
+
     def test_loader_requires_explicit_pass(self):
         source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
         item = json.loads(source.read_text(encoding="utf-8"))
