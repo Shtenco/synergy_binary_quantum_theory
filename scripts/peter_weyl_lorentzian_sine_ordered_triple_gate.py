@@ -39,6 +39,12 @@ def _dispatch_raw(v,a,b,c,executor=None):
     return executor() if executor is not None else RAW.run(v,a,b,c)
 
 
+def _require_diagnostics(out):
+    if not isinstance(out,dict):
+        raise TypeError('raw KKV executor must return the standard diagnostics dictionary')
+    return out
+
+
 def run(v=0,a=None,b=None,c=None,executor=None):
     old_he=KC.CK.apply_HE_complete_key
     old_gauss=KC.KG.apply_HE_local
@@ -119,9 +125,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
     if hasattr(KC.CK.HE_complete_cached,'cache_clear'):
         KC.CK.HE_complete_cached.cache_clear()
     try:
-        out=_dispatch_raw(v,a,b,c,executor=executor)
-        if not isinstance(out,dict):
-            raise TypeError('raw KKV executor must return the standard diagnostics dictionary')
+        out=_require_diagnostics(_dispatch_raw(v,a,b,c,executor=executor))
         infos={
             'HE_reduced':he_reduced.cache_info(),
             'K_complete':k_cached.cache_info(),
