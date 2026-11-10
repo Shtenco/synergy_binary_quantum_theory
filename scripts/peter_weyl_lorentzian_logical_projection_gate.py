@@ -217,12 +217,10 @@ def ordered_triple_state(initial, source_v, a, b, c):
     """Return the actual covariant state for Tr[C_a(K)C_b(K)C_c(V)]|initial>."""
     psi = CV.gauss_to_covariant({initial: 1 + 0j}, source_v)
     total = {}
-    diag = {
-        "CV_complete_basis_leakage": 0.0,
-        "CK_outer_complete_basis_leakage": 0.0,
-        "CK_internal_volume_sector_leakage": 0.0,
-        "CK_complete_charge_basis_leakage": 0.0,
-    }
+    # Start empty: a leakage field exists only after its operator stage has
+    # actually returned a diagnostic. Downstream physical gates reject missing
+    # fields; an unexecuted stage must never be silently reported as zero.
+    diag = {}
     for i, j, k in itertools.product(range(2), repeat=3):
         s1, leakV = RAW.COMP.C_volume_component(psi, source_v, c, k, i, JMAX2)
         update_diag(diag, "CV_complete_basis_leakage", leakV)
