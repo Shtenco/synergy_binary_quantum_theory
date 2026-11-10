@@ -66,12 +66,32 @@ def validate(manifest_path: Path, archive_path: Path):
         raise ValueError("amplitude archive SHA256 mismatch")
     provenance = p.get("provenance", {})
     hashes = provenance.get("shard_file_sha256", {})
-    if len(hashes) != 72 * 3 or any(len(v) != 64 for v in hashes.values()):
-        raise ValueError("expected hashes for all 72 shard JSON/NPZ triplets")
+    expected_shard_files = {
+        name
+        for e in EDGES for n in NODES
+        for name in (f"edge_{e}_node_{n}.json",
+                     f"u_{e}_node_{n}.npz",
+                     f"v_{e}_node_{n}.npz")
+    }
+    if set(hashes) != expected_shard_files or any(len(v) != 64 for v in hashes.values()):
+        raise ValueError("expected exact hashes for all 72 shard JSON/NPZ triplets")
     if provenance.get("shard_manifest_sha256") != canonical_sha(hashes):
         raise ValueError("shard manifest digest mismatch")
-    if p.get("operator_registry", {}).get("E", {}).get("source_blob_sha") != "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1":
+    registry = p.get("operator_registry", {})
+    if registry.get("E", {}).get("source_blob_sha") != "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1":
         raise ValueError("unrecognized E worker source blob")
+    if provenance.get("source_collector_blob_sha") != "3ba2514ecd553fc54a59d3b56c1c43ce24aae09f":
+        raise ValueError("unrecognized historical collector source blob")
+    if registry.get("E", {}).get("backend") != "LocalPLPeterWeylEuclidean exact active-cone":
+        raise ValueError("unexpected E backend")
+    if p.get("carrier") != {
+        "nodes": 384, "dual_links": 768, "parent_coarse_tetra": 0,
+        "parent_fine_nodes": 24, "edge_representatives": [0, 1, 5],
+        "Jmax": 2.5, "basis_status": "NOT_YET_JOINT_E_S_R_W"
+    }:
+        raise ValueError("unexpected or mutated carrier contract")
+    if not all(p.get("checks", {}).values()):
+        raise ValueError("one or more producer checks did not pass")
     if p.get("operator_registry", {}).get("S", {}).get("status") != "MISSING" or p.get("operator_registry", {}).get("R", {}).get("status") != "MISSING":
         raise ValueError("S/R must be explicitly missing in v1")
 
