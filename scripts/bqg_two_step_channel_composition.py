@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -139,6 +140,7 @@ def run_pair(source_s2):
     direct_first_ranks = []
     direct_second_ranks = []
     channel_blocks = []
+    basis_rotation_defects = []
 
     for source_index, source_channel in enumerate(source["channels"]):
         P1, s1, rank1 = FLOW.generated_copy(
@@ -147,6 +149,21 @@ def run_pair(source_s2):
         Q1 = orthonormal_range(P1, 2, f"source channel {source_index}, first step")
 
         P2, s2, rank2 = FLOW.generated_copy(T2, Q1, target["P22_basis"])
+
+        # The direct endpoint carrier must not depend on the arbitrary U(2)
+        # basis chosen inside the intermediate rank-2 image subspace.
+        theta, phi = 0.371, 0.193
+        rotation = np.array([
+            [math.cos(theta), -np.exp(1j * phi) * math.sin(theta)],
+            [np.exp(-1j * phi) * math.sin(theta), math.cos(theta)],
+        ], dtype=complex)
+        P2_rotated, _, _ = FLOW.generated_copy(
+            T2, Q1 @ rotation, target["P22_basis"]
+        )
+        basis_rotation_defects.append(
+            float(np.linalg.norm(P2_rotated - P2, ord="fro"))
+        )
+
         row = [
             float(np.trace(P2 @ Ptarget).real / 2.0)
             for Ptarget in target_projectors
@@ -179,6 +196,7 @@ def run_pair(source_s2):
         and row_error(direct) < 1e-8
         and all(rank == 2 for rank in first_ranks + second_ranks)
         and all(rank == 2 for rank in direct_first_ranks + direct_second_ranks)
+        and max(basis_rotation_defects, default=0.0) < 1e-8
     )
     factorization_tolerance = 1e-8
     scalar_factorization_passed = bool(
@@ -228,6 +246,10 @@ def run_pair(source_s2):
         "second_step_generated_ranks": second_ranks,
         "direct_first_step_generated_ranks": direct_first_ranks,
         "direct_second_step_generated_ranks": direct_second_ranks,
+        "intermediate_basis_rotation_invariance_defects": basis_rotation_defects,
+        "max_intermediate_basis_rotation_invariance_defect": max(
+            basis_rotation_defects, default=0.0
+        ),
         "intermediate_channel_block_diagnostics": channel_blocks,
         "interpretation": (
             "G_direct composes the actual generated rank-2 carrier subspace "
