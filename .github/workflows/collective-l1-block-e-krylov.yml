@@ -7,6 +7,9 @@ on:
     paths:
       - 'scripts/collective_l1_metric_edge_depth2_shard_worker.py'
       - 'scripts/collective_l1_metric_edge_depth2_shard_collect.py'
+      - 'scripts/collective_l1_amplitude_producer.py'
+      - 'tests/test_collective_l1_amplitude_producer.py'
+      - 'L1_AMPLITUDE_PACKAGE.md'
       - 'scripts/pl_peter_weyl_local_backend_equivalence_gate.py'
       - 'scripts/collective_barycentric_E_boundary_support_gate.py'
       - 'scripts/pl_peter_weyl_euclidean.py'
@@ -35,6 +38,8 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: python -m pip install -r requirements.txt
+      - name: L1 amplitude package unit tests
+        run: python -m unittest discover -s tests -p 'test_collective_l1_amplitude_producer.py'
       - name: Reference vs exact active-cone backend
         run: |
           mkdir -p verification_results
@@ -123,6 +128,14 @@ jobs:
           python scripts/collective_l1_metric_edge_depth2_shard_collect.py \
             --root shards \
             --output verification_results/L1_METRIC_EDGE_DEPTH2_KRYLOV.json
+      - name: Build provenance-bound E-only amplitude package
+        run: |
+          python scripts/collective_l1_amplitude_producer.py \
+            --root shards \
+            --source-commit "$GITHUB_SHA" \
+            --output-dir verification_results/l1_amplitude_package
+          python scripts/collective_l1_amplitude_producer.py \
+            --verify-manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json
       - name: Guard scope
         run: |
           python - <<'PY'
@@ -142,3 +155,9 @@ jobs:
           name: collective-l1-metric-edge-depth2-krylov
           path: verification_results/L1_METRIC_EDGE_DEPTH2_KRYLOV.json
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: L1_AMPLITUDE_PACKAGE_E_ONLY
+          path: verification_results/l1_amplitude_package/
+          if-no-files-found: warn
