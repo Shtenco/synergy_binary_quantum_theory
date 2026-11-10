@@ -70,6 +70,12 @@ def tetra_q_block(spins_local,J2,M2):
     scale=max(float(np.linalg.norm(Q,ord="fro")),1.0)
     if not math.isfinite(herm) or herm > HERMITICITY_TOL*scale:
         raise RuntimeError(f"raw tetrahedral Q block is not Hermitian before symmetrization: {herm}")
+    if (not math.isfinite(max_rel) or not math.isfinite(max_abs)
+            or max_rel > RECONSTRUCTION_TOL):
+        raise RuntimeError(
+            f"raw tetrahedral Q leaks out of its total-(J,M) sector: "
+            f"absolute={max_abs}, relative={max_rel}"
+        )
     TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M2))]={
         "raw_hermiticity_defect":herm,"raw_frobenius_norm":scale,
         "absolute_sector_leakage":max_abs,"relative_sector_leakage":max_rel}
@@ -104,6 +110,8 @@ def tetra_volume_block_general(spins_local,J2):
         "M_values_doubled":list(m_values),
         "raw_Q_M_block_defects":m_defects,
         "max_raw_Q_M_block_defect":max_m_defect,
+        "max_Q_sector_leakage_absolute":max(TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["absolute_sector_leakage"] for M in m_values),
+        "max_Q_sector_leakage_relative":max(TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["relative_sector_leakage"] for M in m_values),
         "raw_Q_hermiticity_defects":[TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["raw_hermiticity_defect"] for M in m_values],
         "Q_eigenvalues":[float(x) for x in eigenvalues],
         "Q_min_eigenvalue":float(np.min(eigenvalues)) if eigenvalues.size else 0.0,
