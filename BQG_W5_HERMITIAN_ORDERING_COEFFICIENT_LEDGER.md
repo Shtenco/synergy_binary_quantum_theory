@@ -134,6 +134,14 @@ The runner explicitly labels the last object as a dimensionless (\hbar=1) algebr
 
 A new unit test constructs a complex matrix and checks (S=S^\dagger), (A=-A^\dagger), (S+A=B), and (B_{H,sym}|_{\hbar=1}=-S). This is a matrix-algebra regression test, not a W5 production result. The corresponding Actions run must pass before this new code path is treated as tested.
 
+## 7.2. GitHub Actions execution state
+
+For the code revision `7905fbd4f7974989ebeb4fee41a9b72efd19e13f), the repository reports:
+- [Full-node V10 cutoff study](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42897439770) — **queued**; matrix cutoffs (J_{\max,2}=10,12,14), all five source nodes, all five W5 seeds, 60-minute per-job timeout.
+- [W5 Lorentzian adapter and V10 unit tests](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42897439803) — **queued**.
+
+These are accepted workflow runs, not completed calculations. Until artifacts are uploaded and inspected, no numerical closure size, adjoint residual, cutoff convergence, or test PASS is claimed.
+
 ## 8. Current verdict
 
 **Established algebraically:** the minus \(\hbar^{-2}\) conversion for two anti-Hermitian commutator legs, and the unique minimal symmetric completion of the chosen raw map once its full direct adjoint is known.
