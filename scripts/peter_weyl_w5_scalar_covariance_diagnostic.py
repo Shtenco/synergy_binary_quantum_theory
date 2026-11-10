@@ -59,12 +59,19 @@ def weights_jm(state, node):
 def sector_metrics(state, node, expected_j2=0, expected_m2=0):
     w = weights_jm(state, node)
     total = sum(w.values())
-    good = w.get(f"J={expected_j2/2:g},M={expected_m2/2:g}", 0.0)
-    bad = max(0.0, total - good)
+    expected = f"J={expected_j2/2:g},M={expected_m2/2:g}"
+    good = w.get(expected, 0.0)
+
+    # Do not obtain the forbidden weight by subtracting two nearly equal
+    # floating-point totals.  In this problem the leakage can be 1e-30 while
+    # the scalar-sector weight is O(1), so total-good rounds to exactly zero.
+    wrong_by_jm = {label: value for label, value in w.items() if label != expected}
+    bad = sum(wrong_by_jm.values())
     return {
         "weight_by_JM": w,
         "total_weight": float(total),
         "expected_sector_weight": float(good),
+        "wrong_sector_by_JM": wrong_by_jm,
         "wrong_sector_weight": float(bad),
         "wrong_sector_fraction": float(bad / max(total, 1e-300)),
     }
