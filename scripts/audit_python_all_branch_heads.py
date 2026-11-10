@@ -20,6 +20,7 @@ import os
 import re
 import subprocess
 import time
+import textwrap
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -261,7 +262,7 @@ def iter_inline_python_blocks(source: str, path: str):
             while j < len(lines) and not close.match(lines[j]):
                 j += 1
             if j < len(lines):
-                yield (f"fence-{language}", i + 1, "\n".join(lines[start:j]))
+                yield (f"fence-{language}", i + 1, textwrap.dedent("\n".join(lines[start:j])))
                 i = j + 1
             else:
                 i += 1
@@ -282,7 +283,7 @@ def iter_inline_python_blocks(source: str, path: str):
             while j < len(lines) and lines[j].strip() != delimiter:
                 j += 1
             if j < len(lines):
-                yield (f"heredoc-{delimiter}", i + 1, "\n".join(lines[start:j]))
+                yield (f"heredoc-{delimiter}", i + 1, textwrap.dedent("\n".join(lines[start:j])))
                 i = j + 1
             else:
                 i += 1
