@@ -71,8 +71,9 @@ def validate_refinement_spectrum(item, context):
         "rank": rank,
         "singular_values": singular.tolist(),
         "normalized_squared_singular_values": (
-            (singular * singular / np.sum(singular * singular)).tolist()
-            if float(np.sum(singular * singular)) > 0.0 else []
+            (singular[singular > rank_tol] ** 2
+             / np.sum(singular[singular > rank_tol] ** 2)).tolist()
+            if expected_rank > 0 else []
         ),
         "row_gram_singular_spectrum_max_defect": row_defect,
         "column_gram_singular_spectrum_max_defect": col_defect,
