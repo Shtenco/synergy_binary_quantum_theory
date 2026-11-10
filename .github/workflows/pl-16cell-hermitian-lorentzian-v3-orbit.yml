@@ -10,6 +10,8 @@ on:
       - 'PL_16CELL_HERMITIAN_LORENTZIAN_PREREGISTRATION_V3_ORBIT.md'
       - 'scripts/tetrahedral_volume_backend.py'
       - 'scripts/tetrahedral_charged_volume_audit_gate.py'
+      - 'scripts/tetrahedral_volume_s4_covariance_gate.py'
+      - 'tests/test_tetrahedral_volume_spectral.py'
       - 'scripts/lorentzian_pairing_stabilizer_orbit_gate.py'
       - 'scripts/collective_16cell_pairing_stabilizer_covariance_gate.py'
       - 'scripts/pl_lorentzian_triple_worker.py'
@@ -42,8 +44,11 @@ jobs:
             scripts/pl_lorentzian_orbit_reconstruct_v3.py \
             scripts/pl_lorentzian_48_collect_v3.py \
             scripts/pl_lorentzian_v2_v3_complex_state_compare.py
+            scripts/tetrahedral_volume_s4_covariance_gate.py
       - name: Tetrahedral charged-volume audit and raw spectral matrix export
         run: python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json --matrix-output verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
+      - name: Independent full-local S4 covariance regression
+        run: python scripts/tetrahedral_volume_s4_covariance_gate.py --output verification_results/TETRAHEDRAL_VOLUME_S4_COVARIANCE_V3.json
       - name: Pairing-stabilizer structural theorem
         run: python scripts/lorentzian_pairing_stabilizer_orbit_gate.py --output verification_results/LORENTZIAN_PAIRING_STABILIZER_ORBITS_V3.json
       - name: Exact 16-cell Peter-Weyl H transport representation
@@ -58,6 +63,9 @@ jobs:
           assert a['passed']
           assert a['checks']['charged_q123_preferred_leg_negative_control']
           assert a['checks']['tetra_CV_slot_covariance_restored']
+          s=json.load(open('verification_results/TETRAHEDRAL_VOLUME_S4_COVARIANCE_V3.json'))
+          assert s['passed'] and s['spin_quartets'] >= 5 and s['permutations_per_quartet'] == 24
+          assert s['maximum_relative_covariance_defect'] < 1e-12
           assert b['passed'] and b['worker_orbits']==[[0,1,6,7,16,17,22,23],[2,4,8,10,13,15,19,21],[3,5,9,11,12,14,18,20]]
           assert c['passed'] and c['order']==8
           assert c['checks']['global_K0_seed_invariant']
@@ -78,6 +86,7 @@ jobs:
           path: |
             verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json
             verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
+            verification_results/TETRAHEDRAL_VOLUME_S4_COVARIANCE_V3.json
             verification_results/LORENTZIAN_PAIRING_STABILIZER_ORBITS_V3.json
             verification_results/COLLECTIVE_16CELL_PAIRING_STABILIZER_COVARIANCE_V3.json
           if-no-files-found: error
