@@ -44,6 +44,30 @@ jobs:
         run: python -m py_compile scripts/bqg_two_step_channel_composition.py
       - name: Test direct projected tensor composition
         run: python -m unittest discover -s tests -p 'test_bqg_two_step_channel_composition.py' scripts/bqg_full_channel_flow_matrix.py
+      - name: Generate same-run one-step reference shards
+        env:
+          SOURCE_S2: ${{ matrix.source_s2 }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+        run: |
+          mkdir -p verification_results/refs
+          for s2 in "$SOURCE_S2" "$((SOURCE_S2 + 1))"; do
+            python scripts/bqg_full_channel_flow_matrix.py \
+              --s2 "$s2" \
+              --output "verification_results/refs/BQG_FULL_CHANNEL_FLOW_S2_${s2}.json"
+            S2="$s2" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(f"verification_results/refs/BQG_FULL_CHANNEL_FLOW_S2_{os.environ['S2']}.json")
+          d=json.loads(p.read_text())
+          d["workflow_run_id"]=int(os.environ["GITHUB_RUN_ID"])
+          d["workflow_commit"]=os.environ["GITHUB_SHA"]
+          p.write_text(json.dumps(d,indent=2)+"\\n")
+          PY
+          done
       - name: Compute direct two-step microscopic composition
         env:
           OMP_NUM_THREADS: "1"
@@ -52,6 +76,7 @@ jobs:
         run: |
           python scripts/bqg_two_step_channel_composition.py \
             --source-s2 ${{ matrix.source_s2 }} \
+            --reference-dir verification_results/refs \
             --output verification_results/BQG_TWO_STEP_CHANNEL_COMPOSITION_S2_${{ matrix.source_s2 }}.json
       - name: Upload two-step composition result
         if: always()
