@@ -76,10 +76,14 @@ Remaining provenance and integrity work:
 2. Add a content-addressed per-shard manifest binding producer repository,
    source commit, workflow run/attempt, shard index, artifact ZIP digest,
    extracted map/summary digests, and operator version.
-3. The S4-sign aggregator now pins the exact triggering producer SHA. The
-   mixed Stage A/Stage B workflows still check out the mutable
-   `research/depth6-s4sign-proof` branch tip; propagate the original source
-   SHA through a provenance artifact and pin those worker/aggregator checkouts.
+3. The S4-sign aggregator pins the exact triggering producer SHA. The mixed
+   Stage A/Stage B workflows now pin the frozen source commit
+   `f6bfcd775b8c3cd33c6c235d48293e40657baf9d` and verify both
+   `git rev-parse HEAD` and the mixed-bundle Git blob SHA
+   `cbbaa80f6b6b61d353458db1fa1f03f824730532`. The earlier mutable-branch
+   checkout concern for these two stages is therefore closed. The remaining
+   gap is the end-to-end per-shard manifest tying each output map and summary
+   to that pinned producer, run/attempt, shard index, and operator version.
 4. The mixed-master aggregator checks the number of summaries and global
    block/map coverage, but unlike the S4-sign aggregator it does not yet
    explicitly require unique shard IDs equal to `range(expected)`. Confirm
@@ -252,12 +256,15 @@ source checkout explicitly at `proofsrc`. The existing bundle and aggregator
 paths then resolve unambiguously. This is a workflow-layout correction only;
 it changes no operator, matrix, rank tolerance, or scientific criterion.
 
-The push-triggered Stage A workflow run
+The aggregate checkout blocks in both workflows were corrected to keep the
+main orchestration checkout at the workspace root and the frozen proof source
+at `proofsrc`; duplicate `path` keys were removed. Stage A run
 [42819682938](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42819682938)
-was queued when this note was updated; no completed Stage A aggregate result
-is inferred from the queue state. The first Stage B push-triggered workflow
-file-validation run occurred before its corresponding path correction and
-failed without jobs; it is not evidence of a numerical failure.
+was queued when the initial path fix was made. The first Stage B push-triggered
+workflow file-validation run occurred before its corresponding path correction
+and failed without jobs; it is not evidence of a numerical failure. The later
+workflow definitions now pin and verify the frozen source commit and bundle
+hash in each shard and aggregation job.
 
 ### W5 tolerance ablation: timeout and one-pass replacement
 
@@ -296,3 +303,27 @@ uses explicit runtime checks rather than optimization-sensitive `assert`
 statements, and that it still passes under `python -O`. This is a focused
 guard improvement; it does not change the algebraic theorem or numerical
 acceptance thresholds.
+
+
+### Direct multi-step composition gate
+
+The five-step local ancestry product raises a separate mathematical issue:
+the product of scalar one-step channel matrices is not automatically the
+overlap of the composed microscopic refinement map. The matrix product
+(F_jF_{j+1}) corresponds to an intermediate channel measure-and-prepare
+map that discards off-diagonal channel coherence and traceless structure
+inside each multiplicity block.
+
+This is now specified in
+`BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md`. The executable diagnostic
+`scripts/bqg_two_step_channel_composition.py` composes the actual generated
+rank-2 carrier subspace through two adjacent microscopic refinement tensors,
+compares the direct endpoint matrix (G_{j:j+2}) with (F_jF_{j+1}), and
+records intermediate off-diagonal and internal-anisotropy block norms. It
+recomputes both one-step matrices and checks them against the persisted JSON
+references before interpreting the two-step defect. Workflow
+[42821288997](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821288997)
+was queued at the time of this update; no factorization result is inferred
+before its artifacts arrive. The maximum-product five-step path therefore
+remains a local ancestry candidate until this stronger composition gate is
+measured.
