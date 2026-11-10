@@ -115,8 +115,8 @@
   "source_revisions": {
     "repository": "Shtenco/synergy_binary_quantum_theory",
     "branch": "audit/peter-weyl-sixth-cutoff-20261110",
-    "branch_head": "6faad731dcb63a9af7757d022649b0de6c2bc17a",
-    "audit_script_blob": "07a3c4bc103541857eb7fcfea1aac12d0f59c12b",
+    "branch_head": "36473fe8e11312a27c2d8f1e0d37077693ded145",
+    "audit_script_blob": "2201d9a90ff87f08478f6e594774b85f5de6b954",
     "base_script_blob": "ada71096c638e345ca405cf14f71bce98cf668d9"
   }
 }
