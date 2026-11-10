@@ -207,6 +207,7 @@ def build_carrier(
     for K in W5_K:
         common_keys.update(A_by_K[K])
         common_keys.update(B_sym_by_K[K])
+        common_keys.update(B_forward_by_K[K])
     common_keys = sorted(common_keys, key=repr)
     if not common_keys:
         raise ValueError("common W5 output carrier is empty")
