@@ -1,0 +1,36 @@
+name: W5 scalar failure context probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/peter_weyl_w5_scalar_failure_context_probe.py"
+      - ".github/workflows/w5-scalar-failure-context-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture-first-failure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Capture exact two-endpoint W5 scalar failure
+        run: |
+          python scripts/peter_weyl_w5_scalar_failure_context_probe.py \
+            --K 0 --Jmax2 10 \
+            --output verification_results/W5_SCALAR_FAILURE_CONTEXT_K0_NODE0_J10.json
+      - name: Upload failure context
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w5-scalar-failure-context-k0-node0-j10
+          path: verification_results/W5_SCALAR_FAILURE_CONTEXT_K0_NODE0_J10.json
+          if-no-files-found: warn
