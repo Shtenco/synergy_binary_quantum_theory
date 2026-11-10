@@ -29,10 +29,13 @@ jobs:
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           ref: research/depth6-s4sign-proof
           path: proofsrc
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -55,6 +58,24 @@ jobs:
           test -n "${rid}"
           echo "run_id=${rid}" >> "$GITHUB_OUTPUT"
           echo "SALVAGE_SOURCE_RUN=${rid}"
+      - name: Verify pinned branch harvester, extractor, and safety helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git -C proofsrc hash-object "$path")"
+            test "$actual" = "$expected" || {
+              echo "Pinned source mismatch: $path expected=$expected actual=$actual" >&2
+              exit 1
+            }
+          }
+          verify_blob scripts/harvest_stagea_keymeta.py c0f79e2552088984f8f4566b29f16c726e63cc92
+          verify_blob mixed_parallel/extract_master_key_metadata.py 41b50f59d3c068ef5472ebdc6a8971074ecbcf8c
+          verify_blob proof_tools/safe_archive.py f72190f9fb8e4a6b4f01e31acfaf60b7232e7aea
+          verify_blob proof_tools/safe_pickle.py f2ed47a157819a538275572c802c22ed58b0fadc
       - name: Harvest matching raw shards one-at-a-time into tiny key metadata
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,7 +87,7 @@ jobs:
             --expected-shards 112 \
             --extractor proofsrc/mixed_parallel/extract_master_key_metadata.py \
             --out-dir stagea32_keymeta \
-            --engine-git-blob-sha cbbaa80f6b6b61d353458db1fa1f03f824730532
+            --engine-git-blob-sha 41b50f59d3c068ef5472ebdc6a8971074ecbcf8c
       - name: Show salvage manifest
         run: cat stagea32_keymeta/manifest.json
       - uses: actions/upload-artifact@v4
