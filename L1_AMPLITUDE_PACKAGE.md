@@ -14,7 +14,8 @@ calibration, Lorentzian Schur reduction, or HDA closure.
 
 - `L1_AMPLITUDE_PACKAGE.json`: manifest, provenance, diagnostics, and status.
 - `L1_AMPLITUDE_PACKAGE.npz`: lossless sparse-state arrays for the three
-  representative source states (u_e) and reconstructed responses (v_e).
+  representative source states and reconstructed responses, plus all 72 raw
+  source-shard states and all 72 raw second-action shard states.
 
 The JSON manifest records the SHA256 of the NPZ archive and producer source.
 The package digest is computed over canonical JSON before adding the
