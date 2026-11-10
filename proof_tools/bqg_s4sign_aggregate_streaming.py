@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse,json,pickle,tarfile
+import argparse,json,tarfile
 from pathlib import Path
 import numpy as np
 try:
     from .rank_matrix_guard import validate_full_column_matrix
     from .safe_archive import safe_extract_tar
+    from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
     from rank_matrix_guard import validate_full_column_matrix
     from safe_archive import safe_extract_tar
+    from safe_pickle import safe_load_numpy_pickle
 import itertools
 import bqg_depth6_41 as Z
 import bqg_safe_boundary_master_gate as R
@@ -74,7 +76,7 @@ def certify(records,paths,outfile):
         for i in sorted(remaining):
             uq=[q for q in support[i] if occ[q]=={i}]
             if not uq:continue
-            with open(paths[i],'rb') as f:block=pickle.load(f)
+            with open(paths[i],'rb') as f:block=safe_load_numpy_pickle(f)
             mats=[block[q] for q in uq if q in block]
             del block
             if not mats:continue
