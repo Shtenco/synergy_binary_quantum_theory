@@ -10,8 +10,8 @@ Direct source parsing finds 70 row vectors in M and 70 names in NAMES. The artic
 
 The current matrix has 68 unique row vectors and two duplicate rows:
 
-- row 56 and row 61: [-2, -3, 1/2, 0, 6, -1] (Ksi_0 and Ksi_minus);
-- row 55 and row 62: [-2, 2, -2, 0, 6, -1] (Sigma_plus and Sigma_minus).
+- row 57 and row 62: [-2, -3, 1/2, 0, 6, -1] (Ksi_0 and Ksi_minus);
+- row 56 and row 63: [-2, 2, -2, 0, 6, -1] (Sigma_plus and Sigma_minus).
 
 Thus each pair receives exactly the same formula from the six-dimensional exponent basis. Yet the target dictionary assigns different measured masses to each member of each pair. A single shared formula cannot distinguish the members; any claimed separate prediction requires an additional quantum number/parameter or a different row, neither of which appears in this matrix.
 
