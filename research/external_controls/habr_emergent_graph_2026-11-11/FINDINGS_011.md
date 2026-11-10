@@ -47,7 +47,13 @@ The minimum nonzero eigenvalue of this deterministic expected operator was compu
 | 256 | 0.728946 | 201.73 |
 | 512 | 0.728502 | 255.16 |
 
-The expected-operator gap converges numerically toward a positive constant near 0.7284; multiplying it by (lnN)² therefore diverges. Important: λ₂(E[L]) is not E[λ₂(L)]—the latter is nonlinear—so this exact calculation does not replace the sampled random-graph experiment. The independent samples point in the same qualitative direction: a positive gap plateau is more plausible than a ln⁻² collapse.
+The expected-operator gap converges numerically toward a positive constant. For the lowest coordinate Fourier mode q=(2π/L,0,0), the Riemann-sum limit of the nonlocal term is:
+
+    C = (1/6) ∫_{[-1/2,1/2]^3} [1−cos(2πu_x)]/(u_x²+u_y²+u_z²) d³u.
+
+The local-lattice contribution tends to zero as L⁻². Eight independent scrambled Sobol integrations (2²⁰ points each) give C≈0.72835357 with estimated standard error 5.2×10⁻⁷. The direct finite-L FFT values approach this coefficient (λ₂(E[L])=0.72850245 at L=512). The minimum nonzero Fourier mode was a coordinate-axis mode for all tested L. A proof that no other mode yields a smaller asymptotic value is still needed before calling this the exact λ₂ limit.
+
+Important: λ₂(E[L]) is not E[λ₂(L)]—the latter is nonlinear—so this expected-operator calculation does not replace the sampled random-graph experiment. The independent samples point in the same qualitative direction: a positive gap plateau is more plausible than a ln⁻² collapse.
 
 ## 5. What remains true about p∝N⁻¹/³
 
