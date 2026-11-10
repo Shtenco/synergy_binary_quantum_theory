@@ -7,6 +7,7 @@ on:
     paths:
       - 'scripts/bqg_full_channel_flow_matrix.py'
       - 'scripts/bqg_rg_ancestry_path.py'
+      - 'scripts/bqg_two_step_channel_composition.py'
       - 'tests/test_bqg_full_channel_flow_matrix.py'
       - 'tests/test_bqg_rg_ancestry_path.py'
       - 'tests/test_bqg_two_step_composition_spectra.py'
@@ -125,5 +126,42 @@ jobs:
         with:
           name: bqg-two-step-composition-s2-${{ matrix.source_s2 }}
           path: verification_results/compositions/BQG_TWO_STEP_CHANNEL_COMPOSITION_S2_${{ matrix.source_s2 }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  two-step:
+    needs: flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        source_s2: [3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip numpy sympy
+      - name: Download one-step shards from this exact workflow run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-full-channel-flow-s2-*
+          path: verification_results/flows
+          merge-multiple: true
+      - name: Compile and validate direct two-step composition
+        run: python -m py_compile scripts/bqg_two_step_channel_composition.py scripts/bqg_full_channel_flow_matrix.py
+      - name: Compare direct microscopic endpoint with scalar channel product
+        run: |
+          python scripts/bqg_two_step_channel_composition.py \\
+            --source-s2 ${{ matrix.source_s2 }} \\
+            --reference-dir verification_results/flows \\
+            --output verification_results/BQG_TWO_STEP_CHANNEL_COMPOSITION_S2_${{ matrix.source_s2 }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bqg-two-step-channel-composition-s2-${{ matrix.source_s2 }}
+          path: verification_results/BQG_TWO_STEP_CHANNEL_COMPOSITION_S2_${{ matrix.source_s2 }}.json
           if-no-files-found: warn
           retention-days: 30
