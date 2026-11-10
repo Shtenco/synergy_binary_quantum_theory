@@ -104,6 +104,10 @@ The ancestry switches channel index at the first branching 0 -> 1, and again whe
 
 The next decisive test is not another overlap product: it is to evaluate the full graph-changing forward/return habitat residuals E_a,F_a, the off-carrier leakage, and independently defined master gaps along this candidate lineage. Only then can the scale-free physical-projector refinement criterion be evaluated.
 
+## Composition caveat
+
+The five-step dynamic-programming path maximizes the product of local one-step projector overlaps. This scalar product is not automatically the global overlap of the composed microscopic refinement map, because one-step traces discard intermediate off-diagonal channel blocks. The direct two-step comparison is specified in [BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md](BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md). Until that gate is evaluated, the path remains a maximum-product local ancestry candidate.
+
 ## Claim boundary
 
 This result is a five-step finite representation-RG overlap calculation. It is not a physical-time trajectory, a probability, a continuum fixed point, a proof of a physical projector, or evidence for an emergent Lorentzian spacetime. The finite matrix checks and the still-open physical/continuum gates must remain separate.
