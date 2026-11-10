@@ -86,6 +86,43 @@ def block_diagnostics(Pimage, target_projectors):
     }
 
 
+def direct_composition_matrix(T1, T2, source, middle, target):
+    """Recompute direct endpoint projector overlaps without scalar-channel averaging."""
+    target_projectors = projectors(target)
+    rows = []
+    for source_index, source_channel in enumerate(source["channels"]):
+        P1, _, rank1 = FLOW.generated_copy(T1, source_channel, middle["P22_basis"])
+        if rank1 != 2:
+            raise RuntimeError(f"source channel {source_index}: first image rank is not two")
+        Q1 = orthonormal_range(P1, 2, f"perturbed source channel {source_index}")
+        P2, _, rank2 = FLOW.generated_copy(T2, Q1, target["P22_basis"])
+        if rank2 != 2:
+            raise RuntimeError(f"source channel {source_index}: endpoint image rank is not two")
+        rows.append([float(np.trace(P2 @ Ptar).real / 2.0) for Ptar in target_projectors])
+    return np.asarray(rows, dtype=float)
+
+
+def refinement_perturbation_sensitivity(T1, T2, source, middle, target, baseline, source_s2):
+    rng = np.random.default_rng(20261110 + int(source_s2))
+    rows = []
+    for relative_eps in (1e-14, 1e-13, 1e-12):
+        perturbed = []
+        for T in (T1, T2):
+            noise = rng.normal(size=T.shape) + 1j * rng.normal(size=T.shape)
+            noise_norm = float(np.linalg.norm(noise))
+            noise *= relative_eps * max(float(np.linalg.norm(T)), 1.0) / max(noise_norm, 1e-300)
+            perturbed.append(T + noise)
+        direct_p = direct_composition_matrix(perturbed[0], perturbed[1], source, middle, target)
+        defect = direct_p - baseline
+        rows.append({
+            "relative_tensor_perturbation": relative_eps,
+            "max_direct_overlap_change": float(np.max(np.abs(defect))),
+            "frobenius_direct_overlap_change": float(np.linalg.norm(defect, ord="fro")),
+            "finite": bool(np.isfinite(direct_p).all()),
+        })
+    return rows
+
+
 def run_pair(source_s2):
     if source_s2 not in (3, 4):
         raise ValueError("supported two-step source s2 values are 3 and 4")
@@ -97,6 +134,10 @@ def run_pair(source_s2):
 
     T1, leakage1 = FLOW.refinement_tensor(source_s2)
     T2, leakage2 = FLOW.refinement_tensor(source_s2 + 1)
+    refinement_diag1 = FLOW.refinement_tensor_diagnostics(T1, f"two-step first s2={source_s2}")
+    refinement_diag2 = FLOW.refinement_tensor_diagnostics(T2, f"two-step second s2={source_s2 + 1}")
+    if not math.isfinite(float(leakage1)) or not math.isfinite(float(leakage2)):
+        raise RuntimeError("non-finite refinement leakage in direct two-step composition")
 
     F1, first_singulars, first_ranks = flow_matrix(T1, source, middle)
     F2, second_singulars, second_ranks = flow_matrix(T2, middle, target)
@@ -205,6 +246,7 @@ def run_pair(source_s2):
         )
 
     direct = np.asarray(direct_rows, dtype=float)
+    sensitivity = refinement_perturbation_sensitivity(T1, T2, source, middle, target, direct, source_s2)
     defect = direct - scalar_product
 
     def row_error(matrix):
@@ -226,6 +268,7 @@ def run_pair(source_s2):
         and max(basis_rotation_defects, default=0.0) < 1e-8
         and max((x["hermiticity"] for x in endpoint_projector_defects), default=0.0) < 1e-10
         and max((x["idempotence"] for x in endpoint_projector_defects), default=0.0) < 1e-10
+        and all(x["finite"] for x in sensitivity)
     )
     factorization_tolerance = 1e-8
     scalar_factorization_passed = bool(
@@ -256,6 +299,12 @@ def run_pair(source_s2):
         "target_master_eigenvalues": target["eigenvalues"],
         "refinement_tensor_leakage_first": float(leakage1),
         "refinement_tensor_leakage_second": float(leakage2),
+        "first_refinement_tensor_diagnostics": refinement_diag1,
+        "second_refinement_tensor_diagnostics": refinement_diag2,
+        "direct_composition_refinement_perturbation_sensitivity": sensitivity,
+        "max_direct_composition_perturbation_sensitivity": max(
+            (x["max_direct_overlap_change"] for x in sensitivity), default=0.0
+        ),
         "F_first": F1.tolist(),
         "F_second": F2.tolist(),
         "F_scalar_product": scalar_product.tolist(),
