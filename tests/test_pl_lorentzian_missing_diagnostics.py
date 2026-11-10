@@ -11,6 +11,28 @@ import pl_lorentzian_triple_worker as WORKER
 
 
 class MissingLeakageDiagnosticTests(unittest.TestCase):
+    def test_aggregate_physical_gate_rejects_missing_charge_diagnostic(self):
+        partial = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+        }
+        result = LP.leakage_summary(partial)
+        self.assertFalse(result["complete"])
+        self.assertIsNone(result["maximum"])
+        self.assertEqual(result["missing"], ["CK_complete_charge_basis_leakage"])
+
+    def test_aggregate_physical_gate_accepts_four_explicit_diagnostics(self):
+        complete = {
+            "CV_complete_basis_leakage": 1e-12,
+            "CK_outer_complete_basis_leakage": 2e-12,
+            "CK_internal_volume_sector_leakage": 3e-12,
+            "CK_complete_charge_basis_leakage": 4e-12,
+        }
+        result = LP.leakage_summary(complete)
+        self.assertTrue(result["complete"])
+        self.assertEqual(result["maximum"], 4e-12)
+
     def test_forward_stage_not_run_is_not_reported_as_zero(self):
         with patch.object(LP.CV, "gauss_to_covariant", return_value={"seed": 1 + 0j}), \
              patch.object(LP.RAW.COMP, "C_volume_component", return_value=({}, 0.0)):
