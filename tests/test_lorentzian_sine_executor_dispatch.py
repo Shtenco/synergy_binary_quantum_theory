@@ -1,7 +1,14 @@
+import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from scripts import peter_weyl_lorentzian_sine_ordered_triple_gate as sine_gate
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import peter_weyl_lorentzian_sine_ordered_triple_gate as sine_gate
 
 
 class TestLorentzianSineExecutorDispatch(unittest.TestCase):
