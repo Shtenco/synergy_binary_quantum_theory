@@ -179,7 +179,7 @@ def refinement_tensor_diagnostics(T, context="refinement tensor"):
         "row_gram_eigenvalues": [float(x) for x in np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)],
         "column_gram_nonzero_eigenvalues": [float(x) for x in np.linalg.eigvalsh((col_gram + col_gram.conj().T) / 2) if x > rank_tol**2],
         "row_gram_identity_defect": float(np.linalg.norm(row_gram - np.eye(A.shape[0]), ord="fro")),
-        "column_gram_projector_defect": float(np.linalg.norm(col_gram @ col_gram - col_gram, ord="fro")),
+        "column_gram_idempotence_defect": float(np.linalg.norm(col_gram @ col_gram - col_gram, ord="fro")),
         "normalization_claim": "diagnostic only; no unit-isometry assumption is imposed on the induced singlet-to-singlet map",
     }
 
