@@ -11,9 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
 from safe_pickle import safe_load_bytes, safe_load_builtin_pickle, safe_load_numpy_pickle
 
 
+MARKER_PATH = Path(tempfile.gettempdir()) / "bqg_pickle_should_not_execute"
+
+
 class _MaliciousPayload:
     def __reduce__(self):
-        return (os.system, ("echo SHOULD_NOT_RUN",))
+        return (os.system, (f"touch {MARKER_PATH}",))
 
 
 class SafePickleTests(unittest.TestCase):
@@ -40,7 +43,7 @@ class SafePickleTests(unittest.TestCase):
                     np.testing.assert_array_equal(loaded[key], payload[key])
 
     def test_rejects_arbitrary_global_before_execution(self):
-        marker = Path(tempfile.gettempdir()) / "bqg_pickle_should_not_execute"
+        marker = MARKER_PATH
         marker.unlink(missing_ok=True)
         raw = pickle.dumps(_MaliciousPayload(), protocol=5)
         with self.assertRaisesRegex(pickle.UnpicklingError, "forbidden pickle global"):
