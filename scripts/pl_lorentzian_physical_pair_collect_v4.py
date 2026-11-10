@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Collect the 12 direct-Hermitian physical Lorentzian pair contributions."""
 from __future__ import annotations
-import argparse,json,math,traceback
+import argparse,json,math,traceback,hashlib
 from pathlib import Path
 import numpy as np
 import pl_lorentzian_48_collect as BASE
@@ -25,6 +25,11 @@ def run(root):
         seen.add(key)
         cand=list(Path(root).rglob(f'pair_{key[0]}_{key[1]}.npz'))
         if len(cand)!=1:raise RuntimeError(f'need one NPZ for pair {key}, got {len(cand)}')
+        expected_hash=d.get('state_sha256')
+        if not isinstance(expected_hash,str) or len(expected_hash)!=64:
+            raise RuntimeError(f'missing state_sha256 for pair {key}')
+        actual_hash=hashlib.sha256(cand[0].read_bytes()).hexdigest()
+        if actual_hash!=expected_hash:raise RuntimeError(f'pair NPZ/JSON SHA256 mismatch for {key}')
         st=load_state(cand[0]);add(S,st)
         rows.append({'omit':key[0],'cycle':key[1],'cyclic_order':d['cyclic_order'],'support':len(st),'norm':norm(st),
                      'max_spin':max_spin(st),'max_primitive_leakage':d['max_primitive_physical_leakage'],
