@@ -20,6 +20,7 @@ class TetrahedralVolumeSpectralTests(unittest.TestCase):
         result = tetra_volume_diagnostics((1, 1, 1, 1), 1)
         self.assertLess(max(result["raw_Q_hermiticity_defects"]), 1e-10)
         self.assertLess(result["max_raw_Q_M_block_defect"], 1e-10)
+        self.assertLess(result["max_Q_sector_leakage_relative"], 1e-10)
         self.assertLess(result["V4_minus_Q2_relative_error"], 1e-9)
         self.assertTrue(result["zero_aware_functional_calculus"])
 
