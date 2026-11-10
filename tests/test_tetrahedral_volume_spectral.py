@@ -31,6 +31,17 @@ class TetrahedralVolumeSpectralTests(unittest.TestCase):
         self.assertTrue(all(row["diagnostics"]["raw_Q_hermiticity_defects"] for row in spectral_rows))
         self.assertTrue(all(row["finite_output"] for row in tensor_rows))
 
+    def test_global_magnetic_operator_is_hermitian_positive_and_rotationally_scalar(self):
+        rows = AUDIT.global_magnetic_operator_rows()
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            self.assertTrue(row["all_finite"])
+            self.assertLess(row["raw_global_Q_hermiticity_relative"], 1e-10)
+            self.assertLess(row["global_V_hermiticity_relative"], 1e-10)
+            self.assertGreater(row["global_V_min_eigenvalue"], -1e-10)
+            self.assertLess(row["global_V4_minus_Q2_relative"], 1e-9)
+            self.assertLess(row["global_Q_rotation_commutator_max"], 1e-9)
+
     def test_complete_magnetic_tensor_is_reconstructed(self):
         rng = np.random.default_rng(20261110)
         for spins in ((1, 1, 1, 1), (0, 1, 1, 1)):
