@@ -255,3 +255,21 @@ The full-flow workflow `42797583866` has completed the (s_2=3), (j=3/2\to2) shar
 The row sum is (0.9999999999999994), row-stochasticity defect (5.55\times10^{-16}), target paired-eigenvalue spreads are below (5.4\times10^{-15}), and the binary-blocking Gauss-projection leakage is (1.67\times10^{-31}). Thus the (94.6\%) flow into target channel 1 is not caused by loss of norm or failure of the Gauss projection.
 
 The other four shards (s_2=4,5,6,7) are still running. No full multi-scale ancestry path is claimed until all five matrices have passed and are composed by the dynamic-programming gate.
+
+
+## 9. HDA/gravity closure family: what is closed and what is conditional
+
+The wider HDA branch contains several independent results which must remain distinct:
+
+- `ADM_HDA_PARAMETER_SELECTION.md` gives the classical local-ADM identity and finite spectral regression selecting (c=1/2) and (AB=1), leaving the familiar (G) and (Lambda) freedoms. This is not a full quantum K5 HDA proof.
+- `BINARY_HDA_UNIQUENESS_CHAIN.md` links qubit full isotropy to (D=3), (c_{DW}=1/2), (AB=1), (z=1), and two tensor configuration modes, but explicitly marks the microscopic dynamical hypotheses as conditional/unproved.
+- `DENSITIZED_QUANTUM_HDA_TARGET.md` freezes a preferred inverse-volume-free graph-changing quantum identity and a directional/null-channel test. The complete graph-changing dual response still has to pass.
+- `GRAPH_CHANGING_HDA_TARGET.md` corrects the interpretation of fixed-sector leakage: leaving the original spin sector is not automatically a graph change or an HDA anomaly. The safe first HH column has (44.4033\%) of its norm squared in (j=0)-link sectors which reduce to a different abstract graph; the remaining (55.5967\%) stays on the same K5 graph with nonzero changed spins.
+- `OFF_SHELL_HDA_HABITAT_TARGET.md` identifies the decisive Level-C test: a nontrivial off-shell vertex-smooth habitat response matching the diffeomorphism structure function. Kinematical covariance and group-averaged/on-shell vanishing alone are insufficient.
+- `DUAL_K5_HDA_COCHAIN_TARGET.md` closes the exact combinatorial support: the discrete lapse bracket (N_vM_w-N_wM_v) is supported on the single dual edge ((vw)). The geometry-dependent sharp map from this cochain to a tangential deformation remains OPEN.
+
+This branch therefore has strong algebraic and classical closure results, plus a sharply specified quantum falsification target. It does not yet have a full off-shell graph-changing quantum HDA pass.
+
+## 10. Constraint resolvent is not yet a physical propagator
+
+`FESHBACH_INTERBLOCK_EFFECTIVE_KERNEL.md` supplies an exact Feshbach/block-Lanczos definition of the coarse constraint resolvent. It explicitly keeps the constraint spectral parameter distinct from physical frequency. The physical history graviton propagator still requires the separate Hamiltonian-to-effective-action bridge, a specified physical state/measure, and the full interacting history kernel. This is another example where the operator definition is closed but the physical interpretation remains a separate gate.
