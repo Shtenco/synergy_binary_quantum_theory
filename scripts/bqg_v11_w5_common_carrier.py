@@ -166,9 +166,17 @@ def build_carrier(
                 raise RuntimeError(
                     f"V09 component leakage {max_term_leakage} exceeds {leakage_tol}: node={node}, K={K}"
                 )
+            max_spin_reached = max(
+                (max(ast.literal_eval(row[0])[0]) for row in result["B_Lorentzian_raw_KKV_covariant"]),
+                default=0,
+            ) / 2
             if non_scalar_ratio > leakage_tol:
                 raise RuntimeError(
                     f"V09 non-scalar covariant ratio {non_scalar_ratio} exceeds {leakage_tol}: node={node}, K={K}"
+                )
+            if max_spin_reached > 3.5 + 1e-12:
+                raise RuntimeError(
+                    f"V09 max spin {max_spin_reached} exceeds the frozen 3.5 wall: node={node}, K={K}"
                 )
             a = _decode_v09_sparse(result["A_Euclidean_sine_Gauss"], "V09 A")
             b = _decode_v09_sparse(result["B_Lorentzian_raw_KKV_Gauss"], "V09 B")
@@ -185,6 +193,7 @@ def build_carrier(
                 "B_non_scalar_covariant_norm": result["B_non_scalar_covariant_norm"],
                 "max_term_leakage": max_term_leakage,
                 "non_scalar_covariant_ratio": non_scalar_ratio,
+                "max_spin_reached": max_spin_reached,
             })
 
     B_forward_by_K = {}
@@ -208,8 +217,22 @@ def build_carrier(
             "passed": residual <= crosscheck_tol,
         })
 
+    decomposition_checks = []
+    for K in W5_K:
+        sym_plus_anti = dict(B_sym_by_K[K])
+        _add(sym_plus_anti, B_anti_by_K[K])
+        residual, absolute, scale = _relative_residual(B_forward_by_K[K], sym_plus_anti)
+        decomposition_checks.append({
+            "input_K": K,
+            "B_forward_vs_symmetric_plus_anti_relative_residual": residual,
+            "absolute_residual": absolute,
+            "reference_scale": scale,
+            "passed": residual <= crosscheck_tol,
+        })
+
     failed = [x for x in crosschecks if not x["passed"]]
-    if failed:
+    failed_decomposition = [x for x in decomposition_checks if not x["passed"]]
+    if failed or failed_decomposition:
         return {
             "status": "FAIL_V09_V10_RAW_AMPLITUDE_CROSSCHECK",
             "Jmax2": Jmax2,
@@ -217,6 +240,7 @@ def build_carrier(
             "crosscheck_tolerance": crosscheck_tol,
         "leakage_tolerance": leakage_tol,
             "crosschecks": crosschecks,
+            "decomposition_checks": decomposition_checks,
             "v10_closure_basis_id_sha256": closure["basis_id_sha256"],
             "claim_scope": "raw engine mismatch; no common carrier or joint-Gram input emitted",
         }
@@ -318,6 +342,7 @@ def build_carrier(
         },
         "crosschecks": {
             "V09_per_node_then_node_sum_vs_V10_all_node_forward": crosschecks,
+            "V10_forward_equals_symmetric_plus_anti": decomposition_checks,
             "all_passed": True,
         },
         "v09_column_diagnostics": v09_diagnostics,
