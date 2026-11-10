@@ -102,6 +102,29 @@ def direct_composition_matrix(T1, T2, source, middle, target):
     return np.asarray(rows, dtype=float)
 
 
+def normalized_refinement_spectral_distance(left_diag, right_diag):
+    left = np.asarray(left_diag["singular_values"], dtype=float) ** 2
+    right = np.asarray(right_diag["singular_values"], dtype=float) ** 2
+    left_total = float(np.sum(left))
+    right_total = float(np.sum(right))
+    if (not math.isfinite(left_total) or not math.isfinite(right_total)
+            or left_total <= 0.0 or right_total <= 0.0):
+        raise RuntimeError("refinement tensor has zero or invalid spectral mass")
+    left /= left_total
+    right /= right_total
+    width = max(left.size, right.size)
+    left = np.pad(left, (0, width - left.size))
+    right = np.pad(right, (0, width - right.size))
+    return {
+        "normalized_squared_singular_mass_l1": float(np.sum(np.abs(left - right))),
+        "normalized_squared_singular_mass_hellinger": float(
+            np.linalg.norm(np.sqrt(left) - np.sqrt(right)) / math.sqrt(2.0)
+        ),
+        "left_rank": int(np.count_nonzero(left)),
+        "right_rank": int(np.count_nonzero(right)),
+    }
+
+
 def refinement_perturbation_sensitivity(T1, T2, source, middle, target, baseline, source_s2):
     rng = np.random.default_rng(20261110 + int(source_s2))
     rows = []
@@ -136,6 +159,18 @@ def run_pair(source_s2):
     T2, leakage2 = FLOW.refinement_tensor(source_s2 + 1)
     refinement_diag1 = FLOW.refinement_tensor_diagnostics(T1, f"two-step first s2={source_s2}")
     refinement_diag2 = FLOW.refinement_tensor_diagnostics(T2, f"two-step second s2={source_s2 + 1}")
+    # Compose the actual microscopic tensors before taking channel overlaps.
+    # T1[middle, source, ancilla_1], T2[target, middle, ancilla_2].
+    T_composed = np.einsum("rmb,mca->rcab", T2, T1, optimize=True)
+    refinement_diag_composed = FLOW.refinement_tensor_diagnostics(
+        T_composed, f"direct two-step refinement s2={source_s2}->{source_s2 + 2}"
+    )
+    refinement_spectral_step_change = normalized_refinement_spectral_distance(
+        refinement_diag1, refinement_diag2
+    )
+    refinement_spectral_composition_change = normalized_refinement_spectral_distance(
+        refinement_diag1, refinement_diag_composed
+    )
     if not math.isfinite(float(leakage1)) or not math.isfinite(float(leakage2)):
         raise RuntimeError("non-finite refinement leakage in direct two-step composition")
 
@@ -322,6 +357,10 @@ def run_pair(source_s2):
         "refinement_tensor_leakage_second": float(leakage2),
         "first_refinement_tensor_diagnostics": refinement_diag1,
         "second_refinement_tensor_diagnostics": refinement_diag2,
+        "direct_composed_refinement_tensor_shape": list(T_composed.reshape(T_composed.shape[0], -1).shape),
+        "direct_composed_refinement_tensor_diagnostics": refinement_diag_composed,
+        "consecutive_refinement_spectral_change": refinement_spectral_step_change,
+        "one_step_to_direct_two_step_spectral_change": refinement_spectral_composition_change,
         "direct_composition_refinement_perturbation_sensitivity": sensitivity,
         "max_direct_composition_perturbation_sensitivity": max(
             (x["max_direct_overlap_change"] for x in sensitivity), default=0.0
