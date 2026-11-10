@@ -12,6 +12,7 @@ on:
       - 'tests/test_bqg_lorentzian_w5_joint_gram_gate.py'
       - 'scripts/bqg_v11_w5_common_carrier.py'
       - 'tests/test_bqg_v11_w5_common_carrier.py'
+      - 'tests/test_lorentzian_sine_executor_dispatch.py'
       - 'scripts/peter_weyl_*.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md'
@@ -57,3 +58,4 @@ jobs:
           python -m unittest discover -s tests -p 'test_bqg_v*_w5_lorentzian_*.py' -v
           python -m unittest discover -s tests -p 'test_bqg_lorentzian_w5_joint_gram_gate.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v11_w5_common_carrier.py' -v
+          python -m unittest discover -s tests -p 'test_lorentzian_sine_executor_dispatch.py' -v
