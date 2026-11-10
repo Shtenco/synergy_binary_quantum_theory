@@ -84,10 +84,12 @@ Remaining provenance and integrity work:
    checkout concern for these two stages is therefore closed. The remaining
    gap is the end-to-end per-shard manifest tying each output map and summary
    to that pinned producer, run/attempt, shard index, and operator version.
-4. The mixed-master aggregator checks the number of summaries and global
-   block/map coverage, but unlike the S4-sign aggregator it does not yet
-   explicitly require unique shard IDs equal to `range(expected)`. Confirm
-   the producer summary schema and add that guard before accepting a PASS.
+4. The mixed-master aggregator now calls
+   `validate_shard_coverage` on summary shard IDs and
+   `validate_index_coverage` on both record and map indices. The shared guard
+   requires exact zero-based coverage with no duplicates, missing indices,
+   booleans, or noninteger values. Regression tests cover duplicate/missing
+   shards and record/map gaps. This previously open coverage gap is closed.
 5. Preserve read-only permissions, disabled checkout credentials, and
    producer-branch restrictions in artifact-processing jobs.
 
