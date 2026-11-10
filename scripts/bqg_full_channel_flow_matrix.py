@@ -168,6 +168,8 @@ def refinement_tensor_diagnostics(T, context="refinement tensor"):
     scale = max(float(singular[0]) if singular.size else 0.0, 1.0)
     rank_tol = 1e-12 * scale
     rank = int(np.sum(singular > rank_tol))
+    if not singular.size or rank == 0:
+        raise RuntimeError(f"{context}: induced refinement tensor has zero numerical rank")
     row_gram = A @ A.conj().T
     col_gram = A.conj().T @ A
     row_eigenvalues = np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)
