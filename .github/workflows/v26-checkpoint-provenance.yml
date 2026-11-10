@@ -14,6 +14,8 @@ on:
       - 'scripts/v26_direct_branch_norm.py'
       - 'scripts/v26_charge_scalar_diagnostics.py'
       - 'scripts/v26_hda_habitat.py'
+      - 'research/v26/v26_charge_scalar_diagnostics.py'
+      - 'research/v26/v26_hda_habitat.py'
       - '.github/workflows/v26-checkpoint-provenance.yml'
 
 permissions:
