@@ -194,7 +194,7 @@ def safe_archive_member(name: str) -> bool:
     parts = Path(normalized).parts
     return (
         bool(normalized)
-        and "\\x00" not in normalized
+        and "\x00" not in normalized
         and not normalized.startswith("/")
         and not re.match(r"^[A-Za-z]:", normalized)
         and ".." not in parts
