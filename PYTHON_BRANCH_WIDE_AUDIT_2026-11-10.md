@@ -21,7 +21,7 @@ The audit enumerated every branch head returned by GitHub, deduplicated identica
 | Syntax errors | 2 |
 | Total tree entries across unique branch heads | 46,182 |
 
-At the original audit head, `main` contained 728 tree entries and 198 `.py` files. A later main snapshot at commit `99dd3c2a31610b0ab9b9c56cd1b3937cddda070c` contains 739 tree entries and 207 `.py` files; the branch-wide refresh for that newer head is tracked separately. The larger repository-wide count comes from the many historical and experimental branches. The 18,674 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 674 distinct paths and 757 path/content versions. There are 754 distinct blob contents, of which 752 parsed successfully and two failed syntax parsing.
+At the original audit head, `main` contained 728 tree entries and 198 `.py` files. A later main snapshot at commit `99dd3c2a31610b0ab9b9c56cd1b3937cddda070c` contained 739 tree entries and 207 `.py` files. The latest checked main tree at commit `b965eb8992c517ed944d5c33e5d45094beb451e1` contains 744 tree entries, 210 `.py` files, and eight tracked ZIP/archive files; the expanded branch-wide refresh for the newer head is tracked separately. The larger repository-wide count comes from the many historical and experimental branches. The 18,674 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 674 distinct paths and 757 path/content versions. There are 754 distinct blob contents, of which 752 parsed successfully and two failed syntax parsing.
 
 ## Findings
 
@@ -327,3 +327,60 @@ was queued at the time of this update; no factorization result is inferred
 before its artifacts arrive. The maximum-product five-step path therefore
 remains a local ancestry candidate until this stronger composition gate is
 measured.
+
+
+## Phase 6 — expanded embedded-source audit and direct two-step composition
+
+### Branch-wide scanner scope expansion
+
+The branch-wide audit runner now scans more than standalone Python files. It
+also:
+- inventories Python source members in tracked TAR/ZIP/WHL/EGG archives,
+  including base64-encoded archives, with explicit archive/member/total-source
+  size and member-count limits;
+- extracts explicitly marked Python fences from Markdown/RST and Python
+  heredocs from YAML/shell sources, dedents them, and parses them as independent
+  AST units;
+- reports main-only finding counts and inline-source syntax errors separately
+  from branch-wide findings.
+
+The current main snapshot contains eight tracked ZIP/archive files, including
+the compact-holonomy source archives and saved-vector bundle. These are now
+inside the scanner's supported archive scope. The scan remains static: it
+never imports or executes the extracted source. Its scope explicitly excludes
+nested archives, unmarked prose fragments, unsupported archive formats, and
+non-head historical commits.
+
+The expanded audit run
+[42821558904](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821558904)
+was pending at this update. No new archive-member or inline-Python counts are
+claimed until its artifact is available.
+
+### Two-step microscopic channel composition
+
+The five-step ancestry score is the maximum product of local one-step
+overlaps. The matrix product (F_jF_{j+1}) is a different object: it sums over
+intermediate channels and corresponds to a channel measure-and-prepare map
+that discards off-diagonal channel coherence and traceless structure within
+each multiplicity block. The maximum-product path score instead selects one
+intermediate channel. Neither is automatically the direct overlap of the
+composed microscopic refinement.
+
+The new gate
+`BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md` defines the direct two-step
+endpoint matrix (G_{j:j+2}), the scalar matrix-product defect
+(G_{j:j+2}-F_jF_{j+1}), and the intermediate off-diagonal/internal
+anisotropy diagnostics. The runner
+`scripts/bqg_two_step_channel_composition.py` composes the actual generated
+rank-2 carrier subspace through two adjacent microscopic blocking tensors,
+recomputes and verifies the one-step matrices against their persisted JSON
+references, and separately records the local max-product path score matrix.
+Its workflow run
+[42821558786](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821558786)
+was pending at this update. No factorization outcome is inferred before the
+two matrix artifacts are inspected.
+
+This is the next decisive refinement test: it determines whether the
+five-step local ancestry score is supported by coherent multi-scale
+composition, or whether the scalar channel matrices only describe a
+channel-twirled surrogate.
