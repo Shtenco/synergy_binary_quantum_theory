@@ -136,6 +136,11 @@ jobs:
             --output-dir verification_results/l1_amplitude_package
           python scripts/collective_l1_amplitude_producer.py \
             --verify-manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json
+          python scripts/validate_l1_amplitude_package.py \
+            --manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json \
+            --archive verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.npz \
+            --producer-source scripts/collective_l1_amplitude_producer.py \
+            --shard-root shards
       - name: Guard scope
         run: |
           python - <<'PY'

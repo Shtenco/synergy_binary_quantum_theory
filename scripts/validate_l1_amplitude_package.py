@@ -26,7 +26,7 @@ def sha256(path: Path) -> str:
 
 def git_blob_sha(path: Path) -> str:
     data = Path(path).read_bytes()
-    return hashlib.sha1(f"blob {len(data)}\\0".encode("ascii") + data).hexdigest()
+    return hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
 
 
 def canonical_sha(obj) -> str:
@@ -81,7 +81,10 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
                      f"u_{e}_node_{n}.npz",
                      f"v_{e}_node_{n}.npz")
     }
-    if set(hashes) != expected_shard_files or any(len(v) != 64 for v in hashes.values()):
+    if set(hashes) != expected_shard_files or any(
+            len(v) != 64 or any(ch not in "0123456789abcdef" for ch in v.lower())
+            for v in hashes.values()
+    ):
         raise ValueError("expected exact hashes for all 72 shard JSON/NPZ triplets")
     if provenance.get("shard_manifest_sha256") != canonical_sha(hashes):
         raise ValueError("shard manifest digest mismatch")
