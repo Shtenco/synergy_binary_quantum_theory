@@ -25,10 +25,10 @@ class TestLorentzianSineExecutorDispatch(unittest.TestCase):
             raw_run.assert_called_once_with(3, 1, 2, 4)
 
     def test_executor_result_must_be_diagnostics_mapping(self):
-        with patch.object(sine_gate.RAW, "run", return_value=None):
-            # Dispatch itself preserves the return value; run() validates the
-            # mapping before applying the wrapper diagnostics.
-            self.assertIsNone(sine_gate._dispatch_raw(0, None, None, None))
+        with self.assertRaisesRegex(TypeError, "standard diagnostics dictionary"):
+            sine_gate._require_diagnostics(None)
+        sentinel = {"passed": True}
+        self.assertIs(sine_gate._require_diagnostics(sentinel), sentinel)
 
 
 if __name__ == "__main__":
