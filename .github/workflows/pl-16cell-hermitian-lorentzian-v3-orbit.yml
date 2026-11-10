@@ -49,6 +49,8 @@ jobs:
         run: python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json --matrix-output verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
       - name: Independent full-local S4 covariance regression
         run: python scripts/tetrahedral_volume_s4_covariance_gate.py --output verification_results/TETRAHEDRAL_VOLUME_S4_COVARIANCE_V3.json
+      - name: Spectral registry and full magnetic covariance unit tests
+        run: python -m unittest discover -s tests -p 'test_tetrahedral_volume_spectral.py'
       - name: Pairing-stabilizer structural theorem
         run: python scripts/lorentzian_pairing_stabilizer_orbit_gate.py --output verification_results/LORENTZIAN_PAIRING_STABILIZER_ORBITS_V3.json
       - name: Exact 16-cell Peter-Weyl H transport representation
