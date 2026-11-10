@@ -121,6 +121,25 @@ def selected(args):
     return all_ if args.channel=="all" else [tuple(map(int,args.channel))]
 def prefix(d,stage,ijk):
     return d/(stage+"_"+''.join(map(str,ijk)))
+def validate_leakage_map(diag, require_all=False, context="checkpoint"):
+    if not isinstance(diag, dict):
+        raise ValueError(f"{context}: leakage_max must be an object")
+    unknown = set(diag) - set(LEAK_FIELDS)
+    if unknown:
+        raise ValueError(f"{context}: unknown leakage fields {sorted(unknown)}")
+    missing = set(LEAK_FIELDS) - set(diag)
+    if require_all and missing:
+        raise ValueError(f"{context}: missing required leakage diagnostics {sorted(missing)}")
+    clean = {}
+    for key, value in diag.items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{context}: {key} must be numeric")
+        value = float(value)
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"{context}: {key} must be finite and nonnegative")
+        clean[key] = value
+    return clean
+
 def load_result(d,stage,ijk,freeze):
     stem=prefix(d,stage,ijk);path=stem.with_suffix(".npz");jpath=stem.with_suffix(".json")
     if not path.exists() or not jpath.exists():
@@ -129,6 +148,7 @@ def load_result(d,stage,ijk,freeze):
     if meta.get("freeze")!=freeze or meta.get("stage")!=stage or meta.get("channel")!=list(ijk):
         raise ValueError("Checkpoint metadata mismatch "+str(stem))
     if meta["sha256"]!=digest(path):raise ValueError("Checkpoint SHA256 mismatch "+str(stem))
+    validate_leakage_map(meta.get("leakage_max"), require_all=False, context=str(stem))
     state=restore_state(path)
     if meta["support"]!=len(state) or not math.isclose(meta["norm"],norm(state),rel_tol=1e-12,abs_tol=1e-12):
         raise ValueError("Checkpoint support or norm mismatch "+str(stem))
@@ -138,13 +158,19 @@ def save_result(d,stage,ijk,state,freeze,diag,extra=None):
     persist_state(path,state)
     meta=dict(stage=stage,channel=list(ijk),freeze=freeze,
               sha256=digest(path),support=len(state),norm=norm(state),
-              max_spin=max_spin(state),leakage_max={k:float(diag.get(k,0.)) for k in LEAK_FIELDS},
+              max_spin=max_spin(state),
+              leakage_max=validate_leakage_map(diag, require_all=False, context=f"{stage}_{ijk}"),
               elapsed_s=round(time.perf_counter()-START,3))
     meta.update(extra or {})
     write_atomic(stem.with_suffix(".json"),lambda f:f.write((json.dumps(meta,indent=2,sort_keys=True)+"\n").encode()))
     print("CHECKPOINT",stage,ijk,"states",len(state),"norm",meta["norm"],"sha",meta["sha256"][:12],flush=True)
 def maxdiag(a,b):
-    return {k:max(float(a.get(k,0.)),float(b.get(k,0.))) for k in LEAK_FIELDS}
+    left = validate_leakage_map(a, require_all=False, context="left stage diagnostics")
+    right = validate_leakage_map(b, require_all=False, context="right stage diagnostics")
+    merged = dict(left)
+    for key, value in right.items():
+        merged[key] = max(merged[key], value) if key in merged else value
+    return merged
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--stage",choices=STAGES,required=True)
@@ -183,7 +209,12 @@ def main():
                 x,meta=load_result(args.checkpoint_dir,prev,(i,j,k),freeze)
                 diag=meta["leakage_max"]
                 if not x:
-                    out={};d={}
+                    out={}
+                    # An exact empty input means this operator stage was not applied;
+                    # its leakage is analytically zero, not a missing measurement.
+                    d={"outer_complete_basis_leakage":0.0,
+                       "internal_volume_sector_leakage":0.0,
+                       "complete_charge_basis_leakage":0.0}
                 elif args.stage=="kb":
                     out,d=RAW.KCOMP.C_K_component(x,args.source,args.b,j,k,JMAX2)
                 else:
@@ -204,13 +235,21 @@ def main():
                 diag=maxdiag(diag,meta["leakage_max"])
                 branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
                               "support":len(state),"sha256":meta["sha256"]})
+            diag = validate_leakage_map(diag, require_all=True, context="finish stage")
+            if not all(np.isfinite([z.real, z.imag]).all() for z in total.values()):
+                raise ValueError("finish stage covariant state contains non-finite amplitudes")
             gauss,accept2,reject2=LGA.project_scalar_gauss(total,args.source,TOL)
+            if not all(np.isfinite([z.real, z.imag]).all() for z in gauss.values()):
+                raise ValueError("finish stage Gauss state contains non-finite amplitudes")
             covnorm=norm(total);gnorm=norm(gauss)
             frac=1.0 if accept2+reject2<1e-30 else accept2/(accept2+reject2)
-            physical=max(diag[k] for k in LEAK_FIELDS[:3])
-            checks=dict(finite_covariant_norm=math.isfinite(covnorm),
+            physical=max(diag[k] for k in LEAK_FIELDS)
+            checks=dict(complete_required_diagnostics=set(diag)==set(LEAK_FIELDS),
+                  finite_covariant_norm=math.isfinite(covnorm),
                   finite_gauss_norm=math.isfinite(gnorm),
-                  physical_basis_volume_leakage=physical<1e-8,
+                  finite_covariant_amplitudes=all(np.isfinite([z.real, z.imag]).all() for z in total.values()),
+                  finite_gauss_amplitudes=all(np.isfinite([z.real, z.imag]).all() for z in gauss.values()),
+                  physical_basis_and_charge_leakage=physical<1e-8,
                   scalar_closure_fraction_or_exact_zero=frac>1-1e-10,
                   nonscalar_rejected_norm=math.sqrt(max(reject2,0))<1e-8,
                   single_HL_spin_wall=max_spin(gauss)<=JMAX2/2+1e-12)
@@ -221,7 +260,9 @@ def main():
                   covariant_support=len(total),covariant_norm=covnorm,
                   gauss_support=len(gauss),gauss_norm=gnorm,gauss_max_spin=max_spin(gauss),
                   scalar_closure_fraction=frac,nonscalar_rejected_norm=math.sqrt(max(reject2,0)),
-                  physical_acceptance_max_leakage=physical,checks=checks,branches=branch,
+                  physical_acceptance_max_leakage=physical,
+                  complete_charge_basis_leakage=diag["CK_complete_charge_basis_leakage"],
+                  leakage_diagnostics=diag,checks=checks,branches=branch,
                   is_full_Hermitian_Lorentzian=False,is_full_HDA=False)
             if not args.json_output or not args.state_output:p.error("finish requires json-output and state-output")
             args.state_output.parent.mkdir(parents=True,exist_ok=True)
