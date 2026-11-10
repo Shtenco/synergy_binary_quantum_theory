@@ -12,6 +12,7 @@ on:
       - 'scripts/pl_lorentzian_physical_pair_collect_v4.py'
       - 'scripts/tetrahedral_volume_backend.py'
       - 'scripts/pl_lorentzian_triple_worker.py'
+      - 'scripts/peter_weyl_lorentzian_logical_projection_gate.py'
       - 'scripts/pl_lorentzian_group_worker.py'
       - 'tests/test_pl_lorentzian_missing_diagnostics.py'
       - '.github/workflows/pl-16cell-hermitian-lorentzian-v4-direct.yml'
