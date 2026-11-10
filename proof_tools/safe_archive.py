@@ -77,8 +77,13 @@ def safe_extract_zip(archive: zipfile.ZipFile, destination: str | Path) -> Path:
             raise ValueError(f"duplicate ZIP member target: {info.filename!r}")
         seen.add(target)
         mode = (info.external_attr >> 16) & 0xFFFF
-        if stat.S_ISLNK(mode) or stat.S_ISCHR(mode) or stat.S_ISBLK(mode) or stat.S_ISFIFO(mode):
+        file_type = stat.S_IFMT(mode)
+        if file_type not in (0, stat.S_IFREG, stat.S_IFDIR):
             raise ValueError(f"non-regular ZIP member is forbidden: {info.filename!r}")
+        if info.is_dir() and file_type == stat.S_IFREG:
+            raise ValueError(f"ZIP member type/name mismatch: {info.filename!r}")
+        if not info.is_dir() and file_type == stat.S_IFDIR:
+            raise ValueError(f"ZIP member type/name mismatch: {info.filename!r}")
         if info.file_size < 0:
             raise ValueError(f"invalid ZIP member size: {info.filename!r}")
 
