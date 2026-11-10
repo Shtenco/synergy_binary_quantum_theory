@@ -220,3 +220,23 @@ The script `scripts/bqg_jhalf_to_j1_return_carrier_leakage.py` has now been adde
 It obtains the coarse action on the embedded 32D carrier by applying the declared Hermitian sine-ordered two-node operator twice, then independently checks the pullback against the Gram matrix ((AW)^\dagger(AW)). The script reports the discrepancy rather than silently assuming that cutoff/pruning preserves Hermiticity.
 
 Scope remains deliberately limited: the 243D product of local (j=1) singlet multiplicity spaces. Spin-changed graph-changing habitats and the full master are excluded. The script has been committed but its numerical run has not yet been executed; no (L,D) values are claimed here.
+
+
+### 1.4 Refinement ancestry is not necessarily the lowest local master branch
+
+Sources: `BQG_LOWEST_CHANNEL_REFINEMENT_NOGO.md`, `BQG_MASTER_BRANCH_TRACKING.md`, and `BQG_RG_ANCESTRY_PATH.md`.
+
+A finite counterexample already rejects the shortcut “follow the lowest local master eigenchannel at every scale.” The recorded lowest-channel overlaps oscillate strongly (including values near (0.00108) and (0.9920)); the all-channel resolution is required because the microscopic binary refinement may switch between multiplicity branches.
+
+The correct finite ancestry diagnostic is the full overlap matrix
+
+```math
+\mathcal F_j^{ab}
+=\frac12\operatorname{Tr}
+(P^{block}_{j,a}P^{master}_{j+1/2,b}),
+\qquad \sum_b\mathcal F_j^{ab}=1
+```
+
+for a normalized rank-two source copy, followed by a no-fit maximum-product path through consecutive scales. This selects a candidate representation-RG lineage; it is not a physical-time probability and does not replace the graph-changing habitat residuals.
+
+The global correlated-ancilla master-selection note separately identifies a two-dimensional (S_5)-trivial ancilla sector and proposes the actual symmetric Euclidean master as the no-fit selector. Its final physical-master interpretation remains finite-control only.
