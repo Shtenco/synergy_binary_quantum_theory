@@ -254,9 +254,24 @@ def run():
         "Jmax_7_2_has_no_support_above_3_at_any_power": all(
             row["max_spin_reached"] <= 3.0 + 1e-12 for row in overcut["rows"]
         ) and high_spin_support == 0,
-        "Jmax_3_and_7_2_states_agree": cutoff_comparison["max_amplitude_difference"] < 1e-10,
-        "pruning_1e_14_stable_against_1e_13": tight_comparison["max_amplitude_difference"] < 1e-9,
-        "pruning_1e_12_stable_against_1e_13": loose_comparison["max_amplitude_difference"] < 1e-9,
+        "Jmax_3_and_7_2_states_agree": (
+            cutoff_comparison["left_only_support"] == 0
+            and cutoff_comparison["right_only_support"] == 0
+            and cutoff_comparison["max_amplitude_difference"] < 1e-10
+            and cutoff_comparison["state_l2_difference"] < 1e-9
+        ),
+        "pruning_1e_14_stable_against_1e_13": (
+            tight_comparison["left_only_support"] == 0
+            and tight_comparison["right_only_support"] == 0
+            and tight_comparison["max_amplitude_difference"] < 1e-9
+            and tight_comparison["state_l2_difference"] < 1e-8
+        ),
+        "pruning_1e_12_stable_against_1e_13": (
+            loose_comparison["left_only_support"] == 0
+            and loose_comparison["right_only_support"] == 0
+            and loose_comparison["max_amplitude_difference"] < 1e-9
+            and loose_comparison["state_l2_difference"] < 1e-8
+        ),
         "all_pruning_and_cutoff_norm_histories_match_exact_control": max(
             error for history in norm_history_errors.values() for error in history
         ) < 1e-3,
@@ -264,7 +279,8 @@ def run():
         "gauge_covariance_at_both_cutoffs": max(gauge_covariance.values()) < 1e-12,
         "all_final_amplitudes_finite": all(
             np.isfinite([z.real, z.imag]).all()
-            for z in baseline["final_state"].values()
+            for result_run in (baseline, tight, loose, overcut)
+            for z in result_run["final_state"].values()
         ),
     }
     result = {
