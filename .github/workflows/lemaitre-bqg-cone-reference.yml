@@ -1,0 +1,34 @@
+name: LeMaitre-BQG causal-cone reference gate
+
+on:
+  push:
+    branches:
+      - research/lemaitre-bqg-causal-cone-20261110
+    paths:
+      - "scripts/lemaitre_bqg_cone_reference_gate.py"
+      - "LEMAITRE_BQG_CAUSAL_CONE_BENCHMARK.md"
+      - ".github/workflows/lemaitre-bqg-cone-reference.yml"
+  pull_request:
+    paths:
+      - "scripts/lemaitre_bqg_cone_reference_gate.py"
+      - "LEMAITRE_BQG_CAUSAL_CONE_BENCHMARK.md"
+      - ".github/workflows/lemaitre-bqg-cone-reference.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finite-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run finite reference consistency gate
+        run: |
+          python scripts/lemaitre_bqg_cone_reference_gate.py \
+            --output verification_results/lemaitre_bqg_cone_reference_gate.json
