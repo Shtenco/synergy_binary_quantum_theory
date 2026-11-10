@@ -21,6 +21,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -47,15 +48,44 @@ def api_json(url: str, token: str):
             "User-Agent": "BQG-branch-wide-python-audit",
         },
     )
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {403, 429, 500, 502, 503, 504} or attempt == 5:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            remaining = exc.headers.get("X-RateLimit-Remaining")
+            reset = exc.headers.get("X-RateLimit-Reset")
+            if retry_after:
+                delay = max(1.0, float(retry_after))
+            elif remaining == "0" and reset:
+                delay = max(1.0, float(reset) - time.time() + 1.0)
+                if delay > 120:
+                    raise RuntimeError(
+                        f"GitHub API rate limit exhausted; reset in {delay:.0f}s"
+                    ) from exc
+            else:
+                delay = min(30.0, 2.0 ** attempt * 2.0)
+            time.sleep(delay)
+
+
+def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
+    # Raw content is not subject to the authenticated REST API quota. Verify
+    # the Git object SHA-1 so the fetched bytes remain pinned to the tree entry.
+    quoted_path = urllib.parse.quote(path, safe="/")
+    url = f"https://raw.githubusercontent.com/{repo}/{commit}/{quoted_path}"
+    req = urllib.request.Request(url, headers={"User-Agent": "BQG-branch-wide-python-audit"})
     with urllib.request.urlopen(req, timeout=90) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
-def blob_text(repo: str, sha: str, token: str):
-    obj = api_json(f"{API}/repos/{repo}/git/blobs/{sha}", token)
-    if obj.get("encoding") != "base64":
-        raise RuntimeError(f"unexpected blob encoding for {sha}: {obj.get('encoding')}")
-    return base64.b64decode(obj["content"]).decode("utf-8", errors="replace")
+        raw = response.read()
+    header = b"blob " + str(len(raw)).encode("ascii") + b"\\0"
+    actual_sha = hashlib.sha1(header + raw).hexdigest()
+    if actual_sha != sha:
+        raise RuntimeError(
+            f"raw blob SHA mismatch for {commit}:{path}: expected {sha}, got {actual_sha}"
+        )
+    return raw.decode("utf-8", errors="replace")
 
 
 def dotted(node):
@@ -361,7 +391,10 @@ def main():
     fetched = 0
 
     def get_blob(sha):
-        return sha, blob_text(args.repo, sha, token)
+        location = blob_locations[sha][0]
+        return sha, blob_text(
+            args.repo, sha, location["commit"], location["path"]
+        )
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = [pool.submit(get_blob, sha) for sha in unique_blobs]
@@ -393,7 +426,10 @@ def main():
         locations = archive_locations[archive_sha]
         representative = locations[0]["path"]
         try:
-            encoded = blob_text(args.repo, archive_sha, token)
+            location = locations[0]
+            encoded = blob_text(
+                args.repo, archive_sha, location["commit"], location["path"]
+            )
             scan_embedded_archive(encoded, representative, archive_sha,
                                   findings, totals, locations)
         except Exception as exc:
