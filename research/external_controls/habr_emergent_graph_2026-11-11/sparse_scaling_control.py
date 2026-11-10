@@ -32,12 +32,12 @@ def expected_operator(L: int, alpha: float = 1.0):
     """Exact eigenvalues of the expected combinatorial Laplacian."""
     w = kernel(L)
     p = 1.0 / (6.0 * L**alpha)
-    nonlocal = p * (w.sum() - np.fft.fftn(w).real)
+    nonlocal_eigs = p * (w.sum() - np.fft.fftn(w).real)
     k = np.arange(L)
     one_dim = 2.0 * (1.0 - np.cos(2.0*np.pi*k/L))
     local = (one_dim[:, None, None] + one_dim[None, :, None]
              + one_dim[None, None, :])
-    eig = nonlocal + local
+    eig = nonlocal_eigs + local
     eig[0, 0, 0] = np.inf
     return float(eig.min()), float(6.0 + p*w.sum()), float(w.sum())
 
