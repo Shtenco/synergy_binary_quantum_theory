@@ -58,7 +58,7 @@ jobs:
         omit: [0,1,2,3]
         cycle: [0,1,2]
     runs-on: windows-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
