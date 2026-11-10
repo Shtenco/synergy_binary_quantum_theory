@@ -9,6 +9,7 @@ on:
       - 'scripts/bqg_rg_ancestry_path.py'
       - 'tests/test_bqg_full_channel_flow_matrix.py'
       - 'tests/test_bqg_rg_ancestry_path.py'
+      - 'tests/test_bqg_two_step_composition_spectra.py'
       - '.github/workflows/bqg-full-channel-flow.yml'
   workflow_dispatch:
 
@@ -35,6 +36,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_bqg_full_channel_flow_matrix.py'
           python -m unittest discover -s tests -p 'test_bqg_rg_ancestry_path.py'
+          python -m unittest discover -s tests -p 'test_bqg_two_step_composition_spectra.py'
       - name: Compute full channel-flow matrix
         run: |
           mkdir -p verification_results
