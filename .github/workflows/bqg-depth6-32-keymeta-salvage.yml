@@ -10,10 +10,6 @@ on:
         required: true
         default: '36899125190'
         type: string
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/bqg-depth6-32-keymeta-salvage.yml'
 
 permissions:
   contents: read
@@ -50,10 +46,8 @@ jobs:
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             rid="${{ inputs.source_run_id }}"
           else
-            # Immediate preservation trigger while the known Stage-A run is still active.
-            # This does not recompute any structural or Hamiltonian data; it only
-            # salvages artifacts that already exist at trigger time.
-            rid="36899125190"
+            echo "Unsupported event for keymeta salvage: ${{ github.event_name }}" >&2
+            exit 1
           fi
           test -n "${rid}"
           echo "run_id=${rid}" >> "$GITHUB_OUTPUT"
