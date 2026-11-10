@@ -243,7 +243,11 @@ def closure_acceptance(
     max_spin_reached,
     sine_engine_result,
 ):
-    """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate."""
+    """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate.
+
+    A small direct-adjoint residual cannot override a failed representation,
+    leakage, spin-wall, or sine-Hermitian operator gate.
+    """
     return bool(
         forward_norm > 1e-10
         and adjoint_norm > 1e-10
