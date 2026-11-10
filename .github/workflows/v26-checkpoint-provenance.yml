@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - research/bqg-v26-multiprecision-charge-20261109
+      - research/bqg-v26-multiprecision-charge-20261109, audit/v26-strict-leakage-20261110
     paths:
       - 'scripts/bqg_lorentzian_checkpointed_triple.py'
       - 'scripts/bqg_lorentzian_ka_partition.py'
