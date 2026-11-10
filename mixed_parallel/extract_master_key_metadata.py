@@ -15,9 +15,13 @@ import argparse
 import gzip
 import hashlib
 import json
-import pickle
+import sys
 import tarfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'proof_tools'))
+from safe_archive import safe_extract_tar
+from safe_pickle import safe_load_numpy_pickle
 
 import numpy as np
 
@@ -37,11 +41,7 @@ def extract_tar(src: Path, out: Path) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     root = out.resolve()
     with tarfile.open(src, 'r:gz') as tf:
-        for member in tf.getmembers():
-            dest = (out / member.name).resolve()
-            if root not in dest.parents and dest != root:
-                raise RuntimeError(f'unsafe tar member: {member.name}')
-        tf.extractall(out)
+        safe_extract_tar(tf, out)
     summaries = list(out.rglob('summary.json'))
     if len(summaries) != 1:
         raise RuntimeError(f'expected one summary.json, got {len(summaries)}')
@@ -63,7 +63,7 @@ def extract_metadata(src: Path, work: Path, out: Path, provenance: dict) -> dict
         if len(matches) != 1:
             raise RuntimeError(f'orbit {i}: expected one pickle, got {len(matches)}')
         with matches[0].open('rb') as f:
-            mp = pickle.load(f)
+            mp = safe_load_numpy_pickle(f)
         q_rows = {}
         for q, a0 in mp.items():
             a = np.asarray(a0)
