@@ -94,7 +94,7 @@ def scan_source(source: str, path: str, blob: str, findings: list, totals: Count
                 record(findings, "broad_except", path, blob, node, dotted(node.type))
         elif isinstance(node, ast.Call):
             name = dotted(node.func)
-            if name in {"eval", "exec"} or name.endswith(".eval") or name.endswith(".exec"):
+            if name in {"eval", "exec"} or name in {"builtins.eval", "builtins.exec"}:
                 record(findings, "dynamic_code_execution", path, blob, node, name)
             if name == "os.system" or name.startswith("subprocess."):
                 record(findings, "process_execution", path, blob, node, name)
