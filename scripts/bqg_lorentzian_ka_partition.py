@@ -51,7 +51,7 @@ def expected_freeze(a):
   runtime=Base.runtime_fingerprint(),modules=Base.source_hashes())
 
 def key_digest(keys):
- payload="\\n".join(repr(key) for key in keys).encode("utf-8")
+ payload=b"\0".join(repr(key).encode("utf-8") for key in keys)
  return hashlib.sha256(payload).hexdigest()
 
 def run():
