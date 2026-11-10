@@ -85,6 +85,12 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
                 "CK_internal_volume_sector_leakage": 0.0,
                 "CK_complete_charge_basis_leakage": 0.0,
             },
+            "leakage_max": {
+                "CV_complete_basis_leakage": 0.0,
+                "CK_outer_complete_basis_leakage": 0.0,
+                "CK_internal_volume_sector_leakage": 0.0,
+                "CK_complete_charge_basis_leakage": 0.0,
+            },
         }
         result = BASE.validate_operator_provenance(meta)
         self.assertFalse(result["operator_stage_applied"])
