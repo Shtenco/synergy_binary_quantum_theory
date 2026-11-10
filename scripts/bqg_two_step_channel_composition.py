@@ -9,8 +9,8 @@ channel weights. No operator, cutoff, channel ordering, or tolerance is fitted.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import math
 from pathlib import Path
 
 import numpy as np
@@ -101,6 +101,27 @@ def run_pair(source_s2):
     F2, second_singulars, second_ranks = flow_matrix(T2, middle, target)
     scalar_product = F1 @ F2
 
+    saved_first_path = (
+        Path(__file__).resolve().parents[1]
+        / "docs/numerical_continuation"
+        / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2}.json"
+    )
+    saved_second_path = (
+        Path(__file__).resolve().parents[1]
+        / "docs/numerical_continuation"
+        / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2 + 1}.json"
+    )
+    saved_first = json.loads(saved_first_path.read_text(encoding="utf-8"))
+    saved_second = json.loads(saved_second_path.read_text(encoding="utf-8"))
+    if not saved_first.get("passed") or not saved_second.get("passed"):
+        raise RuntimeError("one-step reference matrix is not explicitly passed")
+    saved_F1 = np.asarray(saved_first["channel_flow_matrix"], dtype=float)
+    saved_F2 = np.asarray(saved_second["channel_flow_matrix"], dtype=float)
+    if saved_F1.shape != F1.shape or np.max(np.abs(saved_F1 - F1)) >= 1e-8:
+        raise RuntimeError("recomputed first one-step matrix differs from persisted reference")
+    if saved_F2.shape != F2.shape or np.max(np.abs(saved_F2 - F2)) >= 1e-8:
+        raise RuntimeError("recomputed second one-step matrix differs from persisted reference")
+
     middle_projectors = projectors(middle)
     target_projectors = projectors(target)
 
@@ -141,7 +162,7 @@ def run_pair(source_s2):
         np.isfinite(matrix).all()
         for matrix in (F1, F2, scalar_product, direct, defect)
     )
-    passed = bool(
+    structural_checks_passed = bool(
         finite
         and leakage1 < 1e-8
         and leakage2 < 1e-8
@@ -150,12 +171,23 @@ def run_pair(source_s2):
         and row_error(direct) < 1e-8
         and all(rank == 2 for rank in first_ranks + second_ranks)
         and all(rank == 2 for rank in direct_first_ranks + direct_second_ranks)
-        and max(float(np.max(np.abs(defect))), 0.0) < float("inf")
+    )
+    factorization_tolerance = 1e-8
+    scalar_factorization_passed = bool(
+        float(np.max(np.abs(defect))) < factorization_tolerance
     )
 
     result = {
-        "status": "direct two-step microscopic channel-composition comparison",
-        "passed": passed,
+        "status": "COMPUTED" if structural_checks_passed else "STRUCTURAL_CHECK_FAILURE",
+        "structural_checks_passed": structural_checks_passed,
+        "scalar_factorization_passed": scalar_factorization_passed,
+        "scalar_factorization_tolerance": factorization_tolerance,
+        "source_one_step_reference_sha256": hashlib.sha256(
+            saved_first_path.read_bytes()
+        ).hexdigest(),
+        "middle_one_step_reference_sha256": hashlib.sha256(
+            saved_second_path.read_bytes()
+        ).hexdigest(),
         "source_s2": source_s2,
         "middle_s2": source_s2 + 1,
         "target_s2": source_s2 + 2,
@@ -212,7 +244,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2), flush=True)
-    return 0 if result["passed"] else 2
+    return 0 if result["structural_checks_passed"] else 2
 
 
 if __name__ == "__main__":
