@@ -159,11 +159,14 @@ def run_pair(source_s2, reference_dir=None):
     T2, leakage2 = FLOW.refinement_tensor(source_s2 + 1)
     refinement_diag1 = FLOW.refinement_tensor_diagnostics(T1, f"two-step first s2={source_s2}")
     refinement_diag2 = FLOW.refinement_tensor_diagnostics(T2, f"two-step second s2={source_s2 + 1}")
-    # Compose the actual microscopic tensors before taking channel overlaps.
+    # Compose the microscopic tensors with the intermediate [2,2] carrier
+    # projector inserted. This is a raw linear composition; it is NOT the
+    # normalized-range map used by direct_composition_matrix below.
     # T1[middle, source, ancilla_1], T2[target, middle, ancilla_2].
-    T_composed = np.einsum("rmb,mca->rcab", T2, T1, optimize=True)
+    P_middle = middle["P22_basis"] @ middle["P22_basis"].conj().T
+    T_composed = np.einsum("rmb,mn,nca->rcab", T2, P_middle, T1, optimize=True)
     refinement_diag_composed = FLOW.refinement_tensor_diagnostics(
-        T_composed, f"direct two-step refinement s2={source_s2}->{source_s2 + 2}"
+        T_composed, f"raw projected two-step refinement s2={source_s2}->{source_s2 + 2}"
     )
     refinement_spectral_step_change = normalized_refinement_spectral_distance(
         refinement_diag1, refinement_diag2
