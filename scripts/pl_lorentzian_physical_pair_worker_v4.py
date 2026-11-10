@@ -15,7 +15,7 @@ Every primitive retains the frozen V2 acceptance checks.  No tetrahedral orbit
 reconstruction or GR target is used.
 """
 from __future__ import annotations
-import argparse,itertools,json,math,traceback,time
+import argparse,itertools,json,math,traceback,time,hashlib
 from pathlib import Path
 import numpy as np
 import peter_weyl_lorentzian_logical_projection_gate as LP
@@ -91,5 +91,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--omit',type=int,choices=range(4),required=True);p.add_argument('--cycle',type=int,choices=range(3),required=True);p.add_argument('--source',type=int,default=0);p.add_argument('--json-output',type=Path,required=True);p.add_argument('--state-output',type=Path,required=True);a=p.parse_args()
     try:S,out=run(a.omit,a.cycle,a.source);code=0 if out['passed'] else 1
     except Exception as exc:S={};out={'status':'v4 pair worker exception','passed':False,'operator_version':VERSION,'omit':a.omit,'cycle':a.cycle,'error_type':type(exc).__name__,'error':str(exc),'traceback':traceback.format_exc()};code=1
-    D=DualComplex(seed_16cell_boundary());W.save_state(a.state_output,S,len(D.dual_edges()),D.n_tets);a.json_output.parent.mkdir(parents=True,exist_ok=True);a.json_output.write_text(json.dumps(out,indent=2,sort_keys=True)+'\n',encoding='utf-8');print(json.dumps(out,indent=2,sort_keys=True));return code
+    D=DualComplex(seed_16cell_boundary());W.save_state(a.state_output,S,len(D.dual_edges()),D.n_tets)
+    if out.get('passed') is True:
+        out['state_sha256']=hashlib.sha256(a.state_output.read_bytes()).hexdigest()
+    a.json_output.parent.mkdir(parents=True,exist_ok=True);a.json_output.write_text(json.dumps(out,indent=2,sort_keys=True)+'\n',encoding='utf-8');print(json.dumps(out,indent=2,sort_keys=True));return code
 if __name__=='__main__':raise SystemExit(main())
