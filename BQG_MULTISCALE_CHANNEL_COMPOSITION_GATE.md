@@ -155,6 +155,23 @@ For at least the first two consecutive refinements, report:
 Only after this test should the maximum-product path be interpreted as a
 coherent multi-scale ancestry rather than a convenient local path score.
 
+## Executable diagnostic
+
+The first implementation is
+`scripts/bqg_two_step_channel_composition.py`, with the two adjacent source
+pairs (s_2=3) and (s_2=4) scheduled by
+`.github/workflows/bqg-two-step-channel-composition.yml`. Before comparing
+the direct composition, the runner recomputes both one-step matrices and
+requires agreement with their persisted, explicitly passed JSON references
+within (10^{-8}). It then constructs the actual intermediate rank-2 carrier
+basis, propagates that basis through the next microscopic blocking tensor,
+and reports the direct endpoint matrix, scalar matrix product, defect, and
+intermediate off-diagonal/internal-anisotropy diagnostics.
+
+The structural checks and the scalar-factorization outcome are reported
+separately. A nonzero composition defect is a diagnostic result, not a reason
+to weaken the one-step guards or change the operator.
+
 ## Claim boundary
 
 The five one-step matrices and their maximum-product path remain valid finite
