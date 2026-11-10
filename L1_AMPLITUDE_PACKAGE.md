@@ -16,8 +16,13 @@ calibration, Lorentzian Schur reduction, or HDA closure.
 - `L1_AMPLITUDE_PACKAGE.npz`: lossless sparse-state arrays for the three
   representative source states (u_e) and reconstructed responses (v_e).
 
-The JSON manifest records the SHA256 of the NPZ archive. The package digest is
-computed over canonical JSON before adding the `package_sha256` field.
+The JSON manifest records the SHA256 of the NPZ archive and producer source.
+The package digest is computed over canonical JSON before adding the
+`package_sha256` field. The source commit is caller-supplied and must be the
+exact `git rev-parse HEAD` at production time; the producer does not independently
+query Git. The legacy shard metadata also does not self-attest its generating
+source blob, so worker identity is pinned by the schema's known source blob but
+is not cryptographically attested by each shard.
 
 ## Sparse state encoding
 
