@@ -256,6 +256,12 @@ def run(root: Path, out_dir: Path, source_commit: str):
                 raise ValueError(f"operator action definition mismatch in {stem}")
             u, us, uk = load_state(up, 768, 384)
             v, vs, vk = load_state(vp, 768, 384)
+            # The worker explicitly certifies both norms exceed TOL=1e-10;
+            # do not trust a JSON boolean when the raw amplitudes are available.
+            if state_norm(u) <= 1e-10:
+                raise ValueError(f"source amplitude is zero or below worker tolerance in {stem}")
+            if state_norm(v) <= 1e-10:
+                raise ValueError(f"depth-two shard amplitude is zero or below worker tolerance in {stem}")
             rows.append(m); sources.append(u); shard_states.append(v); meta_rows.append(m)
             for p in (mp, up, vp):
                 shard_hashes[str(p.name)] = sha256_file(p)

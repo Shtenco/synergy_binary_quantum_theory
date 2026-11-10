@@ -58,8 +58,10 @@ SHA256 hashes of all 216 consumed shard JSON/NPZ files. The verifier checks the
 216 source files against their SHA256, parses every shard manifest against its
 expected edge/node/backend/operator definition, and compares every source NPZ
 state map exactly with the corresponding archived raw shard amplitudes. It
-then independently reconstructs the common source states and all 3×24
-second-action aggregates from those bound raw shards. It also checks the
+recomputes the worker nonzero-state requirements from the raw amplitudes
+(`||u_e|| > 10^{-10}` and `||v_{e,w}|| > 10^{-10}`) rather than trusting the
+worker JSON booleans. It then independently reconstructs the common source
+states and all 3×24 second-action aggregates from those bound raw shards. It also checks the
 producer Git blob and SHA256 identities, the complete archive member set, and
 both package and archive hashes.
 

@@ -242,6 +242,11 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
                     ("u", "u_shard", u_shards), ("v", "v_shard", v_shards)
                 ):
                     source_state = _state_from_npz(shard_root / f"{prefix}_{e}_node_{n}.npz")
+                    # Worker checks use TOL=1e-10 and require both states nonzero.
+                    # Recompute this from raw source amplitudes, not self-attested JSON.
+                    if _state_norm(source_state) <= 1e-10:
+                        label = "source" if prefix == "u" else "depth-two shard"
+                        raise ValueError(f"{label} amplitude is zero or below worker tolerance: {prefix}_{e}_node_{n}")
                     archived_state = _state_from_arrays(z, f"{archive_prefix}_{e}_{n}")
                     if source_state != archived_state:
                         raise ValueError(

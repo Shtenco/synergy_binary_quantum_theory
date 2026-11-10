@@ -21,15 +21,15 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
         for e in validator.EDGES:
             for prefix in ("u", "v"):
                 stem = f"{prefix}_{e}"
-                arrays[f"{stem}_spins"] = np.zeros((0, 768), np.int16)
-                arrays[f"{stem}_Ks"] = np.zeros((0, 384), np.int16)
-                arrays[f"{stem}_amp"] = np.zeros((0,), np.complex128)
+                arrays[f"{stem}_spins"] = np.zeros((1, 768), np.int16)
+                arrays[f"{stem}_Ks"] = np.zeros((1, 384), np.int16)
+                arrays[f"{stem}_amp"] = np.asarray([24.0 if prefix == "v" else 1.0], np.complex128)
             for n in validator.NODES:
                 for prefix in ("u_shard", "v_shard"):
                     stem = f"{prefix}_{e}_{n}"
-                    arrays[f"{stem}_spins"] = np.zeros((0, 768), np.int16)
-                    arrays[f"{stem}_Ks"] = np.zeros((0, 384), np.int16)
-                    arrays[f"{stem}_amp"] = np.zeros((0,), np.complex128)
+                    arrays[f"{stem}_spins"] = np.zeros((1, 768), np.int16)
+                    arrays[f"{stem}_Ks"] = np.zeros((1, 384), np.int16)
+                    arrays[f"{stem}_amp"] = np.asarray([1.0], np.complex128)
         archive = root / "L1_AMPLITUDE_PACKAGE.npz"
         np.savez_compressed(archive, **arrays)
         shard_root = root / "shards"
@@ -43,10 +43,10 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             "node_index_valid",
         }
         edge_labels = {0: [0, 1], 1: [0, 2], 5: [2, 3]}
-        empty = {
-            "spins": np.zeros((0, 768), dtype=np.int16),
-            "Ks": np.zeros((0, 384), dtype=np.int16),
-            "amp": np.zeros((0,), dtype=np.complex128),
+        nonzero_state = {
+            "spins": np.zeros((1, 768), dtype=np.int16),
+            "Ks": np.zeros((1, 384), dtype=np.int16),
+            "amp": np.asarray([1.0], dtype=np.complex128),
         }
         for e in validator.EDGES:
             for n in validator.NODES:
@@ -64,7 +64,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 shard_hashes[mp.name] = validator.sha256(mp)
                 for prefix in ("u", "v"):
                     item = shard_root / f"{prefix}_{e}_node_{n}.npz"
-                    np.savez_compressed(item, **empty)
+                    np.savez_compressed(item, **nonzero_state)
                     shard_hashes[item.name] = validator.sha256(item)
         package = {
             "schema": "L1_AMPLITUDE_PACKAGE",
@@ -171,6 +171,40 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             manifest.write_text(json.dumps(package))
             with self.assertRaisesRegex(ValueError, "depth-two aggregate does not equal raw shard sum"):
                 validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
+
+    def test_zero_raw_shard_is_rejected_even_when_hashes_and_metadata_pass(self):
+        with tempfile.TemporaryDirectory() as td:
+            manifest, archive, shard_root = self._fixture(Path(td))
+            # Replace one v shard with an exactly empty state in both source and archive.
+            zero = {
+                "spins": np.zeros((0, 768), dtype=np.int16),
+                "Ks": np.zeros((0, 384), dtype=np.int16),
+                "amp": np.zeros((0,), dtype=np.complex128),
+            }
+            source_npz = shard_root / "v_0_node_0.npz"
+            np.savez_compressed(source_npz, **zero)
+            with np.load(archive, allow_pickle=False) as source:
+                arrays = {name: source[name].copy() for name in source.files}
+            arrays["v_shard_0_0_spins"] = zero["spins"]
+            arrays["v_shard_0_0_Ks"] = zero["Ks"]
+            arrays["v_shard_0_0_amp"] = zero["amp"]
+            np.savez_compressed(archive, **arrays)
+            package = json.loads(manifest.read_text())
+            package["amplitude_archive_sha256"] = validator.sha256(archive)
+            package["provenance"]["shard_file_sha256"][source_npz.name] = validator.sha256(source_npz)
+            package["provenance"]["shard_manifest_sha256"] = validator.canonical_sha(
+                package["provenance"]["shard_file_sha256"]
+            )
+            body = dict(package)
+            body.pop("package_sha256")
+            package["package_sha256"] = validator.canonical_sha(body)
+            manifest.write_text(json.dumps(package))
+            with self.assertRaisesRegex(ValueError, "depth-two shard amplitude is zero"):
+                validator.validate(
+                    manifest, archive,
+                    ROOT / "scripts/collective_l1_amplitude_producer.py",
+                    shard_root,
+                )
 
     def test_source_shard_tampering_is_detected(self):
         with tempfile.TemporaryDirectory() as td:
