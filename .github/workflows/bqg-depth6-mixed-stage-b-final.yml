@@ -9,7 +9,23 @@ permissions:
   actions: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify canonical depth-6 frontier
+        run: python scripts/verify_depth6_frontier.py
+      - name: Reject stale Stage B status assertions
+        run: python -m unittest discover -s tests -p 'test_depth6_stageb_workflow_ledger.py'
+
   mixed221_shard:
+    needs: preflight
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
