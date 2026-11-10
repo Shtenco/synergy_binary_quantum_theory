@@ -25,6 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: research/depth6-s4sign-proof
       - uses: actions/setup-python@v5
         with:
@@ -59,8 +60,11 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: research/depth6-s4sign-proof
           path: proofsrc
       - uses: actions/setup-python@v5
@@ -120,6 +124,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: research/depth6-s4sign-proof
       - uses: actions/setup-python@v5
         with:
@@ -154,8 +159,11 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: research/depth6-s4sign-proof
           path: proofsrc
       - uses: actions/setup-python@v5
