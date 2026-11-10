@@ -66,6 +66,32 @@ The pairwise scalar matrices predict instead
 (F_jF_{j+1})^{ac}
 =\sum_bF_j^{ab}F_{j+1}^{bc}.
 \]
+
+This product has a precise interpretation. Define the channel replacement
+map
+\[
+\mathcal R_{j+1}(X)
+=\sum_b\frac{\operatorname{Tr}(P_{j+1,b}X)}{d_{j+1,b}}
+P_{j+1,b}.
+\]
+Then
+\[
+(F_jF_{j+1})^{ac}
+=\frac{1}{d_{j,a}}\operatorname{Tr}\left[
+I_{j+1}\mathcal R_{j+1}(Q_{j,a})I_{j+1}^\dagger
+P_{j+2,c}\right].
+\]
+Thus multiplying the scalar matrices is equivalent to applying an
+intermediate measure-and-prepare channel: it measures the intermediate
+master-channel label and replaces the state within that channel by the
+normalized identity on that sector. It discards both off-diagonal channel
+coherences and traceless structure internal to each channel block.
+
+The direct composed overlap \(G_{j:j+2}\), by contrast, propagates
+\(Q_{j,a}\) through the exact microscopic isometry without inserting
+\(\mathcal R_{j+1}\). Equality is therefore a substantive dynamical/
+representation-theoretic condition, not a consequence of row stochasticity.
+
 The first composition defect to measure is therefore
 \[
 \boxed{
