@@ -289,6 +289,7 @@ def run_pair(source_s2):
         and max((x["hermiticity"] for x in endpoint_projector_defects), default=0.0) < 1e-10
         and max((x["idempotence"] for x in endpoint_projector_defects), default=0.0) < 1e-10
         and all(x["finite"] for x in sensitivity)
+        and max((x["max_direct_overlap_change"] for x in sensitivity), default=0.0) < 1e-8
     )
     factorization_tolerance = 1e-8
     scalar_factorization_passed = bool(
