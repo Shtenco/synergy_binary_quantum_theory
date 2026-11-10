@@ -134,7 +134,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 arrays = {name: source[name].copy() for name in source.files}
             arrays["u_shard_0_0_spins"] = np.zeros((1, 768), dtype=np.int16)
             arrays["u_shard_0_0_Ks"] = np.zeros((1, 384), dtype=np.int16)
-            arrays["u_shard_0_0_amp"] = np.asarray([1.0 + 0.0j], dtype=np.complex128)
+            arrays["u_shard_0_0_amp"] = np.asarray([2.0 + 0.0j], dtype=np.complex128)
             np.savez_compressed(archive, **arrays)
             package = json.loads(manifest.read_text())
             package["amplitude_archive_sha256"] = validator.sha256(archive)
@@ -152,7 +152,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 arrays = {name: source[name].copy() for name in source.files}
             arrays["v_shard_0_0_spins"] = np.zeros((1, 768), dtype=np.int16)
             arrays["v_shard_0_0_Ks"] = np.zeros((1, 384), dtype=np.int16)
-            arrays["v_shard_0_0_amp"] = np.asarray([1.0 + 0.0j], dtype=np.complex128)
+            arrays["v_shard_0_0_amp"] = np.asarray([2.0 + 0.0j], dtype=np.complex128)
             np.savez_compressed(archive, **arrays)
             # Also update the independent source NPZ and its digest, so the
             # raw source/archive binding passes and the aggregate check fails.
