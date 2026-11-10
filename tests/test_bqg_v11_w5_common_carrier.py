@@ -47,6 +47,7 @@ class FakeV10:
         ix = {k: i for i, k in enumerate(keys)}
         cols = [[] for _ in keys]
         sym = [[] for _ in keys]
+        anti = [[] for _ in keys]
         for K in (0, 2, 4, 6, 8):
             key = (spins, (K, 0, 0, 0, 2))
             col = ix[self.w5_input_key(K)]
@@ -61,6 +62,7 @@ class FakeV10:
             "forward_B_columns_sparse": cols,
             "hermitian_ordering_candidate": {
                 "B_comm_symmetric_columns": sym,
+                "B_comm_antihermitian_columns": anti,
             },
             "diagnostics": {
                 "direct_adjoint_relative_residual": 0.0,
