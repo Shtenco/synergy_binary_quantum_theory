@@ -18,19 +18,14 @@ import tarfile
 import zipfile
 import os
 import re
-import sys
+import subprocess
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 API = "https://api.github.com"
 PY_EXTS = {".py", ".pyi", ".pyx", ".pxd"}
 IPYNB_EXT = ".ipynb"
-MAX_WORKERS = 8
 ARCHIVE_SUFFIXES = (
     ".tar.gz.b64", ".tgz.b64", ".zip.b64",
     ".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".tar",
@@ -42,58 +37,79 @@ MAX_EMBEDDED_TOTAL_SOURCE_BYTES = 128 * 1024 * 1024
 MAX_EMBEDDED_MEMBERS = 20000
 
 
-def api_json(url: str, token: str):
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "BQG-branch-wide-python-audit",
-        },
+def git_output(arguments, input_bytes=None) -> bytes:
+    result = subprocess.run(
+        ["git", *arguments],
+        input=input_bytes,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
     )
-    for attempt in range(6):
-        try:
-            with urllib.request.urlopen(req, timeout=90) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            if exc.code not in {403, 429, 500, 502, 503, 504} or attempt == 5:
-                raise
-            retry_after = exc.headers.get("Retry-After")
-            remaining = exc.headers.get("X-RateLimit-Remaining")
-            reset = exc.headers.get("X-RateLimit-Reset")
-            if retry_after:
-                delay = max(1.0, float(retry_after))
-            elif remaining == "0" and reset:
-                delay = max(1.0, float(reset) - time.time() + 1.0)
-                if delay > 120:
-                    raise RuntimeError(
-                        f"GitHub API rate limit exhausted; reset in {delay:.0f}s"
-                    ) from exc
-            else:
-                delay = min(30.0, 2.0 ** attempt * 2.0)
-            time.sleep(delay)
+    if result.returncode:
+        message = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"git {' '.join(arguments)} failed: {message}")
+    return result.stdout
 
 
-def blob_bytes(repo: str, sha: str, commit: str, path: str) -> bytes:
-    # Raw content is not subject to the authenticated REST API quota. Verify
-    # the Git object SHA-1 so fetched bytes remain pinned to the tree entry.
-    quoted_path = urllib.parse.quote(path, safe="/")
-    url = f"https://raw.githubusercontent.com/{repo}/{commit}/{quoted_path}"
-    req = urllib.request.Request(url, headers={"User-Agent": "BQG-branch-wide-python-audit"})
-    with urllib.request.urlopen(req, timeout=90) as response:
-        raw = response.read()
-    header = b"blob " + str(len(raw)).encode("ascii") + b"\0"
-    actual_sha = hashlib.sha1(header + raw).hexdigest()
-    if actual_sha != sha:
-        raise RuntimeError(
-            f"raw blob SHA mismatch for {commit}:{path}: expected {sha}, got {actual_sha}"
-        )
-    return raw
+def branch_heads():
+    raw = git_output([
+        "for-each-ref", "--format=%(refname)%09%(objectname)",
+        "refs/remotes/origin/",
+    ])
+    branches = {}
+    for line in raw.decode("utf-8", errors="replace").splitlines():
+        if not line:
+            continue
+        ref, sha = line.split("\t", 1)
+        if ref.endswith("/HEAD"):
+            continue
+        name = ref.removeprefix("refs/remotes/origin/")
+        branches[name] = sha
+    return branches
 
 
-def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
-    return blob_bytes(repo, sha, commit, path).decode("utf-8", errors="replace")
+def git_tree(commit: str):
+    raw = git_output(["ls-tree", "-r", "-t", "-z", commit])
+    entries = []
+    for record_bytes in raw.split(b"\0"):
+        if not record_bytes:
+            continue
+        metadata, path_bytes = record_bytes.split(b"\t", 1)
+        mode, kind, sha = metadata.decode("ascii").split()
+        path = path_bytes.decode("utf-8", errors="replace")
+        entries.append({"mode": mode, "type": kind, "sha": sha, "path": path})
+    return entries
+
+
+def git_blob_batch(shas: list[str]) -> dict[str, bytes]:
+    if not shas:
+        return {}
+    request = "".join(f"{sha}\n" for sha in shas).encode("ascii")
+    raw = git_output(["cat-file", "--batch"], request)
+    blobs = {}
+    offset = 0
+    for sha in shas:
+        line_end = raw.find(b"\n", offset)
+        if line_end < 0:
+            raise RuntimeError(f"truncated git cat-file header for {sha}")
+        header = raw[offset:line_end].split()
+        if len(header) != 3 or header[1] != b"blob":
+            raise RuntimeError(f"git object {sha} is missing or not a blob")
+        size = int(header[2])
+        start = line_end + 1
+        finish = start + size
+        payload = raw[start:finish]
+        if len(payload) != size or raw[finish:finish + 1] != b"\n":
+            raise RuntimeError(f"truncated git blob payload for {sha}")
+        git_header = b"blob " + str(size).encode("ascii") + b"\0"
+        actual_sha = hashlib.sha1(git_header + payload).hexdigest()
+        if actual_sha != sha:
+            raise RuntimeError(f"git cat-file SHA mismatch for {sha}: got {actual_sha}")
+        blobs[sha] = payload
+        offset = finish + 1
+    if offset != len(raw):
+        raise RuntimeError("unexpected trailing bytes from git cat-file --batch")
+    return blobs
 
 
 def dotted(node):
@@ -341,55 +357,48 @@ def main():
     ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "Shtenco/synergy_binary_quantum_theory"))
     ap.add_argument("--out", type=Path, default=Path("python-branch-audit.json"))
     args = ap.parse_args()
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if not token:
-        raise SystemExit("GITHUB_TOKEN or GH_TOKEN is required")
 
     t0 = time.time()
-    refs = api_json(f"{API}/repos/{args.repo}/git/matching-refs/heads/", token)
-    branches = {x["ref"].removeprefix("refs/heads/"): x["object"]["sha"] for x in refs}
+    branches = branch_heads()
     if "main" not in branches:
-        raise SystemExit("branch-wide audit did not receive a main branch head")
+        raise SystemExit("local shallow fetch does not contain refs/remotes/origin/main")
     main_head = branches["main"]
     commits = sorted(set(branches.values()))
     snapshots = []
     occurrences = []
     archive_occurrences = []
-    errors = []
 
-    def get_tree(commit):
-        obj = api_json(f"{API}/repos/{args.repo}/git/trees/{commit}?recursive=1", token)
-        if obj.get("truncated"):
-            raise RuntimeError(f"truncated tree for commit {commit}")
-        entries = obj.get("tree", [])
-        files = [e for e in entries if e.get("type") == "blob"
-                 and Path(e["path"]).suffix.lower() in PY_EXTS | {IPYNB_EXT}]
-        archives = [e for e in entries if e.get("type") == "blob"
-                    and e["path"].lower().endswith(ARCHIVE_SUFFIXES)]
-        return commit, len(entries), files, archives
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        futures = [pool.submit(get_tree, c) for c in commits]
-        for future in as_completed(futures):
-            try:
-                commit, tree_count, files, archives = future.result()
-                snapshots.append({"commit": commit, "tree_entries": tree_count,
-                                  "python_files": len(files), "embedded_archives": len(archives)})
-                for f in files:
-                    occurrences.append({
-                        "commit": commit, "path": f["path"], "blob_sha": f["sha"],
-                        "size": f.get("size", 0), "extension": Path(f["path"]).suffix.lower(),
-                    })
-                for f in archives:
-                    archive_occurrences.append({
-                        "commit": commit, "path": f["path"], "blob_sha": f["sha"],
-                        "size": f.get("size", 0),
-                    })
-            except Exception as exc:
-                errors.append(str(exc))
-
-    if errors:
-        raise SystemExit("branch tree enumeration incomplete: " + " | ".join(errors[:10]))
+    for commit in commits:
+        entries = git_tree(commit)
+        files = [
+            entry for entry in entries
+            if entry["type"] == "blob"
+            and Path(entry["path"]).suffix.lower() in PY_EXTS | {IPYNB_EXT}
+        ]
+        archives = [
+            entry for entry in entries
+            if entry["type"] == "blob"
+            and entry["path"].lower().endswith(ARCHIVE_SUFFIXES)
+        ]
+        snapshots.append({
+            "commit": commit,
+            "tree_entries": len(entries),
+            "python_files": len(files),
+            "embedded_archives": len(archives),
+        })
+        for item in files:
+            occurrences.append({
+                "commit": commit,
+                "path": item["path"],
+                "blob_sha": item["sha"],
+                "extension": Path(item["path"]).suffix.lower(),
+            })
+        for item in archives:
+            archive_occurrences.append({
+                "commit": commit,
+                "path": item["path"],
+                "blob_sha": item["sha"],
+            })
 
     blob_locations = defaultdict(list)
     for item in occurrences:
@@ -400,35 +409,6 @@ def main():
         })
     for locations in blob_locations.values():
         locations.sort(key=lambda x: (x["path"], x["commit"], x["extension"]))
-    unique_blobs = sorted(blob_locations)
-    findings = []
-    totals = Counter()
-    fetched = 0
-
-    def get_blob(sha):
-        location = blob_locations[sha][0]
-        return sha, blob_text(
-            args.repo, sha, location["commit"], location["path"]
-        )
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        futures = [pool.submit(get_blob, sha) for sha in unique_blobs]
-        for future in as_completed(futures):
-            try:
-                sha, source = future.result()
-                locations = blob_locations[sha]
-                representative = locations[0]["path"]
-                extensions = {x["extension"] for x in locations}
-                fetched += 1
-                if IPYNB_EXT in extensions:
-                    scan_notebook(source, representative, sha, findings, totals, locations)
-                if extensions & PY_EXTS:
-                    scan_source(source, representative, sha, findings, totals, locations)
-            except Exception as exc:
-                errors.append(str(exc))
-
-    if errors:
-        raise SystemExit("blob audit incomplete: " + " | ".join(errors[:10]))
 
     archive_locations = defaultdict(list)
     for item in archive_occurrences:
@@ -437,30 +417,52 @@ def main():
         })
     for locations in archive_locations.values():
         locations.sort(key=lambda x: (x["path"], x["commit"]))
+
+    all_blob_shas = sorted(set(blob_locations) | set(archive_locations))
+    blob_contents = git_blob_batch(all_blob_shas)
+
+    findings = []
+    totals = Counter()
+    for sha in sorted(blob_locations):
+        locations = blob_locations[sha]
+        representative = locations[0]["path"]
+        extensions = {x["extension"] for x in locations}
+        source = blob_contents[sha].decode("utf-8", errors="replace")
+        if IPYNB_EXT in extensions:
+            scan_notebook(source, representative, sha, findings, totals, locations)
+        if extensions & PY_EXTS:
+            scan_source(source, representative, sha, findings, totals, locations)
+
     for archive_sha in sorted(archive_locations):
         locations = archive_locations[archive_sha]
         representative = locations[0]["path"]
-        try:
-            location = locations[0]
-            payload = blob_bytes(
-                args.repo, archive_sha, location["commit"], location["path"]
-            )
-            scan_embedded_archive(payload, representative, archive_sha,
-                                  findings, totals, locations)
-        except Exception as exc:
-            record(findings, "embedded_archive_fetch_error", representative,
-                   archive_sha, None, f"{type(exc).__name__}: {exc}", locations)
-            totals["embedded_archive_errors"] += 1
+        scan_embedded_archive(
+            blob_contents[archive_sha], representative, archive_sha,
+            findings, totals, locations
+        )
 
     path_versions = {(x["path"], x["blob_sha"]) for x in occurrences}
     unique_paths = {x["path"] for x in occurrences}
     main_locations = [x for x in occurrences if x["commit"] == main_head]
     main_blob_shas = {x["blob_sha"] for x in main_locations}
+    main_embedded_archive_locations = [
+        x for x in archive_occurrences if x["commit"] == main_head
+    ]
+    main_embedded_syntax_errors = sum(
+        1 for item in findings
+        if item["category"] == "syntax_error"
+        and item["blob_sha"].startswith("sha256:")
+        and any(loc["commit"] == main_head for loc in item.get("locations", []))
+    )
     main_syntax_errors = sum(
         1 for item in findings
         if item["category"] == "syntax_error" and item["blob_sha"] in main_blob_shas
-    )
-    imports = {k.removeprefix("import:"): v for k, v in totals.items() if k.startswith("import:")}
+    ) + main_embedded_syntax_errors
+
+    imports = {
+        k.removeprefix("import:"): v
+        for k, v in totals.items() if k.startswith("import:")
+    }
     category_counts = Counter(x["category"] for x in findings)
     result = {
         "repo": args.repo,
@@ -469,13 +471,15 @@ def main():
         "main_head_sha": main_head,
         "main_python_file_occurrences": len(main_locations),
         "main_unique_python_blobs": len(main_blob_shas),
+        "main_embedded_archive_file_occurrences": len(main_embedded_archive_locations),
         "main_syntax_errors": main_syntax_errors,
         "main_ast_status": "PASS" if main_syntax_errors == 0 else "FAIL",
         "unique_branch_head_commits": len(commits),
         "branch_snapshot_python_file_occurrences": len(occurrences),
         "unique_python_paths_across_branches": len(unique_paths),
         "unique_path_and_content_versions": len(path_versions),
-        "unique_blob_contents_audited": fetched,
+        "unique_blob_contents_audited": len(blob_locations),
+        "unique_git_blobs_loaded": len(blob_contents),
         "embedded_archive_file_occurrences": len(archive_occurrences),
         "unique_embedded_archive_blobs": len(archive_locations),
         "embedded_archives_scanned": totals["embedded_archives_scanned"],
@@ -495,22 +499,29 @@ def main():
         "findings": sorted(findings, key=lambda x: (x["category"], x["path"], x["line"] or 0)),
         "snapshots": sorted(snapshots, key=lambda x: x["commit"]),
         "elapsed_seconds": round(time.time() - t0, 2),
-        "scope_note": "Static inspection only; repository code was not executed. Every distinct Python blob reachable from a branch head was parsed once.",
+        "scope_note": (
+            "Static inspection only; repository code was not executed. Every distinct "
+            "tracked Python blob and every Python source member in supported tar/ZIP "
+            "archives at branch heads was parsed. Inline Python in Markdown/YAML, "
+            "unsupported archive formats, tags, and non-head historical commits are "
+            "outside this scan."
+        ),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({k: result[k] for k in (
         "branch_count", "unique_branch_head_commits", "main_head_sha",
-        "main_python_file_occurrences", "main_syntax_errors", "main_ast_status",
+        "main_python_file_occurrences", "main_embedded_archive_file_occurrences",
+        "main_syntax_errors", "main_ast_status",
         "branch_snapshot_python_file_occurrences", "unique_python_paths_across_branches",
         "unique_path_and_content_versions", "unique_blob_contents_audited",
-        "parsed_sources", "syntax_errors", "embedded_archive_file_occurrences",
-        "unique_embedded_archive_blobs", "embedded_archives_scanned",
-        "embedded_archive_members", "embedded_python_sources",
-        "embedded_archive_unsafe_members", "embedded_archive_errors",
-        "finding_counts", "elapsed_seconds",
+        "unique_git_blobs_loaded", "parsed_sources", "syntax_errors",
+        "embedded_archive_file_occurrences", "unique_embedded_archive_blobs",
+        "embedded_archives_scanned", "embedded_archive_members",
+        "embedded_python_sources", "embedded_archive_unsafe_members",
+        "embedded_archive_errors", "finding_counts", "elapsed_seconds",
     )}, indent=2))
-    return 1 if main_syntax_errors or totals['embedded_archive_errors'] else 0
+    return 1 if main_syntax_errors or totals["embedded_archive_errors"] else 0
 
 
 if __name__ == "__main__":
