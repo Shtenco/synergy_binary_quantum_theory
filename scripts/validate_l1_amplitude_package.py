@@ -109,8 +109,20 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
         "Jmax": 2.5, "basis_status": "NOT_YET_JOINT_E_S_R_W"
     }:
         raise ValueError("unexpected or mutated carrier contract")
-    if not all(p.get("checks", {}).values()):
-        raise ValueError("one or more producer checks did not pass")
+    required_checks = {
+        "all_72_shards_present_and_passed",
+        "source_states_identical",
+        "finite_amplitudes_and_moments",
+        "legacy_collector_state_regression",
+        "legacy_collector_moment_regression",
+        "S4_three_orbit_consistency",
+        "nonnegative_depth2_variance_with_frozen_tolerance",
+    }
+    checks = p.get("checks", {})
+    if set(checks) != required_checks or not all(value is True for value in checks.values()):
+        raise ValueError("missing, unexpected, or failed producer checks")
+    if provenance.get("source_worker_blob_sha") != "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1":
+        raise ValueError("unrecognized worker source provenance")
     if p.get("operator_registry", {}).get("S", {}).get("status") != "MISSING" or p.get("operator_registry", {}).get("R", {}).get("status") != "MISSING":
         raise ValueError("S/R must be explicitly missing in v1")
 
@@ -149,6 +161,8 @@ def _check_state(z, stem, n_edges, n_vertices):
         raise ValueError(f"{stem}: invalid amplitude dtype/shape")
     if not np.isfinite(amp.real).all() or not np.isfinite(amp.imag).all():
         raise ValueError(f"{stem}: non-finite amplitude")
+    if np.any(spins < 0) or np.any(Ks < 0):
+        raise ValueError(f"{stem}: negative spin/intertwiner label")
     keys = [spins[i].tobytes()+Ks[i].tobytes() for i in range(len(amp))]
     if len(set(keys)) != len(keys):
         raise ValueError(f"{stem}: duplicate state key")

@@ -56,6 +56,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             "provenance": {
                 "shard_file_sha256": shard_hashes,
                 "shard_manifest_sha256": validator.canonical_sha(shard_hashes),
+                "source_worker_blob_sha": "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1",
                 "source_collector_blob_sha": "3ba2514ecd553fc54a59d3b56c1c43ce24aae09f",
                 "producer_source_sha256": validator.sha256(ROOT / "scripts/collective_l1_amplitude_producer.py"),
                 "producer_blob_sha": validator.git_blob_sha(ROOT / "scripts/collective_l1_amplitude_producer.py"),
@@ -71,7 +72,15 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 "parent_fine_nodes": 24, "edge_representatives": [0, 1, 5],
                 "Jmax": 2.5, "basis_status": "NOT_YET_JOINT_E_S_R_W",
             },
-            "checks": {"all_checks_passed": True},
+            "checks": {
+                "all_72_shards_present_and_passed": True,
+                "source_states_identical": True,
+                "finite_amplitudes_and_moments": True,
+                "legacy_collector_state_regression": True,
+                "legacy_collector_moment_regression": True,
+                "S4_three_orbit_consistency": True,
+                "nonnegative_depth2_variance_with_frozen_tolerance": True,
+            },
         }
         package["package_sha256"] = validator.canonical_sha(package)
         manifest = root / "L1_AMPLITUDE_PACKAGE.json"
@@ -92,6 +101,26 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             with archive.open("ab") as f:
                 f.write(b"tamper")
             with self.assertRaisesRegex(ValueError, "archive SHA256 mismatch"):
+                validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
+
+    def test_source_shard_tampering_is_detected(self):
+        with tempfile.TemporaryDirectory() as td:
+            manifest, archive, shard_root = self._fixture(Path(td))
+            target = shard_root / "edge_0_node_0.json"
+            target.write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "modified source shard"):
+                validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
+
+    def test_missing_required_check_is_detected(self):
+        with tempfile.TemporaryDirectory() as td:
+            manifest, archive, shard_root = self._fixture(Path(td))
+            package = json.loads(manifest.read_text())
+            package["checks"].pop("S4_three_orbit_consistency")
+            body = dict(package)
+            body.pop("package_sha256")
+            package["package_sha256"] = validator.canonical_sha(body)
+            manifest.write_text(json.dumps(package))
+            with self.assertRaisesRegex(ValueError, "missing, unexpected, or failed"):
                 validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
 
 

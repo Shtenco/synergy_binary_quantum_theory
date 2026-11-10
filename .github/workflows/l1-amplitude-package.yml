@@ -13,6 +13,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: l1-amplitude-package-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   producer-unit-tests:
     runs-on: ubuntu-latest
