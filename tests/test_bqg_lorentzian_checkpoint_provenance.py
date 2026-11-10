@@ -45,6 +45,34 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
         self.assertNotEqual(PART.key_digest(keys), PART.key_digest(keys[:1]))
         self.assertNotEqual(PART.key_digest(keys), PART.key_digest(list(reversed(keys))))
 
+    def test_partial_stage_diagnostics_are_preserved_without_zero_filling(self):
+        partial = {"CV_complete_basis_leakage": 0.0}
+        self.assertEqual(
+            BASE.validate_leakage_map(partial, require_all=False),
+            partial,
+        )
+        with self.assertRaisesRegex(ValueError, "missing required leakage"):
+            BASE.validate_leakage_map(partial, require_all=True)
+
+    def test_finish_requires_all_four_diagnostics(self):
+        complete = {key: 0.0 for key in BASE.LEAK_FIELDS}
+        self.assertEqual(
+            BASE.validate_leakage_map(complete, require_all=True),
+            complete,
+        )
+        complete.pop("CK_complete_charge_basis_leakage")
+        with self.assertRaisesRegex(ValueError, "CK_complete_charge_basis_leakage"):
+            BASE.validate_leakage_map(complete, require_all=True)
+
+    def test_missing_nan_and_negative_diagnostics_fail_closed(self):
+        for value in (float("nan"), float("inf"), -1.0, True, "0"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    BASE.validate_leakage_map(
+                        {"CV_complete_basis_leakage": value},
+                        require_all=False,
+                    )
+
     def test_partition_worker_has_no_optimizable_assert_guards(self):
         tree = ast.parse(
             Path(PART.__file__).read_text(encoding="utf-8"),
