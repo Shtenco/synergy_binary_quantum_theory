@@ -165,14 +165,6 @@ def run():
     tight_comparison = compare_states(baseline["final_state"], tight["final_state"])
     loose_comparison = compare_states(baseline["final_state"], loose["final_state"])
     exact_error = abs(baseline["final_norm_squared"] - exact)
-    extra_spin_states = sum(
-        1 for key in overcut["final_state"]
-        if max(overcut["final_state"].get(key, 0j).real * 0 + 0, 0) < -1
-    )
-    high_spin_support = sum(
-        1 for key in overcut["final_state"]
-        if max(overcut["final_state"].get(key, 0j).real * 0 + 0, 0) > 1e99
-    )
     # Link basis is identical through j=3 for both cutoffs; indices above the
     # J=3 sector start at the common prefix dimension.
     _, idx3, *_ = PW.build_link(3.0)
