@@ -405,13 +405,30 @@ def verify_package(manifest_path: Path):
             for prefix in ("u_shard", "v_shard"):
                 expected.update({f"{prefix}_{edge}_{node}_spins", f"{prefix}_{edge}_{node}_Ks",
                                  f"{prefix}_{edge}_{node}_amp"})
+    groups = [f"{p}_{edge}" for edge in REPS for p in ("u", "v")]
+    groups += [f"{p}_shard_{edge}_{node}" for edge in REPS for node in NODES
+               for p in ("u", "v")]
     with np.load(archive, allow_pickle=False) as z:
         if set(z.files) != expected:
             raise ValueError("amplitude archive member set mismatch")
-        for prefix in sorted(expected):
-            arr = z[prefix]
-            if arr.dtype.kind in "fc" and not np.isfinite(arr).all():
-                raise ValueError(f"non-finite archive array: {prefix}")
+        for group in groups:
+            spins, Ks, amp = z[group+"_spins"], z[group+"_Ks"], z[group+"_amp"]
+            if spins.dtype != np.dtype("int16") or spins.ndim != 2 or spins.shape[1] != 768:
+                raise ValueError(f"invalid spin array: {group}")
+            if Ks.dtype != np.dtype("int16") or Ks.ndim != 2 or Ks.shape[1] != 384:
+                raise ValueError(f"invalid intertwiner array: {group}")
+            if amp.dtype != np.dtype("complex128") or amp.ndim != 1:
+                raise ValueError(f"invalid amplitude array: {group}")
+            if len(spins) != len(Ks) or len(spins) != len(amp):
+                raise ValueError(f"row count mismatch: {group}")
+            if not np.isfinite(amp.real).all() or not np.isfinite(amp.imag).all():
+                raise ValueError(f"non-finite amplitudes: {group}")
+            seen = set()
+            for i in range(len(amp)):
+                key = spins[i].tobytes() + Ks[i].tobytes()
+                if key in seen:
+                    raise ValueError(f"duplicate state key: {group}")
+                seen.add(key)
     return {"passed": True, "schema": SCHEMA, "package_sha256": recorded,
             "amplitude_archive_sha256": package["amplitude_archive_sha256"],
             "array_count": len(expected), "package_status": package.get("package_status")}
