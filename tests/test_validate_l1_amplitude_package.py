@@ -104,6 +104,24 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "archive SHA256 mismatch"):
                 validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
 
+    def test_archive_aggregate_must_equal_raw_shard_sum(self):
+        with tempfile.TemporaryDirectory() as td:
+            manifest, archive, shard_root = self._fixture(Path(td))
+            with np.load(archive, allow_pickle=False) as source:
+                arrays = {name: source[name].copy() for name in source.files}
+            arrays["v_shard_0_0_spins"] = np.zeros((1, 768), dtype=np.int16)
+            arrays["v_shard_0_0_Ks"] = np.zeros((1, 384), dtype=np.int16)
+            arrays["v_shard_0_0_amp"] = np.asarray([1.0 + 0.0j], dtype=np.complex128)
+            np.savez_compressed(archive, **arrays)
+            package = json.loads(manifest.read_text())
+            package["amplitude_archive_sha256"] = validator.sha256(archive)
+            body = dict(package)
+            body.pop("package_sha256")
+            package["package_sha256"] = validator.canonical_sha(body)
+            manifest.write_text(json.dumps(package))
+            with self.assertRaisesRegex(ValueError, "depth-two aggregate does not equal raw shard sum"):
+                validator.validate(manifest, archive, ROOT / "scripts/collective_l1_amplitude_producer.py", shard_root)
+
     def test_source_shard_tampering_is_detected(self):
         with tempfile.TemporaryDirectory() as td:
             manifest, archive, shard_root = self._fixture(Path(td))

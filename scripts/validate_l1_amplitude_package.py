@@ -47,6 +47,43 @@ def expected_names():
     return names
 
 
+def _state_from_arrays(z, stem):
+    spins, Ks, amp = z[stem+"_spins"], z[stem+"_Ks"], z[stem+"_amp"]
+    return {
+        spins[i].tobytes() + Ks[i].tobytes(): complex(amp[i])
+        for i in range(len(amp))
+    }
+
+
+def _state_norm(state):
+    return math.sqrt(math.fsum(abs(value) ** 2 for value in state.values()))
+
+
+def _state_relerr(actual, expected):
+    keys = set(actual) | set(expected)
+    numerator = math.sqrt(math.fsum(
+        abs(actual.get(key, 0j) - expected.get(key, 0j)) ** 2 for key in keys
+    ))
+    return numerator / max(_state_norm(expected), 1e-300)
+
+
+def _stable_sum_states(states):
+    contributions = {}
+    for state in states:
+        for key, value in state.items():
+            contributions.setdefault(key, []).append(complex(value))
+    result = {}
+    for key in sorted(contributions):
+        values = sorted(contributions[key], key=lambda value: (value.real, value.imag))
+        value = complex(
+            math.fsum(item.real for item in values),
+            math.fsum(item.imag for item in values),
+        )
+        if abs(value) > 1e-10:
+            result[key] = value
+    return result
+
+
 def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path, shard_root: Path):
     manifest_path, archive_path = Path(manifest_path), Path(archive_path)
     p = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -136,19 +173,40 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
         if actual != expected:
             raise ValueError(f"archive member set mismatch: missing={len(expected-actual)} extra={len(actual-expected)}")
         checked_states = 0
+        aggregation_reconstruction = {}
+        source_reconstruction = {}
         for e in EDGES:
-            for prefix, node in (("u", None), ("v", None)):
-                stem = f"{prefix}_{e}"
-                checked_states += _check_state(z, stem, 768, 384)
+            for prefix in ("u", "v"):
+                checked_states += _check_state(z, f"{prefix}_{e}", 768, 384)
             for n in NODES:
                 for prefix in ("u_shard", "v_shard"):
-                    stem = f"{prefix}_{e}_{n}"
-                    checked_states += _check_state(z, stem, 768, 384)
+                    checked_states += _check_state(z, f"{prefix}_{e}_{n}", 768, 384)
+            u_shards = [_state_from_arrays(z, f"u_shard_{e}_{n}") for n in NODES]
+            v_shards = [_state_from_arrays(z, f"v_shard_{e}_{n}") for n in NODES]
+            u_reference = u_shards[0]
+            u_error = max((_state_relerr(state, u_reference) for state in u_shards[1:]), default=0.0)
+            archived_u_error = _state_relerr(_state_from_arrays(z, f"u_{e}"), u_reference)
+            if u_error > 1e-12 or archived_u_error > 1e-12:
+                raise ValueError(f"source amplitude reconstruction mismatch for edge {e}: shards={u_error}, aggregate={archived_u_error}")
+            v_reconstructed = _stable_sum_states(v_shards)
+            v_error = _state_relerr(_state_from_arrays(z, f"v_{e}"), v_reconstructed)
+            if v_error > 1e-14:
+                raise ValueError(f"depth-two aggregate does not equal raw shard sum for edge {e}: {v_error}")
+            source_reconstruction[str(e)] = {
+                "max_shard_relative_error": u_error,
+                "archived_source_relative_error": archived_u_error,
+            }
+            aggregation_reconstruction[str(e)] = {
+                "archived_response_relative_error": v_error,
+                "reconstructed_support": len(v_reconstructed),
+            }
     return {
         "passed": True,
         "science_status": "PACKAGE_INTEGRITY_VALID_E_ONLY_PRECURSOR",
         "checked_sparse_state_groups": checked_states,
         "verified_source_shard_files": len(hashes),
+        "independently_reconstructed_source_states": source_reconstruction,
+        "independently_reconstructed_depth2_aggregates": aggregation_reconstruction,
         "archive_sha256": p["amplitude_archive_sha256"],
         "package_sha256": claimed_package_sha,
         "physical_completeness": False,
