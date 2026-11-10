@@ -440,6 +440,18 @@ checks as well. The optimization regression test parses this script's AST
 and executes it under `python -O`. The exact SU(2) operators, matrices,
 and symbolic equalities are unchanged.
 
+Five additional standalone scientific gates still retain assertion-based
+checks and print `PASS`. Rather than mechanically rewriting their symbolic
+and numerical expressions, each now refuses to run when `__debug__` is
+false: `bqg_three_node_reduced_chain_gate.py`,
+`bqg_local_information_resistance_gate.py`,
+`bqg_two_node_reduced_gluing_gate.py`,
+`bqg_projector_graph_transition_gate.py`, and
+`bqg_minimal_entanglement_volume_gate.py`. Their formulas and assertion
+tolerances are unchanged; this guard prevents a false success under
+`python -O`. The optimization test suite checks for the guard in each
+module. The remaining assert-bearing main files are not yet all migrated.
+
 This is one corrected gate, not a blanket clearance of the other
 assert-based gates. The branch-wide report previously counted 171
 production assertion nodes on its main snapshot. Each remaining
@@ -474,7 +486,7 @@ confirmed by a completed matrix job.
 
 ### CI state at this update
 
-- Branch-wide Python audit: run 42822081116 pending.
+- Branch-wide Python audit: run 42822313742 pending.
 - Numerical continuation: latest run 42821910672 queued.
 - Core regression: latest run 42821910573 queued.
 - Mixed Stage-A push matrix: run 42821076917 queued; it predates removal
