@@ -47,6 +47,58 @@ def expected_names():
     return names
 
 
+def _state_from_npz(path):
+    with np.load(path, allow_pickle=False) as data:
+        if set(data.files) != {"spins", "Ks", "amp"}:
+            raise ValueError(f"source shard {path.name}: unexpected NPZ members")
+        spins, Ks, amp = data["spins"], data["Ks"], data["amp"]
+        if (spins.dtype != np.dtype("int16") or spins.ndim != 2 or spins.shape[1] != 768
+                or Ks.dtype != np.dtype("int16") or Ks.ndim != 2 or Ks.shape[1] != 384
+                or amp.dtype != np.dtype("complex128") or amp.ndim != 1
+                or len(spins) != len(Ks) or len(spins) != len(amp)):
+            raise ValueError(f"source shard {path.name}: invalid array dtype/shape")
+        if (not np.isfinite(amp.real).all() or not np.isfinite(amp.imag).all()
+                or np.any(spins < 0) or np.any(Ks < 0)):
+            raise ValueError(f"source shard {path.name}: invalid labels or amplitudes")
+        state = {}
+        for i, value in enumerate(amp):
+            key = spins[i].tobytes() + Ks[i].tobytes()
+            if key in state:
+                raise ValueError(f"source shard {path.name}: duplicate state key")
+            state[key] = complex(value)
+        return state
+
+
+def _validate_shard_metadata(path, edge, node):
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    expected_edges = {0: [0, 1], 1: [0, 2], 5: [2, 3]}
+    required = {
+        "L1_nodes_384", "L1_dual_links_768", "parent_has_24_fine_nodes",
+        "edge_has_four_barycentric_chambers", "first_edge_state_nonzero",
+        "one_node_depth2_state_nonzero", "finite_amplitudes",
+        "depth2_spin_wall_j_le_5_over_2", "depth2_seed_parity_restored",
+        "node_index_valid",
+    }
+    if meta.get("passed") is not True or meta.get("science_status") != "L1_METRIC_EDGE_DEPTH2_FULL_E_SHARD":
+        raise ValueError(f"source shard metadata failed or wrong science status: {path.name}")
+    if meta.get("backend") != "LocalPLPeterWeylEuclidean exact active-cone":
+        raise ValueError(f"source shard metadata backend mismatch: {path.name}")
+    if type(meta.get("edge_index")) is not int or meta["edge_index"] != edge:
+        raise ValueError(f"source shard edge index mismatch: {path.name}")
+    if type(meta.get("node_index")) is not int or meta["node_index"] != node:
+        raise ValueError(f"source shard node index mismatch: {path.name}")
+    if type(meta.get("parent_coarse_tetra")) is not int or meta["parent_coarse_tetra"] != 0:
+        raise ValueError(f"source shard parent tetra mismatch: {path.name}")
+    if meta.get("edge") != expected_edges[edge] or meta.get("Jmax") != 2.5:
+        raise ValueError(f"source shard edge/cutoff mismatch: {path.name}")
+    if meta.get("definition") != "u_e=(1/2) sum_{4 chambers->e} H_c|Omega>; v_e,w=H_w u_e; collector sums w=0..23":
+        raise ValueError(f"source shard operator definition mismatch: {path.name}")
+    checks = meta.get("checks", {})
+    if not required.issubset(checks) or any(value is not True for value in checks.values()):
+        raise ValueError(f"source shard checks missing or failed: {path.name}")
+    return meta
+
+
 def _state_from_arrays(z, stem):
     spins, Ks, amp = z[stem+"_spins"], z[stem+"_Ks"], z[stem+"_amp"]
     return {
@@ -181,8 +233,21 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
             for n in NODES:
                 for prefix in ("u_shard", "v_shard"):
                     checked_states += _check_state(z, f"{prefix}_{e}_{n}", 768, 384)
-            u_shards = [_state_from_arrays(z, f"u_shard_{e}_{n}") for n in NODES]
-            v_shards = [_state_from_arrays(z, f"v_shard_{e}_{n}") for n in NODES]
+            u_shards = []
+            v_shards = []
+            for n in NODES:
+                stem = f"edge_{e}_node_{n}"
+                _validate_shard_metadata(shard_root / f"{stem}.json", e, n)
+                for prefix, archive_prefix, target in (
+                    ("u", "u_shard", u_shards), ("v", "v_shard", v_shards)
+                ):
+                    source_state = _state_from_npz(shard_root / f"{prefix}_{e}_node_{n}.npz")
+                    archived_state = _state_from_arrays(z, f"{archive_prefix}_{e}_{n}")
+                    if source_state != archived_state:
+                        raise ValueError(
+                            f"source NPZ and archived raw amplitudes differ: {prefix}_{e}_node_{n}"
+                        )
+                    target.append(source_state)
             u_reference = u_shards[0]
             u_error = max((_state_relerr(state, u_reference) for state in u_shards[1:]), default=0.0)
             archived_u_error = _state_relerr(_state_from_arrays(z, f"u_{e}"), u_reference)

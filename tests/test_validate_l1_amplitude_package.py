@@ -35,14 +35,37 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
         shard_root = root / "shards"
         shard_root.mkdir()
         shard_hashes = {}
+        required_worker_checks = {
+            "L1_nodes_384", "L1_dual_links_768", "parent_has_24_fine_nodes",
+            "edge_has_four_barycentric_chambers", "first_edge_state_nonzero",
+            "one_node_depth2_state_nonzero", "finite_amplitudes",
+            "depth2_spin_wall_j_le_5_over_2", "depth2_seed_parity_restored",
+            "node_index_valid",
+        }
+        edge_labels = {0: [0, 1], 1: [0, 2], 5: [2, 3]}
+        empty = {
+            "spins": np.zeros((0, 768), dtype=np.int16),
+            "Ks": np.zeros((0, 384), dtype=np.int16),
+            "amp": np.zeros((0,), dtype=np.complex128),
+        }
         for e in validator.EDGES:
             for n in validator.NODES:
-                for name in (f"edge_{e}_node_{n}.json",
-                             f"u_{e}_node_{n}.npz",
-                             f"v_{e}_node_{n}.npz"):
-                    item = shard_root / name
-                    item.write_bytes((name + "\\n").encode())
-                    shard_hashes[name] = validator.sha256(item)
+                meta = {
+                    "passed": True,
+                    "science_status": "L1_METRIC_EDGE_DEPTH2_FULL_E_SHARD",
+                    "backend": "LocalPLPeterWeylEuclidean exact active-cone",
+                    "edge_index": e, "node_index": n, "parent_coarse_tetra": 0,
+                    "edge": edge_labels[e], "Jmax": 2.5,
+                    "definition": "u_e=(1/2) sum_{4 chambers->e} H_c|Omega>; v_e,w=H_w u_e; collector sums w=0..23",
+                    "checks": {name: True for name in required_worker_checks},
+                }
+                mp = shard_root / f"edge_{e}_node_{n}.json"
+                mp.write_text(json.dumps(meta), encoding="utf-8")
+                shard_hashes[mp.name] = validator.sha256(mp)
+                for prefix in ("u", "v"):
+                    item = shard_root / f"{prefix}_{e}_node_{n}.npz"
+                    np.savez_compressed(item, **empty)
+                    shard_hashes[item.name] = validator.sha256(item)
         package = {
             "schema": "L1_AMPLITUDE_PACKAGE",
             "schema_version": 1,
@@ -113,8 +136,17 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
             arrays["v_shard_0_0_Ks"] = np.zeros((1, 384), dtype=np.int16)
             arrays["v_shard_0_0_amp"] = np.asarray([1.0 + 0.0j], dtype=np.complex128)
             np.savez_compressed(archive, **arrays)
+            # Also update the independent source NPZ and its digest, so the
+            # raw source/archive binding passes and the aggregate check fails.
+            source_npz = shard_root / "v_0_node_0.npz"
+            np.savez_compressed(source_npz,
+                spins=arrays["v_shard_0_0_spins"],
+                Ks=arrays["v_shard_0_0_Ks"],
+                amp=arrays["v_shard_0_0_amp"])
             package = json.loads(manifest.read_text())
             package["amplitude_archive_sha256"] = validator.sha256(archive)
+            package["provenance"]["shard_file_sha256"][source_npz.name] = validator.sha256(source_npz)
+            package["provenance"]["shard_manifest_sha256"] = validator.canonical_sha(package["provenance"]["shard_file_sha256"])
             body = dict(package)
             body.pop("package_sha256")
             package["package_sha256"] = validator.canonical_sha(body)
