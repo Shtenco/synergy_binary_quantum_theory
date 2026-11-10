@@ -168,6 +168,13 @@ def validate_operator_provenance(meta, context="checkpoint"):
         raise ValueError(f"{context}: current stage must report all three CK leakage channels")
     if input_support == 0 and any(stage_diag[field] != 0.0 for field in expected_fields):
         raise ValueError(f"{context}: exact-empty-input stage diagnostics must be exactly zero")
+    aggregate_diag = validate_leakage_map(
+        meta.get("leakage_max"), require_all=False,
+        context=f"{context} accumulated leakage",
+    )
+    for field, value in stage_diag.items():
+        if aggregate_diag.get(field, -1.0) < value:
+            raise ValueError(f"{context}: accumulated leakage is below current-stage diagnostic {field}")
     return {"operator_input_support": input_support,
             "operator_stage_applied": applied,
             "diagnostic_provenance_scope": "current_operator_stage",
@@ -223,6 +230,8 @@ def load_result(d,stage,ijk,freeze):
         raise ValueError("Checkpoint metadata mismatch "+str(stem))
     if meta["sha256"]!=digest(path):raise ValueError("Checkpoint SHA256 mismatch "+str(stem))
     validate_leakage_map(meta.get("leakage_max"), require_all=False, context=str(stem))
+    if stage in ("kb", "ka"):
+        validate_operator_provenance(meta, context=str(stem))
     state=restore_state(path)
     if meta["support"]!=len(state) or not math.isclose(meta["norm"],norm(state),rel_tol=1e-12,abs_tol=1e-12):
         raise ValueError("Checkpoint support or norm mismatch "+str(stem))
