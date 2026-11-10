@@ -100,6 +100,17 @@ The first composition defect to measure is therefore
 }
 \]
 
+This scalar matrix-product comparison is distinct from the dynamic-programming
+maximum-product path objective. For a fixed source channel a and endpoint
+channel c, the two-step local maximum-path score is
+```
+H[a,c] = max_b F_j[a,b] * F_{j+1}[b,c]
+```
+The matrix product sums over b; H selects the largest single intermediate
+channel. Both are scalarized diagnostics, and neither should be confused with
+the direct microscopic endpoint overlap G. The executable runner records
+F_j F_{j+1}, H, the maximizing intermediate index, and G separately.
+
 A zero defect would support a two-step scalar transfer description for the
 tested sectors. A nonzero defect is not a failure of either one-step matrix:
 it shows that the scalar channel-flow matrices are not sufficient statistics
@@ -146,10 +157,11 @@ For at least the first two consecutive refinements, report:
 2. The direct endpoint matrix \(G_{j:j+2}\).
 3. The matrix product \(F_jF_{j+1}\).
 4. The full defect \(\Delta_j^{(2)}\), in operator and Frobenius norms.
-5. The intermediate off-diagonal block norms
+5. The two-step maximum-product local path score matrix H and its maximizing intermediate-channel indices.
+6. The intermediate off-diagonal block norms
    \(\|P_bQ_{j,a}P_{b'}\|\), for \(b\ne b'\).
-6. The endpoint projector-resolution and Gauss-projection defects.
-7. The result under an independently repeated cutoff or a second adjacent
+7. The endpoint projector-resolution and Gauss-projection defects.
+8. The result under an independently repeated cutoff or a second adjacent
    pair of spin scales.
 
 Only after this test should the maximum-product path be interpreted as a
