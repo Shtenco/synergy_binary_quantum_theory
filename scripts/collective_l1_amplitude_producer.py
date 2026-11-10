@@ -202,6 +202,19 @@ def run(root: Path, out_dir: Path, source_commit: str):
                 raise ValueError(f"failed or wrong-science shard {stem}")
             if m.get("backend") != EXPECTED_BACKEND:
                 raise ValueError(f"unexpected backend in {stem}: {m.get('backend')}")
+            required_checks = {
+                "L1_nodes_384", "L1_dual_links_768", "parent_has_24_fine_nodes",
+                "edge_has_four_barycentric_chambers", "first_edge_state_nonzero",
+                "one_node_depth2_state_nonzero", "finite_amplitudes",
+                "depth2_spin_wall_j_le_5_over_2", "depth2_seed_parity_restored",
+                "node_index_valid",
+            }
+            shard_checks = m.get("checks", {})
+            if not required_checks.issubset(shard_checks) or not all(shard_checks.values()):
+                raise ValueError(f"incomplete or failed worker checks in {stem}")
+            expected_edge = {0: [0, 1], 1: [0, 2], 5: [2, 3]}[edge]
+            if m.get("edge") != expected_edge:
+                raise ValueError(f"edge label mismatch in {stem}: {m.get('edge')}")
             if int(m.get("edge_index", -1)) != edge or int(m.get("node_index", -1)) != node:
                 raise ValueError(f"metadata index mismatch in {stem}")
             if int(m.get("parent_coarse_tetra", -1)) != 0:
