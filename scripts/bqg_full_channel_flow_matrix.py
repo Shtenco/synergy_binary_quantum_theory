@@ -173,7 +173,10 @@ def refinement_tensor_diagnostics(T, context="refinement tensor"):
     row_eigenvalues = np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)
     col_eigenvalues = np.linalg.eigvalsh((col_gram + col_gram.conj().T) / 2)
     expected_row = np.sort(np.concatenate((np.zeros(max(0, A.shape[0] - singular.size)), singular**2)))
-    observed_col = col_eigenvalues[col_eigenvalues > rank_tol**2]
+    # Use the rank certified by the singular spectrum, not a squared
+    # threshold at machine-noise scale: Gram eigensolvers can return tiny
+    # positive nullspace eigenvalues of order eps * ||A||^2.
+    observed_col = col_eigenvalues[-rank:] if rank else np.asarray([], dtype=float)
     expected_col = np.sort((singular[singular > rank_tol])**2)
     row_spectrum_defect = float(np.max(np.abs(row_eigenvalues - expected_row))) if row_eigenvalues.size else 0.0
     col_spectrum_defect = (float(np.max(np.abs(observed_col - expected_col)))
