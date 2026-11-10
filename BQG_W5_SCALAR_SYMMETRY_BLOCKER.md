@@ -252,3 +252,71 @@ changed.
 This probe is diagnostic only. It does not alter the operator, projection,
 tolerance, or acceptance criteria. Its CI result is pending; no physical cause
 is assigned yet.
+
+
+## Exact-key sequence trace and pruning hypothesis (2026-11-10, follow-up)
+
+The per-sequence trace artifact from probe run
+[42787724085](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42787724085),
+artifact 13750701830, reproduces the exact failing canonical input:
+`spins=(4,...,4)`, source label `C(J2=0,M2=0,K12=0,K34=0)`, all other
+nodes `G(K=0)`, node 0, K seed 0, Jmax2=10. It records 768 primitive
+sequence rows and 12 oriented-specification aggregate rows.
+
+An important qualification: the 12 aggregate rows report zero wrong-sector
+weight, but the probe's auxiliary accumulators use the production
+`add_state(..., tol=1e-11)`. They therefore do **not** establish exact
+cancellation below 1e-11. Primitive sequence rows contain J2=2 (J=1) weights
+of order 0.037--0.066, and some sequences also contain J2=4 (J=2) weights.
+Individual primitive sequences are not scalar; only their coherent sums are
+subject to the scalar selection rule.
+
+The independent unpruned diagnostic was rerun on the same K=0, node-0,
+Jmax2=10 seed in workflow
+[42787724099](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42787724099),
+artifact 13750821413. It explicitly calls
+`project_branch_complete_charges(..., tol=0.0)` and accumulates with
+`add_state(..., tol=0.0)`. Its full H-sine output has:
+
+- wrong-sector weight: 4.016710228941321e-30;
+- total H-sine norm squared: 6.641081686796968.
+
+The exact-key production failure probe from run
+[42787724085](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42787724085)
+has:
+
+- wrong-sector weight: 5.3905126131736365e-20;
+- allowed J2=0,M2=0 weight: 6.641081550043974.
+
+The production wrong-sector weight is about 1.34e10 times the unpruned
+diagnostic value. The unpruned H-sine norm squared and production allowed
+weight differ by 1.36752995e-7 (about 2.06e-8 relative). Thus the discrepancy
+is not only a tiny forbidden tail: the pruning path also changes the
+allowed-sector result at a small but measurable level.
+
+Source inspection identifies two independent default pruning layers in the
+production path: `project_branch_complete_charges` defaults to
+`tol=1e-11`, and `add_state` defaults to `tol=1e-11`. The standalone
+diagnostic sets both to zero. The projection routine also retains its
+separate internal basis-coefficient cutoff at 1e-13 in both paths. The current
+evidence therefore points to an interaction between branch-output pruning,
+state-accumulator pruning and summation order; it does not yet identify which
+of those is sufficient to produce the 5.39e-20 residual.
+
+A dedicated ablation has been committed:
+- script: `scripts/w5_scalar_tolerance_ablation.py`;
+- workflow: `.github/workflows/w5-scalar-tolerance-ablation.yml`;
+- run: [42795399991](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42795399991).
+
+It compares projection tolerance and accumulator tolerance independently,
+flat interleaved accumulation against per-oriented-spec accumulation, reversed
+specification order, and a `math.fsum` real/imaginary reference. It uses the
+same captured input and operator sequences. It does not modify the operator,
+the production guard, or the physical acceptance thresholds. No result is
+claimed until this run produces its artifact.
+
+**Correction to the immediately preceding trace interpretation:** the
+per-spec zero reported by the probe is a thresholded diagnostic result, not
+proof of exact per-spec scalar covariance. The unpruned independent diagnostic
+is the relevant evidence for the small residual; the new ablation is required
+to determine the production-path cause.
