@@ -19,7 +19,11 @@ def run(root):
     for p in Path(root).rglob('pair_*.json'):
         d=json.loads(p.read_text(encoding='utf-8'))
         if d.get('operator_version')!=VERSION:continue
-        if not d.get('passed'):raise RuntimeError(f'failed v4 pair {p}: {d.get("error")}')
+        if d.get('passed') is not True:raise RuntimeError(f'v4 pair must explicitly pass with boolean true: {p}')
+        for field in ('max_primitive_physical_leakage','max_primitive_nonscalar_rejected_norm'):
+            value=d.get(field)
+            if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(float(value)) or float(value)<0.0:
+                raise RuntimeError(f'invalid {field} in {p}')
         key=(int(d['omitted_local_slot']),int(d['cyclic_index']))
         if key in seen:raise RuntimeError(f'duplicate v4 pair {key}')
         seen.add(key)
