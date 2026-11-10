@@ -53,6 +53,10 @@ The all-low-channel path over the same five steps has product 4.694570240506031e
 
 The lineage changes channel index at the first split and again at j=3 -> 7/2, where the target multiplicity increases. It then continues on channel 2 for the final step. Thus the correct finite object is the full matrix ancestry, not a rule that follows the lowest eigenvalue or keeps a fixed channel index.
 
+## Next gate: direct multi-scale composition
+
+The maximum-product path is a local one-step ancestry objective. It is not yet proven equal to the overlap of the composed microscopic refinement isometry. The next required comparison is the direct two-step endpoint matrix against the product of the two one-step matrices, including intermediate off-diagonal channel blocks. The exact definitions and acceptance outputs are specified in [BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md](BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md).
+
 ## What this does and does not establish
 
 This is a finite representation-RG lineage derived from the fixed binary refinement tensor. It is not a physical-time trajectory, a probability, or a continuum theorem. The next required tests are the full graph-changing habitat residuals E_a,F_a, the off-carrier leakage, and independently defined master gaps. Only after those are available can the scale-free physical-projector refinement criterion be assessed.
