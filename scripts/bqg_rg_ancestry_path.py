@@ -42,6 +42,8 @@ def validate_refinement_spectrum(item, context):
     if frobenius <= 0.0 or float(np.sum(singular * singular)) <= 0.0:
         raise ValueError(f"{context}: refinement tensor has zero spectral mass")
     expected_rank = int(np.sum(singular > rank_tol))
+    if expected_rank == 0:
+        raise ValueError(f"{context}: induced refinement tensor has zero numerical rank")
     if isinstance(rank, bool) or not isinstance(rank, int) or rank != expected_rank:
         raise ValueError(f"{context}: numerical rank does not match singular spectrum")
     if float(np.sum(singular * singular)) <= 0.0:
