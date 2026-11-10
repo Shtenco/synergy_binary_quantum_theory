@@ -65,7 +65,7 @@ jobs:
           d=json.loads(p.read_text())
           d["workflow_run_id"]=int(os.environ["GITHUB_RUN_ID"])
           d["workflow_commit"]=os.environ["GITHUB_SHA"]
-          p.write_text(json.dumps(d,indent=2)+"\\n")
+          p.write_text(json.dumps(d,indent=2))
           PY
           done
       - name: Compute direct two-step microscopic composition
