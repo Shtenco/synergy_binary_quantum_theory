@@ -30,6 +30,7 @@
 - FINDINGS_016.md and audit_mass_dependency.py — the 380 pairwise mass-ratio rows have incidence rank 19, not 380 independent tests; uncertainty/covariance provenance is absent, and duplicated experimental entries are flagged in mass_analyzis.py.
 - FINDINGS_017.md and exact_bernoulli_gap.py — exact independent Bernoulli shortcut sampling, 190 graph realizations for L=8…40, decreasing finite-sample CV of the spectral gap; positive limiting gap remains unproved.
 - FINDINGS_018.md — positive Gram tensors cannot yield Lorentzian signature; generic SL(2,C) links do not preserve the displayed Hermitian current; macroscopic shortcuts obstruct an automatic local continuum limit.
+- FINDINGS_019.md and audit_integer_kernel_full_matrices.py — exact SNF/saturated kernels for complete 69×6 and 70×6 matrices, 127 LLL vectors directly verified; source-style primitive kernels have indices 2^179 and 2^180.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
@@ -51,7 +52,7 @@
 
 1. Reproduce all 82 constants exactly by executing a frozen copy of the source script at each declared N; compare article, JSON, and code outputs row by row.
 2. Independently source and validate every experimental reference value, uncertainty, renormalization scheme, and measurement method.
-3. Rebuild the 55×6 exponent matrix from the original source; recompute exact rank, Smith normal form, integer kernel, LLL output, and all 29/49 claimed identities.
+3. Rebuild the article's claimed 55×6 exponent matrix from its original source; reconcile it against the audited 69×6 and 70×6 versions, then recompute the 29/49 claimed identities.
 4. Recompute every one of the 77 displayed formulas at every N convention, and check dimensions before comparing numerical values.
 5. Reproduce the variation functional's grid scan, continuous stationary point, second derivative, parameter sensitivity, and alternative exponents.
 6. Specify and simulate the exact random graph ensemble; compute finite-graph Laplacian spectra, heat traces, zeta functions, spectral dimensions, and graph distances over size sweeps.
