@@ -87,6 +87,58 @@ class TestBQGRGAncestryPath(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "non-finite"):
                 ancestry.load([path])
 
+    def test_loader_requires_complete_provenance(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item.pop("workflow_commit", None)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "missing_provenance.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "workflow_commit"):
+                ancestry.load([path])
+
+    def test_loader_rejects_unsorted_spectrum(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_4.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item["target_master_eigenvalues"] = list(reversed(item["target_master_eigenvalues"]))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "unsorted.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "strictly sorted"):
+                ancestry.load([path])
+
+    def test_loader_rejects_run_id_mismatch(self):
+        files = []
+        for s2 in (3, 4):
+            item = json.loads((ROOT / f"docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_{s2}.json").read_text(encoding="utf-8"))
+            if s2 == 4:
+                item["workflow_run_id"] += 1
+            files.append(item)
+        with tempfile.TemporaryDirectory() as directory:
+            paths = []
+            for i, item in enumerate(files):
+                path = Path(directory) / f"flow_{i}.json"
+                path.write_text(json.dumps(item), encoding="utf-8")
+                paths.append(path)
+            with self.assertRaisesRegex(ValueError, "workflow_run_id changes"):
+                ancestry.load(paths)
+
+    def test_loader_rejects_spectral_stitch_discontinuity(self):
+        files = []
+        for s2 in (3, 4):
+            item = json.loads((ROOT / f"docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_{s2}.json").read_text(encoding="utf-8"))
+            if s2 == 4:
+                item["source_master_eigenvalues"][0] += 1e-3
+            files.append(item)
+        with tempfile.TemporaryDirectory() as directory:
+            paths = []
+            for i, item in enumerate(files):
+                path = Path(directory) / f"flow_{i}.json"
+                path.write_text(json.dumps(item), encoding="utf-8")
+                paths.append(path)
+            with self.assertRaisesRegex(ValueError, "spectra are discontinuous"):
+                ancestry.load(paths)
+
     def test_loader_rejects_nonconsecutive_scales(self):
         files = [
             ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json",
