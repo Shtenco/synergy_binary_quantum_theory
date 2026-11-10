@@ -12,6 +12,7 @@ from tetrahedral_volume_backend import (
     apply_tetra_volume_tensor,
     tetra_volume_diagnostics,
 )
+import tetrahedral_charged_volume_audit_gate as AUDIT
 
 
 class TetrahedralVolumeSpectralTests(unittest.TestCase):
@@ -21,6 +22,14 @@ class TetrahedralVolumeSpectralTests(unittest.TestCase):
         self.assertLess(result["max_raw_Q_M_block_defect"], 1e-10)
         self.assertLess(result["V4_minus_Q2_relative_error"], 1e-9)
         self.assertTrue(result["zero_aware_functional_calculus"])
+
+    def test_audit_gate_constructs_nonempty_spectral_and_tensor_ledgers(self):
+        spectral_rows = AUDIT.charged_spectral_rows()
+        tensor_rows = AUDIT.tensor_reconstruction_rows()
+        self.assertEqual(len(spectral_rows), 8)
+        self.assertEqual(len(tensor_rows), 2)
+        self.assertTrue(all(row["diagnostics"]["raw_Q_hermiticity_defects"] for row in spectral_rows))
+        self.assertTrue(all(row["finite_output"] for row in tensor_rows))
 
     def test_complete_magnetic_tensor_is_reconstructed(self):
         rng = np.random.default_rng(20261110)
