@@ -4,14 +4,15 @@ from scripts.bqg_v11_w5_common_carrier import build_carrier, joint_gram_input
 
 
 class FakeV09:
-    def __init__(self, mismatch=False):
+    def __init__(self, mismatch=False, small_amplitude=None):
         self.mismatch = mismatch
+        self.small_amplitude = small_amplitude
 
     def run_column(self, node, input_K, Jmax2=10, start=0, count=24):
         spins = (4,) * 10
         a_key = (spins, (input_K, 0, 0, 0, 1))
         b_key = (spins, (input_K, 0, 0, 0, 2))
-        b_amp = 2.0 + node
+        b_amp = self.small_amplitude if self.small_amplitude is not None else 2.0 + node
         if self.mismatch:
             b_amp += 0.5
         return {
@@ -33,8 +34,9 @@ class FakeV09:
 
 
 class FakeV10:
-    def __init__(self, status="PASS_ADJOINT_CONSISTENCY"):
+    def __init__(self, status="PASS_ADJOINT_CONSISTENCY", forward_amplitude=20.0):
         self.status = status
+        self.forward_amplitude = forward_amplitude
 
     @staticmethod
     def w5_input_key(K):
@@ -54,8 +56,8 @@ class FakeV10:
         for K in (0, 2, 4, 6, 8):
             key = (spins, (K, 0, 0, 0, 2))
             col = ix[self.w5_input_key(K)]
-            cols[col] = [[ix[key], 20.0, 0.0]]
-            sym[col] = [[ix[key], 20.0, 0.0]]
+            cols[col] = [[ix[key], self.forward_amplitude, 0.0]]
+            sym[col] = [[ix[key], self.forward_amplitude, 0.0]]
         return {
             "status": self.status,
             "basis_keys_repr": [repr(k) for k in keys],
@@ -91,6 +93,30 @@ class TestW5CommonCarrier(unittest.TestCase):
         a_idx = a_rows.index(repr(((4,) * 10, (0, 0, 0, 0, 1))))
         self.assertEqual(result["A"][a_idx][0], [15.0, 0.0])
         self.assertEqual(result["B"][a_rows.index(repr(((4,) * 10, (0, 0, 0, 0, 2))))][0], [20.0, 0.0])
+
+    def test_threshold_is_applied_after_coherent_node_sum(self):
+        amp_tol = 1e-12
+        node_amp = 0.6 * amp_tol
+        result = build_carrier(
+            amp_tol=amp_tol,
+            v09_module=FakeV09(small_amplitude=node_amp),
+            v10_module=FakeV10(forward_amplitude=5 * node_amp),
+        )
+        self.assertEqual(result["status"], "PASS_STRUCTURAL_COMMON_CARRIER")
+        self.assertTrue(result["crosschecks"]["all_passed"])
+        self.assertAlmostEqual(
+            result["crosschecks"]["V09_per_node_then_node_sum_vs_V10_all_node_forward"][0]
+            ["v09_node_sum_vs_v10_forward_relative_residual"],
+            0.0,
+        )
+
+    def test_amp_tol_cannot_fall_below_v09_serialization_accumulation_floor(self):
+        with self.assertRaisesRegex(ValueError, "serialization accumulation floor"):
+            build_carrier(
+                amp_tol=5e-13,
+                v09_module=FakeV09(),
+                v10_module=FakeV10(),
+            )
 
     def test_v10_incomplete_closure_blocks_carrier(self):
         result = build_carrier(

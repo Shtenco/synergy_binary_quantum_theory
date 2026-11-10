@@ -96,8 +96,17 @@ def build_carrier(
         raise ValueError("source_nodes must be a sorted, nonempty subset of 0..4")
     if Jmax2 < 10 or max_states < len(W5_K) or max_depth < 0:
         raise ValueError("invalid W5 cutoff or closure limits")
-    if amp_tol <= 0 or crosscheck_tol <= 0 or leakage_tol <= 0:
-        raise ValueError("amp_tol, crosscheck_tol and leakage_tol must be positive")
+    # V09's sparse JSON serializer drops each node-local amplitude with
+    # |z| <= 1e-13. Require the declared post-sum threshold to exceed the
+    # worst-case coherent accumulation of those omitted per-node entries.
+    serialization_floor = len(nodes) * 1e-13
+    if amp_tol <= serialization_floor:
+        raise ValueError(
+            f"amp_tol must exceed the V09 serialization accumulation floor "
+            f"({serialization_floor:.3g}) for {len(nodes)} source nodes"
+        )
+    if crosscheck_tol <= 0 or leakage_tol <= 0:
+        raise ValueError("crosscheck_tol and leakage_tol must be positive")
 
     here = Path(__file__).resolve().parent
     if str(here) not in sys.path:
@@ -186,9 +195,9 @@ def build_carrier(
                 )
             a = _decode_v09_sparse(result["A_Euclidean_sine_Gauss"], "V09 A")
             b = _decode_v09_sparse(result["B_Lorentzian_raw_KKV_Gauss"], "V09 B")
-            # V10 closes/stores support after the declared amp_tol. Apply the
-            # same post-node-sum threshold before the independent comparison.
-            b = {key: z for key, z in b.items() if abs(z) > amp_tol}
+            # Preserve every serialized node-local contribution here.
+            # V10 applies amp_tol only after the coherent sum over source nodes;
+            # filtering each V09 node first would not commute with that sum.
             _add(A_by_K[K], a)
             _add(B_v09_by_K[K], b)
             v09_diagnostics.append({
@@ -204,6 +213,16 @@ def build_carrier(
                 "non_scalar_covariant_ratio": non_scalar_ratio,
                 "max_spin_reached": max_spin_reached,
             })
+
+    # Apply one identical, post-coherent-sum support threshold to the
+    # V09 Euclidean and raw Lorentzian maps. The V09 serializer floor is
+    # bounded above by the validation guard, so omitted per-node terms cannot
+    # accumulate into a retained post-sum amplitude.
+    for K in W5_K:
+        A_by_K[K] = {key: z for key, z in A_by_K[K].items() if abs(z) > amp_tol}
+        B_v09_by_K[K] = {
+            key: z for key, z in B_v09_by_K[K].items() if abs(z) > amp_tol
+        }
 
     B_forward_by_K = {}
     B_sym_by_K = {}
