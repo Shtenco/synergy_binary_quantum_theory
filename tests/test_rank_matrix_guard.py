@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
-from rank_matrix_guard import (validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename)
+from rank_matrix_guard import (validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, validate_positive_integer, parse_indexed_map_filename)
 
 
 class RankMatrixGuardTests(unittest.TestCase):
@@ -90,6 +90,13 @@ class RankMatrixGuardTests(unittest.TestCase):
                     parse_indexed_map_filename(value, "map")
         with self.assertRaisesRegex(ValueError, "must start with"):
             parse_indexed_map_filename("x1", "map")
+
+    def test_validate_positive_integer_rejects_zero_and_coercions(self):
+        self.assertEqual(validate_positive_integer(3, "dimension"), 3)
+        for value in (0, True, "3", 3.0, -1, None):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "positive integer"):
+                    validate_positive_integer(value, "dimension")
 
 
 if __name__ == "__main__":
