@@ -21,7 +21,7 @@ The article reports a 55×6 matrix (nullity 49). The current public repository c
 
 - matrix_analysis.py: 70×6, 70 names, rank 6, nullity 64; this file computes a nullspace and sorts vectors but does not call LLL.
 - draft/stress_kernel.py: 30×6, 30 names; it explicitly calls SymPy's .lll() on a 24×30 integer kernel basis, so this is a real LLL implementation for a different, 30-observable matrix.
-- physics_constants/constant_matrix_analysis.py: 69 matrix rows but 70 names in the current file, and it does call .lll(); this is a shape/label consistency failure requiring investigation before its outputs can be trusted.
+- physics_constants/constant_matrix_analysis.py: 69 active matrix rows and 69 active names; the apparent 70th name is commented out together with the K_star_meson matrix row. It does call .lll(), but its row-wise integer-kernel construction is later shown to be non-saturated (see FINDINGS_013).
 - physics_constants/matrix_analysis.md: reports a 30×6 matrix, nullity 24, and 14 short LLL invariants.
 
 Thus LLL does exist in some repository scripts, but the cited/current matrix_analysis.py does not implement it, and the 30-row LLL result is not the article's claimed 55-row/49-nullity result. The exact 55×6 matrix and exact 29-vector LLL output used for the article have not yet been located in the current source tree.
@@ -34,9 +34,10 @@ Rank 6 establishes only that the six columns of this chosen exponent matrix are 
 
 ## 5. Current verdict
 
-- Current checked-in M dimensions: 70×6, not 55×6.
+- Current checked-in M dimensions: matrix_analysis.py 70×6; constant_matrix_analysis.py 69×6; draft/stress_kernel.py 30×6. None is the article's reported 55×6.
 - Numeric rank: 6; corresponding nullity: 64, not 49.
 - Duplicate exponent rows: 2 pairs.
 - LLL reduction: implemented in a 30×6 draft, absent from the 70×6 matrix_analysis.py; the article's 55×6 / 29-vector result is not yet reproduced.
 - Physical interpretation of the six basis columns: NOT ESTABLISHED by rank alone.
 - Article/repository version consistency: FAIL.
+- Note: the 69-row constant_matrix_analysis.py has 69 active names; the earlier apparent 70-name mismatch was a commented-out K_star_meson string and is withdrawn.
