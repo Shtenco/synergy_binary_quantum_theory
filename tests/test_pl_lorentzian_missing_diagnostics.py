@@ -54,6 +54,18 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
         self.assertFalse(result["complete"])
         self.assertIn("CK_complete_charge_basis_leakage", result["missing"])
 
+    def test_unknown_leakage_fields_are_not_ignored(self):
+        complete = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+            "invented_zero_channel": 0.0,
+        }
+        result = LP.leakage_summary(complete)
+        self.assertFalse(result["complete"])
+        self.assertIn("unknown:invented_zero_channel", result["invalid"])
+
     def test_nan_inf_negative_and_boolean_leakage_are_rejected_before_max(self):
         for bad in (float("nan"), float("inf"), -1e-12, True):
             with self.subTest(value=bad):
