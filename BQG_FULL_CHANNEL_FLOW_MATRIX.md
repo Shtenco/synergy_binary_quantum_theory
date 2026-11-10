@@ -94,3 +94,20 @@ j=5/2:\ a_1,
 with step overlaps (0.9459578674) and (0.8688492971). Thus the dynamically inherited branch switches to the upper channel at the first split and remains on the upper channel at the next scale. The low-to-low shortcut would instead multiply (0.0540421\times0.9656129\), which is not the microscopic ancestry path.
 
 The (s_2=4) result is persisted in `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_4.json`. The (s_2=5,6,7) shards remain in progress.
+
+
+For this two-step prefix the cumulative overlap product along the inherited upper branch is
+
+```math
+0.9459578674471627\times0.8688492971205302
+=0.8218948282371029.
+```
+
+The naive low-to-low product is only
+
+```math
+0.05404213255283678\times0.965612879727417
+=0.05218377924095551.
+```
+
+These are finite ancestry-overlap products, not physical probabilities.
