@@ -11,6 +11,7 @@ on:
       - 'scripts/pl_peter_weyl_euclidean.py'
       - 'scripts/pl_covariant_backend.py'
       - 'scripts/pl_lorentzian_triple_worker.py'
+      - 'scripts/peter_weyl_lorentzian_logical_projection_gate.py'
       - 'scripts/pl_lorentzian_48_collect.py'
       - 'tests/test_pl_lorentzian_48_failclosed.py'
       - 'tests/test_pl_lorentzian_missing_diagnostics.py'
