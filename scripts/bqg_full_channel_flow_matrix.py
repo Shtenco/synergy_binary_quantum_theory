@@ -159,6 +159,31 @@ def refinement_tensor(s2):
             leak += float(np.vdot(out-proj,out-proj).real)
     return T,leak
 
+def refinement_tensor_diagnostics(T, context="refinement tensor"):
+    """Report the induced tensor's actual Gram/singular spectrum without assuming it is an isometry."""
+    A = np.asarray(T, dtype=complex).reshape(T.shape[0], -1)
+    if A.ndim != 2 or not np.isfinite(A.real).all() or not np.isfinite(A.imag).all():
+        raise RuntimeError(f"{context}: tensor is non-finite or malformed")
+    singular = np.linalg.svd(A, compute_uv=False)
+    scale = max(float(singular[0]) if singular.size else 0.0, 1.0)
+    rank_tol = 1e-12 * scale
+    rank = int(np.sum(singular > rank_tol))
+    row_gram = A @ A.conj().T
+    col_gram = A.conj().T @ A
+    return {
+        "shape": list(A.shape),
+        "numerical_rank": rank,
+        "rank_tolerance": rank_tol,
+        "singular_values": [float(x) for x in singular],
+        "frobenius_norm": float(np.linalg.norm(A, ord="fro")),
+        "row_gram_eigenvalues": [float(x) for x in np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)],
+        "column_gram_nonzero_eigenvalues": [float(x) for x in np.linalg.eigvalsh((col_gram + col_gram.conj().T) / 2) if x > rank_tol**2],
+        "row_gram_identity_defect": float(np.linalg.norm(row_gram - np.eye(A.shape[0]), ord="fro")),
+        "column_gram_idempotence_defect": float(np.linalg.norm(col_gram @ col_gram - col_gram @ col_gram @ col_gram @ col_gram, ord="fro")),
+        "normalization_claim": "diagnostic only; no unit-isometry assumption is imposed on the induced singlet-to-singlet map",
+    }
+
+
 def generated_copy(T,source_basis,target_P22_basis):
     # source_basis: d_source x 2, ancilla logical dimension 2
     G=np.einsum("rba,bu->rua",T,source_basis).reshape(T.shape[0],4)
@@ -175,6 +200,9 @@ def run(s2):
     src=master_channels(s2)
     dst=master_channels(s2+1)
     T,leak=refinement_tensor(s2)
+    refinement_diagnostics = refinement_tensor_diagnostics(T, f"s2={s2}")
+    if not math.isfinite(float(leak)) or float(leak) < 0.0:
+        raise RuntimeError(f"s2={s2}: invalid refinement leakage {leak}")
 
     rows=[]
     singulars=[]
@@ -234,6 +262,7 @@ def run(s2):
       "generated_copy_ranks":generated_copy_ranks,
       "generated_pair_spread_max":max_pair_spread,
       "Gauss_projection_leakage":leak,
+      "refinement_tensor_diagnostics": refinement_diagnostics,
       "claim_boundary":"F_ab is a representation-RG projector overlap, not a physical-time probability. It diagnoses which target master eigenchannel is naturally inherited from each source channel under the exact binary-ancilla blocking tensor."
     }
     return out
