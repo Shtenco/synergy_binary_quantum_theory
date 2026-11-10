@@ -102,6 +102,26 @@ def direct_composition_matrix(T1, T2, source, middle, target):
     return np.asarray(rows, dtype=float)
 
 
+def compose_refinement_tensors(T1, T2, P_middle):
+    """Return T2 P_middle T1 with both binary ancillas retained."""
+    T1 = np.asarray(T1, dtype=complex)
+    T2 = np.asarray(T2, dtype=complex)
+    P_middle = np.asarray(P_middle, dtype=complex)
+    if T1.ndim != 3 or T2.ndim != 3 or P_middle.ndim != 2:
+        raise ValueError("refinement tensors must be rank-3 and middle projector rank-2")
+    if T1.shape[0] != P_middle.shape[0] or P_middle.shape[0] != P_middle.shape[1]:
+        raise ValueError("middle projector and first tensor output dimensions do not match")
+    if T2.shape[1] != P_middle.shape[0]:
+        raise ValueError("middle projector and second tensor input dimensions do not match")
+    if not all(np.isfinite(x).all() for x in (T1.real, T1.imag, T2.real, T2.imag, P_middle.real, P_middle.imag)):
+        raise ValueError("non-finite tensor or intermediate projector")
+    herm = float(np.linalg.norm(P_middle - P_middle.conj().T, ord="fro"))
+    idem = float(np.linalg.norm(P_middle @ P_middle - P_middle, ord="fro"))
+    if herm > 1e-10 or idem > 1e-10:
+        raise ValueError("intermediate carrier operator is not an orthogonal projector")
+    return np.einsum("rmb,mn,nca->rcab", T2, P_middle, T1, optimize=True)
+
+
 def normalized_refinement_spectral_distance(left_diag, right_diag):
     left = np.asarray(left_diag["singular_values"], dtype=float) ** 2
     right = np.asarray(right_diag["singular_values"], dtype=float) ** 2
@@ -164,7 +184,7 @@ def run_pair(source_s2, reference_dir=None):
     # normalized-range map used by direct_composition_matrix below.
     # T1[middle, source, ancilla_1], T2[target, middle, ancilla_2].
     P_middle = middle["P22_basis"] @ middle["P22_basis"].conj().T
-    T_composed = np.einsum("rmb,mn,nca->rcab", T2, P_middle, T1, optimize=True)
+    T_composed = compose_refinement_tensors(T1, T2, P_middle)
     refinement_diag_composed = FLOW.refinement_tensor_diagnostics(
         T_composed, f"raw projected two-step refinement s2={source_s2}->{source_s2 + 2}"
     )
