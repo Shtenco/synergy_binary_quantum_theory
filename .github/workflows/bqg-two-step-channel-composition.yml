@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: bqg-two-step-channel-composition
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   composition:
