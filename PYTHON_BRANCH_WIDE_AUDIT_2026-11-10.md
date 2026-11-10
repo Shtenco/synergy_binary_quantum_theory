@@ -508,3 +508,44 @@ main-tree compile runs first, followed by the documentation scope gate.
 This keeps syntax/bytecode compilation evidence independent of
 documentation-policy failures. It changes no scientific test or acceptance
 criterion.
+
+
+## Phase 8 — strict artifact-index validation in both depth-6 aggregators
+
+A second semantic review of the two active streaming aggregators found a
+coercion gap in artifact metadata. Both paths used `int(value)` on JSON
+record indices and `b<index>.pkl` filenames. That accepts values such as
+`true`, numeric strings, signed indices and noncanonical leading-zero
+filenames as if they were ordinary integer indices. Exact set coverage
+after coercion is not enough to prove that the producer supplied the
+required schema.
+
+The rank guard now provides:
+- `validate_index_value`: accepts only a nonnegative JSON integer and
+  explicitly rejects booleans and numeric strings;
+- `validate_positive_integer`: requires strictly positive dimensions;
+- `parse_indexed_map_filename`: accepts only canonical ASCII
+  `b0.pkl`, `b1.pkl`, … index stems and rejects leading zeros, signs,
+  non-ASCII digits and malformed names.
+
+Both `bqg_mixed_master_aggregate_streaming.py` and
+`bqg_s4sign_aggregate_streaming.py` now validate raw record indices and
+positive dimensions before storing records, parse map filenames through
+the strict helper, and enforce exact zero-based shard/record/map coverage.
+The S4-sign path now uses the same shared coverage guard as the mixed
+aggregator rather than its earlier local integer-coercion check.
+
+During integration, a manual review caught that the script-mode fallback
+imports initially omitted the new helper names. Those imports are now
+corrected in both aggregators; this matters because the workflow executes
+these files as scripts, where relative package imports can fall back to
+the top-level import branch. Regression tests in
+`tests/test_rank_matrix_guard.py` cover booleans, strings, negative and
+leading-zero indices, non-ASCII digits, and nonpositive dimensions.
+
+These checks reject malformed artifact metadata only. They do not change
+the master operator, support graph, SVD threshold, rank criterion, or
+scientific result. The first CI run containing the complete strict-index
+change is
+[42822893945](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42822893945);
+it was pending when this phase was recorded.
