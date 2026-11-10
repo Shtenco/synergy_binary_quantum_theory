@@ -100,6 +100,14 @@ def run_pair(source_s2):
     F1, first_singulars, first_ranks = flow_matrix(T1, source, middle)
     F2, second_singulars, second_ranks = flow_matrix(T2, middle, target)
     scalar_product = F1 @ F2
+    max_product_path = np.zeros_like(scalar_product)
+    max_product_middle_channel = np.zeros(scalar_product.shape, dtype=int)
+    for source_index in range(F1.shape[0]):
+        for target_index in range(F2.shape[1]):
+            path_products = F1[source_index, :] * F2[:, target_index]
+            middle_index = int(np.argmax(path_products))
+            max_product_middle_channel[source_index, target_index] = middle_index
+            max_product_path[source_index, target_index] = path_products[middle_index]
 
     saved_first_path = (
         Path(__file__).resolve().parents[1]
@@ -199,6 +207,8 @@ def run_pair(source_s2):
         "F_first": F1.tolist(),
         "F_second": F2.tolist(),
         "F_scalar_product": scalar_product.tolist(),
+        "max_product_local_path_score_matrix": max_product_path.tolist(),
+        "max_product_intermediate_channel_index": max_product_middle_channel.tolist(),
         "G_direct_composed": direct.tolist(),
         "composition_defect": defect.tolist(),
         "composition_defect_max_abs": float(np.max(np.abs(defect))),
