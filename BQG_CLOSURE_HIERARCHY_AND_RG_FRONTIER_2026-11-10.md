@@ -240,3 +240,18 @@ The correct finite ancestry diagnostic is the full overlap matrix
 for a normalized rank-two source copy, followed by a no-fit maximum-product path through consecutive scales. This selects a candidate representation-RG lineage; it is not a physical-time probability and does not replace the graph-changing habitat residuals.
 
 The global correlated-ancilla master-selection note separately identifies a two-dimensional (S_5)-trivial ancilla sector and proposes the actual symmetric Euclidean master as the no-fit selector. Its final physical-master interpretation remains finite-control only.
+
+
+## 8. First full ancestry-matrix result (new finite certificate)
+
+The full-flow workflow `42797583866` has completed the (s_2=3), (j=3/2\to2) shard successfully. The exact result is persisted in `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json`.
+
+```math
+\mathcal F_{3/2\to2}
+=
+(0.05404213255283678,\ 0.9459578674471627).
+```
+
+The row sum is (0.9999999999999994), row-stochasticity defect (5.55\times10^{-16}), target paired-eigenvalue spreads are below (5.4\times10^{-15}), and the binary-blocking Gauss-projection leakage is (1.67\times10^{-31}). Thus the (94.6\%) flow into target channel 1 is not caused by loss of norm or failure of the Gauss projection.
+
+The other four shards (s_2=4,5,6,7) are still running. No full multi-scale ancestry path is claimed until all five matrices have passed and are composed by the dynamic-programming gate.
