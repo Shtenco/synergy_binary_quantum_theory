@@ -84,8 +84,6 @@ def digest(path):
             if not block:break
             h.update(block)
     return h.hexdigest()
-def source_hashes():
-    return {n:digest(HERE/n) for n in BASE_FILES}
 def write_atomic(path,write):
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
     tmp=path.with_name(path.name+".partial")
