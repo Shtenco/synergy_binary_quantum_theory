@@ -37,6 +37,9 @@ t = (
     - (ket("0101") + ket("0110") + ket("1001") + ket("1010")) / 2
 ) / SQRT3
 
+if not __debug__:
+    raise RuntimeError("Refusing optimized execution: this gate uses assert-based scientific checks")
+
 assert sp.simplify((s.H * s)[0]) == 1
 assert sp.simplify((t.H * t)[0]) == 1
 assert sp.simplify((s.H * t)[0]) == 0
