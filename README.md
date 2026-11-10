@@ -2140,3 +2140,233 @@ core_candidate_architecture_closed: true
 ```
 
 это означает закрытие заявленной **candidate architecture в её доказанном scope**, а не экспериментальное подтверждение окончательной теории природы.
+
+
+---
+
+# Научный аудит и маршрут к физическому доказательству
+## Контрольная фиксация от 10 ноября 2026 года
+
+Этот раздел дополняет изложенную выше кандидатную архитектуру результатами последнего аудита. Его задача — не повысить статус теории риторически, а точно отделить то, что уже выведено или проверено в конечной модели, от того, что ещё должно быть доказано на физическом уровне.
+
+**Главный вывод аудита:** у BCQG есть содержательная математическая основа — комбинаторная конструкция, PL-топология, конечномерные SU(2)/Peter–Weyl сектора, отдельные HDA-результаты и микроскопическая mirror-order модель. Однако пока не собран единый воспроизводимый вычислительный конвейер, который из микроскопической динамики выводит физическую метрику, полный замкнутый constraint algebra и контролируемый continuum/GR-предел. Поэтому текущий статус остаётся **candidate theory; physical proof not established**.
+
+## 1. Что ближе всего к физическому доказательству
+
+### 1.1. Локальная бинарная геометрия и PL-топология
+
+Уже сформирована сильная конечная математическая цепочка:
+
+- минимальная однородная route-оболочка при заявленных правилах выбирает (q=2);
+- локальная ссылка имеет октаэдральную структуру (S^2);
+- при дополнительных условиях minimal 8-vertex + flag/clique closure глобализация единственна с точностью до переименования и даёт 16-cell;
+- seed-комплекс имеет ( (V,E,F,T)=(8,24,32,16) ) и Betti numbers ( (1,0,0,1) );
+- PL-gates проверяют links, ориентацию, границу-в-квадрате и свойства refinement в заявленном наборе уровней.
+
+Это сильное доказательство свойств конкретной комбинаторной модели. Оно **не доказывает**, что всякая допустимая микроскопическая причинная структура обязана иметь эту глобализацию: uniqueness относится к указанным minimal/flag предпосылкам. Оно также само по себе не доказывает динамическую размерность физического пространства.
+
+### 1.2. Размерность и масштабирование
+
+В README выше зафиксированы ранее полученные held-out значения:
+
+- (d_H=2.999229782);
+- (d_s(\text{slice})=3.004393867);
+- (z=0.998281156);
+- (d_s(\text{history})\approx4.004393867).
+
+Они являются численными свидетельствами в конкретном frozen тестовом протоколе. Для физического доказательства необходимо заново связать эти наблюдаемые с тем же микроскопическим динамическим ансамблем, показать независимость от сетки, начальных условий и estimator, опубликовать исходные данные и доверительные интервалы и провести blind/held-out репликацию. Нельзя переносить эти числа на ещё не построенный полный динамический (E+S+R) producer.
+
+### 1.3. SU(2), Peter–Weyl и тетраэдральный объём
+
+Это одна из наиболее перспективных областей приближения к физической теории: здесь уже проверяются не только графы, но и конечномерные операторы квантовой геометрии.
+
+В последнем аудите усилен spectral registry тетраэдрального charged-volume backend:
+
+- сохраняются спектры каждого raw (Q_{J,M}), а не только сводные показатели;
+- сохраняются Frobenius norms отдельных raw (Q_{J,M});
+- charged spectral audit расширен на все допустимые (J_2) для восьми charged spin configurations;
+- экспортируются raw (Q_{J,M}) и соответствующие (V_J) matrices в NPZ;
+- до симметризации проверяется Hermiticity raw-операторов;
+- отдельно регистрируются sector leakage, functional calculus и (S_4)-slot covariance;
+- добавлена полная magnetic (S_4)-проверка для трёх конфигураций и всех 24 перестановок каждой конфигурации (72 строки проверки);
+- независимый (S_4)-gate проверяет пять spin quartets по 24 перестановки и групповое преобразование оператора.
+
+Это правильное усиление доказательной дисциплины: проверяются исходные матрицы и все магнитные блоки, а не только агрегированные диагностические числа. Но код и тесты, добавленные в audit branch, не равны завершённому результату. Их численный статус должен подтверждаться успешным CI, JSON/NPZ-артефактами и повторным независимым чтением артефактов.
+
+Отдельно остаётся необходимым проверить нормировку refinement tensor по **фактическим спектрам последовательных уровней**, а не только по Gram-матрицам или диагностическим нормам. Шестой Peter–Weyl cutoff должен иметь явно сохранённые support, norm, pruning stability и независимую точную контрольную величину.
+
+### 1.4. Lorentzian 48-term amplitude construction: решающий ближайший тест
+
+V2 и V3 должны сравниваться как два независимых вычислительных пути, а не как два отчёта, построенных из одних и тех же реконструированных данных.
+
+В текущей V3 схеме заданы три орбиты по восемь term identities:
+
+- O1: `{0,1,6,7,16,17,22,23}`;
+- O2: `{2,4,8,10,13,15,19,21}`;
+- O3: `{3,5,9,11,12,14,18,20}`.
+
+План вычисления — 12 direct terms и 36 symmetry-reconstructed terms с шестью held-out pair checks. В workflow добавлен независимый V2 baseline из 48 direct terms (8 shards × 6 terms), после чего сравниваются:
+
+- все 48 term identities и их support;
+- каждый комплексный state без предварительного phase alignment;
+- SHA-256 каждого фактически сохранённого NPZ;
+- forward/adjoint режимы;
+- итоговые V2/V3 bundles;
+- максимальные term-wise и bundle-wise relative complex-state errors.
+
+Также исправлена ошибка происхождения: после сохранения реконструированного NPZ хэш пересчитывается по фактическим байтам файла, а не наследуется от исходного representative. Это исправление provenance, а не изменение физического оператора.
+
+**Текущий CI-статус на момент этой фиксации:** workflow run `42854653918` для ветки `audit/pl48-spectral-complete-20261110` находился в состоянии `queued`; job `preflight` также был `queued`; артефактов в проверенном ответе GitHub ещё не было. Следовательно, spectral gate, S4 regression, unit tests, 48-direct V2 baseline, V3 reconstruction и V2/V3 comparison здесь обозначены как **ожидающие выполнения/подтверждения**, а не как PASS. Ссылка на запуск: [GitHub Actions run 42854653918](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42854653918).
+
+Даже успешное совпадение V2/V3 с заданным tolerance докажет прежде всего корректность реализации амплитудного вычисления и симметрийной реконструкции в этом секторе. Оно не докажет физическую полноту амплитуды, глобальную unitarity, замыкание полного HDA или предел GR.
+
+### 1.5. HDA и каноническая гравитация
+
+В проекте имеются отдельные сильные результаты:
+
+- route-normal HDA и fixed-cutoff composition certificate в явно заявленном operator habitat;
+- оценка подавления дополнительных каналов (C_{cross}/D=O(\epsilon)) и (C_{GG}/D=O(\epsilon^2));
+- допустимое семейство совместного предела (J_{max}=o(\epsilon^{-2/13})), включая пример (J_{max}=\epsilon^{-1/8});
+- двухузловые и канонические matter-HDA regression tests;
+- точные representation identities для spin-2 и mirror sectors.
+
+Их нельзя расширять за пределы доказанных предпосылок. Fixed-cutoff composition theorem и один допустимый diagonal family не являются uniform theorem для всех путей (J_{max}\to\infty), (\epsilon\to0). Двухузловой или matter-sector HDA test не заменяет полный микроскопический (E+S+R) constraint algebra на последовательности refinement levels.
+
+### 1.6. Mirror order и healthy mirror-force
+
+В этой ветке уже имеется конкретный конечный мост:
+
+`Y_L/Q → staggered Sigma → coarse sigma(x)`.
+
+Dual graph 16-cell тетраэдров — (Q_4); staggered order parameter `Sigma=(1/16) sum eta_v Y_v` имеет две mirror branches. Конечномерная 16-qubit diagonalization показывает ordered и disordered контрольные режимы при заданных параметрах. Отдельная continuum двухполевaя конструкция имеет положительные kinetic terms и проходит canonical matter-HDA identity в заявленном gate. Yukawa-подобный cross-sector force допускает противоположно-ориентированное отталкивание при `alpha > exp(m_phi*r)/(1+m_phi*r)`.
+
+Это полезный кандидатный механизм, но пока не вывод физической силы из исходной BCQG динамики: нормировка `sigma`, связь с физическим зарядом/массой, значение `alpha`, mediator mass/range и экспериментальные ограничения ещё не выведены из микроскопической теории. Mirror-even metric gate, наоборот, показывает, что простая смена ориентации сама по себе не переворачивает (g_{00}).
+
+## 2. Что пока не является доказанным
+
+На дату аудита нельзя считать доказанными следующие утверждения:
+
+1. что полный динамический BCQG носитель (E+S+R) замкнут и устойчив при refinement;
+2. что Lorentzian amplitude producer даёт полную физическую амплитуду, а не корректный конечный сектор/представление;
+3. что V2/V3 cross-check завершён — до CI artifacts и анализа term-wise errors;
+4. что шестой Peter–Weyl cutoff прошёл независимую проверку support, norm и pruning stability;
+5. что refinement normalization подтверждена последовательными физическими спектрами;
+6. что существует полный Lorentzian quantum history measure и доказана глобальная unitarity;
+7. что полный constraint algebra имеет правильный HDA без аномалий на динамически замкнутом carrier;
+8. что получена физическая метрика из независимо калиброванного микроскопического (B) или (M_{hq}). Подстановка (B=I) по соглашению не является калибровкой;
+9. что существует полный Schur reduction с измеренными gap, locality и effective interactions;
+10. что на четырёх и более refinement levels одновременно сходятся (D_{space}\to3), (c_{eff}\to1/2), constraint ranks к ((3,3,1,0,0)), (N_{phys}=2) и collective `Delta_HH` к нулю с требуемым scaling;
+11. что выполнен continuum/GR limit или получены экспериментально проверяемые значения (G), (Lambda), масс и coupling constants;
+12. что mirror-force candidate уже является физически существующей пятой силой или антигравитацией.
+
+Support walls, синтетические positive controls, self-tests и finite algebra gates не могут подменять реальные амплитуды, физические refinement data или независимую экспериментальную проверку.
+
+## 3. Главная стратегия доказательства
+
+Стратегия должна идти не от новых эффектных моделей, а от закрытия цепочки происхождения каждого физического объекта:
+
+`microscopic state and dynamics
+→ independently computed amplitudes
+→ dynamically closed E+S+R carrier
+→ full constraints and HDA
+→ Schur-reduced effective dynamics
+→ calibrated physical metric
+→ refinement/continuum scaling
+→ blind predictions
+→ independent reproduction`.
+
+Каждое звено должно иметь: (a) точное математическое определение; (b) producer, который создаёт исходные данные; (c) независимый verifier; (d) negative controls; (e) неизменяемую provenance (commit, parameters, hashes); (f) явный статус PASS/FAIL/INCOMPLETE. Следующий слой не может объявляться доказанным, если предыдущий не имеет воспроизводимых артефактов.
+
+## 4. Тактика: 15 последовательных шагов
+
+### Шаг 1. Заморозить математическое ядро и словарь объектов
+Зафиксировать единственные определения состояний, операторов (E,S,R,V,H_E,H_L), orientation variables, inner products, domains, boundary conditions и refinement maps. Составить таблицу обозначений и запретить параллельные несовместимые контракты. Любое изменение ядра — отдельная версия с migration note.
+
+**Критерий выхода:** независимый читатель может восстановить каждую формулу и её область применимости без обращения к неявным соглашениям кода.
+
+### Шаг 2. Закрыть доказательства конечной геометрии и PL-слоя
+Собрать единый exact certificate для (q=2), octahedral link, minimal-flag 16-cell и recursive PL manifold invariants. Явно перечислить предпосылки uniqueness и построить negative controls для non-flag альтернатив.
+
+**Критерий выхода:** proof + machine-checkable certificate + независимый combinatorial verifier.
+
+### Шаг 3. Завершить raw spectral audit тетраэдрального объёма
+Запустить и разобрать текущие spectral registry, all-(J,M) matrices, Hermiticity-before-symmetrization, sector leakage, functional calculus и обе независимые (S_4) проверки. Проверить все 72 magnetic covariance rows и NPZ matrix registry, а не только итоговый boolean.
+
+**Критерий выхода:** завершённый CI run, опубликованные JSON/NPZ, finite values, корректные размеры блоков, независимое повторное чтение артефактов и negative controls.
+
+### Шаг 4. Завершить независимый 48-term V2/V3 amplitude cross-check
+Дождаться и исследовать run 42854653918. Сверить 48 direct V2 terms с V3 12 direct + 36 reconstructed term-by-term: support, complex phase, norm, SHA-256, forward/adjoint и final bundles. Не использовать phase alignment для основного критерия равенства.
+
+**Критерий выхода:** все 48 term comparisons и bundle comparisons проходят заданный tolerance; опубликованы артефакты и отдельный отчёт по худшим ошибкам. Любое расхождение локализуется до изменения кода.
+
+### Шаг 5. Построить независимый Lorentzian amplitude producer
+Отделить физическое вычисление амплитуды от symmetry reconstruction и collector. Зафиксировать входные состояния, measure, boundary data, normalization и операторную версию. Реализовать второй независимый путь вычисления на контрольном подмножестве.
+
+**Критерий выхода:** одинаковые amplitudes из двух независимых producers на frozen benchmark, с reproducible provenance и error budget.
+
+### Шаг 6. Закрыть Peter–Weyl cutoff staircase и refinement normalization
+Довести шестой cutoff: support, norm, pruning stability, независимая exact control. На последовательных уровнях refinement проверить нормировку refinement tensor непосредственно по фактическим спектрам и eigenvalue distributions.
+
+**Критерий выхода:** согласованные spectral scaling curves на всех уровнях, устойчивость к pruning и независимая контрольная реализация.
+
+### Шаг 7. Построить динамически замкнутый (E+S+R) carrier
+Объединить Euclidean (E), Lorentzian (S) и route/recoupling (R) в одном явно определённом пространстве состояний. Измерять leakage, residuals и closure после каждого refinement; support-only оценки хранить отдельно от амплитуд.
+
+**Критерий выхода:** carrier замкнут в пределах заранее заданной ошибки, а leakage и остатки измерены на реальных амплитудах, не выведены из combinatorial support wall.
+
+### Шаг 8. Вывести полный constraint algebra
+Построить Gauss, spatial-diffeomorphism и Hamiltonian constraints на одном carrier. Проверить все пары коммутаторов, включая (H-H), (H-D), (D-D), Gauss cross terms, ordering и boundary contributions.
+
+**Критерий выхода:** полный HDA с правильными structure functions, независимым verifier и scaling residual на нескольких размерах; не только route-normal или two-node identity.
+
+### Шаг 9. Выполнить Schur reduction и доказать контроль эффективной динамики
+Построить измеряемые блоки retained/eliminated degrees of freedom, вычислить Schur complement, gap, conditioning, locality и induced interactions. Проверить устойчивость к выбору разбиения и cutoff.
+
+**Критерий выхода:** bounded effective interactions, устойчивый nonzero gap там, где он требуется, и согласие прямой и reduced динамики.
+
+### Шаг 10. Независимо откалибровать физическую метрику
+Получить микроскопическую калибровку (B) или (M_{hq}) из producer, а не назначать (B=I). Извлечь metric, проверить gauge covariance, positivity, signature, isotropy и независимость от basis choices.
+
+**Критерий выхода:** метрический extractor получает вход из физического расчёта; повторная калибровка другой реализацией даёт согласованный результат.
+
+### Шаг 11. Провести GR-universality test минимум на четырёх refinement levels
+На каждом уровне непосредственно измерить (D_{space}), DeWitt coefficient (c_{eff}), kinetic Hessian, ranks ((r_G,r_D,r_H,r_{extra},r_{secondclass})), (N_{phys}), collective `Delta_HH`, epsilon и все ошибки. Проверить сырую симметрию Hessian до symmetrization, строгую типизацию рангов, уникальность уровней и строгое уменьшение epsilon.
+
+**Критерий выхода:** (D_{space}\to3), (c_{eff}\to1/2), ранги ((3,3,1,0,0)), (N_{phys}=2), `Delta_HH` уменьшается с требуемым exponent (p\ge0.5), а независимые уровни не ухудшают convergence.
+
+### Шаг 12. Доказать совместный continuum limit
+Усилить существующую оценку (J_{max}=o(\epsilon^{-2/13})): явно указать все uniform constants, domains, shape assumptions и error terms; проверить альтернативные diagonal paths и пределы независимости от порядка (J_{max}\to\infty), (\epsilon\to0).
+
+**Критерий выхода:** uniform или чётко ограниченная theorem с исчерпывающими предпосылками, плюс численная проверка предсказанных scaling exponents.
+
+### Шаг 13. Закрыть Lorentzian unitarity, positivity и causal consistency
+Определить физическое Hilbert space, inner product, physical projector/constraint implementation и transfer operator. Проверить positivity, self-adjointness, norm conservation, causal composition и отсутствие ghost/negative-norm modes.
+
+**Критерий выхода:** theorem в заявленном domain плюс независимые finite-size и refinement tests; Euclidean результаты не выдаются за Lorentzian unitarity.
+
+### Шаг 14. Вывести физические константы и blind predictions
+Только после шагов 7–13 выводить (G), (Lambda), coupling constants, mass scales, matter content и параметры mirror sector. Для `sigma/alpha/m_phi` получить first-principles normalization и coupling к физическому matter charge; затем сопоставить fifth-force, equivalence-principle, cosmological и gravitational-wave bounds.
+
+**Критерий выхода:** заранее зарегистрированные численные предсказания в физических единицах, с uncertainty budget и условиями фальсификации.
+
+### Шаг 15. Независимая репликация и итоговый proof dossier
+Заморозить commit, данные, параметры, hashes и benchmark до передачи внешней группе. Предоставить derivations, source code, raw artifacts, negative controls, failed runs и инструкции воспроизведения. Отдельно провести математическую экспертизу и независимую вычислительную репликацию.
+
+**Критерий выхода:** внешняя группа воспроизводит ключевые результаты без доступа к скрытым промежуточным состояниям и подтверждает все заявленные уровни доказательства.
+
+## 5. Жёсткие правила доказательной дисциплины
+
+1. **Не смешивать статусы:** exact theorem, finite numerical test, conditional interpretation, open conjecture и physical observation — разные категории.
+2. **Не объявлять PASS по наличию кода:** PASS требует завершённого запуска, успешных проверок и доступных артефактов.
+3. **Не подменять амплитуды поддержкой:** support wall, count и graph reachability не являются amplitude.
+4. **Не подменять физический RG representation RG:** Peter–Weyl cutoff staircase сам по себе не доказывает continuum dynamics.
+5. **Не подменять калибровку соглашением:** (B=I) нельзя назначать вместо физического metric producer.
+6. **Не скрывать отрицательные результаты:** mirror-even metric, antigravity no-go и любые leakage/failure должны оставаться в ledger.
+7. **Не объединять audit branches автоматически:** изменения в этой фиксации относятся к ветке `audit/pl48-spectral-complete-20261110`; `main` остаётся нетронутой до отдельной ancestry/content review.
+8. **Каждый численный результат должен иметь происхождение:** commit SHA, command, parameters, environment, raw inputs, output hashes и independent verifier.
+
+## 6. Итоговая оценка близости к доказательству
+
+Наиболее близкие к доказательному ядру компоненты — exact finite combinatorics/representation identities, PL-manifold certificates, fixed-scope HDA composition results и усиливаемая проверка полного тетраэдрального spectral operator. Ближайший решающий вычислительный рубеж — независимое совпадение всех 48 комплексных V2/V3 amplitude terms. Ближайший решающий физический рубеж — единый динамически замкнутый (E+S+R) carrier с полным HDA, Schur-reduced dynamics и физически откалиброванной метрикой на четырёх и более refinement levels.
+
+**Пока эти рубежи не пройдены, корректный научный статус — сильная, частично формализованная и вычислительно проверяемая кандидатная теория с существенными открытыми физическими доказательствами.** Цель следующих этапов — не расширять перечень красивых механизмов, а последовательно закрыть эти конкретные разрывы.
