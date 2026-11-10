@@ -1,0 +1,32 @@
+name: BQG jhalf-to-j1 return carrier leakage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_jhalf_to_j1_return_carrier_leakage.py'
+      - 'scripts/bqg_jhalf_to_j1_return_rg_gate.py'
+      - 'scripts/peter_weyl_*.py'
+      - '.github/workflows/bqg-refinement-carrier-leakage.yml'
+
+jobs:
+  carrier-leakage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip numpy scipy sympy
+      - name: Compute compressed-return L and D blocks
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_jhalf_to_j1_return_carrier_leakage.py \
+            --output verification_results/BQG_JHALF_TO_J1_RETURN_CARRIER_LEAKAGE.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-jhalf-to-j1-return-carrier-leakage
+          path: verification_results/BQG_JHALF_TO_J1_RETURN_CARRIER_LEAKAGE.json
+          retention-days: 30
