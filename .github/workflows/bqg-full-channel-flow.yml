@@ -12,10 +12,15 @@ on:
       - '.github/workflows/bqg-full-channel-flow.yml'
   workflow_dispatch:
 
+concurrency:
+  group: bqg-full-channel-flow-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   flow:
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         s2: [3,4,5,6,7,8]
     runs-on: ubuntu-latest
