@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/bcqg-core-candidate-v1
+      - audit/pl48-volume-failclosed-20261110
     paths:
       - 'LORENTZIAN_DIRECT_HERMITIAN_COMMUTATOR_THEOREM.md'
       - 'scripts/lorentzian_direct_hermitian_identity_gate.py'
