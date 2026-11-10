@@ -154,6 +154,15 @@ def scan_source(source: str, path: str, blob: str, findings: list, totals: Count
                 totals[f"import:{node.module.split('.')[0]}"] += 1
         elif isinstance(node, ast.Assert):
             totals["assert_statements"] += 1
+            if not (path.startswith("tests/") or "/tests/" in path or path.endswith("_test.py")):
+                try:
+                    condition = ast.unparse(node.test)
+                except Exception:
+                    condition = "assert condition"
+                record(
+                    findings, "assert_statement", path, blob, node,
+                    f"optimization-sensitive guard: {condition}", locations
+                )
         elif isinstance(node, ast.ExceptHandler):
             if node.type is None:
                 record(findings, "bare_except", path, blob, node, "bare except catches BaseException", locations)
@@ -165,12 +174,25 @@ def scan_source(source: str, path: str, blob: str, findings: list, totals: Count
                 record(findings, "dynamic_code_execution", path, blob, node, name, locations)
             if name == "os.system" or name.startswith("subprocess."):
                 record(findings, "process_execution", path, blob, node, name, locations)
+                shell_true = any(
+                    keyword.arg == "shell"
+                    and isinstance(keyword.value, ast.Constant)
+                    and keyword.value.value is True
+                    for keyword in node.keywords
+                )
+                if name in {"os.system", "os.popen", "subprocess.getoutput", "subprocess.getstatusoutput"} or shell_true:
+                    record(findings, "shell_execution", path, blob, node, name, locations)
             if name in {"pickle.load", "pickle.loads", "_pickle.load", "_pickle.loads"}:
                 record(findings, "pickle_deserialization", path, blob, node, name, locations)
             if name in {"torch.load", "torch.jit.load"}:
                 record(findings, "torch_deserialization", path, blob, node, name, locations)
             if name in {"tarfile.TarFile.extractall", "TarFile.extractall"} or name.endswith(".extractall"):
-                record(findings, "archive_extraction", path, blob, node, name, locations)
+                category = (
+                    "guarded_archive_extraction"
+                    if path.replace("\\", "/").endswith("proof_tools/safe_archive.py")
+                    else "archive_extraction"
+                )
+                record(findings, category, path, blob, node, name, locations)
             if name in {"yaml.load", "yaml.unsafe_load"}:
                 record(findings, "yaml_deserialization", path, blob, node, name, locations)
             if name in {"urllib.request.urlopen", "requests.get", "requests.post",
