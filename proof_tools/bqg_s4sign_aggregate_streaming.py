@@ -4,11 +4,11 @@ import argparse,json,tarfile
 from pathlib import Path
 import numpy as np
 try:
-    from .rank_matrix_guard import validate_full_column_matrix
+    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename
     from .safe_archive import safe_extract_tar
     from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
-    from rank_matrix_guard import validate_full_column_matrix
+    from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename
     from safe_archive import safe_extract_tar
     from safe_pickle import safe_load_numpy_pickle
 import itertools
@@ -52,16 +52,19 @@ def load_index(ds,expected):
         if (s['shell_states'],s['s4sign_blocks'],s['s4sign_dim'])!=(264962,11956,130112):raise SystemExit(('ledger',s))
         if s['failed_blocks']!=0 or s['ok_blocks']!=s['assigned_blocks']:raise SystemExit(('incomplete shard',s))
         for r in s['records']:
-            i=int(r['i'])
+            i=validate_index_value(r.get('i'), "S4-sign record index")
             if i in records:raise SystemExit(('duplicate record',i))
             records[i]=r
         for p in d.rglob('b*.pkl'):
-            i=int(p.stem[1:])
+            i=parse_indexed_map_filename(p.stem, "S4-sign map filename")
             if i in paths:raise SystemExit(('duplicate map',i))
             paths[i]=p
-    shards=sorted(int(s['shard']) for s in summaries)
-    if shards!=list(range(expected)):raise SystemExit(('bad shard coverage',shards))
-    if sorted(records)!=list(range(11956)) or sorted(paths)!=list(range(11956)):raise SystemExit('block/map coverage incomplete')
+    validate_shard_coverage(
+        [s.get('shard') for s in summaries], expected, "S4-sign aggregate"
+    )
+    validate_index_coverage(
+        records.keys(), paths.keys(), 11956, "S4-sign aggregate"
+    )
     if sum(int(r['d']) for r in records.values())!=130112:raise SystemExit('column total mismatch')
     return records,paths
 
