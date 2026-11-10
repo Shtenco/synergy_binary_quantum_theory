@@ -23,6 +23,7 @@
 - FINDINGS_009.md and simulate_smallworld_scaling.py — initial small-size simulation; its ln^(-2) spectral-gap interpretation is explicitly withdrawn by the larger control.
 - FINDINGS_010.md and audit_variational_functional.py — analytic strict-convexity proof and continuous minimum; exponent 2/3 is input, not output.
 - FINDINGS_011.md and sparse_scaling_control.py — larger sparse random-graph experiment (L=16…48, three seeds) plus exact expected-Laplacian FFT through L=512; logarithmic spectral-gap claim withdrawn.
+- FINDINGS_012.md and audit_integer_kernel.py — exact Smith-normal-form audit: the 30×6 draft LLL basis spans a sublattice of index ≈6.356×10²⁶; saturated kernel LLL yields 24 short basis vectors (max coefficient 2).
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
