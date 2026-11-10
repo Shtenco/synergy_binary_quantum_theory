@@ -2,6 +2,8 @@ name: python-all-branches-audit
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
   push:
     branches: [main]
     paths:
@@ -10,6 +12,17 @@ on:
       - '**.pyx'
       - '**.pxd'
       - '**.ipynb'
+      - '**.tar.gz.b64'
+      - '**.tgz.b64'
+      - '**.zip.b64'
+      - '**.tar.gz'
+      - '**.tgz'
+      - '**.tar.bz2'
+      - '**.tar.xz'
+      - '**.tar'
+      - '**.zip'
+      - '**.whl'
+      - '**.egg'
       - '.github/workflows/python-all-branches-audit.yml'
 
 permissions:
@@ -25,12 +38,13 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch shallow snapshots for every branch head
+        run: git fetch --no-tags --depth=1 origin '+refs/heads/*:refs/remotes/origin/*'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Enumerate and statically audit Python blobs across every branch head
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python -m py_compile scripts/audit_python_all_branch_heads.py
