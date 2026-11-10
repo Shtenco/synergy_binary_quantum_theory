@@ -104,6 +104,12 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
     B_cov = {}
     term_rows = []
     first_leg_cache = {}
+    aggregate_diag = {
+        "CV_complete_basis_leakage": 0.0,
+        "CK_outer_complete_basis_leakage": 0.0,
+        "CK_internal_volume_sector_leakage": 0.0,
+        "CK_complete_charge_basis_leakage": 0.0,
+    }
 
     def executor():
         for term_index in range(start, min(start + count, 24)):
@@ -128,6 +134,9 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
                 q, leak = first_leg_cache[cache_key]
                 q = dict(q)
                 max_leak = max(max_leak, float(leak))
+                aggregate_diag["CV_complete_basis_leakage"] = max(
+                    aggregate_diag["CV_complete_basis_leakage"], float(leak)
+                )
                 if q:
                     stage["after_CV_support_sum"] += len(q)
                     stage["nonzero_CV_paths"] += 1
@@ -139,6 +148,18 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
                     max_leak,
                     float(d1["outer_complete_basis_leakage"]),
                     float(d1["internal_volume_sector_leakage"]),
+                    float(d1.get("complete_charge_basis_leakage", 0.0)),
+                )
+                aggregate_diag["CK_outer_complete_basis_leakage"] = max(
+                    aggregate_diag["CK_outer_complete_basis_leakage"],
+                    float(d1["outer_complete_basis_leakage"]),
+                )
+                aggregate_diag["CK_internal_volume_sector_leakage"] = max(
+                    aggregate_diag["CK_internal_volume_sector_leakage"],
+                    float(d1["internal_volume_sector_leakage"]),
+                )
+                aggregate_diag["CK_complete_charge_basis_leakage"] = max(
+                    aggregate_diag["CK_complete_charge_basis_leakage"],
                     float(d1.get("complete_charge_basis_leakage", 0.0)),
                 )
                 if q:
@@ -158,6 +179,18 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
                     float(d2["internal_volume_sector_leakage"]),
                     float(d2.get("complete_charge_basis_leakage", 0.0)),
                 )
+                aggregate_diag["CK_outer_complete_basis_leakage"] = max(
+                    aggregate_diag["CK_outer_complete_basis_leakage"],
+                    float(d2["outer_complete_basis_leakage"]),
+                )
+                aggregate_diag["CK_internal_volume_sector_leakage"] = max(
+                    aggregate_diag["CK_internal_volume_sector_leakage"],
+                    float(d2["internal_volume_sector_leakage"]),
+                )
+                aggregate_diag["CK_complete_charge_basis_leakage"] = max(
+                    aggregate_diag["CK_complete_charge_basis_leakage"],
+                    float(d2.get("complete_charge_basis_leakage", 0.0)),
+                )
                 if q:
                     stage["after_CK2_support_sum"] += len(q)
                     stage["nonzero_CK2_paths"] += 1
@@ -175,6 +208,32 @@ def run_column(source_v, input_K, Jmax2=10, start=0, count=24):
             }
             term_rows.append(row)
             print("W5_L_KKV_TERM_FINISHED " + json.dumps(row), flush=True)
+
+        total_norm = norm_sparse(B_cov)
+        non_scalar_norm = math.sqrt(sum(
+            abs(z) ** 2 for key, z in B_cov.items() if key[2] != 0
+        ))
+        nonscalar_fraction = non_scalar_norm / max(total_norm, 1e-30)
+        max_spin_reached = max(
+            (max(key[0]) for key in B_cov), default=0
+        ) / 2
+        physical_pass = bool(
+            len(B_cov) > 0
+            and total_norm > 1e-10
+            and nonscalar_fraction < 1e-8
+            and aggregate_diag["CV_complete_basis_leakage"] < 1e-9
+            and aggregate_diag["CK_outer_complete_basis_leakage"] < 1e-9
+            and aggregate_diag["CK_internal_volume_sector_leakage"] < 1e-9
+            and max_spin_reached <= 3.5 + 1e-12
+        )
+        return {
+            "passed": physical_pass,
+            "output_support": len(B_cov),
+            "output_norm": total_norm,
+            "final_nonscalar_J_weight_fraction": nonscalar_fraction,
+            "max_spin_reached": max_spin_reached,
+            "max_diagnostics": aggregate_diag,
+        }
 
     # Installs the exact same sine-H_E -> K_sine=[V,H_E^sine] engine used by
     # the all-jhalf raw KKV code; only the incoming W5 state and cutoff differ.
