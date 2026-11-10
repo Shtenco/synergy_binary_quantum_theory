@@ -5,6 +5,7 @@ on:
     branches:
       - research/bcqg-core-candidate-v1
       - audit/pl48-volume-failclosed-20261110
+      - audit/pl48-spectral-complete-20261110
     paths:
       - 'PL_16CELL_HERMITIAN_LORENTZIAN_PREREGISTRATION_V3_ORBIT.md'
       - 'scripts/tetrahedral_volume_backend.py'
@@ -18,6 +19,7 @@ on:
       - 'scripts/pl_lorentzian_48_collect.py'
       - 'scripts/pl_lorentzian_48_collect_v2.py'
       - 'scripts/pl_lorentzian_48_collect_v3.py'
+      - 'scripts/pl_lorentzian_v2_v3_complex_state_compare.py'
       - '.github/workflows/pl-16cell-hermitian-lorentzian-v3-orbit.yml'
   workflow_dispatch:
 
@@ -38,9 +40,10 @@ jobs:
             scripts/lorentzian_pairing_stabilizer_orbit_gate.py \
             scripts/collective_16cell_pairing_stabilizer_covariance_gate.py \
             scripts/pl_lorentzian_orbit_reconstruct_v3.py \
-            scripts/pl_lorentzian_48_collect_v3.py
-      - name: Tetrahedral charged-volume audit
-        run: python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json
+            scripts/pl_lorentzian_48_collect_v3.py \\
+            scripts/pl_lorentzian_v2_v3_complex_state_compare.py
+      - name: Tetrahedral charged-volume audit and raw spectral matrix export
+        run: python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json --matrix-output verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
       - name: Pairing-stabilizer structural theorem
         run: python scripts/lorentzian_pairing_stabilizer_orbit_gate.py --output verification_results/LORENTZIAN_PAIRING_STABILIZER_ORBITS_V3.json
       - name: Exact 16-cell Peter-Weyl H transport representation
@@ -74,8 +77,44 @@ jobs:
           name: pl-lorentzian-v3-preflight
           path: |
             verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_V3.json
+            verification_results/TETRAHEDRAL_CHARGED_VOLUME_SPECTRAL_MATRICES_V3.npz
             verification_results/LORENTZIAN_PAIRING_STABILIZER_ORBITS_V3.json
             verification_results/COLLECTIVE_16CELL_PAIRING_STABILIZER_COVARIANCE_V3.json
+          if-no-files-found: error
+
+  v2-direct-baseline:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        mode: [forward, adjoint]
+        slot: [0,1,2,3]
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Six direct V2 terms per shard
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          python scripts/pl_lorentzian_group_worker_v2.py --mode "${{ matrix.mode }}" --first-slot ${{ matrix.slot }} --source 0 --out-dir out
+      - name: Require six direct V2 terms
+        shell: pwsh
+        run: |
+          $j=(Get-ChildItem out -Filter 'term_*.json').Count
+          $n=(Get-ChildItem out -Filter 'term_*.npz').Count
+          if ($j -ne 6 -or $n -ne 6) { throw "Expected 6 direct V2 JSON/NPZ terms; got $j/$n" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pl-lorentzian-v2-baseline-${{ matrix.mode }}-${{ matrix.slot }}
+          path: out/
           if-no-files-found: error
 
   direct-shards:
@@ -117,7 +156,7 @@ jobs:
           if-no-files-found: error
 
   reconstruct-and-collect:
-    needs: direct-shards
+    needs: [direct-shards, v2-direct-baseline]
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -131,6 +170,11 @@ jobs:
         with:
           pattern: pl-lorentzian-v3-direct-*
           path: direct
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pl-lorentzian-v2-baseline-*
+          path: v2-direct
           merge-multiple: true
       - name: Require exactly twelve direct V2 terms
         shell: pwsh
@@ -150,6 +194,12 @@ jobs:
       - name: Full physical Hermitian V3 collector
         run: |
           python scripts/pl_lorentzian_48_collect_v3.py --root materialized --orbit-certificate verification_results/PL_16CELL_LORENTZIAN_V3_ORBIT_RECONSTRUCTION.json --json-output verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V3.json --state-output verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V3.npz
+      - name: Independent 48-direct V2 baseline collector
+        run: |
+          python scripts/pl_lorentzian_48_collect_v2.py --root v2-direct --json-output verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.json --state-output verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.npz
+      - name: Compare all 48 complex term states and final bundles
+        run: |
+          python scripts/pl_lorentzian_v2_v3_complex_state_compare.py --v2-root v2-direct --v3-root materialized --v2-bundle verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.npz --v3-bundle verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V3.npz --output verification_results/PL_16CELL_V2_V3_COMPLEX_STATE_COMPARISON.json
       - name: Final science guards
         run: |
           python - <<'PY'
@@ -166,6 +216,12 @@ jobs:
           assert d['max_worker_physical_leakage']<1e-8
           assert d['wrong_seed_parity_outputs']==0
           assert d['max_spin_S']<=3.5+1e-12
+          v2=json.load(open('verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.json'))
+          x=json.load(open('verification_results/PL_16CELL_V2_V3_COMPLEX_STATE_COMPARISON.json'))
+          assert v2['passed'] and v2['worker_count']==48
+          assert x['passed']
+          assert x['max_term_relative_complex_state_error'] < 1e-8
+          assert x['max_bundle_relative_complex_state_error'] < 1e-8
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -175,4 +231,7 @@ jobs:
             verification_results/PL_16CELL_LORENTZIAN_V3_ORBIT_RECONSTRUCTION.json
             verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V3.json
             verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V3.npz
+            verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.json
+            verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V2_BASELINE.npz
+            verification_results/PL_16CELL_V2_V3_COMPLEX_STATE_COMPARISON.json
           if-no-files-found: error
