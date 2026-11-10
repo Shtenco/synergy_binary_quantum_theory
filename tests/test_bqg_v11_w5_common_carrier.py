@@ -17,6 +17,8 @@ class FakeV09:
         return {
             "status": "COMPUTED_RAW_W5_KKV_COLUMN",
             "epsilon_terms_completed": 24,
+            "sine_wrapper_gate_passed": True,
+            "sine_wrapper_diagnostics": {},
             "A_Euclidean_sine_Gauss": [[repr(a_key), 1.0 + node, 0.0]],
             "B_Lorentzian_raw_KKV_Gauss": [[repr(b_key), b_amp, 0.0]],
             "B_Lorentzian_raw_KKV_covariant": [[repr((spins, (-1, 0, 0, 0, 0), 0, 0, 0, 0)), b_amp, 0.0]],
