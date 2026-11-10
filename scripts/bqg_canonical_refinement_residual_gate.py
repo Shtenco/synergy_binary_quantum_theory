@@ -6,6 +6,12 @@ import math
 import numpy as np
 
 
+def require(condition, message):
+    """A gate invariant that remains active under python -O."""
+    if not condition:
+        raise AssertionError(message)
+
+
 def canonical_W():
     return np.column_stack([
         np.array([0.0,1.0,0.0],dtype=complex),
@@ -16,8 +22,8 @@ def canonical_W():
 def run():
     W=canonical_W()
     P=W@W.conj().T
-    assert np.linalg.norm(W.conj().T@W-np.eye(2))<1e-14
-    assert np.linalg.norm(P@P-P)<1e-14
+    require(np.linalg.norm(W.conj().T@W-np.eye(2))<1e-14, "W is not an isometry")
+    require(np.linalg.norm(P@P-P)<1e-14, "carrier projector is not idempotent")
 
     rng=np.random.default_rng(20261009)
     ratios=[]
@@ -32,27 +38,27 @@ def run():
         L=(np.eye(3)-P)@Mc@W
         D=W.conj().T@Mc@W-Mf
 
-        assert np.linalg.norm(R-(L+W@D))<1e-11
-        assert np.linalg.norm(W.conj().T@L)<1e-11
-        assert np.linalg.norm(R.conj().T@R-(L.conj().T@L+D.conj().T@D))<1e-10
+        require(np.linalg.norm(R-(L+W@D))<1e-11, "residual decomposition identity failed")
+        require(np.linalg.norm(W.conj().T@L)<1e-11, "leakage is not orthogonal to carrier")
+        require(np.linalg.norm(R.conj().T@R-(L.conj().T@L+D.conj().T@D))<1e-10, "orthogonal defect split failed")
 
         nR=np.linalg.norm(R,2)
         nL=np.linalg.norm(L,2)
         nD=np.linalg.norm(D,2)
-        assert nR+1e-11>=max(nL,nD)
-        assert nR<=math.sqrt(nL*nL+nD*nD)+1e-10
+        require(nR+1e-11>=max(nL,nD), "residual norm lower bound failed")
+        require(nR<=math.sqrt(nL*nL+nD*nD)+1e-10, "residual norm upper bound failed")
         ratios.append((nR,nL,nD))
 
         # Galerkin pullback: only leakage remains.
         Mgal=W.conj().T@Mc@W
         Rg=Mc@W-W@Mgal
         Lg=(np.eye(3)-P)@Mc@W
-        assert np.linalg.norm(Rg-Lg)<1e-11
+        require(np.linalg.norm(Rg-Lg)<1e-11, "Galerkin residual is not pure leakage")
 
     # Registered j=1 absolute-volume scalar on the [2,2] carrier.
     # The theorem here checks the exact target matrix used by the canonical gate.
     Vdoublet=(3.0**0.25)*np.eye(2)
-    assert np.linalg.norm(Vdoublet-(3.0**0.25)*np.eye(2))<1e-15
+    require(np.linalg.norm(Vdoublet-(3.0**0.25)*np.eye(2))<1e-15, "registered j=1 volume scalar mismatch")
 
     print("trials =",len(ratios))
     print("W isometry error =",np.linalg.norm(W.conj().T@W-np.eye(2)))
