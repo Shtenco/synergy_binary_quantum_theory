@@ -53,6 +53,14 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
         self.assertFalse(result["complete"])
         self.assertIn("CK_complete_charge_basis_leakage", result["missing"])
 
+    def test_nan_inf_negative_and_boolean_leakage_are_rejected_before_max(self):
+        for bad in (float("nan"), float("inf"), -1e-12, True):
+            with self.subTest(value=bad):
+                with self.assertRaises(ValueError):
+                    LP.update_diag({}, "CK_complete_charge_basis_leakage", bad)
+                with self.assertRaises(ValueError):
+                    WORKER.update_diag({}, {"CK_complete_charge_basis_leakage": bad})
+
     def test_forward_stage_not_run_is_not_reported_as_zero(self):
         with patch.object(LP.CV, "gauss_to_covariant", return_value={"seed": 1 + 0j}), \
              patch.object(LP.RAW.COMP, "C_volume_component", return_value=({}, 0.0)):
