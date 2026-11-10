@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/bcqg-core-candidate-v1
+      - audit/pl48-volume-failclosed-20261110
     paths:
       - 'PL_16CELL_HERMITIAN_LORENTZIAN_PREREGISTRATION.md'
       - 'scripts/pl_dual_complex.py'
