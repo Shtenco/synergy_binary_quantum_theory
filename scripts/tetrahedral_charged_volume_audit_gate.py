@@ -88,10 +88,42 @@ def cv_slot_norms(use_tetra):
     if ctx is None:return compute()
     with ctx:return compute()
 
+def charged_spectral_rows():
+    rows=[]
+    base=[1,1,1,1]
+    for leg in range(4):
+        for doubled_spin in (0,2):
+            spins=base.copy();spins[leg]=doubled_spin;spins=tuple(spins)
+            diagnostics=tetra_volume_diagnostics(spins,1)
+            rows.append({"spins":list(spins),"J2":1,"diagnostics":diagnostics})
+    return rows
+
+
+def tensor_reconstruction_rows():
+    rows=[]
+    for spins in ((1,1,1,1),(0,1,1,1)):
+        shape=tuple(value+1 for value in spins)
+        size=int(np.prod(shape))
+        values=np.arange(1,size+1,dtype=float).reshape(shape)
+        tensor=values+1j*np.flip(values,axis=0)
+        output=apply_tetra_volume_tensor(tensor,spins)
+        rows.append({
+            "spins":list(spins),
+            "input_shape":list(shape),
+            "input_norm":float(np.linalg.norm(tensor)),
+            "output_norm":float(np.linalg.norm(output)),
+            "finite_output":bool(np.isfinite(output.real).all() and np.isfinite(output.imag).all()),
+            "reconstruction_gate_enforced_inside_apply":True,
+        })
+    return rows
+
+
 def run():
     ZVM.patch_and_clear();checked,gauss_err,gauss_rows=gauss_volume_regression();charged,max_nonprop,oldzero=charged_negative_control()
     k5=he_pair(boundary_4simplex());cell=he_pair(seed_16cell_boundary())
     oldslots=cv_slot_norms(False);newslots=cv_slot_norms(True)
+    spectral_rows=charged_spectral_rows()
+    tensor_rows=tensor_reconstruction_rows()
     oldnorm=[x['matrix_Frobenius_norm'] for x in oldslots];newnorm=[x['matrix_Frobenius_norm'] for x in newslots]
     oldspread=max(oldnorm)-min(oldnorm);newspread=max(newnorm)-min(newnorm)
     checks={
@@ -103,9 +135,10 @@ def run():
       'tetra_CV_all_slots_nonzero':min(newnorm)>1e-3,
       'tetra_CV_slot_covariance_restored':newspread<1e-12,
       'tetra_CV_basis_complete':max(x['max_complete_basis_leakage'] for x in newslots)<1e-10,
-      'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=0.0)<1e-10,
-      'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=0.0)<1e-10,
-      'charged_volume_spectral_functional_calculus':max((x['diagnostics']['V4_minus_Q2_relative_error'] for x in spectral_rows),default=0.0)<1e-9,
+      'charged_spectral_sectors_explicitly_evaluated':len(spectral_rows)==8,
+      'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=math.inf)<1e-10,
+      'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=math.inf)<1e-10,
+      'charged_volume_spectral_functional_calculus':max((x['diagnostics']['V4_minus_Q2_relative_error'] for x in spectral_rows),default=math.inf)<1e-9,
       'complete_magnetic_tensor_reconstruction_and_finite_output':len(tensor_rows)==2 and all(x['finite_output'] for x in tensor_rows),
     }
     return {'status':'tetrahedral charged-volume covariance correction audit','passed':bool(all(checks.values())),
@@ -115,6 +148,7 @@ def run():
             'max_charged_nonproportional_residual_old_vs_tetra':max_nonprop,'max_tetra_Q_norm_where_old_q123_was_zero':oldzero,
             'K5_H_E_comparison':k5,'sixteen_cell_H_E_comparison':cell,
             'old_q123_CV_slots':oldslots,'tetrahedral_CV_slots':newslots,
+            'charged_spectral_rows':spectral_rows,'magnetic_tensor_reconstruction_rows':tensor_rows,
             'old_CV_slot_norm_spread':oldspread,'tetra_CV_slot_norm_spread':newspread,
             'interpretation':'The fixed q_123 extension is valid for frozen Gauss absolute volume but not for charged intermediate states. The four-leg completion restores local tetrahedral slot covariance while leaving the gauge-invariant Euclidean Hamiltonian columns unchanged on both regulators.',
             'consequence':'All Lorentzian C(K)/S calculations that used the old charged q_123 extension are retained only as historical diagnostics and must be recomputed with the tetrahedral backend before physical promotion.',
