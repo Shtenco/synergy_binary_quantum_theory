@@ -37,8 +37,15 @@ def evaluate(D,G,seed,source,idx,mode,caches):
     else:cov,diag=W.ordered_dagger_state(seed,source,*targets)
     gauss,accepted2,rejected2=LGA.project_scalar_gauss(cov,source,TOL)
     total=accepted2+rejected2;frac=1.0 if total<1e-30 else accepted2/total
-    physical=max(float(diag.get('CV_complete_basis_leakage',0.0)),float(diag.get('CK_outer_complete_basis_leakage',0.0)),float(diag.get('CK_internal_volume_sector_leakage',0.0)))
-    charge=float(diag.get('CK_complete_charge_basis_leakage',0.0));cn=math.sqrt(W.norm2(cov));gn=math.sqrt(W.norm2(gauss))
+    required_diag={
+      'CV_complete_basis_leakage':diag.get('CV_complete_basis_leakage'),
+      'CK_outer_complete_basis_leakage':diag.get('CK_outer_complete_basis_leakage'),
+      'CK_internal_volume_sector_leakage':diag.get('CK_internal_volume_sector_leakage'),
+      'CK_complete_charge_basis_leakage':diag.get('CK_complete_charge_basis_leakage')}
+    if any(v is None or isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(float(v)) or float(v)<0.0 for v in required_diag.values()):
+        raise RuntimeError(f'incomplete or invalid required leakage diagnostics: {required_diag}')
+    physical=max(float(v) for v in required_diag.values())
+    charge=float(required_diag['CK_complete_charge_basis_leakage']);cn=math.sqrt(W.norm2(cov));gn=math.sqrt(W.norm2(gauss))
     checks={
       'finite_covariant_norm':math.isfinite(cn),'finite_gauss_norm':math.isfinite(gn),
       'finite_covariant_amplitudes':all(np.isfinite([z.real,z.imag]).all() for z in cov.values()),
@@ -57,7 +64,7 @@ def evaluate(D,G,seed,source,idx,mode,caches):
           'gauss_support':len(gauss),'gauss_norm':gn,'gauss_max_spin':W.max_spin(gauss),
           'exact_zero_ordered_term':len(cov)==0 and len(gauss)==0,'scalar_closure_fraction':frac,
           'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0)),'physical_acceptance_max_leakage':physical,
-          'complete_charge_diagnostic':charge,'cache_info_after_term':cache_info,'runtime_seconds':time.time()-t0,
+          'complete_charge_diagnostic':charge,'leakage_diagnostics':required_diag,'cache_info_after_term':cache_info,'runtime_seconds':time.time()-t0,
           'checks':checks,'weighted_here':False,
           'scope_note':'One individually serialized term from a six-term cache-sharing process shard; mathematical result is identical to the independent worker definition.'}
     return gauss,meta
