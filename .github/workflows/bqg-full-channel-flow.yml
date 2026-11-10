@@ -36,8 +36,50 @@ jobs:
           python scripts/bqg_full_channel_flow_matrix.py \
             --s2 ${{ matrix.s2 }} \
             --output verification_results/BQG_FULL_CHANNEL_FLOW_S2_${{ matrix.s2 }}.json
+      - name: Pin exact workflow provenance into numerical shard
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(f"verification_results/BQG_FULL_CHANNEL_FLOW_S2_{os.environ['S2']}.json")
+          d=json.loads(p.read_text())
+          d["workflow_run_id"]=int(os.environ["GITHUB_RUN_ID"])
+          d["workflow_commit"]=os.environ["GITHUB_SHA"]
+          p.write_text(json.dumps(d,indent=2)+"\\n")
+          PY
+        env:
+          S2: ${{ matrix.s2 }}
       - uses: actions/upload-artifact@v4
         with:
           name: bqg-full-channel-flow-s2-${{ matrix.s2 }}
           path: verification_results/BQG_FULL_CHANNEL_FLOW_S2_${{ matrix.s2 }}.json
           retention-days: 30
+
+  ancestry:
+    needs: flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade numpy
+      - name: Download every consecutive flow shard from this run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-full-channel-flow-s2-*
+          path: verification_results/flows
+          merge-multiple: true
+      - name: Validate complete provenance and six-step spectral continuity
+        run: |
+          python scripts/bqg_rg_ancestry_path.py verification_results/flows/*.json \
+            --output verification_results/BQG_RG_ANCESTRY_PATH_6STEP.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-rg-ancestry-six-step
+          path: verification_results/BQG_RG_ANCESTRY_PATH_6STEP.json
+          if-no-files-found: error
