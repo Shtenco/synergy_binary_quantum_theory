@@ -11,8 +11,9 @@ import argparse
 import hashlib
 import json
 import os
-import shutil
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -26,6 +27,31 @@ from safe_archive import safe_artifact_directory, safe_extract_zip
 
 API = "https://api.github.com"
 
+
+class SameOriginAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Never forward a GitHub bearer token to a different HTTPS origin."""
+
+    @staticmethod
+    def origin(url: str) -> tuple[str, str, int]:
+        parsed = urllib.parse.urlsplit(url)
+        port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+        return parsed.scheme.lower(), (parsed.hostname or "").lower(), port
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urllib.parse.urlsplit(newurl)
+        if parsed.scheme.lower() != "https":
+            raise urllib.error.HTTPError(
+                req.full_url, code, "refusing non-HTTPS artifact redirect", headers, fp
+            )
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is not None and self.origin(req.full_url) != self.origin(newurl):
+            redirected.remove_header("Authorization")
+        return redirected
+
+
+SAFE_OPENER = urllib.request.build_opener(SameOriginAuthRedirectHandler())
+
+
 def request(url: str, token: str) -> bytes:
     req = urllib.request.Request(
         url,
@@ -36,7 +62,7 @@ def request(url: str, token: str) -> bytes:
             "User-Agent": "BQG-artifact-downloader",
         },
     )
-    with urllib.request.urlopen(req, timeout=120) as r:
+    with SAFE_OPENER.open(req, timeout=120) as r:
         return r.read()
 
 def download_to_file(url: str, token: str, destination: Path) -> tuple[int, str]:
@@ -51,7 +77,7 @@ def download_to_file(url: str, token: str, destination: Path) -> tuple[int, str]
     )
     digest = hashlib.sha256()
     size = 0
-    with urllib.request.urlopen(req, timeout=120) as response, destination.open("xb") as output:
+    with SAFE_OPENER.open(req, timeout=120) as response, destination.open("xb") as output:
         while True:
             chunk = response.read(1024 * 1024)
             if not chunk:
