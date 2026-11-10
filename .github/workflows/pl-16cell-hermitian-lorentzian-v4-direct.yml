@@ -20,10 +20,6 @@ concurrency:
   group: pl48-v4-direct-${{ github.ref }}
   cancel-in-progress: true
 
-concurrency:
-  group: pl48-v4-direct-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   preflight:
     runs-on: ubuntu-latest
