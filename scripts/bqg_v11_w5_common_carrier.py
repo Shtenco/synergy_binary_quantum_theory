@@ -180,6 +180,9 @@ def build_carrier(
                 )
             a = _decode_v09_sparse(result["A_Euclidean_sine_Gauss"], "V09 A")
             b = _decode_v09_sparse(result["B_Lorentzian_raw_KKV_Gauss"], "V09 B")
+            # V10 closes/stores support after the declared amp_tol. Apply the
+            # same post-node-sum threshold before the independent comparison.
+            b = {key: z for key, z in b.items() if abs(z) > amp_tol}
             _add(A_by_K[K], a)
             _add(B_v09_by_K[K], b)
             v09_diagnostics.append({
