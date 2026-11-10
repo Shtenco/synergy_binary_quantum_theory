@@ -19,6 +19,7 @@
 - FINDINGS_003.md — all 380 JSON mass-ratio rows, teta inversion, formula-string parser audit, dependence structure.
 - FINDINGS_004.md — neutron lifetime comparison against PDG 2026.
 - FINDINGS_007.md — matrix-version drift, 70×6 vs 55×6 vs 30×6, duplicate rows, and LLL implementation status.
+- FINDINGS_008.md — full algebraic audit of the spectral-zeta derivation, including zero-mode subtraction and the dropped p factor.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
