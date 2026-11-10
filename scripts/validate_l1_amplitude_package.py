@@ -42,7 +42,7 @@ def expected_names():
     return names
 
 
-def validate(manifest_path: Path, archive_path: Path):
+def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path):
     manifest_path, archive_path = Path(manifest_path), Path(archive_path)
     p = json.loads(manifest_path.read_text(encoding="utf-8"))
     if p.get("schema") != SCHEMA or p.get("schema_version") != VERSION:
@@ -55,8 +55,11 @@ def validate(manifest_path: Path, archive_path: Path):
         raise ValueError("unexpected science status")
     if p.get("missing_required_operators") != ["S", "R"]:
         raise ValueError("S/R absence must remain explicit")
-    if not isinstance(p.get("source_commit"), str) or len(p["source_commit"]) != 40:
-        raise ValueError("missing full source commit")
+    if (not isinstance(p.get("source_commit"), str) or len(p["source_commit"]) != 40
+            or any(ch not in "0123456789abcdef" for ch in p["source_commit"].lower())):
+        raise ValueError("missing full hexadecimal source commit")
+    if not p.get("source_commit_attestation", "").startswith("caller-supplied;"):
+        raise ValueError("source commit attestation limitation must remain explicit")
     claimed_package_sha = p.get("package_sha256")
     body = dict(p)
     body.pop("package_sha256", None)
@@ -77,6 +80,10 @@ def validate(manifest_path: Path, archive_path: Path):
         raise ValueError("expected exact hashes for all 72 shard JSON/NPZ triplets")
     if provenance.get("shard_manifest_sha256") != canonical_sha(hashes):
         raise ValueError("shard manifest digest mismatch")
+    if provenance.get("producer_source_sha256") != sha256(Path(producer_source_path)):
+        raise ValueError("producer source SHA256 mismatch")
+    if "worker_identity_limitation" not in provenance:
+        raise ValueError("worker source self-attestation limitation must remain explicit")
     registry = p.get("operator_registry", {})
     if registry.get("E", {}).get("source_blob_sha") != "9b1845aa263bacf23a0f79d5140bb82ceb56c8a1":
         raise ValueError("unrecognized E worker source blob")
@@ -141,9 +148,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--manifest", type=Path, required=True)
     ap.add_argument("--archive", type=Path, required=True)
+    ap.add_argument("--producer-source", type=Path, required=True)
     a = ap.parse_args()
     try:
-        result = validate(a.manifest, a.archive)
+        result = validate(a.manifest, a.archive, a.producer_source)
     except Exception as exc:
         print(json.dumps({"passed": False, "science_status": "PACKAGE_INTEGRITY_FAIL",
                           "error_type": type(exc).__name__, "error": str(exc)}, indent=2))
