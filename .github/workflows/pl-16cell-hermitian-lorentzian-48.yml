@@ -16,11 +16,15 @@ on:
       - '.github/workflows/pl-16cell-hermitian-lorentzian-48.yml'
   workflow_dispatch:
 
+concurrency:
+  group: pl48-audit-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ordered-terms:
     strategy:
       fail-fast: false
-      max-parallel: 24
+      max-parallel: 4
       matrix:
         mode: [forward, adjoint]
         index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
