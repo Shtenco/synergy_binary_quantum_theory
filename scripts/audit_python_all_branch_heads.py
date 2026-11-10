@@ -26,6 +26,7 @@ from pathlib import Path
 API = "https://api.github.com"
 PY_EXTS = {".py", ".pyi", ".pyx", ".pxd"}
 IPYNB_EXT = ".ipynb"
+INLINE_EXTS = {".md", ".rst", ".yml", ".yaml", ".sh"}
 ARCHIVE_SUFFIXES = (
     ".tar.gz.b64", ".tgz.b64", ".zip.b64",
     ".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".tar",
@@ -227,6 +228,64 @@ def scan_notebook(source: str, path: str, blob: str, findings: list, totals: Cou
 
 
 
+def iter_inline_python_blocks(source: str, path: str):
+    """Yield (kind, line, code) for explicitly marked Python snippets.
+
+    Markdown/RST Python fences and Python heredocs in YAML/shell files are
+    scanned. Arbitrary prose and shell fragments are deliberately not guessed
+    to be Python.
+    """
+    suffix = Path(path).suffix.lower()
+    lines = source.splitlines()
+
+    if suffix in {".md", ".rst"}:
+        i = 0
+        fence_open = re.compile(r"^[ \\t]{0,3}(`{3,}|~{3,})[ \\t]*([A-Za-z0-9_+.-]+)?(?:[ \\t].*)?$")
+        while i < len(lines):
+            match = fence_open.match(lines[i])
+            if not match:
+                i += 1
+                continue
+            fence = match.group(1)
+            language = (match.group(2) or "").lower()
+            if language not in {"python", "python3", "py", "ipython"}:
+                i += 1
+                continue
+            marker = fence[0]
+            minimum = len(fence)
+            close = re.compile(r"^[ \\t]{0,3}" + re.escape(marker) + "{" + str(minimum) + r",}[ \\t]*$")
+            start = i + 1
+            j = start
+            while j < len(lines) and not close.match(lines[j]):
+                j += 1
+            if j < len(lines):
+                yield (f"fence-{language}", i + 1, "\\n".join(lines[start:j]))
+                i = j + 1
+            else:
+                i += 1
+
+    if suffix in {".yml", ".yaml", ".sh"}:
+        heredoc = re.compile(
+            r"^[ \\t]*python(?:3)?(?:[ \\t]+-[A-Za-z]+)*[ \\t]+-[ \\t]*<<[\\\"']?([A-Za-z_][A-Za-z0-9_]*)[\\\"']?[ \\t]*$"
+        )
+        i = 0
+        while i < len(lines):
+            match = heredoc.match(lines[i])
+            if not match:
+                i += 1
+                continue
+            delimiter = match.group(1)
+            start = i + 1
+            j = start
+            while j < len(lines) and lines[j].strip() != delimiter:
+                j += 1
+            if j < len(lines):
+                yield (f"heredoc-{delimiter}", i + 1, "\\n".join(lines[start:j]))
+                i = j + 1
+            else:
+                i += 1
+
+
 def safe_archive_member(name: str) -> bool:
     normalized = name.replace("\\", "/")
     parts = Path(normalized).parts
@@ -389,6 +448,7 @@ def main():
     snapshots = []
     occurrences = []
     archive_occurrences = []
+    inline_occurrences = []
 
     for commit in commits:
         entries = git_tree(commit)
@@ -402,11 +462,17 @@ def main():
             if entry["type"] == "blob"
             and entry["path"].lower().endswith(ARCHIVE_SUFFIXES)
         ]
+        inline_files = [
+            entry for entry in entries
+            if entry["type"] == "blob"
+            and Path(entry["path"]).suffix.lower() in INLINE_EXTS
+        ]
         snapshots.append({
             "commit": commit,
             "tree_entries": len(entries),
             "python_files": len(files),
             "embedded_archives": len(archives),
+            "inline_source_files": len(inline_files),
         })
         for item in files:
             occurrences.append({
@@ -420,6 +486,13 @@ def main():
                 "commit": commit,
                 "path": item["path"],
                 "blob_sha": item["sha"],
+            })
+        for item in inline_files:
+            inline_occurrences.append({
+                "commit": commit,
+                "path": item["path"],
+                "blob_sha": item["sha"],
+                "extension": Path(item["path"]).suffix.lower(),
             })
 
     blob_locations = defaultdict(list)
@@ -440,7 +513,17 @@ def main():
     for locations in archive_locations.values():
         locations.sort(key=lambda x: (x["path"], x["commit"]))
 
-    all_blob_shas = sorted(set(blob_locations) | set(archive_locations))
+    inline_locations = defaultdict(list)
+    for item in inline_occurrences:
+        inline_locations[item["blob_sha"]].append({
+            "commit": item["commit"],
+            "path": item["path"],
+            "extension": item["extension"],
+        })
+    for locations in inline_locations.values():
+        locations.sort(key=lambda x: (x["path"], x["commit"], x["extension"]))
+
+    all_blob_shas = sorted(set(blob_locations) | set(archive_locations) | set(inline_locations))
     blob_contents = git_blob_batch(all_blob_shas)
 
     findings = []
@@ -462,6 +545,17 @@ def main():
             blob_contents[archive_sha], representative, archive_sha,
             findings, totals, locations
         )
+
+    for inline_sha in sorted(inline_locations):
+        locations = inline_locations[inline_sha]
+        representative = locations[0]["path"]
+        source = blob_contents[inline_sha].decode("utf-8", errors="replace")
+        for index, (kind, line, code) in enumerate(
+            iter_inline_python_blocks(source, representative), 1
+        ):
+            block_path = f"{representative}#{kind}-{index}"
+            scan_source(code, block_path, inline_sha, findings, totals, locations)
+            totals["inline_python_blocks"] += 1
 
     path_versions = {(x["path"], x["blob_sha"]) for x in occurrences}
     unique_paths = {x["path"] for x in occurrences}
@@ -494,6 +588,12 @@ def main():
         "main_python_file_occurrences": len(main_locations),
         "main_unique_python_blobs": len(main_blob_shas),
         "main_embedded_archive_file_occurrences": len(main_embedded_archive_locations),
+        "main_inline_source_file_occurrences": sum(
+            1 for x in inline_occurrences if x["commit"] == main_head
+        ),
+        "branch_snapshot_inline_source_file_occurrences": len(inline_occurrences),
+        "unique_inline_source_blobs_audited": len(inline_locations),
+        "inline_python_blocks": totals["inline_python_blocks"],
         "main_syntax_errors": main_syntax_errors,
         "main_ast_status": "PASS" if main_syntax_errors == 0 else "FAIL",
         "unique_branch_head_commits": len(commits),
@@ -523,10 +623,10 @@ def main():
         "elapsed_seconds": round(time.time() - t0, 2),
         "scope_note": (
             "Static inspection only; repository code was not executed. Every distinct "
-            "tracked Python blob and every Python source member in supported tar/ZIP "
-            "archives at branch heads was parsed. Inline Python in Markdown/YAML, "
-            "unsupported archive formats, tags, and non-head historical commits are "
-            "outside this scan."
+            "tracked Python blob, every Python source member in supported tar/ZIP "
+            "archives, and explicitly marked Python fence/heredoc block at branch heads "
+            "was parsed. Nested archives, unmarked inline fragments, unsupported archive "
+            "formats, tags, and non-head historical commits are outside this scan."
         ),
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
