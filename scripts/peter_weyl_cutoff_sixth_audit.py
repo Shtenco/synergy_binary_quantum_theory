@@ -87,6 +87,20 @@ def exact_quaternion_haar_control(n: int = 6) -> int:
     return int(result)
 
 
+def gauge_covariance_error(jmax: float) -> float:
+    basis, idx, L, R, U, Ud = PW.build_link(jmax)
+    _, Jfund = PW.spin_mats(0.5)
+    error = 0.0
+    for a in range(3):
+        for i, j in __import__("itertools").product(range(2), repeat=2):
+            left = L[a] @ U[(i, j)] - U[(i, j)] @ L[a]
+            left -= sum(Jfund[a][p, i] * U[(p, j)] for p in range(2))
+            right = R[a] @ U[(i, j)] - U[(i, j)] @ R[a]
+            right -= sum(U[(i, p)] * Jfund[a][p, j] for p in range(2))
+            error = max(error, float(np.linalg.norm(left)), float(np.linalg.norm(right)))
+    return error
+
+
 def evolve_detailed(jmax: float, nmax: int, prune_tol: float):
     basis, idx, _, _, U, Ud = PW.build_link(jmax)
     D = len(basis)
@@ -165,6 +179,10 @@ def run():
     tight_comparison = compare_states(baseline["final_state"], tight["final_state"])
     loose_comparison = compare_states(baseline["final_state"], loose["final_state"])
     exact_error = abs(baseline["final_norm_squared"] - exact)
+    gauge_covariance = {
+        "Jmax_3": gauge_covariance_error(3.0),
+        "Jmax_7_2": gauge_covariance_error(3.5),
+    }
     # Link basis is identical through j=3 for both cutoffs; indices above the
     # J=3 sector start at the common prefix dimension.
     _, idx3, *_ = PW.build_link(3.0)
@@ -186,6 +204,7 @@ def run():
             for x in (baseline, tight, loose, overcut)
         ) < 1e-3,
         "baseline_norm_matches_independent_exact_control": exact_error < 1e-3,
+        "gauge_covariance_at_both_cutoffs": max(gauge_covariance.values()) < 1e-12,
         "all_final_amplitudes_finite": all(
             np.isfinite([z.real, z.imag]).all()
             for z in baseline["final_state"].values()
@@ -219,6 +238,7 @@ def run():
         "pruning_state_comparison_1e-13_vs_1e-14": tight_comparison,
         "pruning_state_comparison_1e-13_vs_1e-12": loose_comparison,
         "overcutoff_support_above_spin_3": high_spin_support,
+        "gauge_covariance_max_errors": gauge_covariance,
         "exact_norm_absolute_error": exact_error,
         "checks": checks,
         "claim_boundary": "Finite sixth-order Peter-Weyl cutoff calculation and an independent exact SU(2)^3 Haar moment. This is not a continuum-limit proof or a physical theorem.",
