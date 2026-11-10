@@ -1,0 +1,23 @@
+{
+  "status": "full microscopic/master multiplicity channel-flow matrix",
+  "passed": true,
+  "source_s2": 3,
+  "source_j": 1.5,
+  "target_s2": 4,
+  "target_j": 2.0,
+  "source_master_eigenvalues": [11.86424574046416],
+  "target_master_eigenvalues": [5.067680982953853, 5.807713077901408],
+  "source_pair_spreads": [0.0],
+  "target_pair_spreads": [5.329070518200751e-15, 4.440892098500626e-15],
+  "channel_flow_matrix": [[0.05404213255283678, 0.9459578674471627]],
+  "row_sums": [0.9999999999999994],
+  "row_stochasticity_error": 5.551115123125783e-16,
+  "best_target_index_by_source": [1],
+  "best_overlap_by_source": [0.9459578674471627],
+  "generated_singular_values": [[0.5266343608235226, 0.5266343608235224, 7.877700591258328e-17, 4.764136489661429e-17]],
+  "generated_pair_spread_max": 1.1102230246251565e-16,
+  "Gauss_projection_leakage": 1.669564288351844e-31,
+  "workflow_run_id": 42797583866,
+  "workflow_commit": "890dc7051601008f5cb724928df9318f2e8654ce",
+  "claim_boundary": "F_ab is a representation-RG projector overlap, not a physical-time probability. It diagnoses which target master eigenchannel is naturally inherited from each source channel under the exact binary-ancilla blocking tensor."
+}
