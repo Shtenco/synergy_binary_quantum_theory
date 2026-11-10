@@ -9,7 +9,7 @@ This reuses exact frozen-state C(V)/C(K) caches without changing any amplitude,
 orientation coefficient, truncation or acceptance criterion.
 """
 from __future__ import annotations
-import argparse,json,math,time,traceback
+import argparse,json,math,time,hashlib,traceback
 from pathlib import Path
 import numpy as np
 import k5_peter_weyl_safe_hda_column as PW
@@ -77,7 +77,9 @@ def run(mode,slot,outdir,source=0):
         try:
             for idx in indices:
                 state,meta=evaluate(D,G,seed,source,idx,mode,caches);allpass&=meta['passed'];summary.append(meta)
-                W.save_state(Path(outdir)/f'term_{mode}_{idx}.npz',state,len(G.EDGES),D.n_tets)
+                state_path=Path(outdir)/f'term_{mode}_{idx}.npz'
+                W.save_state(state_path,state,len(G.EDGES),D.n_tets)
+                meta['state_sha256']=hashlib.sha256(state_path.read_bytes()).hexdigest()
                 (Path(outdir)/f'term_{mode}_{idx}.json').write_text(json.dumps(meta,indent=2,sort_keys=True)+'\n',encoding='utf-8')
         finally:
             restore();LP.JMAX2=oldJ
