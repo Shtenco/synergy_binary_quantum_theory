@@ -20,6 +20,7 @@
 - FINDINGS_004.md — neutron lifetime comparison against PDG 2026.
 - FINDINGS_007.md — matrix-version drift, 70×6 vs 55×6 vs 30×6, duplicate rows, and LLL implementation status.
 - FINDINGS_008.md — full algebraic audit of the spectral-zeta derivation, including zero-mode subtraction and the dropped p factor.
+- FINDINGS_009.md and simulate_smallworld_scaling.py — independent finite-size graph simulation; preliminary support for p∝N^(-1/3) and spectral gap ∝1/(lnN)^2 under an explicit ensemble.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
