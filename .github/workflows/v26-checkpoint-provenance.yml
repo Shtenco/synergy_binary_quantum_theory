@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install --disable-pip-version-check numpy
+      - run: python -m pip install --disable-pip-version-check numpy sympy
       - name: Compile checkpoint workers
         run: |
           python -m py_compile scripts/bqg_lorentzian_checkpointed_triple.py
