@@ -328,6 +328,7 @@ def epsilon_sum_state(initial, source_v):
                 "coefficient": coef,
                 "support": len(st),
                 "norm": math.sqrt(norm2(st)),
+                "exact_empty_input_zero_fields": list(diag.get("exact_empty_input_zero_fields", [])),
             })
     for key in missing_ever | invalid_ever:
         diagmax.pop(key, None)
