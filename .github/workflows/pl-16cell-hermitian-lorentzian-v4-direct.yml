@@ -105,7 +105,7 @@ jobs:
       - name: Hard V4 science guards
         shell: pwsh
         run: |
-          python -c "import json; d=json.load(open('verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V4.json')); assert d['passed']; assert d['operator_version']=='direct-hermitian-commutator-v4'; assert d['pair_count']==12; assert d['primitive_orderings_covered']==48; assert d['max_primitive_physical_leakage']<1e-8; assert d['wrong_seed_parity_outputs']==0; assert d['S_max_spin']<=3.5+1e-12"
+          python -c "import json; d=json.load(open('verification_results/PL_16CELL_HERMITIAN_LORENTZIAN_V4.json')); assert d['passed']; assert d['operator_version']=='direct-hermitian-commutator-v4'; assert d['pair_count']==12; assert d['primitive_orderings_covered']==48; assert d['max_primitive_physical_leakage']<1e-8; assert d['max_primitive_charge_leakage']<1e-8; assert d['wrong_seed_parity_outputs']==0; assert d['S_max_spin']<=3.5+1e-12"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
