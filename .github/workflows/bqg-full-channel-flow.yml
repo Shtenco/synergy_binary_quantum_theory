@@ -81,6 +81,7 @@ jobs:
       - name: Validate complete provenance and six-step spectral continuity
         run: |
           python scripts/bqg_rg_ancestry_path.py verification_results/flows/*.json \
+            --require-refinement-spectra \
             --output verification_results/BQG_RG_ANCESTRY_PATH_6STEP.json
       - uses: actions/upload-artifact@v4
         with:
