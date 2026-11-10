@@ -210,7 +210,16 @@ def install_sine_cached_stack():
 
 
 def update_diag(dst, name, value):
-    dst[name] = max(dst.get(name, 0.0), float(value))
+    if (isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(float(value)) or float(value) < 0.0):
+        raise ValueError(f"invalid leakage diagnostic {name}: {value!r}")
+    previous = dst.get(name)
+    if previous is not None and (
+        isinstance(previous, bool) or not isinstance(previous, (int, float))
+        or not math.isfinite(float(previous)) or float(previous) < 0.0
+    ):
+        raise ValueError(f"invalid accumulated leakage diagnostic {name}: {previous!r}")
+    dst[name] = max(float(previous) if previous is not None else 0.0, float(value))
 
 
 LEAK_FIELDS = (
