@@ -77,6 +77,29 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
             "CK_complete_charge_basis_leakage",
         })
 
+    def test_permutation_ledger_retains_empty_input_zero_provenance(self):
+        fake_diag = {
+            "CV_complete_basis_leakage": 0.0,
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+            "exact_empty_input_zero_fields": [
+                "CK_outer_complete_basis_leakage",
+                "CK_internal_volume_sector_leakage",
+                "CK_complete_charge_basis_leakage",
+            ],
+        }
+        with patch.object(LP.PW, "NEIG", {0: (1, 2, 3, 4)}), \
+             patch.object(LP, "ordered_triple_state", return_value=({}, fake_diag)):
+            _, rows, summary = LP.epsilon_sum_state(("seed",), 0)
+
+        self.assertEqual(len(rows), 24)
+        self.assertTrue(all(
+            set(row["exact_empty_input_zero_fields"]) == set(fake_diag["exact_empty_input_zero_fields"])
+            for row in rows
+        ))
+        self.assertTrue(LP.leakage_summary(summary)["complete"])
+
     def test_dagger_volume_stage_not_run_is_not_reported_as_zero(self):
         ck_diag = {
             "outer_complete_basis_leakage": 0.0,
