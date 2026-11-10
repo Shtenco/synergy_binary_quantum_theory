@@ -53,6 +53,45 @@ def save_bundle(path,forward,adjoint,S,nedges=32,nverts=16):
             out[name+'_spins']=np.zeros((0,nedges),dtype=np.int16);out[name+'_Ks']=np.zeros((0,nverts),dtype=np.int16);out[name+'_amp']=np.zeros((0,),dtype=np.complex128)
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True);np.savez_compressed(path,**out)
 
+LEAK_FIELDS = (
+    "CV_complete_basis_leakage",
+    "CK_outer_complete_basis_leakage",
+    "CK_internal_volume_sector_leakage",
+    "CK_complete_charge_basis_leakage",
+)
+
+
+def validate_worker_leakage_provenance(meta, context):
+    diag = meta.get("leakage_diagnostics")
+    if not isinstance(diag, dict) or set(diag) != set(LEAK_FIELDS):
+        raise RuntimeError(f"missing complete four-channel leakage map in {context}")
+    for field in LEAK_FIELDS:
+        value = diag[field]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise RuntimeError(f"invalid leakage field {field} in {context}")
+        if not math.isfinite(float(value)) or float(value) < 0.0:
+            raise RuntimeError(f"non-finite/negative leakage field {field} in {context}")
+    maximum = max(float(diag[field]) for field in LEAK_FIELDS)
+    if not math.isclose(maximum, float(meta["physical_acceptance_max_leakage"]),
+                        rel_tol=1e-12, abs_tol=1e-15):
+        raise RuntimeError(f"physical leakage maximum disagrees with four-channel map in {context}")
+    if not math.isclose(float(diag["CK_complete_charge_basis_leakage"]),
+                        float(meta["complete_charge_diagnostic"]),
+                        rel_tol=1e-12, abs_tol=1e-15):
+        raise RuntimeError(f"charge leakage disagrees with four-channel map in {context}")
+    provenance = meta.get("exact_empty_input_zero_fields", [])
+    if (not isinstance(provenance, list) or len(provenance) != len(set(provenance))
+            or any(field not in LEAK_FIELDS for field in provenance)):
+        raise RuntimeError(f"invalid exact-empty-input zero provenance in {context}")
+    if provenance:
+        if meta.get("exact_zero_ordered_term") is not True:
+            raise RuntimeError(f"empty-input analytic zero claimed for nonzero term in {context}")
+        for field in provenance:
+            if float(diag[field]) != 0.0:
+                raise RuntimeError(f"analytic empty-input zero is not numerically zero for {field} in {context}")
+    return provenance
+
+
 def run(root):
     metas=[]
     for p in Path(root).rglob('term_*.json'):
@@ -69,6 +108,7 @@ def run(root):
             raise RuntimeError(f'invalid scalar closure fraction in {p}')
         if d.get('exact_zero_ordered_term') not in (True,False):
             raise RuntimeError(f'missing exact-zero declaration in {p}')
+        validate_worker_leakage_provenance(d, str(p))
         mode=d['mode'];idx=int(d['index'])
         if mode not in ('forward','adjoint') or not 0<=idx<24:
             raise RuntimeError(f'invalid worker identity in {p}')
