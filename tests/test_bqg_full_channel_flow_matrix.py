@@ -32,6 +32,20 @@ class FullChannelFlowGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "nonfinite"):
             FLOW.validate_master_spectrum([5.0, float("nan")], [0.0, 0.0], "nan test")
 
+    def test_induced_refinement_tensor_reports_gram_and_singular_data(self):
+        T = np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]], dtype=complex)
+        result = FLOW.refinement_tensor_diagnostics(T, "unit coisometry test")
+        self.assertEqual(result["shape"], [2, 4])
+        self.assertEqual(result["numerical_rank"], 2)
+        self.assertLess(result["row_gram_identity_defect"], 1e-12)
+        self.assertLess(result["column_gram_projector_defect"], 1e-12)
+        self.assertIn("no unit-isometry assumption", result["normalization_claim"])
+
+    def test_induced_refinement_tensor_rejects_nonfinite_entries(self):
+        T = np.array([[1.0, np.nan]], dtype=complex)
+        with self.assertRaisesRegex(RuntimeError, "non-finite"):
+            FLOW.refinement_tensor_diagnostics(T, "NaN test")
+
     def test_accepts_exactly_one_generated_two_dimensional_copy(self):
         rank, spread = FLOW.validate_generated_copy_spectrum(
             [0.5266343608, 0.5266343608, 1e-16, 1e-17], "copy test"
