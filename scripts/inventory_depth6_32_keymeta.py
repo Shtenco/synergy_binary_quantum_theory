@@ -11,14 +11,19 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import io
 import json
-import pickle
 import re
+import stat
+import sys
 import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'proof_tools'))
+from safe_pickle import safe_load_builtin_pickle
 
 import build_master_key_peeling_schedule as S
 
@@ -49,22 +54,32 @@ class StripAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
         new = super().redirect_request(req, fp, code, msg, headers, newurl)
         if new is None:
             return None
+        parsed = urllib.parse.urlparse(newurl)
+        if parsed.scheme.lower() != 'https':
+            raise urllib.error.HTTPError(
+                req.full_url, code, 'refusing non-HTTPS artifact redirect', headers, fp
+            )
         old_host = urllib.parse.urlparse(req.full_url).hostname
-        new_host = urllib.parse.urlparse(newurl).hostname
+        new_host = parsed.hostname
         if old_host == GITHUB_API_HOST and new_host != GITHUB_API_HOST:
             new.remove_header('Authorization')
         return new
 
 
-def download(url: str, token: str, out: Path) -> None:
+def download(url: str, token: str, out: Path) -> tuple[int, str]:
     req = urllib.request.Request(url, headers=github_headers(token))
     opener = urllib.request.build_opener(StripAuthRedirectHandler())
-    with opener.open(req, timeout=180) as r, out.open('wb') as f:
+    digest = hashlib.sha256()
+    size = 0
+    with opener.open(req, timeout=180) as response, out.open('xb') as f:
         while True:
-            b = r.read(1024 * 1024)
-            if not b:
+            chunk = response.read(1024 * 1024)
+            if not chunk:
                 break
-            f.write(b)
+            f.write(chunk)
+            digest.update(chunk)
+            size += len(chunk)
+    return size, digest.hexdigest()
 
 
 def list_run_artifacts(repo: str, run_id: int, token: str) -> list[dict]:
@@ -105,7 +120,7 @@ def choose_latest_keymeta(repo: str, run_ids: list[int], token: str) -> dict[int
 
 def _load_payload_bytes(raw: bytes, label: str) -> dict:
     with gzip.GzipFile(fileobj=io.BytesIO(raw), mode='rb') as g:
-        x = pickle.load(g)
+        x = safe_load_builtin_pickle(g)
     if x.get('kind') != 'BQG_MIXED_MASTER_KEY_METADATA' or int(x.get('schema_version', -1)) != 1:
         raise RuntimeError(f'{label}: wrong keymeta kind/schema')
     return x
@@ -113,7 +128,18 @@ def _load_payload_bytes(raw: bytes, label: str) -> dict:
 
 def load_payloads_from_zip(zpath: Path) -> list[dict]:
     with zipfile.ZipFile(zpath) as z:
-        names = sorted(n for n in z.namelist() if n.endswith('.pkl.gz'))
+        names = []
+        for info in z.infolist():
+            normalized = info.filename.replace('\\\\', '/')
+            parts = Path(normalized).parts
+            mode = (info.external_attr >> 16) & 0xFFFF
+            if (Path(normalized).is_absolute() or '..' in parts
+                    or stat.S_ISLNK(mode) or stat.S_ISCHR(mode)
+                    or stat.S_ISBLK(mode) or stat.S_ISFIFO(mode)):
+                raise RuntimeError(f'{zpath}: unsafe ZIP member {info.filename!r}')
+            if info.filename.endswith('.pkl.gz'):
+                names.append(info.filename)
+        names.sort()
         if not names:
             raise RuntimeError(f'{zpath}: expected at least one .pkl.gz')
         return [_load_payload_bytes(z.read(name), f'{zpath}:{name}') for name in names]
@@ -142,7 +168,12 @@ def main() -> int:
     for sid in sorted(chosen):
         art = chosen[sid]
         zp = a.work / f'shard-{sid}.zip'
-        download(art['archive_download_url'], a.token, zp)
+        size, actual_digest = download(art['archive_download_url'], a.token, zp)
+        expected_digest = str(art.get('digest') or '')
+        if not expected_digest.startswith('sha256:') or actual_digest != expected_digest.split(':', 1)[1].lower():
+            raise RuntimeError(f"artifact {art['name']} SHA-256 mismatch or missing digest")
+        if size != int(art.get('size_in_bytes') or -1):
+            raise RuntimeError(f"artifact {art['name']} size mismatch")
         x = load_payload_from_zip(zp)
         if int(x['shard']) != sid:
             raise RuntimeError(f'artifact shard/name mismatch {sid} vs {x["shard"]}')
