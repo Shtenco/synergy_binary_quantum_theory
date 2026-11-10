@@ -15,6 +15,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import pickle
 import sys
 import tarfile
 from pathlib import Path
@@ -39,7 +40,6 @@ def sha256(path: Path) -> str:
 
 def extract_tar(src: Path, out: Path) -> Path:
     out.mkdir(parents=True, exist_ok=True)
-    root = out.resolve()
     with tarfile.open(src, 'r:gz') as tf:
         safe_extract_tar(tf, out)
     summaries = list(out.rglob('summary.json'))
