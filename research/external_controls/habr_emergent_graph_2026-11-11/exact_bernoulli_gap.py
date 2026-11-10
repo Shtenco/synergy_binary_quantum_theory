@@ -130,7 +130,8 @@ def main():
         batch = [measure(L, args.seed + 1000*L + r) for r in range(args.reps)]
         rows.extend(batch)
         x = np.asarray([r["lambda2"] for r in batch])
-        mean, sd = float(x.mean()), float(x.std(ddof=1)) if len(x)>1 else (float(x.mean()), float("nan"))
+        mean = float(x.mean())
+        sd = float(x.std(ddof=1)) if len(x) > 1 else float("nan")
         cv = sd/mean if mean else float("nan")
         print(f"L={L:3d} N={L**3:7d} reps={len(x):3d} "
               f"mean_gap={mean:.9f} sd={sd:.9f} CV={cv:.6%} "
