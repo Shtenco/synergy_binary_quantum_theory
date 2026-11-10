@@ -211,3 +211,12 @@ The unresolved continuum claim is narrower and more precise:
 for the **actual graph-changing BQG master**, with a dynamically selected microscopic refinement lineage and compatible forward/return habitat embeddings.
 
 That is the next theorem-to-data bridge. No existing finite zero should be discarded, and no finite zero should be promoted beyond its declared sector.
+
+
+## 7. New implementation added after this audit
+
+The script `scripts/bqg_jhalf_to_j1_return_carrier_leakage.py` has now been added. It is designed to compute a narrower but genuinely new datum: the carrier leakage (L) and internal mismatch (D) for the compressed 243-dimensional coarse (j=1) local-singlet return operator.
+
+It obtains the coarse action on the embedded 32D carrier by applying the declared Hermitian sine-ordered two-node operator twice, then independently checks the pullback against the Gram matrix ((AW)^\dagger(AW)). The script reports the discrepancy rather than silently assuming that cutoff/pruning preserves Hermiticity.
+
+Scope remains deliberately limited: the 243D product of local (j=1) singlet multiplicity spaces. Spin-changed graph-changing habitats and the full master are excluded. The script has been committed but its numerical run has not yet been executed; no (L,D) values are claimed here.
