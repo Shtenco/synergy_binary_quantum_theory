@@ -19,12 +19,24 @@ def validate_refinement_spectrum(item, context):
     if (not isinstance(shape, list) or len(shape) != 2
             or any(not isinstance(x, int) or isinstance(x, bool) or x <= 0 for x in shape)):
         raise ValueError(f"{context}: malformed refinement tensor shape")
-    singular = np.asarray(diag.get("singular_values"), dtype=float)
-    row_gram = np.asarray(diag.get("row_gram_eigenvalues"), dtype=float)
-    col_gram = np.asarray(diag.get("column_gram_nonzero_eigenvalues"), dtype=float)
-    rank_tol = float(diag.get("rank_tolerance", math.nan))
+    def numeric_vector(field):
+        raw = diag.get(field)
+        if (not isinstance(raw, list)
+                or any(isinstance(x, bool) or not isinstance(x, (int, float)) for x in raw)):
+            raise ValueError(f"{context}: {field} must be a JSON numeric array")
+        return np.asarray(raw, dtype=float)
+
+    singular = numeric_vector("singular_values")
+    row_gram = numeric_vector("row_gram_eigenvalues")
+    col_gram = numeric_vector("column_gram_nonzero_eigenvalues")
+    rank_tol_raw = diag.get("rank_tolerance")
+    frobenius_raw = diag.get("frobenius_norm")
+    if (isinstance(rank_tol_raw, bool) or not isinstance(rank_tol_raw, (int, float))
+            or isinstance(frobenius_raw, bool) or not isinstance(frobenius_raw, (int, float))):
+        raise ValueError(f"{context}: rank tolerance and Frobenius norm must be numeric")
+    rank_tol = float(rank_tol_raw)
     rank = diag.get("numerical_rank")
-    frobenius = float(diag.get("frobenius_norm", math.nan))
+    frobenius = float(frobenius_raw)
     row_identity_defect = float(diag.get("row_gram_identity_defect", math.nan))
     column_idempotence_defect = float(diag.get("column_gram_idempotence_defect", math.nan))
     if (singular.ndim != 1 or singular.size != min(shape)
