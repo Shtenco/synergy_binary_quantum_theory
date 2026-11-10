@@ -106,9 +106,13 @@ def tetra_volume_block_general(spins_local,J2):
         or Vmin < -HERMITICITY_TOL
         or functional_error > 1e-9):
         raise RuntimeError("tetrahedral volume spectral functional-calculus validation failed")
+    raw_m_eigenvalues=[[float(x) for x in np.linalg.eigvalsh(B)] for B in blocks]
+    raw_m_frobenius_norms=[float(np.linalg.norm(B,ord="fro")) for B in blocks]
     TETRA_VOLUME_DIAGNOSTICS[(spins_local,int(J2))]={
         "M_values_doubled":list(m_values),
         "raw_Q_M_block_defects":m_defects,
+        "raw_Q_M_block_eigenvalues":raw_m_eigenvalues,
+        "raw_Q_M_block_frobenius_norms":raw_m_frobenius_norms,
         "max_raw_Q_M_block_defect":max_m_defect,
         "max_Q_sector_leakage_absolute":max(TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["absolute_sector_leakage"] for M in m_values),
         "max_Q_sector_leakage_relative":max(TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M))]["relative_sector_leakage"] for M in m_values),
