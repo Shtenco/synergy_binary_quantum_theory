@@ -242,6 +242,19 @@ def run(root: Path, out_dir: Path, source_commit: str):
                 raise ValueError(f"unexpected Jmax in {stem}")
             u, us, uk = load_state(up, 768, 384)
             v, vs, vk = load_state(vp, 768, 384)
+            # Bind each NPZ payload to the worker's own per-shard diagnostics.
+            for label, state, diag_key in (
+                ("source", u, "first_edge_state"),
+                ("response", v, "depth2_shard_state"),
+            ):
+                diag = m.get(diag_key, {})
+                if int(diag.get("support", -1)) != len(state):
+                    raise ValueError(f"{stem}: {label} support disagrees with metadata")
+                if not math.isclose(float(diag.get("norm", float("nan"))),
+                                    state_norm(state), rel_tol=2e-12, abs_tol=2e-14):
+                    raise ValueError(f"{stem}: {label} norm disagrees with metadata")
+            if len(m.get("first_columns", [])) != 4:
+                raise ValueError(f"{stem}: expected four first-action edge chambers")
             rows.append(m); sources.append(u); shard_states.append(v); meta_rows.append(m)
             for p in (mp, up, vp):
                 shard_hashes[str(p.name)] = sha256_file(p)
