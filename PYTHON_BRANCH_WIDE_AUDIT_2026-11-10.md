@@ -497,3 +497,14 @@ confirmed by a completed matrix job.
 The CI queue has not yet supplied completed results for the latest
 scanner and optimization-mode tests. The code changes are committed,
 but their CI status must remain pending until the workflows complete.
+
+
+### Core-regression compile ordering
+
+The core workflow previously ran the documentation scope audit before
+`python -m compileall -q .`. A documentation-only failure therefore
+skipped the Python compilation step. The order is now reversed: the full
+main-tree compile runs first, followed by the documentation scope gate.
+This keeps syntax/bytecode compilation evidence independent of
+documentation-policy failures. It changes no scientific test or acceptance
+criterion.
