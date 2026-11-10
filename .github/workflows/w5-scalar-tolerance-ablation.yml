@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/w5_scalar_tolerance_ablation.py"
+      - "scripts/w5_scalar_tolerance_ablation_onepass.py"
       - ".github/workflows/w5-scalar-tolerance-ablation.yml"
   workflow_dispatch:
 
@@ -24,13 +25,13 @@ jobs:
         run: python -m pip install --upgrade numpy sympy
       - name: Compare projection, accumulation and aggregation tolerances
         run: |
-          python scripts/w5_scalar_tolerance_ablation.py \
-            --output verification_results/W5_SCALAR_TOLERANCE_ABLATION.json
+          python scripts/w5_scalar_tolerance_ablation_onepass.py \
+            --output verification_results/W5_SCALAR_TOLERANCE_ABLATION_ONEPASS.json
       - name: Upload ablation result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: w5-scalar-tolerance-ablation-k0-node0-j10
-          path: verification_results/W5_SCALAR_TOLERANCE_ABLATION.json
+          path: verification_results/W5_SCALAR_TOLERANCE_ABLATION_ONEPASS.json
           if-no-files-found: warn
           retention-days: 30
