@@ -39,6 +39,8 @@ def validate_refinement_spectrum(item, context):
         raise ValueError(f"{context}: negative singular/Gram spectrum")
     if singular.size > 1 and np.any(np.diff(singular) > 1e-12 * max(float(singular[0]), 1.0)):
         raise ValueError(f"{context}: singular values are not descending")
+    if frobenius <= 0.0 or float(np.sum(singular * singular)) <= 0.0:
+        raise ValueError(f"{context}: refinement tensor has zero spectral mass")
     expected_rank = int(np.sum(singular > rank_tol))
     if isinstance(rank, bool) or not isinstance(rank, int) or rank != expected_rank:
         raise ValueError(f"{context}: numerical rank does not match singular spectrum")
