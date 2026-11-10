@@ -62,6 +62,8 @@ class TestBQGRGAncestryPath(unittest.TestCase):
                 "row_gram_eigenvalues": [0.16, 0.64],
                 "column_gram_nonzero_eigenvalues": [0.16, 0.64],
                 "frobenius_norm": float((0.8**2 + 0.4**2) ** 0.5),
+                "row_gram_identity_defect": 0.9,
+                "column_gram_idempotence_defect": 0.3,
             }
         }
         result = ancestry.validate_refinement_spectrum(item, "synthetic test")
