@@ -61,6 +61,30 @@ class CriticalGateOptimizationTests(unittest.TestCase):
         self.assertIn("exact_local_blocks", result.stdout)
         self.assertIn('"physicalization_complete": false', result.stdout)
 
+    def test_assert_based_scientific_gates_refuse_optimized_execution(self):
+        paths = (
+            "scripts/bqg_three_node_reduced_chain_gate.py",
+            "scripts/bqg_local_information_resistance_gate.py",
+            "scripts/bqg_two_node_reduced_gluing_gate.py",
+            "scripts/bqg_projector_graph_transition_gate.py",
+            "scripts/bqg_minimal_entanglement_volume_gate.py",
+        )
+        for relative in paths:
+            with self.subTest(path=relative):
+                tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"))
+                guards = [
+                    node for node in tree.body
+                    if isinstance(node, ast.If)
+                    and isinstance(node.test, ast.UnaryOp)
+                    and isinstance(node.test.op, ast.Not)
+                    and isinstance(node.test.operand, ast.Name)
+                    and node.test.operand.id == "__debug__"
+                ]
+                self.assertTrue(
+                    guards,
+                    f"{relative} must refuse python -O while it contains assert gates",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
