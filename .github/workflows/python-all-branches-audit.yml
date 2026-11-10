@@ -1,0 +1,40 @@
+name: python-all-branches-audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/audit_python_all_branch_heads.py'
+      - '.github/workflows/python-all-branches-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-all-branches-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Enumerate and statically audit Python blobs across every branch head
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: \${{ github.repository }}
+        run: |
+          python -m py_compile scripts/audit_python_all_branch_heads.py
+          python scripts/audit_python_all_branch_heads.py --out verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
+      - name: Upload complete branch-wide audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-all-branches-audit
+          path: verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
+          if-no-files-found: error
