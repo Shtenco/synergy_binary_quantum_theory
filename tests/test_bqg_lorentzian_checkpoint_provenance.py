@@ -137,6 +137,69 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
                         require_all=False,
                     )
 
+    def _synthetic_checkpoint_chain(self):
+        cv = {"leakage_max": {"CV_complete_basis_leakage": 0.1}}
+        kb_stage = {
+            "CK_outer_complete_basis_leakage": 0.2,
+            "CK_internal_volume_sector_leakage": 0.3,
+            "CK_complete_charge_basis_leakage": 0.4,
+        }
+        ka_stage = {
+            "CK_outer_complete_basis_leakage": 0.15,
+            "CK_internal_volume_sector_leakage": 0.35,
+            "CK_complete_charge_basis_leakage": 0.25,
+        }
+        kb = {
+            "operator_input_support": 2,
+            "operator_stage_applied": True,
+            "exact_empty_input_zero_fields": [],
+            "diagnostic_provenance_scope": "current_operator_stage",
+            "stage_leakage_diagnostics": kb_stage,
+            "leakage_max": {
+                "CV_complete_basis_leakage": 0.1,
+                **kb_stage,
+            },
+        }
+        ka = {
+            "operator_input_support": 1,
+            "operator_stage_applied": True,
+            "exact_empty_input_zero_fields": [],
+            "diagnostic_provenance_scope": "current_operator_stage",
+            "stage_leakage_diagnostics": ka_stage,
+            "leakage_max": {
+                "CV_complete_basis_leakage": 0.1,
+                "CK_outer_complete_basis_leakage": 0.2,
+                "CK_internal_volume_sector_leakage": 0.35,
+                "CK_complete_charge_basis_leakage": 0.4,
+            },
+        }
+        return cv, kb, ka
+
+    def test_checkpoint_chain_validates_all_stage_maxima_and_support(self):
+        cv, kb, ka = self._synthetic_checkpoint_chain()
+        result = BASE.validate_checkpoint_chain(cv, kb, ka, cv_support=2, kb_support=1)
+        self.assertTrue(result["cv_to_kb_max_aggregation_verified"])
+        self.assertTrue(result["kb_to_ka_max_aggregation_verified"])
+        self.assertEqual(result["cv_output_support"], 2)
+        self.assertEqual(result["kb_output_support"], 1)
+
+    def test_checkpoint_chain_rejects_dropped_intermediate_leakage(self):
+        cv, kb, ka = self._synthetic_checkpoint_chain()
+        ka["leakage_max"]["CK_complete_charge_basis_leakage"] = 0.25
+        with self.assertRaisesRegex(ValueError, "ka cumulative leakage"):
+            BASE.validate_checkpoint_chain(cv, kb, ka, cv_support=2, kb_support=1)
+
+    def test_checkpoint_chain_rejects_support_discontinuity(self):
+        cv, kb, ka = self._synthetic_checkpoint_chain()
+        with self.assertRaisesRegex(ValueError, "kb operator input support"):
+            BASE.validate_checkpoint_chain(cv, kb, ka, cv_support=3, kb_support=1)
+
+    def test_checkpoint_chain_rejects_missing_intermediate_diagnostic(self):
+        cv, kb, ka = self._synthetic_checkpoint_chain()
+        kb["leakage_max"].pop("CK_complete_charge_basis_leakage")
+        with self.assertRaisesRegex(ValueError, "missing required leakage"):
+            BASE.validate_checkpoint_chain(cv, kb, ka, cv_support=2, kb_support=1)
+
     def test_partition_worker_has_no_optimizable_assert_guards(self):
         tree = ast.parse(
             Path(PART.__file__).read_text(encoding="utf-8"),
