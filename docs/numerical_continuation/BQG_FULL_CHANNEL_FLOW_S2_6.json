@@ -1,0 +1,29 @@
+{
+  "status": "full microscopic/master multiplicity channel-flow matrix",
+  "passed": true,
+  "source_s2": 6,
+  "source_j": 3.0,
+  "target_s2": 7,
+  "target_j": 3.5,
+  "source_master_eigenvalues": [9.001223358412153, 10.264684071155518],
+  "target_master_eigenvalues": [7.140843485221557, 9.459669912782038, 36.381268968404214],
+  "source_pair_spreads": [1.4210854715202004e-14, 7.105427357601002e-15],
+  "target_pair_spreads": [1.3322676295501878e-14, 2.1316282072803006e-14, 2.1316282072803006e-14],
+  "channel_flow_matrix": [
+    [0.0010798724532179987, 0.9126526548162104, 0.08626747273057057],
+    [0.011850779524905184, 0.20452407378606086, 0.7836251466890334]
+  ],
+  "row_sums": [0.9999999999999989, 0.9999999999999994],
+  "row_stochasticity_error": 1.1102230246251565e-15,
+  "best_target_index_by_source": [1, 2],
+  "best_overlap_by_source": [0.9126526548162104, 0.7836251466890334],
+  "generated_singular_values": [
+    [0.47646584079035614, 0.47646584079035603, 4.88076469739575e-16, 2.6285240286043896e-16],
+    [0.4367183415050474, 0.43671834150504724, 5.18619165681589e-16, 3.960345093170047e-16]
+  ],
+  "generated_pair_spread_max": 1.6653345369377348e-16,
+  "Gauss_projection_leakage": 2.6311151347911333e-31,
+  "workflow_run_id": 42797583866,
+  "workflow_commit": "890dc7051601008f5cb724928df9318f2e8654ce",
+  "claim_boundary": "F_ab is a representation-RG projector overlap, not a physical-time probability. It diagnoses which target master eigenchannel is naturally inherited from each source channel under the exact binary-ancilla blocking tensor."
+}
