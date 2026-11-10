@@ -21,10 +21,6 @@ concurrency:
   group: tetrahedral-volume-audit-${{ github.ref }}
   cancel-in-progress: true
 
-concurrency:
-  group: tetrahedral-volume-audit-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   audit:
     runs-on: macos-latest
