@@ -7,6 +7,7 @@ on:
       - "scripts/bqg_two_step_channel_composition.py"
       - ".github/workflows/bqg-two-step-channel-composition.yml"
       - "scripts/bqg_full_channel_flow_matrix.py"
+      - "tests/test_bqg_two_step_channel_composition.py"
       - "scripts/bqg_rg_ancestry_path.py"
       - "tests/test_bqg_full_channel_flow_matrix.py"
       - "tests/test_bqg_rg_ancestry_path.py"
@@ -40,7 +41,9 @@ jobs:
           python -m unittest discover -s tests -p 'test_bqg_full_channel_flow_matrix.py'
           python -m unittest discover -s tests -p 'test_bqg_rg_ancestry_path.py'
       - name: Compile direct composition diagnostic
-        run: python -m py_compile scripts/bqg_two_step_channel_composition.py scripts/bqg_full_channel_flow_matrix.py
+        run: python -m py_compile scripts/bqg_two_step_channel_composition.py
+      - name: Test direct projected tensor composition
+        run: python -m unittest discover -s tests -p 'test_bqg_two_step_channel_composition.py' scripts/bqg_full_channel_flow_matrix.py
       - name: Compute direct two-step microscopic composition
         env:
           OMP_NUM_THREADS: "1"
