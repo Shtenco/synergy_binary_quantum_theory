@@ -101,11 +101,43 @@ def gauge_covariance_error(jmax: float) -> float:
     return error
 
 
+def sparse_transitions_without_hidden_threshold(matrix):
+    """Keep every floating nonzero; all state pruning is explicit and logged."""
+    transitions = {}
+    tiny_count = 0
+    minimum_nonzero = math.inf
+    for column in range(matrix.shape[1]):
+        rows = np.flatnonzero(matrix[:, column] != 0.0)
+        entries = []
+        for row in rows:
+            value = matrix[row, column]
+            magnitude = abs(value)
+            minimum_nonzero = min(minimum_nonzero, magnitude)
+            if magnitude <= 1e-14:
+                tiny_count += 1
+            entries.append((int(row), value))
+        transitions[column] = entries
+    return transitions, {"nonzero_transition_count": sum(len(x) for x in transitions.values()),
+                         "transition_entries_at_or_below_1e-14": tiny_count,
+                         "minimum_nonzero_transition_magnitude": (
+                             float(minimum_nonzero) if math.isfinite(minimum_nonzero) else None
+                         )}
+
+
 def evolve_detailed(jmax: float, nmax: int, prune_tol: float):
     basis, idx, _, _, U, Ud = PW.build_link(jmax)
     D = len(basis)
-    Ut = {key: PW.sparse_transitions(value) for key, value in U.items()}
-    Dt = {key: PW.sparse_transitions(value) for key, value in Ud.items()}
+    Ut, transition_diag_u = {}, {}
+    Dt, transition_diag_ud = {}, {}
+    for key, matrix in U.items():
+        Ut[key], transition_diag_u[key] = sparse_transitions_without_hidden_threshold(matrix)
+    for key, matrix in Ud.items():
+        Dt[key], transition_diag_ud[key] = sparse_transitions_without_hidden_threshold(matrix)
+    transition_diagnostics = {
+        "fundamental": transition_diag_u,
+        "adjoint": transition_diag_ud,
+        "hidden_transition_threshold": 0.0,
+    }
     zero = idx[(0.0, 0.0, 0.0)]
     state = {(zero, zero, zero, zero): 1.0 + 0.0j}
     pairs = list(__import__("itertools").combinations(range(4), 2))
@@ -142,6 +174,7 @@ def evolve_detailed(jmax: float, nmax: int, prune_tol: float):
         })
     return {
         "link_dimension": D,
+        "transition_diagnostics": transition_diagnostics,
         "rows": rows,
         "final_state": state,
         "final_support": len(state),
