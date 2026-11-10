@@ -5,8 +5,10 @@ from pathlib import Path
 import numpy as np
 try:
     from .rank_matrix_guard import validate_full_column_matrix
+    from .safe_archive import safe_extract_tar
 except ImportError:
     from rank_matrix_guard import validate_full_column_matrix
+    from safe_archive import safe_extract_tar
 import bqg_depth6_41 as Z
 import bqg_depth6_generic_jucys_selector as J
 import bqg_depth6_generic_master_row as M
@@ -55,7 +57,7 @@ def extract(root,work,expected,prefix):
     ds=[]
     for t in ts:
         d=work/t.stem.replace('.tar','');d.mkdir(exist_ok=True)
-        with tarfile.open(t,'r:gz') as f:f.extractall(d)
+        with tarfile.open(t, 'r:gz') as f:safe_extract_tar(f, d)
         ds.append(d)
     return ds
 
