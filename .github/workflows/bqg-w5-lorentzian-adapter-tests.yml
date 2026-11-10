@@ -2,7 +2,7 @@ name: BQG W5 Lorentzian adapter tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, research/lemaitre-bqg-causal-cone-20261110]
     paths:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'tests/test_bqg_v09_w5_lorentzian_raw_column.py'
