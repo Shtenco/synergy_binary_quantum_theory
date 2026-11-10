@@ -391,7 +391,18 @@ def run_pair(source_s2, reference_dir=None):
         "max_product_local_path_score_matrix": max_product_path.tolist(),
         "max_product_intermediate_channel_index": max_product_middle_channel.tolist(),
         "G_direct_composed": direct.tolist(),
-        "global_microscopic_endpoint_overlap_matrix": direct.tolist(),
+        "direct_two_step_endpoint_projector_overlap_matrix": direct.tolist(),
+        "global_microscopic_endpoint_overlap_matrix_legacy_alias": direct.tolist(),
+        "direct_endpoint_overlap_semantics": (
+            "Direct two-step endpoint projector overlap obtained by composing the two "
+            "microscopic refinement maps through the intermediate rank-2 carrier. "
+            "This is not the six-level/global microscopic overlap and is not a "
+            "physical-time probability."
+        ),
+        "max_product_intermediate_channel_scope": (
+            "Pairwise maximum over the intermediate channel for each fixed source/target "
+            "pair; not a globally consistent multi-step ancestry path."
+        ),
         "scalar_markov_composition_matrix": scalar_product.tolist(),
         "local_one_step_overlap_matrices": {"source_to_middle": F1.tolist(), "middle_to_target": F2.tolist()},
         "composition_defect": defect.tolist(),
