@@ -255,11 +255,13 @@ def ordered_triple_state(initial, source_v, a, b, c):
     # actually returned a diagnostic. Downstream physical gates reject missing
     # fields; an unexecuted stage must never be silently reported as zero.
     diag = {}
+    ck_operator_called = False
     for i, j, k in itertools.product(range(2), repeat=3):
         s1, leakV = RAW.COMP.C_volume_component(psi, source_v, c, k, i, JMAX2)
         update_diag(diag, "CV_complete_basis_leakage", leakV)
         if not s1:
             continue
+        ck_operator_called = True
         s2, d2 = RAW.KCOMP.C_K_component(s1, source_v, b, j, k, JMAX2)
         for name, val in (
             ("CK_outer_complete_basis_leakage", d2["outer_complete_basis_leakage"]),
@@ -279,6 +281,19 @@ def ordered_triple_state(initial, source_v, a, b, c):
         ):
             update_diag(diag, name, val)
         add(total, s3)
+    if not ck_operator_called:
+        # Every CK branch had an exactly empty input; these are analytic zeros,
+        # explicitly tagged as such, not missing numerical measurements.
+        diag.update({
+            "CK_outer_complete_basis_leakage": 0.0,
+            "CK_internal_volume_sector_leakage": 0.0,
+            "CK_complete_charge_basis_leakage": 0.0,
+            "exact_empty_input_zero_fields": [
+                "CK_outer_complete_basis_leakage",
+                "CK_internal_volume_sector_leakage",
+                "CK_complete_charge_basis_leakage",
+            ],
+        })
     return total, diag
 
 
