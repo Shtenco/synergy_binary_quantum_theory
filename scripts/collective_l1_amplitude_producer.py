@@ -47,6 +47,11 @@ def canonical_json_sha(obj) -> str:
     raw = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     return hashlib.sha256(raw).hexdigest()
 
+def git_blob_sha(path: Path) -> str:
+    data = Path(path).read_bytes()
+    header = f"blob {len(data)}\\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
+
 
 def state_norm(state: Mapping[bytes, complex]) -> float:
     return math.sqrt(math.fsum(abs(v) ** 2 for v in state.values()))
@@ -187,6 +192,14 @@ def run(root: Path, out_dir: Path, source_commit: str):
     root, out_dir = Path(root), Path(out_dir)
     if not source_commit or len(source_commit) != 40:
         raise ValueError("--source-commit must be a full 40-character Git SHA")
+    scripts_dir = Path(__file__).resolve().parent
+    actual_worker_blob = git_blob_sha(scripts_dir/"collective_l1_metric_edge_depth2_shard_worker.py")
+    actual_collector_blob = git_blob_sha(scripts_dir/"collective_l1_metric_edge_depth2_shard_collect.py")
+    if actual_worker_blob != SOURCE_BLOB_SHA["worker"]:
+        raise ValueError(f"worker source blob mismatch: {actual_worker_blob}")
+    if actual_collector_blob != SOURCE_BLOB_SHA["collector"]:
+        raise ValueError(f"collector source blob mismatch: {actual_collector_blob}")
+    producer_blob = git_blob_sha(Path(__file__))
 
     U, V, V_LEGACY, U_SHARDS, V_SHARDS, shard_hashes, shard_metas = [], [], [], [], [], {}, {}
     source_checks, shard_stats, aggregation = {}, {}, {}
@@ -302,6 +315,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
                     "Jmax": 2.5, "basis_status": "NOT_YET_JOINT_E_S_R_W"},
         "provenance": {
             "source_collector_blob_sha": SOURCE_BLOB_SHA["collector"],
+            "producer_blob_sha": producer_blob,
             "shard_file_sha256": shard_hashes,
             "shard_manifest_sha256": canonical_json_sha(shard_hashes),
             "source_commit": source_commit,
