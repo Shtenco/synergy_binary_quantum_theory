@@ -492,8 +492,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "B_H_symmetric_numeric_columns_at_hbar_1": encode_columns(BHsym_hbar1_columns),
             "B_comm_symmetric_columns": encode_columns(Bsym_columns),
             "B_comm_antihermitian_columns": encode_columns(Banti_columns),
-            "symmetric_part_is_hermitian_by_construction": True,
-            "antihermitian_part_is_antihermitian_by_construction": True,
+            "symmetric_part_is_hermitian_if_direct_adjoint_is_exact": True,
+            "antihermitian_part_is_antihermitian_if_direct_adjoint_is_exact": True,
+            "finite_precision_qualification": "The direct-adjoint relative residual above controls the numerical departure from exact Hermiticity/anti-Hermiticity.",
             "physical_ordering_selected": False,
             "external_beta_kappa_planck_trace_regulator_prefactor_fixed": False,
             "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
