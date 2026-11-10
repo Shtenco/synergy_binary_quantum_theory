@@ -1,154 +1,109 @@
 # BQG full multiplicity-channel flow matrix
 
-The previous low-to-low overlap test temporarily assumed that the physically
-relevant local master channel is always the lowest eigenchannel.  The first
-multiplicity branching \(j=3/2\to2\) falsifies that shortcut: binary
-microscopic refinement overlaps only about \(5.4\%\) with the lowest \(j=2\)
-master channel and therefore about \(94.6\%\) with the other channel.
-
-The correct finite representation-RG object is therefore the **full channel
-flow matrix**
+The finite representation-RG object is the full channel-flow matrix
 
 \[
-\boxed{
 \mathcal F_j^{ab}
-=
-\frac12
-\operatorname{Tr}
-\left(
-P_{j\to j+1/2,a}^{\rm block}
-P_{j+1/2,b}^{\rm master}
-\right).
-}
+=\frac12\operatorname{Tr}
+\left(P_{j\to j+1/2,a}^{\rm block}
+P_{j+1/2,b}^{\rm master}\right),
 \]
 
-Here:
+where a runs over every isolated source master multiplicity channel and b over every target master channel. The target projectors resolve the full target [2,2]-isotypic sector, so each source row should sum to one. This is an RG-compatibility/projector-overlap matrix, **not** a physical Markov transition probability.
 
-- \(a\) labels every isolated source master multiplicity channel;
-- \(b\) labels every target master multiplicity channel;
-- \(P^{\rm block}_{a}\) is the target \([2,2]\) copy generated from source
-  channel \(a\) by the exact binary-ancilla symmetric blocking tensor.
+## Five consecutive finite flow matrices
 
-For each fixed source channel \(a\),
+All five shards for s2=3,4,5,6,7, i.e. j=3/2 -> 2 -> 5/2 -> 3 -> 7/2 -> 4, completed with passed=true in workflow run [42797583866](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42797583866). The five JSON inputs are persisted under docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_{3,4,5,6,7}.json.
+
+\[
+\mathcal F_{3/2\to2}
+=\begin{pmatrix}0.0540421326&0.9459578674\end{pmatrix}.
+\]
+
+\[
+\mathcal F_{2\to5/2}
+=\begin{pmatrix}
+0.9656128797&0.0343871203\\
+0.1311507029&0.8688492971
+\end{pmatrix}.
+\]
+
+\[
+\mathcal F_{5/2\to3}
+=\begin{pmatrix}
+0.8397696212&0.1602303788\\
+0.1173115629&0.8826884371
+\end{pmatrix}.
+\]
+
+\[
+\mathcal F_{3\to7/2}
+=\begin{pmatrix}
+0.0010798725&0.9126526548&0.0862674727\\
+0.0118507795&0.2045240738&0.7836251467
+\end{pmatrix}.
+\]
+
+\[
+\mathcal F_{7/2\to4}
+=\begin{pmatrix}
+0.9920365891&0.0045659110&0.0033975000\\
+0.0019135244&0.8233707897&0.1747156859\\
+0.0060241961&0.1270873565&0.8668884474
+\end{pmatrix}.
+\]
+
+Across the five matrices:
+- maximum row-stochasticity defect: 1.11e-15;
+- maximum target paired-eigenvalue spread: 2.13e-14;
+- maximum generated-pair spread: 2.22e-16;
+- Gauss-projection leakage: between 1.67e-31 and 2.89e-30.
+
+These checks support the internal finite-matrix construction and completeness of the channel resolution at these five steps. They do not establish continuum convergence or a physical transition law.
+
+## Maximum-overlap ancestry path
+
+Dynamic programming over the full matrices, with no lowest-eigenvalue assumption, gives
 
 \[
 \boxed{
-\sum_b \mathcal F_j^{ab}=1
-}
-\]
-
-within numerical precision, because the target master channels form an
-orthogonal resolution of the full target \([2,2]\)-isotypic sector.
-
-This matrix is **not** a physical Markov transition probability.  It is an
-RG-compatibility/fidelity matrix.
-
-Its purpose is to identify ancestry-consistent channel trajectories without
-the unsupported rule "always choose the lowest local master eigenvalue".
-
-The next canonical finite question is whether the sequence of flow matrices
-contains a high-overlap lineage across increasing \(j\), and whether that
-lineage stabilizes.
-
-
-## First completed full-flow shard (2026-11-10)
-
-The \(s_2=3\), \(j=3/2\to2\) matrix has now been computed by the full all-channel gate and passed its internal checks:
-
-```math
-\mathcal F_{3/2\to2}
-=
-\begin{pmatrix}
-0.05404213255283678 & 0.9459578674471627
-\end{pmatrix}.
-```
-
-The row sum is \(0.9999999999999994\), the row-stochasticity defect is \(5.55\times10^{-16}\), target paired-eigenvalue spreads are below \(5.4\times10^{-15}\), and the Gauss-projection leakage is \(1.67\times10^{-31}\).
-
-The numerical result is persisted at `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json`. It confirms that the first source channel flows predominantly to target channel 1 (the higher local master eigenvalue), not target channel 0. The remaining four consecutive scale shards are required before the global ancestry path can be selected.
-
-
-The \(s_2=4\), \(j=2\to5/2\) shard has also passed. Its complete matrix is
-
-```math
-\mathcal F_{2\to5/2}
-=
-\begin{pmatrix}
-0.965612879727417 & 0.03438712027258314\\
-0.13115070287946956 & 0.8688492971205302
-\end{pmatrix}.
-```
-
-Both row sums differ from one by at most \(2.22\times10^{-16}\); target paired-eigenvalue spreads are below \(4.5\times10^{-15}\); Gauss-projection leakage is \(2.30\times10^{-31}\).
-
-Combining the first two matrices, the maximum-overlap ancestry path is so far
-
-```math
-j=3/2:\ a_0
-\longrightarrow
-j=2:\ a_1
-\longrightarrow
-j=5/2:\ a_1,
-```
-
-with step overlaps \(0.9459578674\) and \(0.8688492971\). Thus the dynamically inherited branch switches to the upper channel at the first split and remains on the upper channel at the next scale. The low-to-low shortcut would instead multiply (0.0540421\times0.9656129\), which is not the microscopic ancestry path.
-
-The \(s_2=4\) result is persisted in `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_4.json`. The \(s_2=5,6,7\) shards remain in progress.
-
-
-For this two-step prefix the cumulative overlap product along the inherited upper branch is
-
-```math
-0.9459578674471627\times0.8688492971205302
-=0.8218948282371029.
-```
-
-The naive low-to-low product is only
-
-```math
-0.05404213255283678\times0.965612879727417
-=0.05218377924095551.
-```
-
-These are finite ancestry-overlap products, not physical probabilities.
-
-
-The \(s_2=5\), \(j=5/2\to3\) shard passed with
-
-```math
-\mathcal F_{5/2\to3}
-=
-\begin{pmatrix}
-0.8397696211912622 & 0.1602303788087373\\
-0.11731156289887903 & 0.8826884371011211
-\end{pmatrix}.
-```
-
-Row-stochasticity defect is \(4.44\times10^{-16}\); paired-eigenvalue spreads are below \(1.5\times10^{-14}\); Gauss-projection leakage is \(2.21\times10^{-31}\). The inherited channel 1 continues to target channel 1 with overlap \(0.8826884371\).
-
-The \(s_2=6\), \(j=3\to7/2\) shard passed with
-
-```math
-\mathcal F_{3\to7/2}
-=
-\begin{pmatrix}
-0.001079872453218 & 0.9126526548162104 & 0.08626747273057057\\
-0.011850779524905184 & 0.20452407378606086 & 0.7836251466890334
-\end{pmatrix}.
-```
-
-Row-stochasticity defect is \(1.11\times10^{-15}\); paired-eigenvalue spreads are below \(2.2\times10^{-14}\); Gauss-projection leakage is \(2.63\times10^{-31}\). The inherited source channel 1 now flows most strongly into target channel 2 (overlap \(0.7836251467\)); this is a second branch-index change caused by the increasing multiplicity, not a failure of the microscopic blocking map.
-
-The four-step maximum-overlap ancestry prefix is therefore
-
-```math
 a_0^{(3/2)}
 \to a_1^{(2)}
 \to a_1^{(5/2)}
 \to a_1^{(3)}
-\to a_2^{(7/2)}.
-```
+\to a_2^{(7/2)}
+\to a_2^{(4)}.
+}
+\]
 
-Its cumulative overlap product is \(0.5685020687\). The naive all-low path has product only \(4.7322551\times10^{-5}\), so the ancestry prefix is larger by a factor of approximately (1.20\times10^4). This remains a finite RG-overlap comparison, not a physical transition probability or a continuum theorem.
+The five step overlaps are
 
-The \(s_2=5,6\) matrices are persisted at `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_5.json` and `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_6.json`. The final (s_2=7) shard is still running.
+\[
+0.9459578674471627,\quad
+0.8688492971205302,\quad
+0.8826884371011211,\quad
+0.7836251466890334,\quad
+0.866888447374884.
+\]
+
+Their cumulative product is
+
+\[
+\boxed{0.49282787562801145}.
+\]
+
+The rejected shortcut that always selects channel index zero has product
+
+\[
+4.694570240506031\times10^{-5},
+\]
+
+so the maximum-overlap lineage product is about 1.0498e4 times larger on this five-step interval.
+
+The ancestry switches channel index at the first branching 0 -> 1, and again when the target multiplicity grows at j=3 -> 7/2, where 1 -> 2. It then remains on channel 2 for the last step. This is a finite, data-derived lineage, not a claim that channel indices themselves are invariant labels across changing multiplicities.
+
+The next decisive test is not another overlap product: it is to evaluate the full graph-changing forward/return habitat residuals E_a,F_a, the off-carrier leakage, and independently defined master gaps along this candidate lineage. Only then can the scale-free physical-projector refinement criterion be evaluated.
+
+## Claim boundary
+
+This result is a five-step finite representation-RG overlap calculation. It is not a physical-time trajectory, a probability, a continuum fixed point, a proof of a physical projector, or evidence for an emergent Lorentzian spacetime. The finite matrix checks and the still-open physical/continuum gates must remain separate.
