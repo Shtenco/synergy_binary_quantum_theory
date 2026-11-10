@@ -149,16 +149,30 @@ def validate_operator_provenance(meta, context="checkpoint"):
     applied = meta.get("operator_stage_applied")
     if not isinstance(applied, bool) or applied is not (input_support > 0):
         raise ValueError(f"{context}: operator-stage execution flag mismatch")
-    expected = ({"CK_outer_complete_basis_leakage",
-                 "CK_internal_volume_sector_leakage",
-                 "CK_complete_charge_basis_leakage"}
-                if input_support == 0 else set())
+    expected_fields = {
+        "CK_outer_complete_basis_leakage",
+        "CK_internal_volume_sector_leakage",
+        "CK_complete_charge_basis_leakage",
+    }
+    expected = expected_fields if input_support == 0 else set()
     actual = meta.get("exact_empty_input_zero_fields")
     if not isinstance(actual, list) or set(actual) != expected or len(actual) != len(expected):
         raise ValueError(f"{context}: empty-input diagnostic provenance mismatch")
+    if meta.get("diagnostic_provenance_scope") != "current_operator_stage":
+        raise ValueError(f"{context}: diagnostic provenance scope is missing or invalid")
+    stage_diag = validate_leakage_map(
+        meta.get("stage_leakage_diagnostics"), require_all=True,
+        context=f"{context} current operator stage",
+    )
+    if set(stage_diag) != expected_fields:
+        raise ValueError(f"{context}: current stage must report all three CK leakage channels")
+    if input_support == 0 and any(stage_diag[field] != 0.0 for field in expected_fields):
+        raise ValueError(f"{context}: exact-empty-input stage diagnostics must be exactly zero")
     return {"operator_input_support": input_support,
             "operator_stage_applied": applied,
-            "exact_empty_input_zero_fields": sorted(expected)}
+            "diagnostic_provenance_scope": "current_operator_stage",
+            "exact_empty_input_zero_fields": sorted(expected),
+            "stage_leakage_diagnostics": stage_diag}
 
 
 def load_result(d,stage,ijk,freeze):
@@ -244,7 +258,8 @@ def main():
                     out,d=RAW.KCOMP.C_K_component(x,args.source,args.a,i,j,JMAX2)
                 d={("CK_"+field):float(value) for field,value in d.items()
                    if field in ("outer_complete_basis_leakage","internal_volume_sector_leakage","complete_charge_basis_leakage")}
-                diag=maxdiag(diag,d)
+                stage_diag = dict(d)
+                diag=maxdiag(diag,stage_diag)
                 before=len(out)
                 if args.stage=="kb":
                     out={key:amp for key,amp in out.items() if key[2] in (0,2)}
@@ -256,6 +271,8 @@ def main():
                             {"pruned_by_frozen_scalar_channel":before-len(out),
                              "operator_input_support":len(x),
                              "operator_stage_applied":not exact_empty_input,
+                             "diagnostic_provenance_scope":"current_operator_stage",
+                             "stage_leakage_diagnostics":stage_diag,
                              "exact_empty_input_zero_fields":zero_fields})
         else:
             total={};diag={};branch=[]
