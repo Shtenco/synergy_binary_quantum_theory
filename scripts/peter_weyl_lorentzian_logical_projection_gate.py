@@ -238,6 +238,15 @@ def leakage_summary(diag):
     return {"complete": complete, "maximum": maximum, "missing": missing, "invalid": invalid}
 
 
+def merge_leakage_max(dst, missing_ever, invalid_ever, source):
+    summary = leakage_summary(source)
+    missing_ever.update(summary["missing"])
+    invalid_ever.update(summary["invalid"])
+    for key in LEAK_FIELDS:
+        if key in source and key not in summary["invalid"]:
+            update_diag(dst, key, source[key])
+
+
 def ordered_triple_state(initial, source_v, a, b, c):
     """Return the actual covariant state for Tr[C_a(K)C_b(K)C_c(V)]|initial>."""
     psi = CV.gauss_to_covariant({initial: 1 + 0j}, source_v)
@@ -278,6 +287,8 @@ def epsilon_sum_state(initial, source_v):
     total = {}
     rows = []
     diagmax = {}
+    missing_ever = set()
+    invalid_ever = set()
     for r, omit in enumerate(neighbors):
         base = tuple(x for x in neighbors if x != omit)
         face = (-1) ** r
@@ -286,8 +297,7 @@ def epsilon_sum_state(initial, source_v):
             coef = face * parity(base, perm)
             st, diag = ordered_triple_state(initial, source_v, a, b, c)
             add(total, st, coef)
-            for name, val in diag.items():
-                update_diag(diagmax, name, val)
+            merge_leakage_max(diagmax, missing_ever, invalid_ever, diag)
             rows.append({
                 "omitted_neighbor": omit,
                 "ordered_edges": [a, b, c],
@@ -295,6 +305,8 @@ def epsilon_sum_state(initial, source_v):
                 "support": len(st),
                 "norm": math.sqrt(norm2(st)),
             })
+    for key in missing_ever | invalid_ever:
+        diagmax.pop(key, None)
     return total, rows, diagmax
 
 
@@ -339,6 +351,8 @@ def run(source_v=0):
         columns = []
         epsilon_rows = []
         diagmax = {}
+        missing_ever = set()
+        invalid_ever = set()
         all_logical_support = []
 
         for Kin in source_basis:
@@ -349,8 +363,7 @@ def run(source_v=0):
             logical = project_all_logical(total, source_v)
             columns.append((initial, total, logical))
             epsilon_rows.append({"input_source_K2": Kin, "terms": rows})
-            for name, val in diag.items():
-                update_diag(diagmax, name, val)
+            merge_leakage_max(diagmax, missing_ever, invalid_ever, diag)
             all_logical_support.append({
                 "input_source_K2": Kin,
                 "full_output_support": len(total),
@@ -395,7 +408,13 @@ def run(source_v=0):
             for name, fn in caches.items()
         }
 
+        for key in missing_ever | invalid_ever:
+            diagmax.pop(key, None)
         leakage = leakage_summary(diagmax)
+        if invalid_ever:
+            leakage["invalid"] = sorted(set(leakage["invalid"]) | invalid_ever)
+            leakage["complete"] = False
+            leakage["maximum"] = None
         passed = (
             len(columns) == 2
             and all(x["full_output_support"] > 0 for x in all_logical_support)
