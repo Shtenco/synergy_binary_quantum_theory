@@ -14,6 +14,10 @@ on:
       - 'tests/test_bqg_v11_w5_common_carrier.py'
       - '.github/workflows/bqg-v11-w5-common-carrier-pilot.yml'
 
+concurrency:
+  group: bqg-v11-w5-carrier-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
