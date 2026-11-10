@@ -4,7 +4,7 @@ import argparse,json,tarfile
 from pathlib import Path
 import numpy as np
 try:
-    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename
+    from .rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, validate_positive_integer, parse_indexed_map_filename
     from .safe_archive import safe_extract_tar
     from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
@@ -53,6 +53,7 @@ def load_index(ds,expected):
         if s['failed_blocks']!=0 or s['ok_blocks']!=s['assigned_blocks']:raise SystemExit(('incomplete shard',s))
         for r in s['records']:
             i=validate_index_value(r.get('i'), "S4-sign record index")
+            validate_positive_integer(r.get('d'), f"S4-sign block {i} dimension")
             if i in records:raise SystemExit(('duplicate record',i))
             records[i]=r
         for p in d.rglob('b*.pkl'):
