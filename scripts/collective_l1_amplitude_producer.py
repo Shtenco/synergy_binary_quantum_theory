@@ -247,6 +247,10 @@ def run(root: Path, out_dir: Path, source_commit: str):
         U_SHARDS.extend(sources)
         V_SHARDS.extend(shard_states)
         v_stable, discarded = stable_sum_states(shard_states)
+        v_reverse, _ = stable_sum_states(list(reversed(shard_states)))
+        permutation_error = state_relerr(v_stable, v_reverse)
+        if permutation_error != 0.0:
+            raise ValueError(f"stable aggregation is order-dependent for edge {edge}: {permutation_error}")
         v_legacy = {}
         for state in shard_states:
             legacy_add(v_legacy, state)
@@ -271,6 +275,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
             "discarded_global_l2_norm": discarded,
             "stable_sum_order": "state-key sorted; per-key real/imag math.fsum",
             "intermediate_pruning": False,
+            "reverse_order_relative_difference": permutation_error,
         }
         shard_metas[str(edge)] = rows
 
