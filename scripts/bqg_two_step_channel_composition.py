@@ -122,13 +122,34 @@ def run_pair(source_s2):
     )
     saved_first = json.loads(saved_first_path.read_text(encoding="utf-8"))
     saved_second = json.loads(saved_second_path.read_text(encoding="utf-8"))
-    if not saved_first.get("passed") or not saved_second.get("passed"):
-        raise RuntimeError("one-step reference matrix is not explicitly passed")
+    if saved_first.get("passed") is not True or saved_second.get("passed") is not True:
+        raise RuntimeError("one-step reference matrix must explicitly pass with boolean true")
+    for label, item in (("first", saved_first), ("second", saved_second)):
+        run_id = item.get("workflow_run_id")
+        commit = item.get("workflow_commit")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            raise RuntimeError(f"{label} reference has invalid workflow_run_id")
+        if not isinstance(commit, str) or len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit.lower()):
+            raise RuntimeError(f"{label} reference has invalid workflow_commit")
+    if saved_first["workflow_run_id"] != saved_second["workflow_run_id"]:
+        raise RuntimeError("one-step references come from different workflow runs")
+    if saved_first["workflow_commit"] != saved_second["workflow_commit"]:
+        raise RuntimeError("one-step references come from different source commits")
+    saved_first_target = np.asarray(saved_first["target_master_eigenvalues"], dtype=float)
+    saved_second_source = np.asarray(saved_second["source_master_eigenvalues"], dtype=float)
+    if saved_first_target.shape != saved_second_source.shape or not np.isfinite(saved_first_target).all() or not np.isfinite(saved_second_source).all():
+        raise RuntimeError("adjacent one-step reference spectra are malformed")
+    spectral_stitch_defect = float(np.max(np.abs(saved_first_target - saved_second_source)))
+    spectral_scale = max(float(np.max(np.abs(saved_first_target))), float(np.max(np.abs(saved_second_source))), 1.0)
+    if spectral_stitch_defect > 1e-10 * spectral_scale:
+        raise RuntimeError(f"adjacent one-step reference spectra do not stitch: {spectral_stitch_defect}")
     saved_F1 = np.asarray(saved_first["channel_flow_matrix"], dtype=float)
     saved_F2 = np.asarray(saved_second["channel_flow_matrix"], dtype=float)
-    if saved_F1.shape != F1.shape or np.max(np.abs(saved_F1 - F1)) >= 1e-8:
+    if not np.isfinite(saved_F1).all() or not np.isfinite(saved_F2).all():
+        raise RuntimeError("persisted one-step matrix contains NaN or infinity")
+    if saved_F1.shape != F1.shape or float(np.max(np.abs(saved_F1 - F1))) >= 1e-8:
         raise RuntimeError("recomputed first one-step matrix differs from persisted reference")
-    if saved_F2.shape != F2.shape or np.max(np.abs(saved_F2 - F2)) >= 1e-8:
+    if saved_F2.shape != F2.shape or float(np.max(np.abs(saved_F2 - F2))) >= 1e-8:
         raise RuntimeError("recomputed second one-step matrix differs from persisted reference")
 
     middle_projectors = projectors(middle)
@@ -140,7 +161,9 @@ def run_pair(source_s2):
     direct_first_ranks = []
     direct_second_ranks = []
     channel_blocks = []
+    endpoint_channel_blocks = []
     basis_rotation_defects = []
+    endpoint_projector_defects = []
 
     for source_index, source_channel in enumerate(source["channels"]):
         P1, s1, rank1 = FLOW.generated_copy(
@@ -164,6 +187,10 @@ def run_pair(source_s2):
             float(np.linalg.norm(P2_rotated - P2, ord="fro"))
         )
 
+        p2_hermiticity = float(np.linalg.norm(P2 - P2.conj().T, ord="fro"))
+        p2_idempotence = float(np.linalg.norm(P2 @ P2 - P2, ord="fro"))
+        endpoint_projector_defects.append({"hermiticity": p2_hermiticity, "idempotence": p2_idempotence})
+        endpoint_channel_blocks.append(block_diagnostics(P2, target_projectors))
         row = [
             float(np.trace(P2 @ Ptarget).real / 2.0)
             for Ptarget in target_projectors
@@ -197,6 +224,8 @@ def run_pair(source_s2):
         and all(rank == 2 for rank in first_ranks + second_ranks)
         and all(rank == 2 for rank in direct_first_ranks + direct_second_ranks)
         and max(basis_rotation_defects, default=0.0) < 1e-8
+        and max((x["hermiticity"] for x in endpoint_projector_defects), default=0.0) < 1e-10
+        and max((x["idempotence"] for x in endpoint_projector_defects), default=0.0) < 1e-10
     )
     factorization_tolerance = 1e-8
     scalar_factorization_passed = bool(
@@ -208,6 +237,11 @@ def run_pair(source_s2):
         "structural_checks_passed": structural_checks_passed,
         "scalar_factorization_passed": scalar_factorization_passed,
         "scalar_factorization_tolerance": factorization_tolerance,
+        "workflow_run_id": saved_first["workflow_run_id"],
+        "workflow_commit": saved_first["workflow_commit"],
+        "adjacent_reference_spectrum_stitch_defect": spectral_stitch_defect,
+        "flow_source_sha256": hashlib.sha256(Path(FLOW.__file__).read_bytes()).hexdigest(),
+        "two_step_script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "source_one_step_reference_sha256": hashlib.sha256(
             saved_first_path.read_bytes()
         ).hexdigest(),
@@ -251,6 +285,14 @@ def run_pair(source_s2):
             basis_rotation_defects, default=0.0
         ),
         "intermediate_channel_block_diagnostics": channel_blocks,
+        "direct_endpoint_channel_block_diagnostics": endpoint_channel_blocks,
+        "direct_endpoint_projector_defects": endpoint_projector_defects,
+        "max_direct_endpoint_off_diagonal_frobenius": max(
+            (x["max_off_diagonal_frobenius"] for x in endpoint_channel_blocks), default=0.0
+        ),
+        "max_direct_endpoint_internal_channel_anisotropy": max(
+            (x["max_internal_channel_anisotropy"] for x in endpoint_channel_blocks), default=0.0
+        ),
         "interpretation": (
             "G_direct composes the actual generated rank-2 carrier subspace "
             "through both microscopic refinement tensors. F_first @ F_second "
