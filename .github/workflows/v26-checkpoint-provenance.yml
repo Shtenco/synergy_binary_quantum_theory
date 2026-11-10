@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: v26-checkpoint-provenance-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   provenance:
