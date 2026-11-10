@@ -22,6 +22,10 @@ TEXT_SUFFIXES = {".py", ".md", ".yml", ".yaml", ".json"}
 # They remain version controlled and readable, but are not canonical theory.
 EXCLUDED_FILES = {
     Path("REPOSITORY_AUDIT_2026-08-29.md"),
+    Path("AUDIT_REPORT_2026-10-22.md"),
+    Path("docs/README_TECHNICAL_ARCHIVE_20261109.md"),
+    Path("docs/README_STORY_ARCHIVE_20261109.md"),
+    Path("docs/FIGURE_ATLAS.md"),
 }
 EXCLUDED_PREFIXES = {
     ("docs", "archive"),
@@ -31,7 +35,9 @@ EXCLUDED_PREFIXES = {
 # README and status may describe the explicitly open information-mode proposal.
 # This is permission to discuss it, not to import retired physics modules.
 DISCUSSION_TERMS = {
-    Path("README.md"): {"info" + "ton"},
+    # The README uses "mirror" only in archived figure labels/links; this is
+    # permission to reference historical material, not to restore the sector.
+    Path("README.md"): {"info" + "ton", "mir" + "ror"},
     Path("THEORY_STATUS.md"): {"info" + "ton"},
 }
 
