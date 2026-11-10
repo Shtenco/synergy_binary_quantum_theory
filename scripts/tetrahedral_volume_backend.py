@@ -73,7 +73,8 @@ def tetra_q_block(spins_local,J2,M2):
     TETRA_Q_DIAGNOSTICS[(spins_local,int(J2),int(M2))]={
         "raw_hermiticity_defect":herm,"raw_frobenius_norm":scale,
         "absolute_sector_leakage":max_abs,"relative_sector_leakage":max_rel}
-    return 0.5*(Q+Q.conj().T),max_abs,max_rel
+    # Return the raw reduced block: the caller must compare M sectors before averaging/symmetrizing.
+    return Q,max_abs,max_rel
 
 @functools.lru_cache(maxsize=None)
 def tetra_volume_block_general(spins_local,J2):
