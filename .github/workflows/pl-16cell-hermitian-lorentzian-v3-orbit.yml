@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/bcqg-core-candidate-v1
+      - audit/pl48-volume-failclosed-20261110
     paths:
       - 'PL_16CELL_HERMITIAN_LORENTZIAN_PREREGISTRATION_V3_ORBIT.md'
       - 'scripts/tetrahedral_volume_backend.py'
