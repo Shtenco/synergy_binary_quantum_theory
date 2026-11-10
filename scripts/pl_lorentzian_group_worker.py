@@ -64,7 +64,8 @@ def evaluate(D,G,seed,source,idx,mode,caches):
           'gauss_support':len(gauss),'gauss_norm':gn,'gauss_max_spin':W.max_spin(gauss),
           'exact_zero_ordered_term':len(cov)==0 and len(gauss)==0,'scalar_closure_fraction':frac,
           'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0)),'physical_acceptance_max_leakage':physical,
-          'complete_charge_diagnostic':charge,'leakage_diagnostics':required_diag,'cache_info_after_term':cache_info,'runtime_seconds':time.time()-t0,
+          'complete_charge_diagnostic':charge,'leakage_diagnostics':required_diag,
+          'exact_empty_input_zero_fields':diag.get('exact_empty_input_zero_fields',[]),'cache_info_after_term':cache_info,'runtime_seconds':time.time()-t0,
           'checks':checks,'weighted_here':False,
           'scope_note':'One individually serialized term from a six-term cache-sharing process shard; mathematical result is identical to the independent worker definition.'}
     return gauss,meta
