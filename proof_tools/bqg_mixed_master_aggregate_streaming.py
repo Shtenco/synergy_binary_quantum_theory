@@ -8,7 +8,7 @@ try:
     from .safe_archive import safe_extract_tar
     from .safe_pickle import safe_load_numpy_pickle
 except ImportError:
-    from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
+    from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, validate_positive_integer, parse_indexed_map_filename
     from safe_archive import safe_extract_tar
     from safe_pickle import safe_load_numpy_pickle
 import bqg_depth6_41 as Z
