@@ -12,9 +12,28 @@ import bqg_two_step_channel_composition as COMPOSE
 class TwoStepRefinementSpectrumTests(unittest.TestCase):
     def test_identical_normalized_spectra_have_zero_distance(self):
         diag = {
-            "singular_values": [0.8, 0.4, 0.2],
+            "singular_values": [0.8, 0.4, 1e-14],
+            "rank_tolerance": 1e-12,
+            "numerical_rank": 2,
         }
         result = COMPOSE.normalized_refinement_spectral_distance(diag, diag)
+        self.assertAlmostEqual(result["normalized_squared_singular_mass_l1"], 0.0)
+        self.assertAlmostEqual(result["normalized_squared_singular_mass_hellinger"], 0.0)
+
+    def test_numerical_nullspace_is_excluded_from_refinement_mass(self):
+        left = {
+            "singular_values": [0.8, 0.4, 1e-15],
+            "rank_tolerance": 1e-12,
+            "numerical_rank": 2,
+        }
+        right = {
+            "singular_values": [0.6, 0.3, 1e-16],
+            "rank_tolerance": 1e-12,
+            "numerical_rank": 2,
+        }
+        result = COMPOSE.normalized_refinement_spectral_distance(left, right)
+        self.assertEqual(result["left_rank"], 2)
+        self.assertEqual(result["right_rank"], 2)
         self.assertAlmostEqual(result["normalized_squared_singular_mass_l1"], 0.0)
         self.assertAlmostEqual(result["normalized_squared_singular_mass_hellinger"], 0.0)
 
