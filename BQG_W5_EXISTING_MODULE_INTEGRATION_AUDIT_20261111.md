@@ -151,3 +151,28 @@ The historical \`docs/numerical_continuation/reverse_adjoint_middle_inventory.js
 | Physical retarded response and causal cone | open |
 
 No result is promoted from a finite reference, partial artifact, or queued workflow to a physical BQG claim.
+
+
+## V11 implementation update — common carrier builder
+
+The integration builder now exists at \`scripts/bqg_v11_w5_common_carrier.py\`. It calls the existing V10 closure engine first, then the existing V09 per-node/per-input engine for all five W5 inputs and all declared source nodes. It constructs:
+- the Euclidean map \(A\) by the declared coherent node sum of V09 sine-Hermitian columns;
+- the raw Lorentzian forward map \(B_{\rm comm}\) from V10;
+- the symmetric and anti-Hermitian parts separately;
+- a deterministic union output basis with exact Gauss keys and complex phases;
+- SHA-256 identifiers for the input seeds, common output basis, and source modules.
+
+The builder independently compares the V09 per-node raw KKV maps after node summation against the V10 all-node forward seed columns. It applies the same post-sum amplitude threshold before comparison. It also checks \(B_{\rm forward}=B_{\rm sym}+B_{\rm anti}\) column by column. A mismatch, incomplete closure, scalar projection rejection, excessive component leakage, non-scalar covariant residue, or violation of the frozen spin wall blocks carrier emission. A diagnostic JSON with traceback is retained on runtime exceptions.
+
+### Executor interface defect found and fixed
+
+Source-level interface inspection found that V09 called
+\`LSINE.run(source_v, executor=executor)\`, while the actual \`peter_weyl_lorentzian_sine_ordered_triple_gate.run\` did not accept an \`executor\` keyword. Further, V09's callback previously returned no diagnostics mapping, whereas the wrapper expects the standard diagnostics schema.
+
+The wrapper now has an optional executor dispatch path; legacy calls without an executor still call \`RAW.run(v,a,b,c)\`. V09's callback now returns the full diagnostics mapping consumed by the wrapper, including support, norm, non-scalar fraction, maximum spin, and component leakages. A dedicated dispatch regression test covers both callback and legacy behavior.
+
+### V11 scope and workflow
+
+The pilot workflow \`.github/workflows/bqg-v11-w5-common-carrier-pilot.yml\` runs the five-node W5 carrier at \(J_{\max,2}=10\), preserving a JSON artifact even on failure. The adapter workflow compiles V09/V10/V11 and runs their regression suites. Both workflows use concurrency groups to prevent repeated commits from indefinitely multiplying duplicate queued runs.
+
+A successful V11 result means only \`PASS_STRUCTURAL_COMMON_CARRIER\`: the raw Euclidean map and V10 symmetric raw-KKV candidate have been placed on a common finite carrier and their independent engine cross-checks passed. The coefficient fields remain null by design. No physical \(H_E+H_L\) combination is generated unless an external caller supplies explicit coefficients and provenance; even then the resulting kernel is only as physical as that independently established normalization.
