@@ -28,6 +28,27 @@ class TwoStepRefinementCompositionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "orthogonal projector"):
             TWO.compose_refinement_tensors(T1, T2, P)
 
+    def test_amplitude_level_endpoint_weights_contract_full_two_step_tensor(self):
+        T = np.zeros((4, 2, 1, 1), dtype=complex)
+        T[0, 0, 0, 0] = 1.0
+        T[1, 1, 0, 0] = 1.0
+        source_channel = np.eye(2, dtype=complex)
+        target_channels = [
+            np.array([[1, 0], [0, 1], [0, 0], [0, 0]], dtype=complex),
+            np.array([[0, 0], [0, 0], [1, 0], [0, 1]], dtype=complex),
+        ]
+        source = {"channels": [source_channel]}
+        target = {
+            "channels": target_channels,
+            "P22_basis": np.eye(4, dtype=complex),
+        }
+        result = TWO.direct_microscopic_endpoint_channel_weights(
+            T, source, target, "synthetic endpoint test"
+        )
+        np.testing.assert_allclose(result["weights"], [[1.0, 0.0]], atol=1e-12)
+        self.assertLess(result["row_stochasticity_error"], 1e-12)
+        self.assertAlmostEqual(result["endpoint_norm_squared_by_source"][0], 2.0)
+
     def test_refinement_spectral_distance_uses_rank_and_normalized_mass(self):
         left = {"singular_values": [2.0, 1.0], "numerical_rank": 2}
         right = {"singular_values": [1.0, 1.0], "numerical_rank": 2}
