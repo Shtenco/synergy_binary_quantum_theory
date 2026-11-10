@@ -24,6 +24,24 @@ def run(root):
             value=d.get(field)
             if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(float(value)) or float(value)<0.0:
                 raise RuntimeError(f'invalid {field} in {p}')
+        primitives=d.get('primitive_metadata')
+        if not isinstance(primitives,list) or len(primitives)!=4:
+            raise RuntimeError(f'v4 pair {p} must contain exactly four primitive metadata records')
+        primitive_ids=set()
+        for primitive in primitives:
+            if primitive.get('passed') is not True:
+                raise RuntimeError(f'v4 primitive must explicitly pass in {p}')
+            BASE.validate_worker_leakage_provenance(primitive, f'{p} primitive')
+            primitive_ids.add((primitive.get('mode'),int(primitive.get('index',-1))))
+        expected_ids={(mode,int(idx)) for mode in ('forward','adjoint') for idx in d.get('forward_indices',[])}
+        if primitive_ids != expected_ids:
+            raise RuntimeError(f'v4 primitive orbit mismatch in {p}: {primitive_ids} != {expected_ids}')
+        primitive_charge=max(float(x['complete_charge_diagnostic']) for x in primitives)
+        primitive_leak=max(float(x['physical_acceptance_max_leakage']) for x in primitives)
+        if not math.isclose(primitive_charge,float(d['max_primitive_charge_leakage']),rel_tol=1e-12,abs_tol=1e-15):
+            raise RuntimeError(f'v4 aggregate charge leakage mismatch in {p}')
+        if not math.isclose(primitive_leak,float(d['max_primitive_physical_leakage']),rel_tol=1e-12,abs_tol=1e-15):
+            raise RuntimeError(f'v4 aggregate physical leakage mismatch in {p}')
         key=(int(d['omitted_local_slot']),int(d['cyclic_index']))
         if key in seen:raise RuntimeError(f'duplicate v4 pair {key}')
         seen.add(key)
@@ -36,7 +54,8 @@ def run(root):
         if actual_hash!=expected_hash:raise RuntimeError(f'pair NPZ/JSON SHA256 mismatch for {key}')
         st=load_state(cand[0]);add(S,st)
         rows.append({'omit':key[0],'cycle':key[1],'cyclic_order':d['cyclic_order'],'support':len(st),'norm':norm(st),
-                     'max_spin':max_spin(st),'max_primitive_leakage':d['max_primitive_physical_leakage'],
+                     'max_primitive_leakage':d['max_primitive_physical_leakage'],
+                     'max_primitive_charge_leakage':d['max_primitive_charge_leakage'],
                      'max_primitive_rejected':d['max_primitive_nonscalar_rejected_norm'],'runtime_seconds':d.get('runtime_seconds')})
     expect={(o,c) for o in range(4) for c in range(3)}
     if seen!=expect:raise RuntimeError(f'v4 pair orbit mismatch missing={sorted(expect-seen)} extra={sorted(seen-expect)}')
@@ -48,6 +67,7 @@ def run(root):
     maxrej=max(r['max_primitive_rejected'] for r in rows)
     checks={'all_12_physical_pairs_loaded':len(rows)==12,'orbit_complete_unique':seen==expect,
             'finite_combined_amplitudes':finite,'max_primitive_leakage_below_1e-8':maxleak<1e-8,
+            'max_primitive_charge_leakage_below_1e-8':maxcharge<1e-8,
             'max_primitive_nonscalar_rejection_below_1e-8':maxrej<1e-8,
             'S_preserves_even_valence_seed_parity':wrong==0,'single_L_spin_wall':max_spin(S)<=3.5+1e-12}
     out={'status':'exact direct-Hermitian 16-cell PL-S3 Lorentzian node column','passed':bool(all(checks.values())),
