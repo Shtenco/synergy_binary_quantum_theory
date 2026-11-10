@@ -242,20 +242,99 @@ for a normalized rank-two source copy, followed by a no-fit maximum-product path
 The global correlated-ancilla master-selection note separately identifies a two-dimensional (S_5)-trivial ancilla sector and proposes the actual symmetric Euclidean master as the no-fit selector. Its final physical-master interpretation remains finite-control only.
 
 
-## 8. First full ancestry-matrix result (new finite certificate)
+## 8. Five-step full ancestry-matrix result (finite representation-RG certificate)
 
-The full-flow workflow `42797583866` has completed the (s_2=3), (j=3/2\to2) shard successfully. The exact result is persisted in `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json`.
+The full-flow workflow `42797583866` completed all five consecutive
+`s_2=3,4,5,6,7` shards, covering
+`j=3/2 -> 2 -> 5/2 -> 3 -> 7/2 -> 4`. The exact matrices are persisted in
+`docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_{3,4,5,6,7}.json`.
+
+The one-step matrices are:
 
 ```math
-\mathcal F_{3/2\to2}
-=
-(0.05404213255283678,\ 0.9459578674471627).
+F_{3/2\to2}=(0.0540421326,\ 0.9459578674)
 ```
 
-The row sum is (0.9999999999999994), row-stochasticity defect (5.55\times10^{-16}), target paired-eigenvalue spreads are below (5.4\times10^{-15}), and the binary-blocking Gauss-projection leakage is (1.67\times10^{-31}). Thus the (94.6\%) flow into target channel 1 is not caused by loss of norm or failure of the Gauss projection.
+```math
+F_{2\to5/2}=
+\begin{pmatrix}
+0.9656128797&0.0343871203\\
+0.1311507029&0.8688492971
+\end{pmatrix}
+```
 
-The other four shards (s_2=4,5,6,7) are still running. No full multi-scale ancestry path is claimed until all five matrices have passed and are composed by the dynamic-programming gate.
+```math
+F_{5/2\to3}=
+\begin{pmatrix}
+0.8397696212&0.1602303788\\
+0.1173115629&0.8826884371
+\end{pmatrix}
+```
 
+```math
+F_{3\to7/2}=
+\begin{pmatrix}
+0.0010798725&0.9126526548&0.0862674727\\
+0.0118507795&0.2045240738&0.7836251467
+\end{pmatrix}
+```
+
+```math
+F_{7/2\to4}=
+\begin{pmatrix}
+0.9920365891&0.0045659110&0.0033975000\\
+0.0019135244&0.8233707897&0.1747156859\\
+0.0060241961&0.1270873565&0.8668884474
+\end{pmatrix}
+```
+
+Across these five finite matrices, the maximum row-stochasticity defect is
+(1.11\times10^{-15}), the maximum target paired-eigenvalue spread is
+(2.13\times10^{-14}), the maximum generated-pair spread is
+(2.22\times10^{-16}), and Gauss-projection leakage ranges from
+(1.67\times10^{-31}) to (2.89\times10^{-30}). Thus the five individual
+channel resolutions pass their stated finite numerical checks.
+
+The maximum-product dynamic-programming path is
+
+```math
+a_0^{(3/2)}\to a_1^{(2)}\to a_1^{(5/2)}
+\to a_1^{(3)}\to a_2^{(7/2)}\to a_2^{(4)}.
+```
+
+Its five edge overlaps are
+(0.9459578674471627, 0.8688492971205302, 0.8826884371011211,0.7836251466890334, 0.866888447374884), with product
+(0.49282787562801145). The all-low-index shortcut has product
+(4.694570240506031\times10^{-5}), so the maximum-product local path score
+is about (1.0498\times10^4) times larger.
+
+**Important refinement of the claim:** this is a maximum-product *local*
+ancestry candidate. The product of scalar one-step matrices (F_jF_{j+1})
+is equivalent to an intermediate channel measure-and-prepare map; it discards
+off-diagonal channel coherence and traceless structure inside each
+multiplicity block. The maximum-product path is a different statistic again:
+it selects one intermediate channel rather than summing over channels. Neither
+is automatically the overlap of the composed microscopic refinement.
+
+The direct two-step comparison is specified in
+`BQG_MULTISCALE_CHANNEL_COMPOSITION_GATE.md` and implemented by
+`scripts/bqg_two_step_channel_composition.py`. It compares the actual
+generated rank-2 carrier propagated through two adjacent microscopic
+refinement tensors against (F_jF_{j+1}), while recording intermediate
+off-diagonal/internal-anisotropy blocks and the maximum-product local path
+score. Its workflow is pending; no factorization outcome is claimed yet.
+
+The full five-step data and local path are also recorded in
+`BQG_FULL_CHANNEL_FLOW_MATRIX.md`,
+`BQG_RG_ANCESTRY_PATH.md`, and
+`docs/numerical_continuation/BQG_RG_ANCESTRY_PATH_5STEP.json`.
+
+**Claim boundary:** these are finite representation-RG projector-overlap
+results. They are not physical-time probabilities, physical histories,
+continuum fixed points, or a proof of physical-projector convergence. The
+full graph-changing habitat residuals (E_a,F_a), off-carrier leakage, and
+independently defined master gaps remain separate gates.
+ 
 
 ## 9. HDA/gravity closure family: what is closed and what is conditional
 
