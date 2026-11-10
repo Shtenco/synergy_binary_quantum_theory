@@ -314,6 +314,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
                     "parent_fine_nodes": 24, "edge_representatives": list(REPS),
                     "Jmax": 2.5, "basis_status": "NOT_YET_JOINT_E_S_R_W"},
         "provenance": {
+            "source_worker_blob_sha": SOURCE_BLOB_SHA["worker"],
             "source_collector_blob_sha": SOURCE_BLOB_SHA["collector"],
             "producer_blob_sha": producer_blob,
             "shard_file_sha256": shard_hashes,
@@ -384,6 +385,18 @@ def verify_package(manifest_path: Path):
         raise ValueError("v1 E-only verifier refuses an unrecognized completeness claim")
     if package.get("science_status") != "L1_EUCLIDEAN_E_ONLY_PRECURSOR_NOT_FULL_PHYSICS":
         raise ValueError("unexpected science status")
+    provenance = package.get("provenance", {})
+    if provenance.get("source_worker_blob_sha") != SOURCE_BLOB_SHA["worker"]:
+        raise ValueError("worker source provenance mismatch")
+    if provenance.get("source_collector_blob_sha") != SOURCE_BLOB_SHA["collector"]:
+        raise ValueError("collector source provenance mismatch")
+    if len(provenance.get("producer_blob_sha", "")) != 40:
+        raise ValueError("missing producer Git blob identity")
+    shard_hashes = provenance.get("shard_file_sha256", {})
+    if len(shard_hashes) != 216 or any(len(v) != 64 for v in shard_hashes.values()):
+        raise ValueError("incomplete shard SHA256 manifest")
+    if canonical_json_sha(shard_hashes) != provenance.get("shard_manifest_sha256"):
+        raise ValueError("shard manifest digest mismatch")
     expected = set()
     for edge in REPS:
         for prefix in ("u", "v"):
