@@ -55,7 +55,7 @@ def build_link(jmax):
                     MM=m+a;NN=n+b
                     if abs(MM)>J+1e-12 or abs(NN)>J+1e-12:continue
                     c=math.sqrt((2*j+1)/(2*J+1))*CG(j,.5,J,m,a,MM)*CG(j,.5,J,n,b,NN)
-                    if abs(c)>1e-14:M[idx[(float(J),float(MM),float(NN))],col]+=c
+                    if c != 0.0:M[idx[(float(J),float(MM),float(NN))],col]+=c
             U[(ai,bi)]=M;Ud[(ai,bi)]=M.conj().T
     return basis,idx,L,R,U,Ud
 
