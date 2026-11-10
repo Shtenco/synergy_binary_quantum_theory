@@ -31,10 +31,9 @@ def validate_index_value(value, context: str) -> int:
 
 def validate_positive_integer(value, context: str) -> int:
     """Require a strictly positive JSON integer for dimensions/counts."""
-    checked = validate_index_value(value, context)
-    if checked < 1:
+    if type(value) is not int or value < 1:
         raise ValueError(f"{context}: value must be a positive integer, got {value!r}")
-    return checked
+    return value
 
 
 def parse_indexed_map_filename(stem: str, context: str) -> int:
