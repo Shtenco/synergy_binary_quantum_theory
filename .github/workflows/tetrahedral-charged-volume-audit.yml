@@ -11,6 +11,7 @@ on:
       - 'scripts/tetrahedral_charged_volume_uniqueness_gate.py'
       - 'scripts/tetrahedral_volume_s4_covariance_gate.py'
       - 'scripts/tetrahedral_charged_volume_audit_gate.py'
+      - 'tests/test_tetrahedral_volume_spectral.py'
       - 'scripts/pl_dual_complex.py'
       - 'scripts/pl_peter_weyl_euclidean.py'
       - '.github/workflows/tetrahedral-charged-volume-audit.yml'
@@ -33,6 +34,8 @@ jobs:
           python -m py_compile scripts/tetrahedral_charged_volume_uniqueness_gate.py
           python -m py_compile scripts/tetrahedral_volume_s4_covariance_gate.py
           python -m py_compile scripts/tetrahedral_charged_volume_audit_gate.py
+      - name: Test raw volume spectrum and complete magnetic reconstruction
+        run: python -m unittest discover -s tests -p 'test_tetrahedral_volume_spectral.py'
       - name: Unique S4 sign-representation completion
         run: python scripts/tetrahedral_charged_volume_uniqueness_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_UNIQUENESS.json
       - name: Full magnetic-tensor S4 covariance
@@ -57,6 +60,10 @@ jobs:
           assert d['checks']['old_CV_slot_asymmetry_detected']
           assert d['checks']['tetra_CV_all_slots_nonzero']
           assert d['checks']['tetra_CV_slot_covariance_restored']
+          assert d['checks']['charged_Q_raw_Hermitian_before_symmetrization']
+          assert d['checks']['charged_Q_raw_M_independent_before_averaging']
+          assert d['checks']['charged_volume_spectral_functional_calculus']
+          assert d['checks']['complete_magnetic_tensor_reconstruction_and_finite_output']
           assert d['tetra_CV_slot_norm_spread']<1e-12
           PY
       - uses: actions/upload-artifact@v4
