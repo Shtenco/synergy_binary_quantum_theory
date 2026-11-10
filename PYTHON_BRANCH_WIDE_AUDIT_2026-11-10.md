@@ -91,3 +91,27 @@ There are 610 `assert` statements across the distinct source versions. Assertion
 This is a branch-wide static source audit: it establishes source inventory, syntax parsing, and locations of potentially risky APIs. It does not execute all 748 parseable source blobs. Many are heavyweight numerical jobs, artifact aggregators, or scripts that launch processes or contact external services; indiscriminately executing them would be unsafe and scientifically meaningless without their exact inputs and provenance.
 
 The next semantic phase should prioritize (1) the current-main archive/pickle boundary, (2) the V21/V22/V26 Lorentzian worker and collector chain, (3) the depth-6 artifact aggregation/recovery family, and (4) numerical gates with acceptance logic based on assertions or broad exception handling. Every reported numerical result must remain tied to its source commit, inputs, operator version, and artifact hashes.
+
+
+## Phase 2 — semantic review of the current-main rank-certification path
+
+A focused review of both current-main streaming rank aggregators found a missing matrix-shape invariant. They computed an SVD and accepted a block when rank equals m and the smallest returned singular value exceeded tolerance, but did not first require the stacked image matrix to have exactly m columns. A matrix with more than m columns can have rank m while still having a nontrivial right kernel; in that case rank equals m is not a full-column-rank certificate for the claimed m-column orbit block.
+
+This was a fail-open validation gap for malformed or mismatched artifact maps. It does not establish that any existing artifact had the wrong shape, but the code did not enforce the invariant needed by its own certificate.
+
+**Correction committed on main:**
+
+- Added proof_tools/rank_matrix_guard.py, which requires a 2D matrix, exact expected column count, and finite entries.
+- Applied the guard before SVD in both proof_tools/bqg_mixed_master_aggregate_streaming.py and proof_tools/bqg_s4sign_aggregate_streaming.py.
+- Added tests/test_rank_matrix_guard.py, including a regression where a 2×3 matrix has rank 2 but must not pass as a two-column full-rank certificate.
+- The full numerical-continuation workflow passed on commit e371f1c6d2ebece81abe760e50507d5c31f7949f, including python -m unittest discover -s tests and the existing finite-evidence checks.
+
+No operator formula, coefficient, basis, threshold, or scientific acceptance tolerance was changed. The new check only rejects malformed matrix dimensions and nonfinite values before the existing SVD criterion is applied.
+
+### Remaining rank-pipeline provenance issues
+
+The same two aggregators still consume tarballs and pickle maps without a content-addressed manifest binding every shard, summary, and pickle map to its producer commit. Summary counts and orbit coverage are checked, but those checks do not prove that the loaded numerical maps are the exact outputs of the intended producer. Since pickle deserialization is executable, these inputs must remain trusted until a digest-bound, non-executable interchange format is introduced.
+
+The SVD certificate remains a **finite numerical rank certificate**, not an exact symbolic rank theorem. The implementation uses floating-point singular values and a numerical tolerance. Its own proof_logic string correctly calls the master image numeric; downstream documentation must preserve that limitation.
+
+The output metadata field unique_rows / unique_q is populated from the geometric unique-support set before filtering to map keys. The actual matrix row count is separately recorded as rows. These fields should be renamed or split in a later schema revision so that geometric support counts cannot be mistaken for the number of loaded nonzero row blocks.
