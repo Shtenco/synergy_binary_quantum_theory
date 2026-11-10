@@ -3,9 +3,9 @@
 ## Scope and reproducibility
 
 Repository: `Shtenco/synergy_binary_quantum_theory`  
-Audit head on `main`: `d3c51ec466a724726c299cb07aef2a05445eb509`  
-Audit workflow: [python-all-branches-audit](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802977103)  
-Machine-readable artifact: [PYTHON_ALL_BRANCHES_AUDIT.json](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42802977103/artifacts/13755569812)
+Audit head on `main`: `86dd015d5aefd6181a7301f85c53383e2312f86c`  
+Audit workflow: [python-all-branches-audit](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42805938831)  
+Machine-readable artifact: [PYTHON_ALL_BRANCHES_AUDIT.json](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42805938831/artifacts/13757833131)
 
 The audit enumerated every branch head returned by GitHub, deduplicated identical commit heads, fetched every distinct Python-source blob reachable from those snapshots, and parsed the sources with Python's AST. The scan did not execute repository code.
 
@@ -27,7 +27,7 @@ The current `main` snapshot is smaller: 728 tree entries and 198 `.py` files. Th
 
 ### 1. Syntax errors in a historical research branch
 
-Two distinct Python blobs fail AST parsing. Both occur in the branch snapshot `research/bqg-v23-exact-finite-certificates-20261108` (commit `5b6d53bfc826193f5008633a753e76cb2458862a`), not in the current `main` snapshot:
+Two distinct Python blobs fail AST parsing. Both are absent from the current `main` snapshot (the refreshed audit parsed all 198 main Python files with zero syntax errors). The first malformed blob is shared by four branch heads — `research/bqg-v23-exact-finite-certificates-20261108` (`5b6d53bfc826193f5008633a753e76cb2458862a`), `research/bqg-v24-finite-index-constraint-gates-20261108` (`524240db085485ac31678e82778f585ffd38d199`), `research/bqg-v25-local-HDA-charge-20261108` (`b58872dcb23404fd509421e14b975a98d2214a3e`), and `audit/bqg-independent-proof-20261108` (`fddd49427c636e92dfe79b96034862aeba629927`). The second malformed blob occurs on `fix/v21-c1-fail-closed-20261108` (`2626dcbed6bf6d91179810792bb7db5343b08477`):
 
 - `scripts/pl_lorentzian_group_worker_v2.py:49`: the metadata assignments following `d=json.loads(...)` are indented one level too far, causing `IndentationError: unexpected indent`.
 - `tests/test_v21_c1_checkpoint_repair.py:455`: a literal escaped newline was inserted inside a source line, causing `SyntaxError: unexpected character after line continuation character`.
@@ -150,3 +150,16 @@ Recommended remediation order:
 - `proof_tools/bqg_s4sign_aggregate_streaming.py` verifies that shard IDs equal `range(expected)`; the mixed aggregator checks the number of summaries and global block/map coverage but does not independently enforce unique, complete shard IDs. Add that invariant for symmetry and provenance clarity.
 - Both streaming aggregators report `unique_q` / `unique_rows` from the geometric unique-support candidate set, while `rows` is the actual stacked matrix row count. Preserve the existing result schema for old artifacts, but rename or split these fields in a versioned schema so that support candidates are not confused with loaded matrix rows.
 - The current-main numerical continuation tests pass on the recorded audit lineage. The branch-wide audit remains static: it does not prove numerical correctness of all source versions, and no scientific acceptance threshold should be inferred from AST parsing.
+
+
+### Audit-tool reproducibility correction
+
+The first branch-wide scanner revision deduplicated by blob SHA but attached each finding to the first path encountered for that blob. Since branch trees are fetched concurrently, that representative path could depend on completion order and could omit other branch/path locations for the same source blob.
+
+The scanner was corrected on main at `86dd015d5aefd6181a7301f85c53383e2312f86c`:
+- every finding now carries all known `(commit, path, extension)` locations for its blob;
+- the representative path is selected deterministically;
+- the report includes the exact branch-head map and a separate current-main AST result;
+- the audit exits nonzero if current main has syntax errors, while historical branch syntax errors remain reported without blocking main.
+
+The refreshed workflow passed. It confirmed `main_ast_status=PASS`, `main_syntax_errors=0`, 198 main Python files, and the same branch-wide inventory: 157 branches, 146 unique heads, 18,674 file appearances, 674 paths, 757 path/content versions, 754 distinct blobs, 752 parseable sources, and two historical syntax-error blobs.
