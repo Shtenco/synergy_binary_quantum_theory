@@ -190,8 +190,9 @@ def pack_state(state, n_edges, n_vertices):
 
 def run(root: Path, out_dir: Path, source_commit: str):
     root, out_dir = Path(root), Path(out_dir)
-    if not source_commit or len(source_commit) != 40:
-        raise ValueError("--source-commit must be a full 40-character Git SHA")
+    if (not source_commit or len(source_commit) != 40
+            or any(ch not in "0123456789abcdef" for ch in source_commit.lower())):
+        raise ValueError("--source-commit must be a full 40-character hexadecimal Git SHA")
     scripts_dir = Path(__file__).resolve().parent
     actual_worker_blob = git_blob_sha(scripts_dir/"collective_l1_metric_edge_depth2_shard_worker.py")
     actual_collector_blob = git_blob_sha(scripts_dir/"collective_l1_metric_edge_depth2_shard_collect.py")
@@ -398,8 +399,17 @@ def verify_package(manifest_path: Path):
     if len(provenance.get("producer_blob_sha", "")) != 40:
         raise ValueError("missing producer Git blob identity")
     shard_hashes = provenance.get("shard_file_sha256", {})
-    if len(shard_hashes) != 216 or any(len(v) != 64 for v in shard_hashes.values()):
-        raise ValueError("incomplete shard SHA256 manifest")
+    expected_shard_files = {
+        name
+        for edge in REPS for node in NODES
+        for name in (f"edge_{edge}_node_{node}.json",
+                     f"u_{edge}_node_{node}.npz",
+                     f"v_{edge}_node_{node}.npz")
+    }
+    if set(shard_hashes) != expected_shard_files or any(
+            len(v) != 64 or any(ch not in "0123456789abcdef" for ch in v.lower())
+            for v in shard_hashes.values()):
+        raise ValueError("incomplete or malformed shard SHA256 manifest")
     if canonical_json_sha(shard_hashes) != provenance.get("shard_manifest_sha256"):
         raise ValueError("shard manifest digest mismatch")
     expected = set()
