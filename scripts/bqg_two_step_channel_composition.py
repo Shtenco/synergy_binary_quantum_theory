@@ -120,8 +120,8 @@ def normalized_refinement_spectral_distance(left_diag, right_diag):
         "normalized_squared_singular_mass_hellinger": float(
             np.linalg.norm(np.sqrt(left) - np.sqrt(right)) / math.sqrt(2.0)
         ),
-        "left_rank": int(np.count_nonzero(left)),
-        "right_rank": int(np.count_nonzero(right)),
+        "left_rank": int(left_diag["numerical_rank"]),
+        "right_rank": int(right_diag["numerical_rank"]),
     }
 
 
@@ -371,6 +371,9 @@ def run_pair(source_s2, reference_dir=None):
         "max_product_local_path_score_matrix": max_product_path.tolist(),
         "max_product_intermediate_channel_index": max_product_middle_channel.tolist(),
         "G_direct_composed": direct.tolist(),
+        "global_microscopic_endpoint_overlap_matrix": direct.tolist(),
+        "scalar_markov_composition_matrix": scalar_product.tolist(),
+        "local_one_step_overlap_matrices": {"source_to_middle": F1.tolist(), "middle_to_target": F2.tolist()},
         "composition_defect": defect.tolist(),
         "composition_defect_max_abs": float(np.max(np.abs(defect))),
         "composition_defect_frobenius": float(np.linalg.norm(defect, ord="fro")),
@@ -403,12 +406,21 @@ def run_pair(source_s2, reference_dir=None):
             (x["max_internal_channel_anisotropy"] for x in endpoint_channel_blocks), default=0.0
         ),
         "interpretation": (
-            "G_direct composes the actual generated rank-2 carrier subspace "
-            "through both microscopic refinement tensors. F_first @ F_second "
-            "is the scalar channel-matrix composition. Their difference "
-            "measures information discarded by replacing the intermediate "
-            "carrier with channel weights."
+            "G_direct_composed is the directly contracted two-step microscopic "
+            "endpoint projector overlap, computed by propagating the actual "
+            "generated rank-2 carrier subspace through both refinement tensors. "
+            "F_first and F_second are local one-step channel overlaps; their "
+            "matrix product is a scalar Markov-style composition, not the "
+            "microscopic endpoint overlap. max_product_local_path_score is "
+            "the best single intermediate-channel path and is distinct from "
+            "both the sum over intermediate channels and G_direct_composed."
         ),
+        "overlap_semantics": {
+            "F_first_F_second": "local one-step overlaps and their scalar matrix product",
+            "max_product_local_path_score_matrix": "maximum product over one intermediate channel; not a summed or direct microscopic overlap",
+            "G_direct_composed": "direct microscopic two-step endpoint projector overlap",
+            "raw_projected_refinement_tensor_spectrum": "diagnostic of T2 P_middle T1; not the normalized-range carrier map used to form G_direct_composed",
+        },
         "claim_boundary": (
             "Finite two-step representation-RG composition test only. "
             "Not a physical transition probability or continuum theorem."
