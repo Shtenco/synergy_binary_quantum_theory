@@ -31,6 +31,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'proof_tools'))
 from safe_archive import safe_extract_zip
 
 
+API = 'https://api.github.com'
+
 API_HEADERS = {
     'Accept': 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
@@ -124,6 +126,19 @@ def main() -> int:
     token = os.environ.get(a.token_env)
     if not token:
         raise RuntimeError(f'missing token env {a.token_env}')
+    source_run = api_json(f'{API}/repos/{a.repo}/actions/runs/{a.run_id}', token)
+    head_repository = source_run.get('head_repository') or {}
+    if (
+        source_run.get('path') != '.github/workflows/bqg-depth6-mixed-stage-a.yml'
+        or source_run.get('head_branch') != 'main'
+        or head_repository.get('full_name') != a.repo
+        or source_run.get('status') != 'completed'
+        or source_run.get('conclusion') != 'success'
+    ):
+        raise RuntimeError(
+            'source run is not a successful same-repository main-branch '
+            'BQG depth6 mixed stage A run'
+        )
     a.out_dir.mkdir(parents=True, exist_ok=True)
 
     rx = re.compile(r'^' + re.escape(a.prefix) + r'(\d+)$')
