@@ -64,6 +64,12 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CK_complete_charge_basis_leakage"):
             BASE.validate_leakage_map(complete, require_all=True)
 
+    def test_merging_empty_stages_does_not_synthesize_zero_diagnostics(self):
+        merged = BASE.maxdiag({}, {})
+        self.assertEqual(merged, {})
+        with self.assertRaisesRegex(ValueError, "missing required leakage"):
+            BASE.validate_leakage_map(merged, require_all=True)
+
     def test_missing_nan_and_negative_diagnostics_fail_closed(self):
         for value in (float("nan"), float("inf"), -1.0, True, "0"):
             with self.subTest(value=value):
