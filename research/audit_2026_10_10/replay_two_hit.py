@@ -2,8 +2,10 @@
 
 Only load the trusted pickle files committed alongside this script.
 """
-import json,pickle
+import json,sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'proof_tools'))
+from safe_pickle import safe_load_bytes
 import numpy as np
 from scipy.sparse import load_npz
 p=Path(__file__).resolve().parent
@@ -14,10 +16,10 @@ outs=[]
 for name,inp in [('H0H1',h1),('H1H0',h0)]:
  out={}
  for j,(k,c) in enumerate(sorted(inp.items())):
-  im=pickle.loads((p/f'{name}_{j:03d}.pkl').read_bytes())
+  im=safe_load_bytes((p/f'{name}_{j:03d}.pkl').read_bytes())
   for key,z in im.items():out[key]=out.get(key,0j)+c*z
  out={k:z for k,z in out.items() if abs(z)>1e-10}
- saved=pickle.loads((p/f'{name}.pkl').read_bytes())
+ saved=safe_load_bytes((p/f'{name}.pkl').read_bytes())
  assert max(abs(out.get(k,0j)-saved.get(k,0j)) for k in set(out)|set(saved))<1e-12
  outs.append(out)
 c={k:outs[0].get(k,0j)-outs[1].get(k,0j) for k in set(outs[0])|set(outs[1])}
