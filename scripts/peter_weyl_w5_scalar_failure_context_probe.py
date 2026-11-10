@@ -130,13 +130,105 @@ def main():
             raise ProbeCaptured("Expected scalar-covariance failure captured") from exc
 
     def traced_complete(key, source_v, Jmax2, charged_nodes=(0, 1)):
+        # Reproduce complete_HE_sine's exact loop and accumulation order while
+        # observing each oriented specification, adjoint choice and T sequence.
+        # The physical output accumulator receives precisely the same additions
+        # in the same order as the original function.
+        import k5_peter_weyl_safe_hda_column as PW
+
         context.update({
             "source_v": int(source_v),
             "Jmax2": int(Jmax2),
             "charged_nodes": list(charged_nodes),
             "canonical_key_repr": repr(key),
         })
-        return original_complete(key, source_v, Jmax2, charged_nodes=charged_nodes)
+
+        def jm_weights(state):
+            result = {}
+            for (_, labels), amp in state.items():
+                for node in charged_nodes:
+                    lab = labels[node]
+                    if lab[0] == "C":
+                        _, j2, m2, _, _ = lab
+                        slot = result.setdefault(str(node), {})
+                        label = f"J2={int(j2)},M2={int(m2)}"
+                        slot[label] = slot.get(label, 0.0) + float(abs(amp) ** 2)
+            return result
+
+        def wrong_weight(weights):
+            total = 0.0
+            wrong = 0.0
+            for node in charged_nodes:
+                expected_j2, expected_m2 = context["original_JM"][str(node)]
+                row = weights.get(str(node), {})
+                for label, value in row.items():
+                    total += value
+                    if label != f"J2={expected_j2},M2={expected_m2}":
+                        wrong += value
+            return {"total_endpoint_weight": total, "wrong_endpoint_weight": wrong}
+
+        base = KC.CK.branch_from_key(key)
+        out = {}
+        max_v = 0.0
+        max_b = 0.0
+        rows = []
+        for spec_index, (sign, spec) in enumerate(PW.oriented_specs(source_v)):
+            spec_acc = {}
+            for adj in (False, True):
+                adj_acc = {}
+                for sequence_index, (coef, seq0) in enumerate(PW.T_sequences(*spec)):
+                    seq = PW.adjoint_sequence(seq0) if adj else seq0
+                    branches, vleak = KC.CK.apply_sequence_to_branch(
+                        base, seq, source_v, Jmax2
+                    )
+                    max_v = max(max_v, float(vleak))
+                    sequence_acc = {}
+                    for branch_index, branch in enumerate(branches):
+                        projected, bleak = KC.CK.project_branch_complete_charges(
+                            branch, charged_nodes
+                        )
+                        max_b = max(max_b, float(bleak))
+                        scale = (+0.5j if adj else -0.5j) * sign * coef
+                        KC.CK.add_state(out, projected, scale)
+                        KC.CK.add_state(sequence_acc, projected, scale)
+                    weights = jm_weights(sequence_acc)
+                    rows.append({
+                        "spec_index": spec_index,
+                        "oriented_spec": list(spec),
+                        "epsilon_sign": int(sign),
+                        "adjoint": bool(adj),
+                        "sequence_index": sequence_index,
+                        "sequence": repr(seq),
+                        "sequence_coefficient": [float(complex(coef).real), float(complex(coef).imag)],
+                        "branch_count": len(branches),
+                        "sequence_output_support": len(sequence_acc),
+                        "sequence_JM_weights": weights,
+                        **wrong_weight(weights),
+                    })
+                    KC.CK.add_state(adj_acc, sequence_acc)
+                KC.CK.add_state(spec_acc, adj_acc)
+            spec_weights = jm_weights(spec_acc)
+            rows.append({
+                "spec_index": spec_index,
+                "oriented_spec": list(spec),
+                "epsilon_sign": int(sign),
+                "stage": "after_complete_oriented_spec",
+                "spec_output_support": len(spec_acc),
+                "spec_JM_weights": spec_weights,
+                **wrong_weight(spec_weights),
+            })
+
+        total_weights = jm_weights(out)
+        context["operator_stage_trace"] = {
+            "construction": "complete_HE_sine exact loop with passive per-sequence observers",
+            "sequence_rows": rows,
+            "total_output_support": len(out),
+            "total_output_JM_weights": total_weights,
+            "total_output_wrong_weight": wrong_weight(total_weights),
+            "max_volume_leakage": max_v,
+            "max_basis_leakage": max_b,
+        }
+        return out, max_v, max_b
 
     def traced_he_state(state, source_v, Jmax2, charged_nodes):
         idx = int(context.get("he_call_index", 0)) + 1
