@@ -26,6 +26,7 @@
 - FINDINGS_012.md and audit_integer_kernel.py — exact Smith-normal-form audit: the old 30×6 draft LLL basis spans a sublattice of index ≈6.356×10²⁶; saturated kernel LLL yields 24 short basis vectors (max coefficient 2).
 - FINDINGS_013.md and audit_integer_kernel_corrected_matrix.py — second 30×6 matrix audit: 24/30 rows differ from the old draft; the newer matrix's row-wise integer kernel is also non-saturated, index 2⁵⁴.
 - FINDINGS_014.md — NLO R²/AIC square SSE twice, calibration and NLO are in-sample, raw dimensionful SI values are regressed against dimensionless basis, covariance is ignored in chi-square.
+- FINDINGS_015.md — selective minor-gcd routine is not SNF, torsion is assigned to the wrong group, and Gram/angle clustering is basis-dependent.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
