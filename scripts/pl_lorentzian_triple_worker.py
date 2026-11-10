@@ -155,6 +155,7 @@ def run(index,mode='forward',source=0):
       'gauss_max_spin':max_spin(gauss),'exact_zero_ordered_term':len(cov)==0 and len(gauss)==0,
       'scalar_closure_fraction':scalar_fraction,'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0)),
       'physical_acceptance_max_leakage':physical,'complete_charge_diagnostic':charge,
+      'leakage_diagnostics':required_diag,
       'exact_empty_input_zero_fields':diag.get('exact_empty_input_zero_fields',[]),
       'cache_info':cache_info,'checks':checks,'weighted_here':False,
       'orientation_note':'Coefficient = tetrahedral local orientation sign times permutation parity; on boundary-4-simplex this reduces to orientation[v] times the historical K5 epsilon orbit.',
