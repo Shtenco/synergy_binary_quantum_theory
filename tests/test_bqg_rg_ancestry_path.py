@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import tempfile
 import sys
 import unittest
@@ -22,6 +23,25 @@ class TestBQGRGAncestryPath(unittest.TestCase):
         result = ancestry.solve(matrices)
 
         self.assertEqual(result["channel_path"], [0, 1, 1, 1, 2, 2])
+        self.assertAlmostEqual(
+            result["selected_path_local_projector_overlap_product"],
+            math.prod(step["overlap"] for step in result["steps"]),
+            places=14,
+        )
+        self.assertAlmostEqual(
+            result["best_cumulative_fidelity"],
+            result["initial_uniform_prior_weight"]
+            * result["selected_path_local_projector_overlap_product"],
+            places=14,
+        )
+        self.assertGreaterEqual(
+            result["product_of_independent_local_maxima_not_a_single_path"],
+            result["selected_path_local_projector_overlap_product"] - 1e-14,
+        )
+        self.assertEqual(
+            result["global_microscopic_endpoint_overlap"],
+            "NOT_COMPUTED_BY_STEPWISE_PATH_DP",
+        )
         self.assertAlmostEqual(
             result["best_cumulative_fidelity"], 0.49282787562801145, places=12
         )
