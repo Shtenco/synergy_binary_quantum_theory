@@ -386,3 +386,92 @@ This is the next decisive refinement test: it determines whether the
 five-step local ancestry score is supported by coherent multi-scale
 composition, or whether the scalar channel matrices only describe a
 channel-twirled surrogate.
+
+
+## Phase 7 — inline-source audit implementation and workflow verification
+
+### Current scanner revision
+
+The current branch-wide scanner revision is on main commit
+`033ca9779cdd61299d048d9dfcbe884f0d7f9692`. In addition to standalone
+Python files, notebooks and direct archive members, it extracts labelled
+Python fences from Markdown/RST and Python heredocs from YAML/shell files.
+It now parses the same Git blob once per distinct source suffix, so identical
+content stored as both Markdown and YAML is not interpreted using only the
+first path encountered. Findings are mapped back to the containing file's
+original line numbers and restricted to locations with the matching suffix.
+
+Regression tests in `tests/test_python_audit_inline_blocks.py` cover:
+- Markdown Python fences with language metadata;
+- YAML `python - <<'PY'` heredocs;
+- indentation normalization;
+- separate parsing of multiple code fences.
+
+The audit reports both repository-wide and main-only finding counts, and
+separates inline syntax errors from standalone-module syntax errors. The
+current audit run is
+[42821910697](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821910697);
+it was pending when this note was written. Earlier expanded-scan runs
+42821334886 and 42821558904 were cancelled by successive pushes before
+producing a completed artifact. Do not treat their missing artifacts as
+audit failures or as successful scans.
+
+### Optimization-sensitive gate correction
+
+The canonical refinement residual gate previously used nine Python
+`assert` statements for the isometry, projector, residual decomposition,
+orthogonality, norm bounds and registered scalar check. Python removes
+these statements under `-O`, but the script still printed `PASS`.
+
+The gate now uses explicit `require(condition, message)` checks. The new
+test `tests/test_critical_gate_optimization.py` verifies that the gate's AST
+contains no `ast.Assert` node, that a false condition still raises under
+optimization, and that the full gate completes under `python -O`.
+`numerical-continuation.yml` invokes the gate. No operator, identity,
+coefficient, basis, or tolerance changed.
+
+This is one corrected gate, not a blanket clearance of the other
+assert-based gates. The branch-wide report previously counted 171
+production assertion nodes on its main snapshot. Each remaining
+main-only gate must be reviewed for whether its assertions are
+certification criteria, internal debugging checks, or ordinary tests.
+
+### Depth-6 workflow provenance and trigger behavior
+
+The mixed Stage-A, Stage-B and keymeta-salvage workflows now pin the
+research source to commit
+`f6bfcd775b8c3cd33c6c235d48293e40657baf9d` and verify the mixed bundle
+blob SHA
+`cbbaa80f6b6b61d353458db1fa1f03f824730532`. The keymeta-salvage
+workflow additionally verifies the exact harvester, extractor and safe
+archive/pickle helper blobs. The regression test
+`tests/test_depth6_workflow_source_pinning.py` locks these values.
+
+A push to the keymeta-salvage workflow file had previously invoked a
+fallback to stale run ID `36899125190`. That run failed only after the
+pinned source and helper checks succeeded; the harvester correctly
+rejected the stale run as not being a successful same-repository main
+Stage-A run. The fallback has been removed, the push trigger has been
+removed, and salvage now requires a genuine Stage-A `workflow_run` or an
+explicit `workflow_dispatch`.
+
+The mixed Stage-A workflow's push-to-own-YAML trigger was also removed.
+Previously, merely editing that workflow launched its 30-job matrix.
+The upstream Stage-A `workflow_run` trigger remains. The queued push
+matrix from before that trigger correction is not evidence of a
+completed proof run; its source-pinning checks have not yet been
+confirmed by a completed matrix job.
+
+### CI state at this update
+
+- Branch-wide Python audit: run 42821910697 pending.
+- Numerical continuation: latest run 42821910672 queued.
+- Core regression: latest run 42821910573 queued.
+- Mixed Stage-A push matrix: run 42821076917 queued; it predates removal
+  of the self-trigger and has not completed its source-pinning step.
+- Keymeta salvage: run 42821051288 failed at the stale run-ID validation;
+  source commit and bundle verification steps succeeded.
+
+The CI queue has not yet supplied completed results for the latest
+scanner and optimization-mode tests. The code changes are committed,
+but their CI status must remain pending until the workflows complete.
