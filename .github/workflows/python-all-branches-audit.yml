@@ -5,7 +5,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/audit_python_all_branch_heads.py'
+      - '**.py'
+      - '**.pyi'
+      - '**.pyx'
+      - '**.pxd'
+      - '**.ipynb'
       - '.github/workflows/python-all-branches-audit.yml'
 
 permissions:
