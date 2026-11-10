@@ -296,10 +296,23 @@ def solve(mats):
         "channel_path": [int(x) for x in path],
         "best_log_fidelity": best_log,
         "best_cumulative_fidelity": best_product,
+        "best_stepwise_ancestry_path_score": best_product,
+        "local_one_step_max_overlap_by_source": [
+            [float(x) for x in np.max(np.asarray(item["channel_flow_matrix"], dtype=float), axis=1)]
+            for item in mats
+        ],
         "steps": steps,
+        "global_microscopic_endpoint_overlap": "NOT_COMPUTED_BY_STEPWISE_PATH_DP",
+        "overlap_semantics": (
+            "Each steps[].overlap is a local one-step representation-RG projector overlap. "
+            "best_stepwise_ancestry_path_score is the maximum product along a discrete "
+            "sequence of these local overlaps. It is not a directly contracted global "
+            "microscopic endpoint overlap; that requires composing the microscopic "
+            "refinement tensors and retaining intermediate carrier coherence."
+        ),
         "naive_lowest_channel_path": lowest_path,
         "naive_lowest_cumulative_fidelity": float(lowest_product),
-        "ancestry_to_lowest_product_ratio": (
+        "best_path_score_to_fixed_channel0_score_ratio": (
             float(best_product / lowest_product) if lowest_product > 0 else None
         ),
         "naive_lowest_steps": lowest_steps,
