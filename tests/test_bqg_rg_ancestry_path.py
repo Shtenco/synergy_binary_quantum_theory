@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import math
+import tempfile
 import sys
 import unittest
 from pathlib import Path
@@ -34,6 +36,46 @@ class TestBQGRGAncestryPath(unittest.TestCase):
         self.assertGreater(
             result["ancestry_to_lowest_product_ratio"], 12000.0
         )
+
+    def test_loader_requires_explicit_pass(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item.pop("passed", None)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "missing_pass.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "explicitly pass"):
+                ancestry.load([path])
+
+    def test_loader_rejects_failed_shard(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item["passed"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "failed.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "explicitly pass"):
+                ancestry.load([path])
+
+    def test_loader_requires_single_half_spin_step(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item["target_s2"] = item["source_s2"] + 2
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "wrong_step.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "advance s2 by one"):
+                ancestry.load([path])
+
+    def test_loader_rejects_nonfinite_master_spectrum(self):
+        source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
+        item = json.loads(source.read_text(encoding="utf-8"))
+        item["source_master_eigenvalues"][0] = float("nan")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "nonfinite_spectrum.json"
+            path.write_text(json.dumps(item), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "non-finite"):
+                ancestry.load([path])
 
     def test_loader_rejects_nonconsecutive_scales(self):
         files = [

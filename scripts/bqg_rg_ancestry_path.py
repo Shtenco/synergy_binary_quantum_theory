@@ -16,10 +16,40 @@ def load(paths, stochastic_tol=1e-8):
         mats.append(item)
     mats.sort(key=lambda item: item["source_s2"])
 
+    if not math.isfinite(stochastic_tol) or stochastic_tol < 0:
+        raise ValueError("stochastic_tol must be finite and nonnegative")
+
     for item in mats:
+        source_s2 = item.get("source_s2")
+        target_s2 = item.get("target_s2")
+        if (not isinstance(source_s2, int) or isinstance(source_s2, bool)
+                or not isinstance(target_s2, int) or isinstance(target_s2, bool)):
+            raise ValueError("source_s2 and target_s2 must be integer spin labels")
+        if target_s2 != source_s2 + 1:
+            raise ValueError(
+                f"each refinement step must advance s2 by one: "
+                f"{source_s2} -> {target_s2}"
+            )
+        if item.get("passed") is not True:
+            raise ValueError("a channel-flow shard must explicitly pass its own gate")
+
+        source_eigenvalues = np.asarray(item.get("source_master_eigenvalues"), dtype=float)
+        target_eigenvalues = np.asarray(item.get("target_master_eigenvalues"), dtype=float)
+        if (source_eigenvalues.ndim != 1 or target_eigenvalues.ndim != 1
+                or source_eigenvalues.size == 0 or target_eigenvalues.size == 0):
+            raise ValueError("source and target master spectra must be nonempty vectors")
+        if not np.isfinite(source_eigenvalues).all() or not np.isfinite(target_eigenvalues).all():
+            raise ValueError("source or target master spectrum contains non-finite values")
+        if not math.isclose(float(item.get("source_j", math.nan)), source_s2 / 2.0,
+                            rel_tol=0.0, abs_tol=1e-12):
+            raise ValueError("source_j does not match source_s2")
+        if not math.isclose(float(item.get("target_j", math.nan)), target_s2 / 2.0,
+                            rel_tol=0.0, abs_tol=1e-12):
+            raise ValueError("target_j does not match target_s2")
+
         F = np.asarray(item["channel_flow_matrix"], dtype=float)
-        ns = len(item["source_master_eigenvalues"])
-        nt = len(item["target_master_eigenvalues"])
+        ns = len(source_eigenvalues)
+        nt = len(target_eigenvalues)
         if F.shape != (ns, nt):
             raise ValueError(
                 f"channel matrix shape {F.shape} does not match "
@@ -35,9 +65,6 @@ def load(paths, stochastic_tol=1e-8):
             raise ValueError(
                 f"channel-flow matrix is not row-stochastic: defect={defect}"
             )
-        if item.get("passed") is False:
-            raise ValueError("a channel-flow shard did not pass its own gate")
-
     for left, right in zip(mats, mats[1:]):
         if left["target_s2"] != right["source_s2"]:
             raise ValueError("nonconsecutive flow matrices")
