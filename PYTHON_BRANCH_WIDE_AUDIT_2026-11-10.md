@@ -163,3 +163,12 @@ The scanner was corrected on main at `86dd015d5aefd6181a7301f85c53383e2312f86c`:
 - the audit exits nonzero if current main has syntax errors, while historical branch syntax errors remain reported without blocking main.
 
 The refreshed workflow passed. It confirmed `main_ast_status=PASS`, `main_syntax_errors=0`, 198 main Python files, and the same branch-wide inventory: 157 branches, 146 unique heads, 18,674 file appearances, 674 paths, 757 path/content versions, 754 distinct blobs, 752 parseable sources, and two historical syntax-error blobs.
+
+
+## Phase 4 — pin the exact depth-6 S4-sign producer commit
+
+The `workflow_run` aggregation workflow previously checked out the mutable `research/depth6-s4sign-proof` branch tip while downloading artifacts from a particular completed producer run. Those are not necessarily the same revision if the branch advances before aggregation. This is a source-to-evidence provenance gap independent of whether the numerical matrices are correct.
+
+**Correction on main:** `.github/workflows/bqg-depth6-s4sign-aggregate.yml` now (a) requires a successful triggering run from the same repository and the expected proof branch, (b) checks out the triggering run's exact `head_sha`, and (c) verifies that `git -C proofsrc rev-parse HEAD` equals that SHA before unpacking its proof bundle. This changes no scientific operator, numerical tolerance, or certificate claim.
+
+The aggregator still needs a per-shard manifest binding producer SHA, shard index, raw artifact digest, extracted matrix-map digests, and operator-version metadata. GitHub artifact ZIP digest verification and producer checkout pinning are necessary but not sufficient for end-to-end provenance. The source checkout change has been committed, but the next producer-triggered aggregation has not yet been observed to complete; do not label it a verified end-to-end PASS.
