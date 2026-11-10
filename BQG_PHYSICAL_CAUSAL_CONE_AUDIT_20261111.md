@@ -273,6 +273,22 @@ This audit does not relax the existing production requirements. The unified Lore
 
 Do not assemble E, S and R from incompatible carriers. Do not treat E-only L1 shards, Euclidean Krylov precursors, Lorentzian V2/V3, or separate sparse-Fourier blocks as one physical package.
 
+## 9.1. W5 Lorentzian production status: source-level cross-audit
+
+The W5 Lorentzian files were also inspected because a physical retarded cone cannot be built on an unverified Lorentzian operator.
+
+The source-level chain is:
+
+1. The older all-\(j=1/2\) Lorentzian runner is not the W5 Euclidean input sector. W5 uses doubled spins \((4,)\times10\), i.e. \(j=2\), with five seed labels \(K\in\{0,2,4,6,8\}\). Its old \(J_{\max}=7/2\) wall is not a justified W5 cutoff.
+2. The v09 adapter uses the correct five W5 seeds and computes coherent raw 24-term KKV columns in the same Gauss output-key convention as the Euclidean sine column. It explicitly does not perform physical Hermitian completion or restore the physical prefactor.
+3. The v10 closure runner independently assembles the reversed-order adjoint and closes a finite reachable basis under both raw forward and adjoint maps. A complete finite PASS would establish adjoint consistency of that raw structural map on that declared cutoff/basis; it would not select the physical Lorentzian ordering.
+4. The v10 unit tests use finite random matrix blocks to test index algebra, sparse assembly, and adjoint identities. They are not the expensive Peter–Weyl W5 production closure.
+5. The W5 pipeline audit itself requires complete closure, adjoint residual, cutoff comparison (at least the declared sequence such as \(J_{\max,2}=10,12,14\)), leakage control, a justified Hermitian ordering, and a convention-ledger prefactor before a physical \(H_E+H_L\) Gram or joint-kernel claim.
+
+The recursive repository tree at the audited base contains the W5 source scripts and tests but no W5 production-result JSON artifacts. This is a repository-tree observation, not proof that no external or untracked run exists. No W5 production closure or cutoff-convergence result is claimed by this audit.
+
+**Consequence for the causal-cone plan:** the W5 Lorentzian operator must pass its own production and convention gates before it can enter the unified E+S+R carrier, physical rigging map, retarded-response calculation, or IR-cone comparison. A raw KKV adjoint-consistency PASS is necessary structural evidence, not a physical Hamiltonian certificate.
+
 ## 10. Acceptance rule
 
 The full BQG causal-cone claim may be considered only after all of the following are independently satisfied:
