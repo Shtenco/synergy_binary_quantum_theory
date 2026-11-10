@@ -200,6 +200,7 @@ def run():
     exact = exact_quaternion_haar_control(n)
     known = [6, 120, 4650, 254604, 16807392]
     exact_prefix = [exact_quaternion_haar_control(k) for k in range(1, 6)]
+    exact_values = exact_prefix + [exact]
     if exact_prefix != known:
         raise RuntimeError(f"independent exact control failed known prefix: {exact_prefix}")
 
@@ -212,6 +213,24 @@ def run():
     tight_comparison = compare_states(baseline["final_state"], tight["final_state"])
     loose_comparison = compare_states(baseline["final_state"], loose["final_state"])
     exact_error = abs(baseline["final_norm_squared"] - exact)
+    norm_history_errors = {
+        "Jmax_3_prune_1e-13": [
+            abs(row["norm_squared"] - exact_values[row["power"] - 1])
+            for row in baseline["rows"]
+        ],
+        "Jmax_3_prune_1e-14": [
+            abs(row["norm_squared"] - exact_values[row["power"] - 1])
+            for row in tight["rows"]
+        ],
+        "Jmax_3_prune_1e-12": [
+            abs(row["norm_squared"] - exact_values[row["power"] - 1])
+            for row in loose["rows"]
+        ],
+        "Jmax_7_2_prune_1e-13": [
+            abs(row["norm_squared"] - exact_values[row["power"] - 1])
+            for row in overcut["rows"]
+        ],
+    }
     gauge_covariance = {
         "Jmax_3": gauge_covariance_error(3.0),
         "Jmax_7_2": gauge_covariance_error(3.5),
@@ -228,13 +247,18 @@ def run():
         "independent_exact_Haar_control_reproduces_first_five_values": exact_prefix == known,
         "independent_exact_sixth_control_is_integer": isinstance(exact, int),
         "Jmax_3_reaches_exact_spin_3": math.isclose(baseline["final_max_spin"], 3.0, rel_tol=0.0, abs_tol=1e-12),
-        "Jmax_7_2_overcutoff_has_no_support_above_3": high_spin_support == 0,
+        "Jmax_3_support_reaches_expected_frontier_at_every_power": all(
+            math.isclose(row["max_spin_reached"], row["power"] / 2.0, rel_tol=0.0, abs_tol=1e-12)
+            for row in baseline["rows"]
+        ),
+        "Jmax_7_2_has_no_support_above_3_at_any_power": all(
+            row["max_spin_reached"] <= 3.0 + 1e-12 for row in overcut["rows"]
+        ) and high_spin_support == 0,
         "Jmax_3_and_7_2_states_agree": cutoff_comparison["max_amplitude_difference"] < 1e-10,
         "pruning_1e_14_stable_against_1e_13": tight_comparison["max_amplitude_difference"] < 1e-9,
         "pruning_1e_12_stable_against_1e_13": loose_comparison["max_amplitude_difference"] < 1e-9,
-        "all_three_pruning_norms_match_exact_control": max(
-            abs(x["final_norm_squared"] - exact)
-            for x in (baseline, tight, loose, overcut)
+        "all_pruning_and_cutoff_norm_histories_match_exact_control": max(
+            error for history in norm_history_errors.values() for error in history
         ) < 1e-3,
         "baseline_norm_matches_independent_exact_control": exact_error < 1e-3,
         "gauge_covariance_at_both_cutoffs": max(gauge_covariance.values()) < 1e-12,
@@ -252,6 +276,8 @@ def run():
             "method": "SU(2)^3 Haar integral via unit-quaternion S^3 characteristic function and exact rational Laplacian recurrence",
             "known_first_five_values": known,
             "recomputed_first_five_values": exact_prefix,
+            "recomputed_first_six_values": exact_values,
+            "norm_history_absolute_errors": norm_history_errors,
             "sixth_exact_norm_squared": exact,
             "derivation": "W=2 sum_{i<j} q_i dot q_j=|q_1+q_2+q_3+1|^2-4; ||W^6|0>||^2=E[W^12]",
         },
