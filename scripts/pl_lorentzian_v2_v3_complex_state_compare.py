@@ -152,7 +152,7 @@ def main():
     a=p.parse_args()
     out=run(a.v2_root,a.v3_root,a.v2_bundle,a.v3_bundle)
     a.output.parent.mkdir(parents=True,exist_ok=True)
-    a.output.write_text(json.dumps(out,indent=2,sort_keys=True)+"\\n",encoding="utf-8")
+    a.output.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps(out,indent=2,sort_keys=True))
     return 0 if out["passed"] else 1
 
