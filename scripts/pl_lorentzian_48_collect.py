@@ -6,7 +6,7 @@ exact scalar Gauss channel; this collector applies the preregistered PL epsilon
 coefficients and forms S=-i(L-Ldagger)/2.
 """
 from __future__ import annotations
-import argparse,json,math,re,traceback
+import argparse,json,math,re,traceback,hashlib
 from pathlib import Path
 import numpy as np
 TOL=1e-10
@@ -90,7 +90,15 @@ def run(root):
 
     sums={'forward':{},'adjoint':{}};rows=[]
     for mode,idx,p,npz,d in sorted(metas,key=lambda x:(x[0],x[1])):
-        st=load_state(npz);coef=int(d['PL_epsilon_coefficient']);add(sums[mode],st,coef)
+        expected_state_hash=d.get('state_sha256')
+        if not isinstance(expected_state_hash,str) or len(expected_state_hash)!=64:
+            raise RuntimeError(f'missing state_sha256 binding in {p}')
+        actual_state_hash=hashlib.sha256(npz.read_bytes()).hexdigest()
+        if actual_state_hash!=expected_state_hash:
+            raise RuntimeError(f'NPZ/metadata SHA256 mismatch for {p}')
+        st=load_state(npz);coef=int(d['PL_epsilon_coefficient'])
+        if coef not in (-1,1):raise RuntimeError(f'invalid epsilon coefficient in {p}')
+        add(sums[mode],st,coef)
         rows.append({'mode':mode,'index':idx,'coefficient':coef,'ordered_target_nodes':d['ordered_target_nodes'],
                      'worker_support':len(st),'worker_norm':norm(st),'exact_zero_ordered_term':d['exact_zero_ordered_term'],
                      'max_leakage':d['physical_acceptance_max_leakage'],'scalar_closure_fraction':d['scalar_closure_fraction']})
