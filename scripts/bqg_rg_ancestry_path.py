@@ -10,7 +10,67 @@ from pathlib import Path
 import numpy as np
 
 
-def load(paths, stochastic_tol=1e-8):
+def validate_refinement_spectrum(item, context):
+    """Cross-check singular and Gram spectra of the actual induced tensor."""
+    diag = item.get("refinement_tensor_diagnostics")
+    if not isinstance(diag, dict):
+        raise ValueError(f"{context}: missing refinement_tensor_diagnostics")
+    shape = diag.get("shape")
+    if (not isinstance(shape, list) or len(shape) != 2
+            or any(not isinstance(x, int) or isinstance(x, bool) or x <= 0 for x in shape)):
+        raise ValueError(f"{context}: malformed refinement tensor shape")
+    singular = np.asarray(diag.get("singular_values"), dtype=float)
+    row_gram = np.asarray(diag.get("row_gram_eigenvalues"), dtype=float)
+    col_gram = np.asarray(diag.get("column_gram_nonzero_eigenvalues"), dtype=float)
+    rank_tol = float(diag.get("rank_tolerance", math.nan))
+    rank = diag.get("numerical_rank")
+    frobenius = float(diag.get("frobenius_norm", math.nan))
+    if (singular.ndim != 1 or singular.size != min(shape)
+            or row_gram.shape != (shape[0],) or col_gram.ndim != 1
+            or not np.isfinite(singular).all() or not np.isfinite(row_gram).all()
+            or not np.isfinite(col_gram).all() or not math.isfinite(rank_tol)
+            or rank_tol <= 0.0 or not math.isfinite(frobenius) or frobenius < 0.0):
+        raise ValueError(f"{context}: malformed/non-finite refinement spectra")
+    if np.any(singular < 0.0) or np.any(row_gram < -1e-10) or np.any(col_gram < -1e-10):
+        raise ValueError(f"{context}: negative singular/Gram spectrum")
+    if singular.size > 1 and np.any(np.diff(singular) > 1e-12 * max(float(singular[0]), 1.0)):
+        raise ValueError(f"{context}: singular values are not descending")
+    expected_rank = int(np.sum(singular > rank_tol))
+    if isinstance(rank, bool) or not isinstance(rank, int) or rank != expected_rank:
+        raise ValueError(f"{context}: numerical rank does not match singular spectrum")
+    expected_row = np.sort(np.concatenate((np.zeros(max(0, shape[0] - singular.size)),
+                                           singular * singular)))
+    if expected_row.shape != row_gram.shape:
+        raise ValueError(f"{context}: row Gram spectrum dimension mismatch")
+    scale = max(float(np.max(np.abs(expected_row))), float(np.max(np.abs(row_gram))), 1.0)
+    row_defect = float(np.max(np.abs(expected_row - row_gram)))
+    expected_col = np.sort((singular[singular > rank_tol]) ** 2)
+    if expected_col.shape != col_gram.shape:
+        raise ValueError(f"{context}: column Gram nonzero spectrum dimension mismatch")
+    col_scale = max(float(np.max(np.abs(expected_col))) if expected_col.size else 0.0,
+                    float(np.max(np.abs(col_gram))) if col_gram.size else 0.0, 1.0)
+    col_defect = (float(np.max(np.abs(expected_col - col_gram)))
+                  if expected_col.size else 0.0)
+    frob_defect = abs(frobenius * frobenius - float(np.sum(singular * singular)))
+    if row_defect > 1e-8 * scale or col_defect > 1e-8 * col_scale:
+        raise ValueError(f"{context}: Gram spectra disagree with singular values")
+    if frob_defect > 1e-8 * max(frobenius * frobenius, 1.0):
+        raise ValueError(f"{context}: Frobenius norm disagrees with singular spectrum")
+    return {
+        "shape": shape,
+        "rank": rank,
+        "singular_values": singular.tolist(),
+        "normalized_squared_singular_values": (
+            (singular * singular / np.sum(singular * singular)).tolist()
+            if float(np.sum(singular * singular)) > 0.0 else []
+        ),
+        "row_gram_singular_spectrum_max_defect": row_defect,
+        "column_gram_singular_spectrum_max_defect": col_defect,
+        "frobenius_singular_spectrum_defect": frob_defect,
+    }
+
+
+def load(paths, stochastic_tol=1e-8, require_refinement_spectra=False):
     mats = []
     if not paths:
         raise ValueError("at least one channel-flow file is required")
@@ -45,9 +105,6 @@ def load(paths, stochastic_tol=1e-8):
             raise ValueError("workflow_run_id must be a positive integer")
         if not isinstance(commit, str) or len(commit) != 40 or any(c not in "0123456789abcdef" for c in commit.lower()):
             raise ValueError("workflow_commit must be a full 40-character hexadecimal SHA")
-        if not np.all(np.diff(source_eigenvalues) > 0.0) or not np.all(np.diff(target_eigenvalues) > 0.0):
-            raise ValueError("source and target eigenvalues must be strictly sorted ascending")
-
         source_eigenvalues = np.asarray(item.get("source_master_eigenvalues"), dtype=float)
         target_eigenvalues = np.asarray(item.get("target_master_eigenvalues"), dtype=float)
         if (source_eigenvalues.ndim != 1 or target_eigenvalues.ndim != 1
@@ -55,6 +112,16 @@ def load(paths, stochastic_tol=1e-8):
             raise ValueError("source and target master spectra must be nonempty vectors")
         if not np.isfinite(source_eigenvalues).all() or not np.isfinite(target_eigenvalues).all():
             raise ValueError("source or target master spectrum contains non-finite values")
+        if not np.all(np.diff(source_eigenvalues) > 0.0) or not np.all(np.diff(target_eigenvalues) > 0.0):
+            raise ValueError("source and target eigenvalues must be strictly sorted ascending")
+        if item.get("refinement_tensor_diagnostics") is None:
+            if require_refinement_spectra:
+                raise ValueError("missing refinement_tensor_diagnostics")
+            item["_refinement_spectrum_validation"] = None
+        else:
+            item["_refinement_spectrum_validation"] = validate_refinement_spectrum(
+                item, f"s2={source_s2}"
+            )
         if not math.isclose(float(item.get("source_j", math.nan)), source_s2 / 2.0,
                             rel_tol=0.0, abs_tol=1e-12):
             raise ValueError("source_j does not match source_s2")
@@ -181,6 +248,35 @@ def solve(mats):
             "overlap": overlap,
         })
 
+    refinement_evolution = []
+    for index, item in enumerate(mats):
+        current = item.get("_refinement_spectrum_validation")
+        if current is None:
+            refinement_evolution.append({
+                "source_s2": item["source_s2"],
+                "target_s2": item["target_s2"],
+                "spectrum_validation": "NOT_AVAILABLE_IN_LEGACY_SHARD",
+            })
+            continue
+        entry = {
+            "source_s2": item["source_s2"],
+            "target_s2": item["target_s2"],
+            **current,
+        }
+        if index + 1 < len(mats):
+            nxt = mats[index + 1].get("_refinement_spectrum_validation")
+            if nxt is not None:
+                a = np.asarray(current["normalized_squared_singular_values"], dtype=float)
+                b = np.asarray(nxt["normalized_squared_singular_values"], dtype=float)
+                width = max(a.size, b.size)
+                ap = np.pad(a, (0, width - a.size))
+                bp = np.pad(b, (0, width - b.size))
+                entry["next_scale_normalized_singular_mass_l1"] = float(np.sum(np.abs(ap - bp)))
+                entry["next_scale_normalized_singular_mass_hellinger"] = float(
+                    np.linalg.norm(np.sqrt(ap) - np.sqrt(bp)) / math.sqrt(2.0)
+                )
+        refinement_evolution.append(entry)
+
     return {
         "status": "maximum-fidelity ancestry path through BQG multiplicity channels",
         "provenance": {
@@ -189,6 +285,8 @@ def solve(mats):
             "input_files": [{"path": x["_source_path"], "sha256": x["_source_sha256"]} for x in mats],
             "spectral_stitch_defects": [x.get("_spectral_stitch_defect_to_next", 0.0) for x in mats[:-1]],
         },
+        "refinement_spectrum_validation_complete": all(x.get("_refinement_spectrum_validation") is not None for x in mats),
+        "refinement_spectral_evolution": refinement_evolution,
         "channel_path": [int(x) for x in path],
         "best_log_fidelity": best_log,
         "best_cumulative_fidelity": best_product,
@@ -213,8 +311,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--require-refinement-spectra", action="store_true")
     args = parser.parse_args()
-    result = solve(load(args.inputs))
+    result = solve(load(args.inputs, require_refinement_spectra=args.require_refinement_spectra))
     rendered = json.dumps(result, indent=2)
     print(rendered)
     if args.output:
