@@ -111,3 +111,44 @@ The naive low-to-low product is only
 ```
 
 These are finite ancestry-overlap products, not physical probabilities.
+
+
+The (s_2=5), (j=5/2\to3) shard passed with
+
+```math
+\mathcal F_{5/2\to3}
+=
+\begin{pmatrix}
+0.8397696211912622 & 0.1602303788087373\\
+0.11731156289887903 & 0.8826884371011211
+\end{pmatrix}.
+```
+
+Row-stochasticity defect is (4.44\times10^{-16}); paired-eigenvalue spreads are below (1.5\times10^{-14}); Gauss-projection leakage is (2.21\times10^{-31}). The inherited channel 1 continues to target channel 1 with overlap (0.8826884371).
+
+The (s_2=6), (j=3\to7/2) shard passed with
+
+```math
+\mathcal F_{3\to7/2}
+=
+\begin{pmatrix}
+0.001079872453218 & 0.9126526548162104 & 0.08626747273057057\\
+0.011850779524905184 & 0.20452407378606086 & 0.7836251466890334
+\end{pmatrix}.
+```
+
+Row-stochasticity defect is (1.11\times10^{-15}); paired-eigenvalue spreads are below (2.2\times10^{-14}); Gauss-projection leakage is (2.63\times10^{-31}). The inherited source channel 1 now flows most strongly into target channel 2 (overlap (0.7836251467)); this is a second branch-index change caused by the increasing multiplicity, not a failure of the microscopic blocking map.
+
+The four-step maximum-overlap ancestry prefix is therefore
+
+```math
+a_0^{(3/2)}
+\to a_1^{(2)}
+\to a_1^{(5/2)}
+\to a_1^{(3)}
+\to a_2^{(7/2)}.
+```
+
+Its cumulative overlap product is (0.5685020687). The naive all-low path has product only (4.7322551\times10^{-5}), so the ancestry prefix is larger by a factor of approximately (1.20\times10^4). This remains a finite RG-overlap comparison, not a physical transition probability or a continuum theorem.
+
+The (s_2=5,6) matrices are persisted at `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_5.json` and `docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_6.json`. The final (s_2=7) shard is still running.
