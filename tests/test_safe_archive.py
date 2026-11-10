@@ -4,11 +4,14 @@ import tarfile
 import tempfile
 import unittest
 import zipfile
+import urllib.request
 from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
 from safe_archive import safe_artifact_directory, safe_extract_tar, safe_extract_zip
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from download_workflow_artifacts_paginated import SameOriginAuthRedirectHandler
 
 
 class SafeArchiveTests(unittest.TestCase):
@@ -96,6 +99,42 @@ class SafeArchiveTests(unittest.TestCase):
             with zipfile.ZipFile(io.BytesIO(), "w") as zf:
                 with self.assertRaisesRegex(ValueError, "not empty"):
                     safe_extract_zip(zf, dest)
+
+    def test_cross_origin_redirect_does_not_forward_bearer_token(self):
+        handler = SameOriginAuthRedirectHandler()
+        request = urllib.request.Request(
+            "https://api.github.com/repos/example/repo/actions/artifacts/1/zip",
+            headers={"Authorization": "Bearer secret"},
+        )
+        redirected = handler.redirect_request(
+            request, None, 302, "Found", {},
+            "https://signed-artifact-storage.example/download",
+        )
+        self.assertIsNotNone(redirected)
+        self.assertIsNone(redirected.get_header("Authorization"))
+
+    def test_same_origin_redirect_preserves_bearer_token(self):
+        handler = SameOriginAuthRedirectHandler()
+        request = urllib.request.Request(
+            "https://api.github.com/repos/example/repo/actions/artifacts/1/zip",
+            headers={"Authorization": "Bearer secret"},
+        )
+        redirected = handler.redirect_request(
+            request, None, 302, "Found", {},
+            "https://api.github.com/repos/example/repo/actions/artifacts/1/zip?download=1",
+        )
+        self.assertEqual(redirected.get_header("Authorization"), "Bearer secret")
+
+    def test_non_https_redirect_is_rejected(self):
+        handler = SameOriginAuthRedirectHandler()
+        request = urllib.request.Request(
+            "https://api.github.com/repos/example/repo/actions/artifacts/1/zip",
+            headers={"Authorization": "Bearer secret"},
+        )
+        with self.assertRaisesRegex(Exception, "non-HTTPS"):
+            handler.redirect_request(
+                request, None, 302, "Found", {}, "http://attacker.example/steal"
+            )
 
     def test_artifact_name_must_be_single_safe_component(self):
         with tempfile.TemporaryDirectory() as tmp:
