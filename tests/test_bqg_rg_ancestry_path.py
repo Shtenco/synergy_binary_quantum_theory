@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import tempfile
 import sys
 import unittest
@@ -14,27 +13,27 @@ import bqg_rg_ancestry_path as ancestry
 
 
 class TestBQGRGAncestryPath(unittest.TestCase):
-    def test_four_step_full_matrix_prefix(self):
+    def test_five_step_full_matrix_ancestry(self):
         files = [
-            ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json",
-            ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_4.json",
-            ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_5.json",
-            ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_6.json",
+            ROOT / f"docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_{s2}.json"
+            for s2 in (3, 4, 5, 6, 7)
         ]
         matrices = ancestry.load(files)
         result = ancestry.solve(matrices)
 
-        self.assertEqual(result["channel_path"], [0, 1, 1, 1, 2])
+        self.assertEqual(result["channel_path"], [0, 1, 1, 1, 2, 2])
         self.assertAlmostEqual(
-            result["best_cumulative_fidelity"], 0.5685020686576171, places=12
+            result["best_cumulative_fidelity"], 0.49282787562801145, places=12
         )
         self.assertAlmostEqual(
             result["naive_lowest_cumulative_fidelity"],
-            4.732255132750176e-05,
+            4.694570240506031e-05,
             places=15,
         )
-        self.assertGreater(
-            result["ancestry_to_lowest_product_ratio"], 12000.0
+        self.assertAlmostEqual(
+            result["ancestry_to_lowest_product_ratio"],
+            10497.827285142275,
+            places=8,
         )
 
     def test_loader_requires_explicit_pass(self):
