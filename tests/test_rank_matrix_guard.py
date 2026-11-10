@@ -84,10 +84,12 @@ class RankMatrixGuardTests(unittest.TestCase):
     def test_parse_map_filename_requires_canonical_decimal_index(self):
         self.assertEqual(parse_indexed_map_filename("b0", "map"), 0)
         self.assertEqual(parse_indexed_map_filename("b123", "map"), 123)
-        for value in ("b", "b01", "b+1", "b-1", "b1x", "x1", "b１２"):
+        for value in ("b", "b01", "b+1", "b-1", "b1x", "b１２"):
             with self.subTest(value=value):
                 with self.assertRaisesRegex(ValueError, "not canonical"):
                     parse_indexed_map_filename(value, "map")
+        with self.assertRaisesRegex(ValueError, "must start with"):
+            parse_indexed_map_filename("x1", "map")
 
 
 if __name__ == "__main__":
