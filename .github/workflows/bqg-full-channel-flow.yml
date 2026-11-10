@@ -40,6 +40,7 @@ jobs:
         env:
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_SHA: ${{ github.sha }}
+          S2: ${{ matrix.s2 }}
         run: |
           python - <<'PY'
           import json, os
@@ -48,10 +49,8 @@ jobs:
           d=json.loads(p.read_text())
           d["workflow_run_id"]=int(os.environ["GITHUB_RUN_ID"])
           d["workflow_commit"]=os.environ["GITHUB_SHA"]
-          p.write_text(json.dumps(d,indent=2)+"\\n")
+          p.write_text(json.dumps(d,indent=2)+"\n")
           PY
-        env:
-          S2: ${{ matrix.s2 }}
       - uses: actions/upload-artifact@v4
         with:
           name: bqg-full-channel-flow-s2-${{ matrix.s2 }}
