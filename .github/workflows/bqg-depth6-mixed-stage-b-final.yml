@@ -204,29 +204,35 @@ jobs:
           assert c221['status']=='PASS' and c221['certified_columns']==130503 and c221['remaining_columns']==0,c221
 
           s4=frontier['s4_sign_frontier']
-          assert s4['sector_status']=='ACTIVE_NOT_CLOSED',s4
+          assert s4['sector_status']=='CLOSED_FINITE_NUMERICAL',s4
           assert s4['exact_h0_null_directions']==16,s4
+          assert s4['h0_complement_dimension']==130096,s4
+          assert s4['h0_complement_rank']==130096,s4
           assert s4['h1_lift']['rank']==16,s4
-          plan=s4['giant_component']['square_minor_plan']
-          assert plan['numerical_rank'] is None,plan
-          assert plan['status']=='NOT_YET_FACTORIZED',plan
+          assert s4['master_kernel_dimension']==0,s4
+          assert s4['obsolete_gate']['status']=='SUPERSEDED_DO_NOT_USE_AS_BLOCKER',s4
+          assert frontier['finite_depth6_theorem_status']=='NOT_YET_PROVED',frontier
 
+          mixed={
+            '[3,2]':{'status':c32['status'],'columns':c32.get('certified_columns'),'sigma_min':c32.get('global_sigma_min')},
+            '[3,1,1]':{'status':c311['status'],'columns':c311.get('certified_columns'),'sigma_min':c311.get('global_sigma_min')},
+            '[2,2,1]':{'status':c221['status'],'columns':c221.get('certified_columns'),'sigma_min':c221.get('global_sigma_min')},
+          }
+          all_mixed_pass=all(x['status']=='PASS' for x in mixed.values())
           out={
-            'status':'ACTIVE_NOT_CLOSED',
+            'status':'NUMERICAL_WITNESSES_PENDING',
             'scope':'finite corrected K5 depth-6 master-kernel frontier',
-            'mixed_sector_certificates':{
-              '[3,2]':{'status':'PASS','columns':130903,'sigma_min':c32.get('global_sigma_min')},
-              '[3,1,1]':{'status':'PASS','columns':153455,'sigma_min':c311.get('global_sigma_min')},
-              '[2,2,1]':{'status':'PASS','columns':130503,'sigma_min':c221.get('global_sigma_min')},
-            },
-            '[2,1,1,1]_master_status':'ACTIVE_NOT_CLOSED',
+            'mixed_sector_certificates':mixed,
+            'all_three_remaining_mixed_witnesses_passed':all_mixed_pass,
+            '[2,1,1,1]_master_status':'CLOSED_FINITE_NUMERICAL',
             's4_sign_exact_H0_null_directions':16,
+            's4_sign_H0_complement_rank':'130096/130096',
             's4_sign_H1_lift_rank':'16/16',
-            'giant_sparse_minor_shape':[130007,130007],
-            'giant_sparse_minor_numerical_rank':None,
-            'finite_depth6_common_kernel':'NOT_YET_PROVED',
-            'blocking_gate':'rank-revealing factorization of the 130007x130007 giant sparse minor, followed by master-aware combination with the proven 16D H1 lift',
-            'continuum_boundary':'even a future finite depth-6 PASS is not a continuum/physical-projector proof'
+            's4_sign_master_kernel_dimension':0,
+            'obsolete_130007_sparse_minor':'SUPERSEDED_DO_NOT_USE_AS_BLOCKER',
+            'finite_depth6_theorem_status':'NOT_YET_PROVED',
+            'blocking_gate':'independent numerical master witnesses for [3,2], [3,1,1], [2,2,1], followed by canonical ledger reconciliation',
+            'continuum_boundary':'finite numerical closure, if achieved, does not prove continuum limit, rigging-map physical inner product, or physical projector'
           }
           open('BQG_DEPTH6_MIXED_FRONTIER.json','w').write(json.dumps(out,indent=2)+'\n')
           print(json.dumps(out,indent=2))
