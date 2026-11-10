@@ -25,11 +25,15 @@ def validate_refinement_spectrum(item, context):
     rank_tol = float(diag.get("rank_tolerance", math.nan))
     rank = diag.get("numerical_rank")
     frobenius = float(diag.get("frobenius_norm", math.nan))
+    row_identity_defect = float(diag.get("row_gram_identity_defect", math.nan))
+    column_idempotence_defect = float(diag.get("column_gram_idempotence_defect", math.nan))
     if (singular.ndim != 1 or singular.size != min(shape)
             or row_gram.shape != (shape[0],) or col_gram.ndim != 1
             or not np.isfinite(singular).all() or not np.isfinite(row_gram).all()
             or not np.isfinite(col_gram).all() or not math.isfinite(rank_tol)
-            or rank_tol <= 0.0 or not math.isfinite(frobenius) or frobenius < 0.0):
+            or rank_tol <= 0.0 or not math.isfinite(frobenius) or frobenius < 0.0
+            or not math.isfinite(row_identity_defect) or row_identity_defect < 0.0
+            or not math.isfinite(column_idempotence_defect) or column_idempotence_defect < 0.0):
         raise ValueError(f"{context}: malformed/non-finite refinement spectra")
     if np.any(singular < 0.0) or np.any(row_gram < -1e-10) or np.any(col_gram < -1e-10):
         raise ValueError(f"{context}: negative singular/Gram spectrum")
