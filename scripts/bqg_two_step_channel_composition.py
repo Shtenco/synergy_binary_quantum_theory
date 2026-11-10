@@ -146,9 +146,9 @@ def refinement_perturbation_sensitivity(T1, T2, source, middle, target, baseline
     return rows
 
 
-def run_pair(source_s2):
-    if source_s2 not in (3, 4):
-        raise ValueError("supported two-step source s2 values are 3 and 4")
+def run_pair(source_s2, reference_dir=None):
+    if source_s2 not in (3, 4, 5, 6, 7):
+        raise ValueError("supported two-step source s2 values are 3 through 7")
 
     FLOW.ZVM.patch_and_clear()
     source = FLOW.master_channels(source_s2)
@@ -186,16 +186,12 @@ def run_pair(source_s2):
             max_product_middle_channel[source_index, target_index] = middle_index
             max_product_path[source_index, target_index] = path_products[middle_index]
 
-    saved_first_path = (
-        Path(__file__).resolve().parents[1]
-        / "docs/numerical_continuation"
-        / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2}.json"
+    reference_root = (
+        Path(reference_dir) if reference_dir is not None
+        else Path(__file__).resolve().parents[1] / "docs/numerical_continuation"
     )
-    saved_second_path = (
-        Path(__file__).resolve().parents[1]
-        / "docs/numerical_continuation"
-        / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2 + 1}.json"
-    )
+    saved_first_path = reference_root / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2}.json"
+    saved_second_path = reference_root / f"BQG_FULL_CHANNEL_FLOW_S2_{source_s2 + 1}.json"
     saved_first = json.loads(saved_first_path.read_text(encoding="utf-8"))
     saved_second = json.loads(saved_second_path.read_text(encoding="utf-8"))
     if saved_first.get("passed") is not True or saved_second.get("passed") is not True:
@@ -348,6 +344,7 @@ def run_pair(source_s2):
             saved_second_path.read_bytes()
         ).hexdigest(),
         "source_s2": source_s2,
+        "reference_directory": str(reference_root),
         "middle_s2": source_s2 + 1,
         "target_s2": source_s2 + 2,
         "source_master_eigenvalues": source["eigenvalues"],
