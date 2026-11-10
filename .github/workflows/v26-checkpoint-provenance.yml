@@ -10,6 +10,10 @@ on:
       - 'scripts/bqg_lorentzian_checkpointed_triple.py'
       - 'scripts/bqg_lorentzian_ka_partition.py'
       - 'tests/test_bqg_lorentzian_checkpoint_provenance.py'
+      - 'tests/test_v26_highprecision_charge.py'
+      - 'scripts/v26_direct_branch_norm.py'
+      - 'scripts/v26_charge_scalar_diagnostics.py'
+      - 'scripts/v26_hda_habitat.py'
       - '.github/workflows/v26-checkpoint-provenance.yml'
 
 permissions:
@@ -35,5 +39,7 @@ jobs:
           python -m py_compile scripts/bqg_lorentzian_ka_partition.py
       - name: Test source closure and partition provenance
         run: python -m unittest discover -s tests -p 'test_bqg_lorentzian_checkpoint_provenance.py'
+      - name: Test V26 high-precision charge and honest claim boundaries
+        run: python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py'
       - name: Repeat under optimized Python
         run: python -O -m unittest discover -s tests -p 'test_bqg_lorentzian_checkpoint_provenance.py'
