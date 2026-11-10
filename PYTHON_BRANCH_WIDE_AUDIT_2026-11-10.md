@@ -353,10 +353,11 @@ never imports or executes the extracted source. Its scope explicitly excludes
 nested archives, unmarked prose fragments, unsupported archive formats, and
 non-head historical commits.
 
-The expanded audit run
-[42821558904](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42821558904)
-was pending at this update. No new archive-member or inline-Python counts are
-claimed until its artifact is available.
+The expanded audit runs were repeatedly cancelled while main continued to
+advance. The latest observed run,
+[42822233592](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42822233592),
+was cancelled before producing an artifact. No new archive-member or
+inline-Python counts are claimed until one run completes on a stable head.
 
 ### Two-step microscopic channel composition
 
