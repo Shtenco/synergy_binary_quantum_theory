@@ -78,6 +78,7 @@ class L1AmplitudePackageValidatorTests(unittest.TestCase):
                 "finite_amplitudes_and_moments": True,
                 "legacy_collector_state_regression": True,
                 "legacy_collector_moment_regression": True,
+                "global_threshold_loss_within_frozen_tolerance": True,
                 "S4_three_orbit_consistency": True,
                 "nonnegative_depth2_variance_with_frozen_tolerance": True,
             },

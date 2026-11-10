@@ -21,9 +21,16 @@ class L1AmplitudeProducerTests(unittest.TestCase):
     def test_stable_sum_is_shard_order_invariant(self):
         x = {b"a": 1.0 + 2.0j, b"b": -0.25j}
         y = {b"a": -0.5 - 1.0j, b"c": 3.0}
-        a, _ = producer.stable_sum_states([x, y])
-        b, _ = producer.stable_sum_states([y, x])
+        a, _, _ = producer.stable_sum_states([x, y])
+        b, _, _ = producer.stable_sum_states([y, x])
         self.assertEqual(a, b)
+
+    def test_discarded_global_norm_is_reported(self):
+        tiny = {b"a": 0.5e-10, b"b": 0.5e-10}
+        kept, discarded, relative = producer.stable_sum_states([tiny])
+        self.assertEqual(kept, {})
+        self.assertGreater(discarded, 0.0)
+        self.assertAlmostEqual(relative, 1.0)
 
     def test_duplicate_sparse_state_keys_fail_closed(self):
         with tempfile.TemporaryDirectory() as td:

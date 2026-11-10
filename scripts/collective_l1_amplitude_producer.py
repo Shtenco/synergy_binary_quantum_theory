@@ -101,17 +101,22 @@ def stable_sum_states(states):
             buckets[key].append(complex(value))
     out = {}
     discarded_sq = []
+    total_sq = []
     for key in sorted(buckets):
         vals = buckets[key]
         # math.fsum is correctly rounded for each real component; deterministic
         # sorting also makes the serialized result reproducible.
         vals.sort(key=lambda z: (z.real, z.imag))
         z = complex(math.fsum(v.real for v in vals), math.fsum(v.imag for v in vals))
+        total_sq.append(abs(z) ** 2)
         if abs(z) > GLOBAL_DROP_TOL:
             out[key] = z
         else:
             discarded_sq.append(abs(z) ** 2)
-    return out, math.sqrt(math.fsum(discarded_sq))
+    discarded_norm = math.sqrt(math.fsum(discarded_sq))
+    total_norm = math.sqrt(math.fsum(total_sq))
+    discarded_relative_norm = discarded_norm / max(total_norm, 1e-300)
+    return out, discarded_norm, discarded_relative_norm
 
 
 def legacy_add(dst, src, tol=LEGACY_SUM_TOL):
@@ -252,8 +257,8 @@ def run(root: Path, out_dir: Path, source_commit: str):
         U.append(u0)
         U_SHARDS.extend(sources)
         V_SHARDS.extend(shard_states)
-        v_stable, discarded = stable_sum_states(shard_states)
-        v_reverse, _ = stable_sum_states(list(reversed(shard_states)))
+        v_stable, discarded, discarded_rel = stable_sum_states(shard_states)
+        v_reverse, _, _ = stable_sum_states(list(reversed(shard_states)))
         permutation_error = state_relerr(v_stable, v_reverse)
         if permutation_error != 0.0:
             raise ValueError(f"stable aggregation is order-dependent for edge {edge}: {permutation_error}")
@@ -279,6 +284,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
         aggregation[str(edge)] = {
             "legacy_collector_relative_difference": mismatch_agg,
             "discarded_global_l2_norm": discarded,
+            "discarded_global_l2_relative_norm": discarded_rel,
             "stable_sum_order": "state-key sorted; per-key real/imag math.fsum",
             "intermediate_pruning": False,
             "reverse_order_relative_difference": permutation_error,
@@ -303,6 +309,9 @@ def run(root: Path, out_dir: Path, source_commit: str):
         "finite_amplitudes_and_moments": bool(finite),
         "legacy_collector_state_regression": all(x["legacy_collector_relative_difference"] <= REGRESSION_TOL for x in aggregation.values()),
         "legacy_collector_moment_regression": all(x <= REGRESSION_TOL for x in moment_regression.values()),
+        "global_threshold_loss_within_frozen_tolerance": all(
+            x["discarded_global_l2_relative_norm"] <= REGRESSION_TOL
+            for x in aggregation.values()),
         "S4_three_orbit_consistency": bool(symmetry),
         "nonnegative_depth2_variance_with_frozen_tolerance": bool(variance),
     }
@@ -473,13 +482,13 @@ def self_test():
     a, b = {key: 0.6e-10}, {key: 0.6e-10}
     legacy = {}
     legacy_add(legacy, a); legacy_add(legacy, b)
-    stable, _ = stable_sum_states([a, b])
+    stable, _, _ = stable_sum_states([a, b])
     check1 = key not in legacy and abs(stable[key]-1.2e-10) < 1e-25
     # Stable aggregation is invariant under shard permutation.
     x = {b"x": 1.25+2.5j, b"y": -0.5j}
     y = {b"x": -0.25-1.5j, b"z": 3.0}
-    s1, _ = stable_sum_states([x, y])
-    s2, _ = stable_sum_states([y, x])
+    s1, _, _ = stable_sum_states([x, y])
+    s2, _, _ = stable_sum_states([y, x])
     check2 = state_relerr(s1, s2) == 0.0
     # Complex inner product must preserve conjugation and imaginary parts.
     ip = inner({b"z": 1.0+2.0j}, {b"z": 3.0-1.0j})

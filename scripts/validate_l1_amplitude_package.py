@@ -115,6 +115,7 @@ def validate(manifest_path: Path, archive_path: Path, producer_source_path: Path
         "finite_amplitudes_and_moments",
         "legacy_collector_state_regression",
         "legacy_collector_moment_regression",
+        "global_threshold_loss_within_frozen_tolerance",
         "S4_three_orbit_consistency",
         "nonnegative_depth2_variance_with_frozen_tolerance",
     }

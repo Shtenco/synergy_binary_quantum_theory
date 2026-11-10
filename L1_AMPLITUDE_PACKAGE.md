@@ -62,9 +62,11 @@ hashes.
 
 All contributions for a state key are accumulated before thresholding.
 Real and imaginary components use deterministic compensated summation.
-A single global threshold is applied after complete aggregation; discarded
-amplitude norm is recorded. A consumer must not silently re-threshold the
-archive.
+A single global threshold is applied after complete aggregation; both the
+discarded amplitude norm and its ratio to the full pre-threshold aggregate norm
+are recorded. The package fails closed if this relative loss exceeds the frozen
+regression tolerance (3\\times10^{-7}). A consumer must not silently
+re-threshold the archive.
 
 The legacy collector is retained as a regression oracle only. Its intermediate
 threshold behavior is not the canonical aggregation rule.
