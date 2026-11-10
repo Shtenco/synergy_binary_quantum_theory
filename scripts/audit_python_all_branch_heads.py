@@ -31,7 +31,11 @@ API = "https://api.github.com"
 PY_EXTS = {".py", ".pyi", ".pyx", ".pxd"}
 IPYNB_EXT = ".ipynb"
 MAX_WORKERS = 8
-ARCHIVE_SUFFIXES = (".tar.gz.b64", ".tgz.b64", ".zip.b64")
+ARCHIVE_SUFFIXES = (
+    ".tar.gz.b64", ".tgz.b64", ".zip.b64",
+    ".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".tar",
+    ".zip", ".whl", ".egg",
+)
 MAX_EMBEDDED_ARCHIVE_BYTES = 64 * 1024 * 1024
 MAX_EMBEDDED_MEMBER_BYTES = 16 * 1024 * 1024
 MAX_EMBEDDED_TOTAL_SOURCE_BYTES = 128 * 1024 * 1024
@@ -71,9 +75,9 @@ def api_json(url: str, token: str):
             time.sleep(delay)
 
 
-def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
+def blob_bytes(repo: str, sha: str, commit: str, path: str) -> bytes:
     # Raw content is not subject to the authenticated REST API quota. Verify
-    # the Git object SHA-1 so the fetched bytes remain pinned to the tree entry.
+    # the Git object SHA-1 so fetched bytes remain pinned to the tree entry.
     quoted_path = urllib.parse.quote(path, safe="/")
     url = f"https://raw.githubusercontent.com/{repo}/{commit}/{quoted_path}"
     req = urllib.request.Request(url, headers={"User-Agent": "BQG-branch-wide-python-audit"})
@@ -85,7 +89,11 @@ def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
         raise RuntimeError(
             f"raw blob SHA mismatch for {commit}:{path}: expected {sha}, got {actual_sha}"
         )
-    return raw.decode("utf-8", errors="replace")
+    return raw
+
+
+def blob_text(repo: str, sha: str, commit: str, path: str) -> str:
+    return blob_bytes(repo, sha, commit, path).decode("utf-8", errors="replace")
 
 
 def dotted(node):
@@ -186,6 +194,7 @@ def safe_archive_member(name: str) -> bool:
     parts = Path(normalized).parts
     return (
         bool(normalized)
+        and "\\x00" not in normalized
         and not normalized.startswith("/")
         and not re.match(r"^[A-Za-z]:", normalized)
         and ".." not in parts
@@ -212,11 +221,15 @@ def scan_embedded_source(payload: bytes, member_path: str, findings: list,
     totals["embedded_python_source_bytes"] += len(payload)
 
 
-def scan_embedded_archive(encoded: str, archive_path: str, archive_sha: str,
+def scan_embedded_archive(payload: bytes, archive_path: str, archive_sha: str,
                           findings: list, totals: Counter, locations=None):
+    suffix = archive_path.lower()
     try:
-        compact = "".join(encoded.split())
-        raw = base64.b64decode(compact, validate=True)
+        if suffix.endswith(".b64"):
+            compact = b"".join(payload.split()).decode("ascii")
+            raw = base64.b64decode(compact, validate=True)
+        else:
+            raw = payload
     except Exception as exc:
         record(findings, "embedded_archive_decode_error", archive_path,
                archive_sha, None, str(exc), locations)
@@ -232,8 +245,9 @@ def scan_embedded_archive(encoded: str, archive_path: str, archive_sha: str,
     member_count = 0
     source_bytes = 0
     try:
-        if suffix.endswith((".tar.gz.b64", ".tgz.b64")):
-            with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as archive:
+        if suffix.endswith((".tar.gz.b64", ".tgz.b64", ".tar.gz", ".tgz",
+                            ".tar.bz2", ".tar.xz", ".tar")):
+            with tarfile.open(fileobj=io.BytesIO(raw), mode="r:*") as archive:
                 for member in archive:
                     member_count += 1
                     if member_count > MAX_EMBEDDED_MEMBERS:
@@ -271,14 +285,15 @@ def scan_embedded_archive(encoded: str, archive_path: str, archive_sha: str,
                         raise RuntimeError("embedded archive total source-byte limit exceeded")
                     scan_embedded_source(payload, f"{archive_path}!/{member.name}",
                                          findings, totals, locations)
-        elif suffix.endswith(".zip.b64"):
+        elif suffix.endswith((".zip.b64", ".zip", ".whl", ".egg")):
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 for member in archive.infolist():
                     member_count += 1
                     if member_count > MAX_EMBEDDED_MEMBERS:
                         raise RuntimeError("embedded archive member-count limit exceeded")
                     mode = member.external_attr >> 16
-                    if stat.S_ISLNK(mode):
+                    if (stat.S_ISLNK(mode) or stat.S_ISCHR(mode)
+                            or stat.S_ISBLK(mode) or stat.S_ISFIFO(mode)):
                         record(findings, "embedded_archive_link_or_device",
                                f"{archive_path}!/{member.filename}", archive_sha,
                                None, "symlink member is not followed", locations)
@@ -427,10 +442,10 @@ def main():
         representative = locations[0]["path"]
         try:
             location = locations[0]
-            encoded = blob_text(
+            payload = blob_bytes(
                 args.repo, archive_sha, location["commit"], location["path"]
             )
-            scan_embedded_archive(encoded, representative, archive_sha,
+            scan_embedded_archive(payload, representative, archive_sha,
                                   findings, totals, locations)
         except Exception as exc:
             record(findings, "embedded_archive_fetch_error", representative,
