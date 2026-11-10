@@ -19,3 +19,23 @@ def validate_full_column_matrix(matrix, expected_columns: int, context: str):
     if not np.isfinite(array).all():
         raise ValueError(f"{context}: master image contains NaN or infinity")
     return array
+
+
+def validate_shard_coverage(shard_ids, expected_shards: int, context: str):
+    """Require one unique shard ID for every integer in [0, expected_shards)."""
+    if type(expected_shards) is not int or expected_shards < 1:
+        raise ValueError(f"{context}: invalid expected shard count {expected_shards!r}")
+    ids = list(shard_ids)
+    if len(ids) != expected_shards:
+        raise ValueError(
+            f"{context}: expected {expected_shards} shard IDs, got {len(ids)}"
+        )
+    if any(type(shard_id) is not int for shard_id in ids):
+        raise ValueError(f"{context}: shard IDs must be integers, got {ids!r}")
+    expected = list(range(expected_shards))
+    if sorted(ids) != expected:
+        raise ValueError(
+            f"{context}: shard IDs must cover exactly 0..{expected_shards - 1} "
+            f"with no duplicates; got {sorted(ids)!r}"
+        )
+    return tuple(sorted(ids))

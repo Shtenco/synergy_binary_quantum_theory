@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
-from rank_matrix_guard import validate_full_column_matrix
+from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage
 
 
 class RankMatrixGuardTests(unittest.TestCase):
@@ -33,6 +33,25 @@ class RankMatrixGuardTests(unittest.TestCase):
     def test_rejects_nonfinite_values(self):
         with self.assertRaisesRegex(ValueError, "NaN or infinity"):
             validate_full_column_matrix(np.array([[1.0, np.nan]]), 2, "test orbit")
+
+    def test_accepts_complete_shard_coverage(self):
+        self.assertEqual(validate_shard_coverage([2, 0, 1], 3, "test"), (0, 1, 2))
+
+    def test_rejects_duplicate_shard_ids(self):
+        with self.assertRaisesRegex(ValueError, "no duplicates"):
+            validate_shard_coverage([0, 1, 1], 3, "test")
+
+    def test_rejects_missing_shard_id(self):
+        with self.assertRaisesRegex(ValueError, "expected 2 shard IDs"):
+            validate_shard_coverage([0], 2, "test")
+
+    def test_rejects_noninteger_shard_ids(self):
+        with self.assertRaisesRegex(ValueError, "must be integers"):
+            validate_shard_coverage([0, "1"], 2, "test")
+
+    def test_rejects_boolean_shard_ids(self):
+        with self.assertRaisesRegex(ValueError, "must be integers"):
+            validate_shard_coverage([False, 1], 2, "test")
 
     def test_rejects_boolean_or_nonpositive_expected_dimension(self):
         for value in (True, 0, -1, 2.0):
