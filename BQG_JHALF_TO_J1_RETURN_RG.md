@@ -90,3 +90,68 @@ does not measure off-carrier leakage of the full master, and does not establish 
 4. Only after the full master, physical ordering, and normalization are fixed, compare physical gaps and common kernels.
 
 Until those tests pass, the scientifically correct conclusion is: the first finite return-kernel RG comparison is positive and full-rank at both scales, but exhibits a large (~52.3% operator-relative) dynamical mismatch; no RG fixed point has been demonstrated.
+
+
+## Frobenius scale-shape decomposition (post-hoc diagnostic, not a physical fit)
+
+The completed datum from run
+[42704882313](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42704882313)
+also permits an exact least-squares decomposition of the finite Frobenius
+mismatch. Let
+`q=||K_c||_F/||K_f||_F` and
+`r=||K_c-K_f||_F/||K_f||_F`. The unconstrained best real scalar is
+
+```
+alpha_* = <K_c,K_f>_F / ||K_f||_F^2
+        = (1 + q^2 - r^2)/2
+        = 0.5528218039618608.
+```
+
+The measured quantities are:
+
+| Diagnostic | Value |
+|---|---:|
+| `||K_f||_F` | 53.128785550016545 |
+| `||K_c||_F` | 29.618176897278648 |
+| `q` | 0.5574788994451131 |
+| `r` | 0.45292285811472693 |
+| `alpha_*` | 0.5528218039618608 |
+| `||K_c-alpha_* K_f||_F / ||K_f||_F` | 0.07190811074481429 |
+| Frobenius cosine `alpha_*/q` | 0.9916461493199334 |
+| `sqrt(alpha_*)` | 0.7435198746246537 |
+
+The identity
+`||K_c-K_f||_F^2 = (1-alpha_*)^2 ||K_f||_F^2 + ||K_c-alpha_*K_f||_F^2`
+splits the squared mismatch into a component parallel to the fine operator and
+an orthogonal shape residual. In this decomposition, 97.47938% of the squared
+Frobenius mismatch is parallel-scale displacement and 2.52062% is orthogonal
+shape displacement.
+
+This is **not** evidence that the RG transformation is physically invariant
+after rescaling. `alpha_*` is fitted after seeing the two matrices; using it
+as a renormalization coefficient would be circular. The remaining 7.19%
+relative Frobenius residual is also nonzero and must be explained.
+
+A separate 32-column comparison of one-hit image norms gives coarse/fine
+ratios with mean 0.7572931915, standard deviation 0.0262755987, and range
+[0.7111050604, 0.8036446805]. The mean is about 1.85% above
+`sqrt(alpha_*)`; the ratios are not constant across logical basis vectors.
+This supports a scale-dominant but not purely scalar change.
+
+The trace ratio is 0.5708107313, which differs from `alpha_*`. The sorted
+eigenvalue ratios also vary substantially (approximately 0.47767--0.90015).
+These are distinct diagnostics: the sorted ratios are not generalized
+eigenvalues and must not be interpreted as mode-by-mode renormalization
+factors.
+
+### Required independent normalization test
+
+The next calculation must derive the expected scale from the representation
+normalization and the actual coarse-graining map before comparing it with
+`alpha_*`. In particular, it must account for the local intertwiner
+normalization, link-hit normalization, volume operator convention, and the
+number/order of local Hamiltonian terms in `H_01`. Then recompute the
+residual using that independently predicted coefficient, without fitting it
+to the 32D matrices. The repeated RG workflow
+[42787724179](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42787724179)
+is still running at the time of this note; no repeat-run agreement is claimed.
