@@ -40,7 +40,7 @@ g_xx v^2 + 2 g_tx v + g_tt = 0,   v = dx/dt.
 
 The paper reports slopes approximately `±0.99994`. The independent offline script recomputes the roots from the stored tensor rather than copying the rounded slopes.
 
-The external run used five agents and 1,000 evaluation episodes per agent. Each saved `evaluation.json` reports a 100% success rate and final objective 1.0 in all 1,000 episodes. This establishes consistency of the stored evaluation summaries, not independent rerunning of the training.
+The external run used five agents and 1,000 evaluation episodes per agent. Each saved `evaluation.json` reports a 100% success rate and final objective 1.0 in all 1,000 episodes. This establishes consistency of the stored evaluation summaries, not independent rerunning of the training. The manifest identifies run `20261017_141731`, master seed `20260727`, agent seeds `[399,410,982,979,839]`, environment seeds `[944,303,238,477,151]`, and evaluation seed `12345`. The notebook source states that the original historical seeds were not persisted; these are the later declared reproducibility seeds. The five evaluation artifact SHAs are pinned in the offline reference script.
 
 ## 3. Source-level audit findings that must remain visible
 
