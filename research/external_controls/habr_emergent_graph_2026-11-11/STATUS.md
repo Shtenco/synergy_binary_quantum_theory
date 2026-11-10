@@ -28,6 +28,7 @@
 - FINDINGS_014.md — NLO R²/AIC square SSE twice, calibration and NLO are in-sample, raw dimensionful SI values are regressed against dimensionless basis, covariance is ignored in chi-square.
 - FINDINGS_015.md — selective minor-gcd routine is not SNF, torsion is assigned to the wrong group, and Gram/angle clustering is basis-dependent.
 - FINDINGS_016.md and audit_mass_dependency.py — the 380 pairwise mass-ratio rows have incidence rank 19, not 380 independent tests; uncertainty/covariance provenance is absent, and duplicated experimental entries are flagged in mass_analyzis.py.
+- FINDINGS_017.md and exact_bernoulli_gap.py — exact independent Bernoulli shortcut sampling, 190 graph realizations for L=8…40, decreasing finite-sample CV of the spectral gap; positive limiting gap remains unproved.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
 - FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
@@ -53,7 +54,8 @@
 4. Recompute every one of the 77 displayed formulas at every N convention, and check dimensions before comparing numerical values.
 5. Reproduce the variation functional's grid scan, continuous stationary point, second derivative, parameter sensitivity, and alternative exponents.
 6. Specify and simulate the exact random graph ensemble; compute finite-graph Laplacian spectra, heat traces, zeta functions, spectral dimensions, and graph distances over size sweeps.
-7. Prove or refute TSCO existence/uniqueness, local continuity, unitarity, continuum limit, metric signature, and particle interpretation.
+7. Extend exact-Bernoulli graph runs to larger L and seeds, report solver residuals, and derive concentration bounds before asserting an asymptotic gap.
+8. Prove or refute TSCO existence/uniqueness, local continuity, unitarity, continuum limit, metric signature, and particle interpretation.
 8. Build a source-backed particle-level mass dataset with covariance, scheme/scale, and preregistered held-out species; replace ratio-row statistics with rank-aware likelihoods.
 9. Only then compare the surviving mechanism with BQG's binary-edge / Regge / causal-slab construction.
 
