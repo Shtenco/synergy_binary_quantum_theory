@@ -73,3 +73,7 @@ The separate variation_principle.py sets k=xN^(2/3) and K_eff=K+lambda*k, produc
 - Unique universality class / asymptotic theorem: NOT ESTABLISHED.
 - Compatibility with variation_principle.py's k∼N^(2/3): UNRESOLVED / APPARENTLY INCONSISTENT.
 - This is the first substantive positive control result found so far; it should be retained and tested, not discarded with the failed zeta derivation.
+
+## Correction added 2026-11-11 — superseded spectral-gap interpretation
+
+The initial claim in sections 3–4 that the tested gap·(lnN)² was approximately stable was based on only L=8,12,16 and two seeds. It does not survive the larger control. See FINDINGS_011.md and sparse_scaling_control.py: for L=16,24,32,48 (three seeds each), the sampled λ₂ decreases toward a plateau while λ₂·(lnN)² rises; the exact expected-Laplacian gap through L=512 tends to approximately 0.7284. Therefore the preliminary λ₂∝(lnN)⁻² interpretation is withdrawn. The conditional expected-shortcut-degree argument for p∝N⁻¹/³ remains valid under the specified 3D r⁻² ensemble. Do not cite the original small-size gap table as support for a logarithmic gap law.
