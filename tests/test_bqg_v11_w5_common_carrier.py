@@ -19,6 +19,7 @@ class FakeV09:
             "epsilon_terms_completed": 24,
             "A_Euclidean_sine_Gauss": [[repr(a_key), 1.0 + node, 0.0]],
             "B_Lorentzian_raw_KKV_Gauss": [[repr(b_key), b_amp, 0.0]],
+            "B_Lorentzian_raw_KKV_covariant": [[repr((spins, (-1, 0, 0, 0, 0), 0, 0, 0, 0)), b_amp, 0.0]],
             "A_support": 1,
             "B_support": 1,
             "A_norm": 1.0 + node,
@@ -80,6 +81,7 @@ class TestW5CommonCarrier(unittest.TestCase):
         )
         self.assertEqual(result["status"], "PASS_STRUCTURAL_COMMON_CARRIER")
         self.assertTrue(result["crosschecks"]["all_passed"])
+        self.assertTrue(all(x["passed"] for x in result["crosschecks"]["V10_forward_equals_symmetric_plus_anti"]))
         self.assertEqual(len(result["A"][0]), 5)
         self.assertEqual(len(result["B"][0]), 5)
         # A is coherently summed over five source nodes: 1+2+3+4+5 = 15.
