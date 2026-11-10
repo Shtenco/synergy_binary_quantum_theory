@@ -27,9 +27,18 @@ class TetrahedralVolumeSpectralTests(unittest.TestCase):
     def test_audit_gate_constructs_nonempty_spectral_and_tensor_ledgers(self):
         spectral_rows = AUDIT.charged_spectral_rows()
         tensor_rows = AUDIT.tensor_reconstruction_rows()
-        self.assertEqual(len(spectral_rows), 8)
+        self.assertGreater(len(spectral_rows), 8)
         self.assertEqual(len(tensor_rows), 2)
         self.assertTrue(all(row["diagnostics"]["raw_Q_hermiticity_defects"] for row in spectral_rows))
+        self.assertTrue(all(
+            len(row["diagnostics"]["raw_Q_M_block_eigenvalues"]) == len(row["diagnostics"]["M_values_doubled"])
+            for row in spectral_rows
+        ))
+        arrays, index = AUDIT.spectral_matrix_bundle()
+        self.assertEqual(sum(row["kind"] == "Q_JM_raw" for row in index),
+                         sum(len(row["diagnostics"]["M_values_doubled"]) for row in spectral_rows))
+        self.assertTrue(all(np.isfinite(value.real).all() and np.isfinite(value.imag).all()
+                            for key, value in arrays.items() if key.endswith("_Q_raw")))
         self.assertTrue(all(row["finite_output"] for row in tensor_rows))
 
     def test_global_magnetic_operator_is_hermitian_positive_and_rotationally_scalar(self):
@@ -42,6 +51,14 @@ class TetrahedralVolumeSpectralTests(unittest.TestCase):
             self.assertGreater(row["global_V_min_eigenvalue"], -1e-10)
             self.assertLess(row["global_V4_minus_Q2_relative"], 1e-9)
             self.assertLess(row["global_Q_rotation_commutator_max"], 1e-9)
+
+    def test_full_magnetic_s4_covariance_for_signed_q_and_even_volume(self):
+        rows = AUDIT.s4_covariance_rows()
+        self.assertEqual(len(rows), 72)
+        for row in rows:
+            self.assertLess(row["Q_signed_covariance_relative_error"], 1e-10)
+            self.assertLess(row["V_even_covariance_relative_error"], 1e-10)
+            self.assertLess(row["permutation_unitarity_defect"], 1e-12)
 
     def test_complete_magnetic_tensor_is_reconstructed(self):
         rng = np.random.default_rng(20261110)
