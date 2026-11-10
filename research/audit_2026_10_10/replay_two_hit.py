@@ -20,9 +20,14 @@ for name,inp in [('H0H1',h1),('H1H0',h0)]:
   for key,z in im.items():out[key]=out.get(key,0j)+c*z
  out={k:z for k,z in out.items() if abs(z)>1e-10}
  saved=safe_load_bytes((p/f'{name}.pkl').read_bytes())
- assert max(abs(out.get(k,0j)-saved.get(k,0j)) for k in set(out)|set(saved))<1e-12
+ replay_error=max(abs(out.get(k,0j)-saved.get(k,0j)) for k in set(out)|set(saved))
+ if not replay_error < 1e-12:
+  raise RuntimeError(f"{name} replay mismatch: {replay_error:.17g}")
  outs.append(out)
 c={k:outs[0].get(k,0j)-outs[1].get(k,0j) for k in set(outs[0])|set(outs[1])}
 norm=float(np.sqrt(sum(abs(z)**2 for z in c.values())))
-assert abs(norm-json.loads((p/'results.json').read_text())['commutator_norm'])<1e-12
+expected_norm=json.loads((p/'results.json').read_text())['commutator_norm']
+norm_error=abs(norm-expected_norm)
+if not norm_error < 1e-12:
+ raise RuntimeError(f"commutator norm mismatch: {norm_error:.17g}")
 print(json.dumps({'saved_evidence_replay_passed':True,'commutator_norm':norm,'fresh_operator_generation':False}))
