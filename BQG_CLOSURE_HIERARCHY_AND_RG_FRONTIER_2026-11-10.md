@@ -189,9 +189,9 @@ The earlier finite run found a large raw return-kernel mismatch (operator-relati
 
 ## 5. Correct next calculation order
 
-1. Finish and inspect the W5 tolerance-ablation run. Determine separately the effect of projection tolerance, accumulator tolerance, grouping, and summation order. Validate against the already saved zero/null controls. Do not alter the production guard before this is resolved.
+1. Inspect the one-pass W5 tolerance-ablation run (workflow 42820210450). It generates each branch once and evaluates projection/accumulator tolerance variants in parallel. Compare full maps, forbidden-sector weights, allowed-sector weight, and grouping/order effects against the saved zero/null controls. Do not alter the production guard before this is resolved.
 2. For the (j=1/2\to1) return-kernel result, retain the current 32x32 pullback comparison as a diagnostic, but do not label it a full master refinement test.
-3. Implement a coarse-domain carrier-leakage calculation for the same finite positive return operator, or derive a sparse adjoint/Gram route that obtains (M_cW_{global}) without constructing an unnecessarily dense full coarse matrix. Report (L) and (D) separately.
+3. Inspect the running coarse-domain carrier-leakage calculation (workflow 42797344820). It targets the same finite positive return operator and reports (L) and (D) separately without constructing an unnecessarily dense full coarse matrix. If its Hermiticity/pullback checks pass, extend the method to the full graph-changing habitats.
 4. Only then proceed to the actual graph-changing constraint family: freeze (iota_0,iota_1), measure (E_a,F_a), assemble/bound (R), and compute (epsilon^{sf}) using independently computed gaps.
 5. Repeat at a second refinement pair and a declared regulator variation. A single (j=1/2\to1) datum cannot establish asymptotic decay or summability.
 6. Keep HDA, Lorentzian adjoint closure, graph-changing physical projector, and TT transfer extraction as separate gates. Passing one does not imply the others.
@@ -219,7 +219,7 @@ The script `scripts/bqg_jhalf_to_j1_return_carrier_leakage.py` has now been adde
 
 It obtains the coarse action on the embedded 32D carrier by applying the declared Hermitian sine-ordered two-node operator twice, then independently checks the pullback against the Gram matrix ((AW)^\dagger(AW)). The script reports the discrepancy rather than silently assuming that cutoff/pruning preserves Hermiticity.
 
-Scope remains deliberately limited: the 243D product of local (j=1) singlet multiplicity spaces. Spin-changed graph-changing habitats and the full master are excluded. The script has been committed but its numerical run has not yet been executed; no (L,D) values are claimed here.
+Scope remains deliberately limited: the 243D product of local (j=1) singlet multiplicity spaces. Spin-changed graph-changing habitats and the full master are excluded. The numerical run is in progress in workflow 42797344820; no (L,D) values are claimed until its artifact is available and its Hermiticity/pullback checks are inspected.
 
 
 ### 1.4 Refinement ancestry is not necessarily the lowest local master branch
