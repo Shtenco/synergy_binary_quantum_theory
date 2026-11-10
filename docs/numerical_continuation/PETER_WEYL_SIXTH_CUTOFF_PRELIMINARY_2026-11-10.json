@@ -1,0 +1,122 @@
+{
+  "status": "PRELIMINARY_LOCAL_NUMERICAL_PASS_CI_PENDING",
+  "numerical_checks_passed": true,
+  "ci_reproduced": false,
+  "power": 6,
+  "required_cutoff_by_representation_bound": 3,
+  "baseline": {
+    "jmax": 3,
+    "prune_tolerance": 1e-13,
+    "link_dimension": 140,
+    "steps": [
+      {
+        "power": 1,
+        "support_after_pruning": 24,
+        "support_before_pruning_exact_nonzero": 24,
+        "pruned_amplitude_count": 0,
+        "norm_squared": 6.000000000000001,
+        "max_spin_reached": 0.5
+      },
+      {
+        "power": 2,
+        "support_after_pruning": 307,
+        "support_before_pruning_exact_nonzero": 307,
+        "pruned_amplitude_count": 0,
+        "norm_squared": 120.00000000000018,
+        "max_spin_reached": 1
+      },
+      {
+        "power": 3,
+        "support_after_pruning": 2171,
+        "support_before_pruning_exact_nonzero": 2309,
+        "pruned_amplitude_count": 138,
+        "norm_squared": 4649.99999999998,
+        "max_spin_reached": 1.5
+      },
+      {
+        "power": 4,
+        "support_after_pruning": 12366,
+        "support_before_pruning_exact_nonzero": 12789,
+        "pruned_amplitude_count": 423,
+        "norm_squared": 254604.00000001065,
+        "max_spin_reached": 2
+      },
+      {
+        "power": 5,
+        "support_after_pruning": 48366,
+        "support_before_pruning_exact_nonzero": 53775,
+        "pruned_amplitude_count": 5409,
+        "norm_squared": 16807391.9999988,
+        "max_spin_reached": 2.5
+      },
+      {
+        "power": 6,
+        "support_after_pruning": 182461,
+        "support_before_pruning_exact_nonzero": 192348,
+        "pruned_amplitude_count": 9887,
+        "pruned_amplitude_l2_norm": 4.896442637158053e-13,
+        "norm_squared": 1250089632.0003376,
+        "max_spin_reached": 3
+      }
+    ]
+  },
+  "independent_exact_control": {
+    "method": "SU(2)^3 Haar integral through unit-quaternion S^3 characteristic function and exact rational Laplacian recurrence; independent of Clebsch-Gordan transition matrices",
+    "exact_norm_squared": 1250089632,
+    "exact_prefix_norm_squared": [
+      6,
+      120,
+      4650,
+      254604,
+      16807392
+    ],
+    "absolute_error": 0.0003376007080078125,
+    "relative_error": 2.700612015057593e-13,
+    "identity": "W=2 sum_{i<j} q_i·q_j=|q_1+q_2+q_3+q_4|^2-4; ||W^6|0>||^2=E[W^12]"
+  },
+  "pruning_sensitivity": {
+    "baseline_1e_13": {
+      "support": 182461,
+      "norm_squared": 1250089632.0003376
+    },
+    "tighter_1e_14": {
+      "support": 182729,
+      "preprune_support": 192349,
+      "pruned_amplitudes": 9620,
+      "norm_squared": 1250089632.0003376,
+      "max_amplitude_difference_vs_baseline": 1.2079226507921703e-13,
+      "state_l2_difference_vs_baseline": 5.648350429834929e-13
+    },
+    "looser_1e_12": {
+      "support": 182450,
+      "preprune_support": 192348,
+      "pruned_amplitudes": 9898,
+      "norm_squared": 1250089632.0003376,
+      "max_amplitude_difference_vs_baseline": 1.8474111129762605e-13,
+      "state_l2_difference_vs_baseline": 4.943349272832371e-13
+    }
+  },
+  "overcutoff_control": {
+    "jmax": 3.5,
+    "support": 182461,
+    "norm_squared": 1250089632.0003376,
+    "max_spin_reached": 3,
+    "support_above_spin_3": 0,
+    "state_max_amplitude_difference_vs_jmax_3": 0,
+    "state_l2_difference_vs_jmax_3": 0
+  },
+  "claim_boundary": "Finite sixth-order cutoff computation and an independent exact Haar moment. This does not establish continuum convergence or a physical theorem.",
+  "execution_environment": {
+    "python": "3.13.5",
+    "numpy": "2.3.5",
+    "sympy": "1.14.0",
+    "execution": "model-side isolated Python reproduction of the repository transition construction; GitHub Actions run remains queued"
+  },
+  "source_revisions": {
+    "repository": "Shtenco/synergy_binary_quantum_theory",
+    "branch": "audit/peter-weyl-sixth-cutoff-20261110",
+    "branch_head": "6faad731dcb63a9af7757d022649b0de6c2bc17a",
+    "audit_script_blob": "07a3c4bc103541857eb7fcfea1aac12d0f59c12b",
+    "base_script_blob": "ada71096c638e345ca405cf14f71bce98cf668d9"
+  }
+}
