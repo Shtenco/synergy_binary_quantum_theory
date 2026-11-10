@@ -16,6 +16,9 @@ FRACTIONS = np.array([
 ], dtype=float)
 
 reported_graph_changed = 0.44403316047555935
+if not __debug__:
+    raise RuntimeError("Refusing optimized execution: this gate uses assert-based scientific checks")
+
 assert abs(FRACTIONS.sum() - 1.0) < 2e-8
 assert abs(FRACTIONS[1:].sum() - reported_graph_changed) < 2e-8
 channel_norms = TOTAL_NORM * np.sqrt(FRACTIONS)
