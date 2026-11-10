@@ -188,7 +188,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
     if not source_commit or len(source_commit) != 40:
         raise ValueError("--source-commit must be a full 40-character Git SHA")
 
-    U, V, shard_hashes, shard_metas = [], [], {}, {}
+    U, V, U_SHARDS, V_SHARDS, shard_hashes, shard_metas = [], [], [], [], {}, {}
     source_checks, shard_stats, aggregation = {}, {}, {}
     for edge in REPS:
         rows, sources, shard_states, meta_rows = [], [], [], []
@@ -206,7 +206,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
                 raise ValueError(f"metadata index mismatch in {stem}")
             if int(m.get("parent_coarse_tetra", -1)) != 0:
                 raise ValueError(f"unexpected parent tetra in {stem}")
-            if int(m.get("Jmax", -1)) != 2:
+            if not math.isclose(float(m.get("Jmax", -1)), 2.5, rel_tol=0.0, abs_tol=1e-12):
                 raise ValueError(f"unexpected Jmax in {stem}")
             u, us, uk = load_state(up, 768, 384)
             v, vs, vk = load_state(vp, 768, 384)
@@ -218,6 +218,8 @@ def run(root: Path, out_dir: Path, source_commit: str):
         if mismatch >= SOURCE_TOL:
             raise ValueError(f"source state mismatch for edge {edge}: {mismatch}")
         U.append(u0)
+        U_SHARDS.extend(sources)
+        V_SHARDS.extend(shard_states)
         v_stable, discarded = stable_sum_states(shard_states)
         v_legacy = {}
         for state in shard_states:
@@ -304,6 +306,15 @@ def run(root: Path, out_dir: Path, source_commit: str):
     for i, state in enumerate(V):
         s, k, a = pack_state(state, 768, 384)
         arrays[f"v_{REPS[i]}_spins"], arrays[f"v_{REPS[i]}_Ks"], arrays[f"v_{REPS[i]}_amp"] = s, k, a
+    # Preserve every input shard amplitude, not merely its hash or aggregate.
+    for idx, state in enumerate(U_SHARDS):
+        edge, node = REPS[idx // 24], idx % 24
+        s, k, a = pack_state(state, 768, 384)
+        arrays[f"u_shard_{edge}_{node}_spins"], arrays[f"u_shard_{edge}_{node}_Ks"], arrays[f"u_shard_{edge}_{node}_amp"] = s, k, a
+    for idx, state in enumerate(V_SHARDS):
+        edge, node = REPS[idx // 24], idx % 24
+        s, k, a = pack_state(state, 768, 384)
+        arrays[f"v_shard_{edge}_{node}_spins"], arrays[f"v_shard_{edge}_{node}_Ks"], arrays[f"v_shard_{edge}_{node}_amp"] = s, k, a
     out_dir.mkdir(parents=True, exist_ok=True)
     npz_path = out_dir/"L1_AMPLITUDE_PACKAGE.npz"
     json_path = out_dir/"L1_AMPLITUDE_PACKAGE.json"
