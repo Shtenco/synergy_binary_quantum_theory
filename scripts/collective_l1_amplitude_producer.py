@@ -64,6 +64,12 @@ def state_relerr(a, b) -> float:
     return num / den
 
 
+def require_exact_int(meta, key: str, expected: int, stem: str):
+    value = meta.get(key)
+    if type(value) is not int or value != expected:
+        raise ValueError(f"invalid {key} in {stem}: expected exact integer {expected}, got {value!r}")
+
+
 def load_state(path: Path, n_edges: int, n_vertices: int):
     with np.load(path, allow_pickle=False) as z:
         required = {"spins", "Ks", "amp"}
@@ -234,17 +240,20 @@ def run(root: Path, out_dir: Path, source_commit: str):
                 "node_index_valid",
             }
             shard_checks = m.get("checks", {})
-            if not required_checks.issubset(shard_checks) or not all(shard_checks.values()):
+            if not required_checks.issubset(shard_checks) or any(value is not True for value in shard_checks.values()):
                 raise ValueError(f"incomplete or failed worker checks in {stem}")
             expected_edge = {0: [0, 1], 1: [0, 2], 5: [2, 3]}[edge]
             if m.get("edge") != expected_edge:
                 raise ValueError(f"edge label mismatch in {stem}: {m.get('edge')}")
-            if int(m.get("edge_index", -1)) != edge or int(m.get("node_index", -1)) != node:
-                raise ValueError(f"metadata index mismatch in {stem}")
-            if int(m.get("parent_coarse_tetra", -1)) != 0:
-                raise ValueError(f"unexpected parent tetra in {stem}")
-            if not math.isclose(float(m.get("Jmax", -1)), 2.5, rel_tol=0.0, abs_tol=1e-12):
-                raise ValueError(f"unexpected Jmax in {stem}")
+            require_exact_int(m, "edge_index", edge, stem)
+            require_exact_int(m, "node_index", node, stem)
+            require_exact_int(m, "parent_coarse_tetra", 0, stem)
+            jmax = m.get("Jmax")
+            if type(jmax) not in (int, float) or not math.isfinite(jmax) or not math.isclose(jmax, 2.5, rel_tol=0.0, abs_tol=1e-12):
+                raise ValueError(f"unexpected Jmax in {stem}: {jmax!r}")
+            expected_definition = "u_e=(1/2) sum_{4 chambers->e} H_c|Omega>; v_e,w=H_w u_e; collector sums w=0..23"
+            if m.get("definition") != expected_definition:
+                raise ValueError(f"operator action definition mismatch in {stem}")
             u, us, uk = load_state(up, 768, 384)
             v, vs, vk = load_state(vp, 768, 384)
             rows.append(m); sources.append(u); shard_states.append(v); meta_rows.append(m)

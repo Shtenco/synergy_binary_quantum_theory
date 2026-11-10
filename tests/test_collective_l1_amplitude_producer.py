@@ -14,6 +14,12 @@ import collective_l1_amplitude_producer as producer
 
 
 class L1AmplitudeProducerTests(unittest.TestCase):
+    def test_exact_metadata_integer_rejects_fractional_and_boolean_values(self):
+        for bad in (1.9, True, "1"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    producer.require_exact_int({"node_index": bad}, "node_index", 1, "fixture")
+
     def test_intermediate_pruning_counterexample(self):
         result = producer.self_test()
         self.assertTrue(result["passed"], result)
