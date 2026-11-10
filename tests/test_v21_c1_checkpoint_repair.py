@@ -349,6 +349,8 @@ class V21C1Tests(unittest.TestCase):
                 "passed": True, "mode": "forward", "index": 3,
                 "operator_version": "tetrahedral-charged-volume-v2",
                 "source_node": 0, "Jmax": 3.5, "checks": {"ok": True},
+                "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
+                "npz_sha256": hashlib.sha256(npz.read_bytes()).hexdigest(),
                 "source_commit": "a" * 40,
                 "volume_backend": "tetrahedral-volume-v1",
                 "volume_backend_sha256": "c" * 64,
