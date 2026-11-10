@@ -60,7 +60,7 @@ The matrix cannot by itself encode kg, m, s, J, C, or any other SI dimension. Co
 ## 6. Verdict
 
 - Exact rank and saturated integer kernels for frozen 69×6 and 70×6 matrices: **COMPUTED**.
-- LLL vectors and every direct multiplication: **PASS**, 127 total exact vector checks.
+- LLL vectors and every direct multiplication: **PASS**: 127 saturated LLL vectors and 127 source-style LLL vectors were each directly checked (254 exact products total).
 - Source-style row-wise primitive kernels: **NOT SATURATED**, indices (2^{179}) and (2^{180}).
 - Formula provenance: **NOT CLEAN**; at least the m_s comment and Ω-c active formula require explicit reconciliation.
 - SI dimensional derivation from these six dimensionless generators: **ABSENT**.
