@@ -8,6 +8,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import peter_weyl_lorentzian_logical_projection_gate as LP
 import pl_lorentzian_triple_worker as WORKER
+import pl_lorentzian_48_collect as BASE
 
 
 class MissingLeakageDiagnosticTests(unittest.TestCase):
@@ -102,8 +103,8 @@ class MissingLeakageDiagnosticTests(unittest.TestCase):
 
         self.assertEqual(state, {})
         self.assertIn("CV_complete_basis_leakage", diag)
-        self.assertNotIn("CK_outer_complete_basis_leakage", diag)
-        self.assertNotIn("CK_internal_volume_sector_leakage", diag)
+        self.assertIn("CK_outer_complete_basis_leakage", diag)
+        self.assertIn("CK_internal_volume_sector_leakage", diag)
         self.assertIn("CK_complete_charge_basis_leakage", diag)
         self.assertEqual(set(diag["exact_empty_input_zero_fields"]), {
             "CK_outer_complete_basis_leakage",
