@@ -23,6 +23,9 @@ P14 = I2 / 2 - sp.sqrt(3) * X / 4 - Z / 4
 PAIR_PROJECTORS = (P12, P13, P14)
 
 # Basic exact identities for the local shape frame.
+if not __debug__:
+    raise RuntimeError("Refusing optimized execution: this gate uses assert-based scientific checks")
+
 assert sp.simplify(P12 + P13 + P14 - sp.Rational(3, 2) * I2) == sp.zeros(2)
 for P in PAIR_PROJECTORS:
     assert sp.simplify(P * P - P) == sp.zeros(2)
