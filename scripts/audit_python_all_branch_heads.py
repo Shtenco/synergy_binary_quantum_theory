@@ -551,14 +551,33 @@ def main():
 
     for inline_sha in sorted(inline_locations):
         locations = inline_locations[inline_sha]
-        representative = locations[0]["path"]
         source = blob_contents[inline_sha].decode("utf-8", errors="replace")
-        for index, (kind, line, code) in enumerate(
-            iter_inline_python_blocks(source, representative), 1
-        ):
-            block_path = f"{representative}#{kind}-{index}"
-            scan_source(code, block_path, inline_sha, findings, totals, locations)
-            totals["inline_python_blocks"] += 1
+        # The same Git blob can be stored under different suffixes. Scan once
+        # per distinct parser type so a shared Markdown/YAML blob is not
+        # interpreted only according to whichever path sorts first.
+        representatives = {}
+        for location in locations:
+            representatives.setdefault(location["extension"], location["path"])
+        for extension, representative in sorted(representatives.items()):
+            extension_locations = [
+                location for location in locations
+                if location["extension"] == extension
+            ]
+            for index, (kind, line, code) in enumerate(
+                iter_inline_python_blocks(source, representative), 1
+            ):
+                block_path = f"{representative}#{kind}-{index}"
+                first_finding = len(findings)
+                scan_source(
+                    code, block_path, inline_sha, findings, totals,
+                    extension_locations
+                )
+                # scan_source numbers lines relative to the extracted block.
+                # Shift them back to the containing Markdown/YAML/shell file.
+                for finding in findings[first_finding:]:
+                    if finding.get("line") is not None:
+                        finding["line"] += line
+                totals["inline_python_blocks"] += 1
 
     path_versions = {(x["path"], x["blob_sha"]) for x in occurrences}
     unique_paths = {x["path"] for x in occurrences}
