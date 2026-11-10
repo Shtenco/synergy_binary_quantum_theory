@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: \${{ github.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -49,11 +49,11 @@ jobs:
             --amp-tol 1e-12 \
             --crosscheck-tol 1e-8 \
             --leakage-tol 1e-9 \
-            --output verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN\${{ github.run_id }}.json
+            --output verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN${{ github.run_id }}.json
       - name: Upload V11 common-carrier evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-v11-w5-common-carrier-j10-run\${{ github.run_id }}
-          path: verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN\${{ github.run_id }}.json
+          name: bqg-v11-w5-common-carrier-j10-run${{ github.run_id }}
+          path: verification_results/BQG_V11_W5_COMMON_CARRIER_J10_RUN${{ github.run_id }}.json
           if-no-files-found: warn
