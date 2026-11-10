@@ -43,6 +43,9 @@ H3 = sp.simplify(H_AB + H_BC)
 lam0 = 3 - 3 * sp.sqrt(2) / 2
 lam2 = 3 + 3 * sp.sqrt(2) / 2
 expected = {lam0: 2, sp.Integer(3): 4, lam2: 2}
+if not __debug__:
+    raise RuntimeError("Refusing optimized execution: this gate uses assert-based scientific checks")
+
 assert H3.eigenvals() == expected
 assert len((H3 - lam0 * I8).nullspace()) == 2
 
