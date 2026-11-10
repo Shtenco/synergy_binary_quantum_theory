@@ -42,6 +42,48 @@ def gram(imgs):
             z=inner(imgs[i],imgs[j]); G[i,j]=z; G[j,i]=np.conj(z)
     return (G+G.conj().T)/2
 
+def validate_master_spectrum(eigenvalues, pair_spreads, context):
+    """Require isolated, numerically degenerate two-dimensional master channels."""
+    values = np.asarray(eigenvalues, dtype=float)
+    spreads = np.asarray(pair_spreads, dtype=float)
+    if values.ndim != 1 or values.size == 0 or spreads.shape != values.shape:
+        raise RuntimeError(f"{context}: malformed master-channel spectrum")
+    if not np.isfinite(values).all() or not np.isfinite(spreads).all():
+        raise RuntimeError(f"{context}: nonfinite master-channel spectrum")
+    if np.any(spreads < 0.0) or float(np.max(spreads)) >= 1e-8:
+        raise RuntimeError(
+            f"{context}: [2,2] eigenvalue-pair splitting exceeds 1e-8: {spreads.tolist()}"
+        )
+    gaps = np.diff(values)
+    scale = max(float(np.max(np.abs(values))), 1.0)
+    gap_tol = 1e-10 * scale
+    if gaps.size and np.any(gaps <= gap_tol):
+        raise RuntimeError(
+            f"{context}: master channels are not spectrally isolated; "
+            f"gaps={gaps.tolist()}, tolerance={gap_tol}"
+        )
+    return float(np.min(gaps)) if gaps.size else None
+
+
+def validate_generated_copy_spectrum(singular_values, context):
+    """Require the microscopic image to be exactly one numerical 2D copy."""
+    s = np.asarray(singular_values, dtype=float)
+    if s.ndim != 1 or s.size < 2 or not np.isfinite(s).all():
+        raise RuntimeError(f"{context}: malformed generated-copy singular spectrum")
+    rank = int(np.sum(s > 1e-10))
+    if rank != 2:
+        raise RuntimeError(
+            f"{context}: generated target [2,2] copy has numerical rank {rank}, expected 2; "
+            f"singular_values={s.tolist()}"
+        )
+    pair_spread = float(abs(s[0] - s[1]))
+    if pair_spread >= 1e-8:
+        raise RuntimeError(
+            f"{context}: generated [2,2] pair splitting exceeds 1e-8: {pair_spread}"
+        )
+    return rank, pair_spread
+
+
 def p22(s2):
     d=s2+1; P=np.zeros((d,d),complex)
     for p in PERMS:
@@ -70,7 +112,10 @@ def master_channels(s2):
     w,U=np.linalg.eigh(M22)
     order=np.argsort(w); w=w[order]; U=U[:,order]
 
-    assert len(w)%2==0
+    if len(w) % 2:
+        raise RuntimeError(
+            f"j={s2 / 2}: [2,2] isotypic master multiplicity is odd ({len(w)})"
+        )
     channels=[]
     eigvals=[]
     spreads=[]
@@ -80,10 +125,14 @@ def master_channels(s2):
         channels.append(S)
         eigvals.append(float(np.mean(pair)))
         spreads.append(float(np.ptp(pair)))
+    min_channel_gap = validate_master_spectrum(
+        eigvals, spreads, f"j={s2 / 2} master"
+    )
     return {
         "channels":channels,
         "eigenvalues":eigvals,
         "pair_spreads":spreads,
+        "minimum_interchannel_gap":min_channel_gap,
         "P22_basis":B,
         "P22":P,
     }
@@ -116,12 +165,10 @@ def generated_copy(T,source_basis,target_P22_basis):
     B=target_P22_basis
     G22=B@(B.conj().T@G)
     U,s,Vh=np.linalg.svd(G22,full_matrices=False)
-    rank=int(np.sum(s>1e-10))
-    if rank<2:
-        raise RuntimeError(f"generated target [22] rank {rank}<2")
+    rank, _ = validate_generated_copy_spectrum(s, "microscopic blocking")
     Q=U[:,:2]
     P=Q@Q.conj().T
-    return P,s
+    return P,s,rank
 
 def run(s2):
     ZVM.patch_and_clear()
@@ -133,12 +180,14 @@ def run(s2):
     singulars=[]
     row_sums=[]
     max_pair_spread=0.0
+    generated_copy_ranks=[]
 
     dst_projectors=[S@S.conj().T for S in dst["channels"]]
 
     for a,Ssrc in enumerate(src["channels"]):
-        Pblock,svals=generated_copy(T,Ssrc,dst["P22_basis"])
+        Pblock,svals,generated_rank=generated_copy(T,Ssrc,dst["P22_basis"])
         singulars.append([float(x) for x in svals])
+        generated_copy_ranks.append(generated_rank)
         if len(svals)>=2:
             max_pair_spread=max(max_pair_spread,float(abs(svals[0]-svals[1])))
         row=[]
@@ -157,6 +206,9 @@ def run(s2):
     passed=(
         leak<1e-8
         and max_pair_spread<1e-8
+        and all(rank == 2 for rank in generated_copy_ranks)
+        and max(src["pair_spreads"], default=0.0)<1e-8
+        and max(dst["pair_spreads"], default=0.0)<1e-8
         and stochastic_err<1e-8
         and np.min(F)>-1e-9
         and np.max(F)<1+1e-9
@@ -171,12 +223,15 @@ def run(s2):
       "target_master_eigenvalues":dst["eigenvalues"],
       "source_pair_spreads":src["pair_spreads"],
       "target_pair_spreads":dst["pair_spreads"],
+      "source_minimum_interchannel_gap":src["minimum_interchannel_gap"],
+      "target_minimum_interchannel_gap":dst["minimum_interchannel_gap"],
       "channel_flow_matrix":F.tolist(),
       "row_sums":row_sums,
       "row_stochasticity_error":stochastic_err,
       "best_target_index_by_source":[int(x) for x in best],
       "best_overlap_by_source":[float(x) for x in best_overlaps],
       "generated_singular_values":singulars,
+      "generated_copy_ranks":generated_copy_ranks,
       "generated_pair_spread_max":max_pair_spread,
       "Gauss_projection_leakage":leak,
       "claim_boundary":"F_ab is a representation-RG projector overlap, not a physical-time probability. It diagnoses which target master eigenchannel is naturally inherited from each source channel under the exact binary-ancilla blocking tensor."
