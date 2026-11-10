@@ -316,6 +316,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
         "missing_production_products": ["joint_E_S_R_Krylov_basis", "metric_calibration_on_same_W",
                                         "full_Lorentzian_Schur_blocks", "direct_HDA_generators_and_residual"],
         "level": "L1", "source_commit": source_commit,
+        "source_commit_attestation": "caller-supplied; must equal git rev-parse HEAD at production time; not independently queried by this script",
         "operator_registry": {
             "E": {"status": "PRESENT_EUCLIDEAN_PRECURSOR", "definition": "existing full physical-sine Euclidean L1 depth-two shard worker",
                   "backend": EXPECTED_BACKEND, "source_blob_sha": SOURCE_BLOB_SHA["worker"]},
@@ -331,6 +332,8 @@ def run(root: Path, out_dir: Path, source_commit: str):
             "shard_file_sha256": shard_hashes,
             "shard_manifest_sha256": canonical_json_sha(shard_hashes),
             "source_commit": source_commit,
+            "producer_source_sha256": sha256_file(Path(__file__).resolve()),
+            "worker_identity_limitation": "worker/collector source blobs are pinned by this schema, but legacy shard metadata does not self-attest its generating source blob",
         },
         "source_consistency": source_checks, "shard_diagnostics": shard_stats,
         "aggregation_diagnostics": aggregation,
