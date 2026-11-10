@@ -170,16 +170,35 @@ def refinement_tensor_diagnostics(T, context="refinement tensor"):
     rank = int(np.sum(singular > rank_tol))
     row_gram = A @ A.conj().T
     col_gram = A.conj().T @ A
+    row_eigenvalues = np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)
+    col_eigenvalues = np.linalg.eigvalsh((col_gram + col_gram.conj().T) / 2)
+    expected_row = np.sort(np.concatenate((np.zeros(max(0, A.shape[0] - singular.size)), singular**2)))
+    observed_col = col_eigenvalues[col_eigenvalues > rank_tol**2]
+    expected_col = np.sort((singular[singular > rank_tol])**2)
+    row_spectrum_defect = float(np.max(np.abs(row_eigenvalues - expected_row))) if row_eigenvalues.size else 0.0
+    col_spectrum_defect = (float(np.max(np.abs(observed_col - expected_col)))
+                           if observed_col.size == expected_col.size and observed_col.size else
+                           (0.0 if observed_col.size == expected_col.size else math.inf))
+    frobenius = float(np.linalg.norm(A, ord="fro"))
+    frobenius_spectrum_defect = abs(frobenius**2 - float(np.sum(singular**2)))
+    spectral_scale = max(float(np.max(expected_row)) if expected_row.size else 0.0, 1.0)
+    if row_spectrum_defect > 1e-8 * spectral_scale or col_spectrum_defect > 1e-8 * spectral_scale:
+        raise RuntimeError(f"{context}: Gram spectra disagree with singular values")
+    if frobenius_spectrum_defect > 1e-8 * max(frobenius**2, 1.0):
+        raise RuntimeError(f"{context}: Frobenius norm disagrees with singular spectrum")
     return {
         "shape": list(A.shape),
         "numerical_rank": rank,
         "rank_tolerance": rank_tol,
         "singular_values": [float(x) for x in singular],
-        "frobenius_norm": float(np.linalg.norm(A, ord="fro")),
-        "row_gram_eigenvalues": [float(x) for x in np.linalg.eigvalsh((row_gram + row_gram.conj().T) / 2)],
-        "column_gram_nonzero_eigenvalues": [float(x) for x in np.linalg.eigvalsh((col_gram + col_gram.conj().T) / 2) if x > rank_tol**2],
+        "frobenius_norm": frobenius,
+        "row_gram_eigenvalues": [float(x) for x in row_eigenvalues],
+        "column_gram_nonzero_eigenvalues": [float(x) for x in observed_col],
         "row_gram_identity_defect": float(np.linalg.norm(row_gram - np.eye(A.shape[0]), ord="fro")),
         "column_gram_idempotence_defect": float(np.linalg.norm(col_gram @ col_gram - col_gram, ord="fro")),
+        "row_gram_singular_spectrum_defect": row_spectrum_defect,
+        "column_gram_singular_spectrum_defect": col_spectrum_defect,
+        "frobenius_singular_spectrum_defect": float(frobenius_spectrum_defect),
         "normalization_claim": "diagnostic only; no unit-isometry assumption is imposed on the induced singlet-to-singlet map",
     }
 
