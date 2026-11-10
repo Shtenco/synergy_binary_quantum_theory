@@ -36,6 +36,17 @@ class TestBQGRGAncestryPath(unittest.TestCase):
             places=8,
         )
 
+        saved = json.loads(
+            (ROOT / "docs/numerical_continuation/BQG_RG_ANCESTRY_PATH_5STEP.json")
+            .read_text(encoding="utf-8")
+        )
+        self.assertEqual(saved["channel_path"], result["channel_path"])
+        self.assertAlmostEqual(
+            saved["best_cumulative_fidelity"],
+            result["best_cumulative_fidelity"],
+            places=12,
+        )
+
     def test_loader_requires_explicit_pass(self):
         source = ROOT / "docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_3.json"
         item = json.loads(source.read_text(encoding="utf-8"))
