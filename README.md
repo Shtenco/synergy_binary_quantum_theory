@@ -3,7 +3,7 @@
 ### Большая научная сказка о бинарной квантовой гравитации
 
 **БКГ / BQG · От первого бита до тетраэдра, квантовой геометрии и ещё не разгаданной тайны гравитации**  
-**Редакция:** 9 ноября 2026 года · **Для любознательных детей, взрослых и исследователей**
+**Редакция:** 10 ноября 2026 года · **Для любознательных детей, взрослых и исследователей**
 
 > Представь себе стену из бесчисленного множества крошечных кирпичиков. Вблизи ты видишь швы, трещинки и неровности. Отойди подальше — стена кажется сплошной и гладкой. А вдруг пространство тоже похоже на такую стену? А вдруг то, что мы называем расстоянием и формой, собирается из маленьких правил, похожих на «да» и «нет»?
 >
@@ -955,6 +955,271 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 6. Не смешивай W5, W17, W43 и depth-6 как одно и то же гильбертово пространство.
 7. Не называй экспериментальным открытием внутреннюю подгонку коэффициентов.
 8. Позволяй честному «ещё неизвестно» оставаться научным результатом.
+
+
+---
+
+# Приложение Г. Журнал исследовательского аудита и вычислительного прогресса (10 ноября 2026)
+
+Это приложение фиксирует отдельный инженерно-научный проход по репозиторию `Shtenco/synergy_binary_quantum_theory`. Оно дополняет предыдущие главы и реестр результатов, но **не меняет их научные статусы задним числом**. В частности, новый код проверки целостности не является новой физической амплитудой, доказательством HDA или доказательством непрерывного предела.
+
+## Г.1. Что было установлено в ходе аудита
+
+Аудит разделил свидетельства на четыре уровня, которые нельзя смешивать:
+
+1. **Точная математика:** утверждения, доказанные аналитически при явно указанных предпосылках.
+2. **Конечномерная численная проверка:** расчёт на фиксированном комплексе, cutoff и конечном пространстве состояний.
+3. **Реализация амплитуд и операторов:** проверяемый production-код, сохраняющий исходные комплексные амплитуды, базис и происхождение данных.
+4. **Физический предел:** динамическое замыкание, Lorentzian sector, HDA, независимая метрическая калибровка, последовательное refinement и continuum/GR limit.
+
+Переход с одного уровня на следующий требует собственного свидетельства. Ни unit-тест, ни совпадение спектров двух конечных матриц, ни успешная сборка архива сами по себе не закрывают физические задачи.
+
+## Г.2. Главный шестипунктный план — зафиксированная последовательность
+
+| № | Обязательная задача | Что должно быть получено до признания этапа закрытым |
+|---:|---|---|
+| 1 | Единый production producer полного (E+S+R) | Все три оператора и их комплексные амплитуды построены на одном фоне, одном Hilbert carrier и одной версии базиса; сохранены исходные (EW_l,SW_l,RW_l), а не только Gram-матрицы и спектры. |
+| 2 | Динамически замкнутый carrier и измеряемая утечка | Общий, не зависящий от целевого результата (W_l); rank, singular spectrum, condition number и утечки для каждого оператора и всех упорядоченных depth-two слов. |
+| 3 | Полный Lorentzian Schur reduction | Полная блочная матрица на том же carrier, спектр и gap знаменательного блока, conditioning, прямое решение и независимое сравнение с Schur reduction. |
+| 4 | Прямой HDA residual | Микроскопический и сжатый остатки для одного и того же production operator, с отдельными leakage и projection-loss diagnostics. |
+| 5 | Независимая metric calibration | Собственная (M_{hq}^{(l)}) или эквивалентная калибровка на каждом refinement-уровне, полный спектр, rank, condition number и устойчивость базиса; без подгонки к GR-ответу. |
+| 6 | Четыре сопоставимых физических уровня | L0–L3 с одним набором observables, нормировок, операторных определений и заранее зафиксированных критериев; никаких склеек результатов из несовместимых пространств. |
+
+Порядок принципиален: нельзя вычислять физический Schur complement до определения общего carrier и нельзя объявлять HDA проверенной на операторе, отличном от того, из которого получены физические амплитуды.
+
+### Г.2.1. Единый immutable package
+
+Целевой формат каждого уровня:
+
+[
+\mathcal P_l=
+(\mathcal H_l,\Omega_l,W_l,E_l,S_l,R_l,\mathcal M_l),
+]
+
+где (mathcal H_l) — пространство состояний, (Omega_l) — фиксированный фон/seed, (W_l) — общий carrier, (E_l,S_l,R_l) — три оператора с исходными комплексными амплитудами, а (mathcal M_l) — независимая метрическая калибровка и provenance.
+
+Каждый артефакт должен быть связан с тем же refinement, carrier, background, cutoff, операторными blob SHA и source commit. Импорт результатов с другого уровня или из другого carrier запрещён.
+
+## Г.3. Установленные разрывы между существующими вычислительными путями
+
+На момент этого аудита существующие Euclidean, Lorentzian и route-based конвейеры не образуют один production carrier:
+
+- L1 Euclidean E-worker использует barycentric refinement первого уровня: 384 fine chambers/nodes и 768 dual links, три edge representatives ([0,1,5]) и 24 вторых действия на каждый представитель.
+- Lorentzian V2/V3 использует отдельную 16-cell/global assembly; он не является тем же L1 barycentric state space.
+- Sparse Fourier route использует конечные двумерные Fourier modes и матричные (2\times2) геометрические блоки; это не тот же базис состояний L1.
+- Поэтому объединение уже полученных чисел из этих путей в (H=-\frac23E-\frac{32}{9}S+R) не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
+
+### Г.3.1. Carrier и leakage
+
+В `COLLECTIVE_KRYLOV_EFFECTIVE_BASIS.md` зафиксирована target-independent конструкция глубины два:
+
+[
+\mathcal K_l^{(2)}
+=\operatorname{span}\{\Omega_l,O_a\Omega_l,O_bO_a\Omega_l\},
+\qquad O_a,O_b\in\{E,S,R\}.
+]
+
+Указанная support wall (j_{\rm face}\leq9) — граница поддержки конечного построения, а не доказательство динамического замыкания. Для общего ортопроектора (P_l=W_lW_l^\dagger) должны измеряться:
+
+[
+\eta_A=\|(I-P_l)A W_l\|,
+\qquad
+\eta_{BA}=\|(I-P_l)O_bO_aW_l\|.
+]
+
+Нужны все направления базиса, все (A\in\{E,S,R,H\}), все упорядоченные пары и полные singular spectra. Один seed или одна нулевая утечка на искусственно ограниченном support не заменяют эту проверку.
+
+### Г.3.2. Lorentzian Schur reduction
+
+Для полного блока
+
+[
+C_l=
+\begin{pmatrix}
+A_l&B_l\\
+B_l^\dagger&D_l
+\end{pmatrix}
+]
+
+кандидат на эффективный блок при нулевом спектральном параметре:
+
+[
+C_{\mathrm{eff},l}(0)=A_l-B_lD_l^{-1}B_l^\dagger.
+]
+
+До обращения (D_l) требуется опубликовать его полный спектр, малые eigenvalues, gap и condition number; при малых/нулевых модах — явно задать допустимую процедуру, а не скрывать их псевдообратной. Результат Schur должен совпадать с независимым решением полной блочной системы в пределах заранее объявленной ошибки.
+
+Ранее зарегистрированный depth-two diagnostic
+
+[
+X_E=Q_\perp EW_g,\quad X_S=Q_\perp SW_g,
+]
+[
+L_{EE}=X_E^\dagger X_E,\quad
+L_{SS}=X_S^\dagger X_S,\quad
+L_{ES}=X_E^\dagger X_S+X_S^\dagger X_E
+]
+
+и комбинация для (G=-2E/3-32S/9),
+
+[
+L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
+]
+
+остаются конечномерным denominator-free leakage diagnostic. Это не полный физический Feshbach/Schur reduction.
+
+### Г.3.3. Прямой HDA
+
+Для одного и того же production operator и общего (W_l) необходимо построить (H_l[N]^{\rm eff}), (H_l[M]^{\rm eff}), (D_l[\beta]^{\rm eff}) и измерить
+
+[
+\Delta_{HH,l}=
+\frac{
+\|[H_l[N]^{\rm eff},H_l[M]^{\rm eff}]
+-i\hbar D_l[\beta]^{\rm eff}\|
+}{
+\|D_l[\beta]^{\rm eff}\|
+}.
+]
+
+Дополнительно сохраняются микроскопический residual до сжатия, leakage генераторов, discrepancy между bracket-before-compression и bracket-after-compression и ошибка structure function. Проекция не должна искусственно уменьшать остаток и превращать его в мнимое подтверждение HDA.
+
+### Г.3.4. Независимая метрическая калибровка
+
+В `collective_metric_hessian_extractor.py` предусмотрены два маршрута:
+
+[
+q=B^{-1}Jh
+\quad\text{или}\quad
+q=M_{hq}^{-1}h,
+\qquad K_h=Q^TK_qQ.
+]
+
+Выбор (B=I) не является независимой физической калибровкой. В ранее проверенном первом блоке зафиксировано
+
+[
+M_{hq}^TM_{hq}
+=\frac16(P_{A_1}+P_E)+\frac13P_{T_2},
+]
+
+то есть (s^2_{A_1}=s^2_E=1/6), (s^2_{T_2}=1/3). Это конечный block result, а не последовательная refinement calibration. Для закрытия пункта нужны независимые (M_{hq}^{(l)}) на L0–L3, все шесть singular values, rank, conditioning, covariance и устойчивость базиса.
+
+## Г.4. Предыдущие конечные ориентиры — не четыре физических уровня
+
+Ранее зарегистрированные контрольные значения:
+
+- L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около (4.83\times10^{-15}), размерность 17 с seed.
+- L1 E-only worker family: 72 shard triplets (3 edge representatives × 24 nodes). Это вычислительное разбиение одного Euclidean E-path, а не 72 независимых физических уровня.
+- Наличие L0 precursor и L1 E-only shard family не означает наличие четырёх сопоставимых физических refinement levels.
+- Общий (c_{\mathrm{DeWitt}}(\epsilon)) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
+
+## Г.5. L1 amplitude package v1: что реализовано
+
+В отдельной исследовательской ветке [`research/l1-amplitude-package-20261110`](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/l1-amplitude-package-20261110) построена схема `L1_AMPLITUDE_PACKAGE v1`. Её статус намеренно ограничен:
+
+`L1_EUCLIDEAN_E_ONLY_PRECURSOR_NOT_FULL_PHYSICS`.
+
+Пакет включает:
+
+- 384 fine nodes/chambers и 768 dual links;
+- edge representatives ([0,1,5]), 24 shard nodes на каждый edge;
+- 72 shard triplets: 72 JSON metadata + 72 (u)-NPZ + 72 (v)-NPZ, всего 216 исходных файлов;
+- 144 исходных NPZ с raw sparse states;
+- агрегированные (u_e,v_e) для трёх представителей и все сырые shard states в архиве;
+- sparse complex amplitudes (mathrm{complex128}), полные spin/intertwiner keys и provenance;
+- явный статус отсутствия (S) и (R), отсутствия общего (E+S+R) basis, Lorentzian Schur и production HDA.
+
+Определения worker:
+
+[
+u_e=\frac12\sum_{4\,\mathrm{chambers}\to e}H_c|\Omega\rangle,
+\qquad
+v_{e,w}=H_wu_e,
+\qquad
+v_e=\sum_{w=0}^{23}v_{e,w}.
+]
+
+Используется `LocalPLPeterWeylEuclidean exact active-cone`, с (J_{\max}=2.5) в shard metadata. Worker заявляет конечные проверки геометрии, ненулевости состояний, конечности амплитуд, spin wall и seed parity. Эти заявления теперь дополнительно пересчитываются producer/validator по raw NPZ, а не принимаются только из JSON.
+
+### Г.5.1. Исправление порядка суммирования
+
+В историческом collector использовался промежуточный порог (10^{-10}) после добавления каждого вклада. Это может быть зависимо от порядка: два вклада по (0.6\times10^{-10}) каждый по отдельности отбрасываются, хотя их сумма (1.2\times10^{-10}) уже должна сохраниться.
+
+В новом producer все вклады сначала собираются по полному state key; real и imaginary компоненты суммируются детерминированно через `math.fsum`, а порог применяется один раз после полной суммы. Отдельно сохраняется потерянная L2-норма и её отношение к норме полного агрегата. Исторический collector остаётся regression oracle, а не каноническим правилом суммирования.
+
+### Г.5.2. Целостность источника и архива
+
+Валидатор проверяет:
+
+- точный schema/version и запрет заявлять v1 как complete physical package;
+- canonical package SHA256 и archive SHA256;
+- точный набор 216 source file hashes и shard manifest digest;
+- producer SHA256 и настоящий Git blob SHA-1 с NUL-разделителем в заголовке Git blob;
+- закреплённые worker/collector source blob identities и явное ограничение self-attestation старых worker metadata;
+- точный набор NPZ members, dtype, shape, конечность амплитуд, неотрицательность меток, отсутствие дублирующихся state keys и canonical ordering архивных sparse rows;
+- семантическую проверку JSON metadata: точные integer indices без bool/string/fractional coercion, edge mapping, parent block, cutoff, backend, operator definition и worker checks;
+- точное соответствие каждого source NPZ соответствующему raw shard state в архиве;
+- независимую реконструкцию одинаковых source states и всех depth-two агрегатов из 24 исходных shards на каждый edge.
+
+Дополнительное исправление от 10 ноября: producer и validator пересчитывают условие ненулевости из фактических raw amplitudes. При worker threshold (10^{-10}) они отвергают (\|u_e\|\leq10^{-10}) и (\|v_{e,w}\|\leq10^{-10}), даже если metadata содержит `true`. Тестовая фикстура теперь использует ненулевые контрольные состояния; добавлен негативный тест, который согласованно заменяет один source NPZ и архивный shard нулевыми массивами, пересчитывает хеши и требует отказа валидатора. Два прежних tamper-теста также исправлены так, чтобы фактически менять амплитуды, а не перезаписывать те же значения.
+
+**Важная оговорка:** синтетические unit fixtures проверяют логику validator, но не являются оригинальными SU(2)-амплитудами. Только настоящий полный набор 72 worker outputs, прошедший producer, validator, backend equivalence и регрессионные сравнения, может дать статус E-only regression precursor.
+
+### Г.5.3. Основные файлы исследовательской ветки
+
+- [`L1_AMPLITUDE_PACKAGE.md`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/L1_AMPLITUDE_PACKAGE.md) — схема, статус и инструкции воспроизводимости.
+- [`scripts/collective_l1_amplitude_producer.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/scripts/collective_l1_amplitude_producer.py) — ingestion, stable aggregation, legacy regression и формирование package.
+- [`scripts/validate_l1_amplitude_package.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/scripts/validate_l1_amplitude_package.py) — независимый integrity/semantic validator.
+- [`scripts/collective_l1_metric_edge_depth2_shard_worker.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/scripts/collective_l1_metric_edge_depth2_shard_worker.py) — исходный E worker.
+- [`scripts/collective_l1_metric_edge_depth2_shard_collect.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/scripts/collective_l1_metric_edge_depth2_shard_collect.py) — исторический collector/regression reference.
+- [`tests/test_collective_l1_amplitude_producer.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/tests/test_collective_l1_amplitude_producer.py) и [`tests/test_validate_l1_amplitude_package.py`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/tests/test_validate_l1_amplitude_package.py) — unit и negative/tamper tests.
+- [`.github/workflows/l1-amplitude-package.yml`](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/l1-amplitude-package-20261110/.github/workflows/l1-amplitude-package.yml) — dedicated Python 3.12, py_compile, NumPy и unit-test workflow.
+
+Последние исследовательские коммиты:
+- `5aabf3eb3ae87eea48b56a442c2df860f73019ef` — проверка source NPZ ↔ archived raw amplitudes и независимая реконструкция.
+- `a1f992456e03b947ffed50a1a9389e6e105fbf69` — пересчёт ненулевости shard amplitudes в producer и validator.
+- `ec6980fb53677780d6a68a41f5d97b248b4e4d0d` — исправление tamper tests, чтобы они действительно меняли amplitudes.
+
+## Г.6. CI и Git provenance на момент фиксации
+
+Последний dedicated unit workflow: [run 42875363986](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42875363986), commit `ec6980fb53677780d6a68a41f5d97b248b4e4d0d`. На момент записи его статус — `queued`, conclusion отсутствует, artifacts отсутствуют. Предыдущий run для промежуточного commit был отменён обновлением ветки. Поэтому **ни py_compile, ни unit tests последней версии не объявляются пройденными**.
+
+Отдельный более тяжёлый Lorentzian run `42854653918` ранее также наблюдался в очереди; это не является результатом вычисления или свидетельством физического успеха.
+
+Важное разделение Git-веток:
+
+- изменения producer/validator и их тестов находятся в research branch;
+- этот журнал фиксирует их в главном README, но **не переносит экспериментальный код в main**;
+- в рамках этой фиксации меняется только README;
+- никакой audit/research branch не сливается автоматически;
+- отсутствие завершённого CI и production artifacts должно оставаться явно видимым.
+
+## Г.7. Что делать дальше — последовательный порядок без перескоков
+
+1. Дождаться завершения run `42875363986`, проверить каждый job/step и сохранить фактический вывод; при failure исправлять только подтверждённую причину.
+2. Не делать повторных push, пока текущий CI не разобран, если нет критической ошибки.
+3. После успешных unit tests запустить полный 72-shard production workflow на исследовательской ветке: все shards, backend equivalence, collector, producer, validator и архивирование исходных artifacts.
+4. Проверить три независимых слоя численного результата: raw complex amplitudes; stable-vs-legacy state regression; полные (K,A,B) matrices и spectral/moment diagnostics. Зафиксировать реальные нормы, support, потери от порога и ошибки сравнения.
+5. Только после реального E-only regression PASS начинать построение (S) и (R) на **том же** L1 carrier и расширять schema до общего immutable E+S+R package.
+6. На этом едином пакете измерить carrier leakage, затем выполнить полный Lorentzian block/Schur reduction, прямой HDA residual и независимую metric calibration.
+7. Перенести одинаковые измерения на четыре сопоставимых refinement levels L0–L3. Не объявлять continuum/GR limit до отдельного аналитического и численного обоснования.
+
+## Г.8. Научный статус после этого прохода
+
+На 10 ноября 2026 года получен важный инженерный прогресс: определён E-only package contract, усилена связь исходных NPZ с архивом, добавлена независимая реконструкция агрегатов и устранена уязвимость, при которой JSON-флаги могли заявлять ненулевые состояния при нулевых raw arrays. Улучшена защита от tampering и неоднозначности порядка суммирования.
+
+Однако текущий результат **не** означает:
+
+- завершённый единый (E+S+R) production package;
+- доказанное динамическое замыкание общего carrier;
+- полный Lorentzian Schur/Feshbach operator;
+- физическую проверку HDA;
+- последовательную независимую metric calibration;
+- четыре сопоставимых физических refinement levels;
+- доказательство continuum limit, Einstein equations или ОТО как предела БКГ.
+
+Это не обесценивает достигнутую работу. Напротив, теперь точнее отделены проверяемая вычислительная инфраструктура, конечные математические результаты и ещё открытые физические утверждения. Следующий этап должен строиться на воспроизводимых raw amplitudes и завершённых CI/artifact checks, а не на декларативном статусе.
+
 
 ---
 
