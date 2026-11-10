@@ -233,6 +233,7 @@ def main():
                                if exact_empty_input else [])
                 save_result(args.checkpoint_dir,args.stage,(i,j,k),out,freeze,diag,
                             {"pruned_by_frozen_scalar_channel":before-len(out),
+                             "operator_input_support":len(x),
                              "operator_stage_applied":not exact_empty_input,
                              "exact_empty_input_zero_fields":zero_fields})
         else:
@@ -241,14 +242,18 @@ def main():
                 state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
                 LP.add(total,state) # exactly old pruning/TOL semantics
                 diag=maxdiag(diag,meta["leakage_max"])
+                input_support = meta.get("operator_input_support")
+                if isinstance(input_support, bool) or not isinstance(input_support, int) or input_support < 0:
+                    raise ValueError(f"ka_{i}{j}{k}: invalid operator input support")
+                skipped_exactly = input_support == 0
                 expected_zero_fields = ({"CK_outer_complete_basis_leakage",
                                           "CK_internal_volume_sector_leakage",
                                           "CK_complete_charge_basis_leakage"}
-                                         if not state else set())
+                                         if skipped_exactly else set())
                 recorded_zero_fields = set(meta.get("exact_empty_input_zero_fields", []))
                 if recorded_zero_fields != expected_zero_fields:
                     raise ValueError(f"ka_{i}{j}{k}: empty-input diagnostic provenance mismatch")
-                if meta.get("operator_stage_applied") is not bool(state):
+                if meta.get("operator_stage_applied") is not (not skipped_exactly):
                     raise ValueError(f"ka_{i}{j}{k}: operator-stage execution flag mismatch")
                 branch.append({"ijk":[i,j,k],"gauss_projection_pending":True,
                               "support":len(state),"sha256":meta["sha256"],
