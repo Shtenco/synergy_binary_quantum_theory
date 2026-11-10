@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proof_tools"))
-from rank_matrix_guard import validate_full_column_matrix, validate_shard_coverage, validate_index_coverage
+from rank_matrix_guard import (validate_full_column_matrix, validate_shard_coverage, validate_index_coverage, validate_index_value, parse_indexed_map_filename)
 
 
 class RankMatrixGuardTests(unittest.TestCase):
@@ -73,6 +73,21 @@ class RankMatrixGuardTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaisesRegex(ValueError, "invalid expected column count"):
                     validate_full_column_matrix(np.eye(2), value, "test orbit")
+
+    def test_validate_index_value_accepts_only_nonnegative_json_integers(self):
+        self.assertEqual(validate_index_value(0, "record"), 0)
+        for value in (True, False, "1", 1.0, -1, None):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "nonnegative JSON integer"):
+                    validate_index_value(value, "record")
+
+    def test_parse_map_filename_requires_canonical_decimal_index(self):
+        self.assertEqual(parse_indexed_map_filename("b0", "map"), 0)
+        self.assertEqual(parse_indexed_map_filename("b123", "map"), 123)
+        for value in ("b", "b01", "b+1", "b-1", "b1x", "x1", "b１２"):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "not canonical"):
+                    parse_indexed_map_filename(value, "map")
 
 
 if __name__ == "__main__":
