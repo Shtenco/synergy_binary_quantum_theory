@@ -3,6 +3,14 @@ import json,itertools
 from pathlib import Path
 import sympy as sp
 from sympy.physics.wigner import clebsch_gordan
+
+
+def require(condition, message):
+    """Keep exact-volume gate invariants active under python -O."""
+    if not condition:
+        raise AssertionError(message)
+
+
 root=Path(__file__).resolve().parent
 
 def labels_for(spins,J):
@@ -33,22 +41,22 @@ for sp2,J2 in [((2,2,2,2),0),((1,2,2,2),1),((3,2,2,2),1)]:
             sign=(-1)**sum(xyz[i]>xyz[j] for i in range(3) for j in range(i+1,3));f=[sp.eye(len(m)) for m in mag]
             for leg,a in zip(legs,xyz):f[leg]=data[leg][1][a]
             Q+=sp.Rational((-1)**(omit+1)*sign,4)*sp.kronecker_product(*f)
-    q=sp.simplify(B.conjugate().T*Q*B);assert sp.simplify(B.conjugate().T*B)==sp.eye(len(labels));assert sp.simplify(Q*B-B*q)==sp.zeros(n,len(labels))
+    q=sp.simplify(B.conjugate().T*Q*B);require(sp.simplify(B.conjugate().T*B)==sp.eye(len(labels)), 'recoupling basis is not isometric');require(sp.simplify(Q*B-B*q)==sp.zeros(n,len(labels)), 'volume operator does not preserve the selected intertwiner carrier')
     S=sp.simplify(sp.trace(q*q)/2);P=sp.simplify((S*S-sp.trace(q**4)/2)/2);lm=(S-sp.sqrt(S*S-4*P))/2;lp=(S+sp.sqrt(S*S-4*P))/2
     if len(labels)==3:
-        assert sp.simplify(q**3-S*q)==sp.zeros(3)
+        require(sp.simplify(q**3-S*q)==sp.zeros(3), 'three-dimensional characteristic identity failed')
         V=q*q/S**sp.Rational(3,4)
     elif len(labels)==4:
         a=(lp**sp.Rational(1,4)-lm**sp.Rational(1,4))/(lp-lm);b=(lp*lm**sp.Rational(1,4)-lm*lp**sp.Rational(1,4))/(lp-lm);V=a*q*q+b*sp.eye(4)
-        assert sp.simplify(q**4-S*q*q+P*sp.eye(4))==sp.zeros(4)
+        require(sp.simplify(q**4-S*q*q+P*sp.eye(4))==sp.zeros(4), 'four-dimensional characteristic identity failed')
     elif len(labels)==5:
         a=(lp**sp.Rational(-3,4)-lm**sp.Rational(-3,4))/(lp-lm);b=(lp*lm**sp.Rational(-3,4)-lm*lp**sp.Rational(-3,4))/(lp-lm);V=a*q**4+b*q*q
-        assert sp.simplify(q**5-S*q**3+P*q)==sp.zeros(5)
+        require(sp.simplify(q**5-S*q**3+P*q)==sp.zeros(5), 'five-dimensional characteristic identity failed')
     else:raise AssertionError('Unexpected charged multiplicity')
     saved=json.loads((root/('exact_source_volume.json' if J2==0 else 'exact_initial_charged_volumes.json')).read_text())
     if J2: saved=next(row for row in saved if tuple(row['spins_doubled'])==sp2)
     expected=sp.Matrix([[sp.sympify(x) for x in row] for row in saved['Q_block']])
-    assert sp.simplify(q-expected)==sp.zeros(len(labels))
+    require(sp.simplify(q-expected)==sp.zeros(len(labels)), 'recomputed local volume block differs from the frozen exact source')
     row={'spins_doubled':sp2,'J2':J2,'dimension':len(labels),'exact_Q_and_charge_invariance_checked':True,'polynomial_checked':True,'physicalization_complete':False}
     rows.append(row)
 print(json.dumps({'exact_local_blocks':rows,'scope':'regular-volume candidate, selected three blocks only'},indent=2))
