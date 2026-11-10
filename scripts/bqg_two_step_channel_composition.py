@@ -123,8 +123,12 @@ def compose_refinement_tensors(T1, T2, P_middle):
 
 
 def normalized_refinement_spectral_distance(left_diag, right_diag):
-    left = np.asarray(left_diag["singular_values"], dtype=float) ** 2
-    right = np.asarray(right_diag["singular_values"], dtype=float) ** 2
+    left_sv = np.asarray(left_diag["singular_values"], dtype=float)
+    right_sv = np.asarray(right_diag["singular_values"], dtype=float)
+    left_tol = float(left_diag["rank_tolerance"])
+    right_tol = float(right_diag["rank_tolerance"])
+    left = left_sv[left_sv > left_tol] ** 2
+    right = right_sv[right_sv > right_tol] ** 2
     left_total = float(np.sum(left))
     right_total = float(np.sum(right))
     if (not math.isfinite(left_total) or not math.isfinite(right_total)
