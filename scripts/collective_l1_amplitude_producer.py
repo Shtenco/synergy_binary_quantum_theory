@@ -188,7 +188,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
     if not source_commit or len(source_commit) != 40:
         raise ValueError("--source-commit must be a full 40-character Git SHA")
 
-    U, V, U_SHARDS, V_SHARDS, shard_hashes, shard_metas = [], [], [], [], {}, {}
+    U, V, V_LEGACY, U_SHARDS, V_SHARDS, shard_hashes, shard_metas = [], [], [], [], [], {}, {}
     source_checks, shard_stats, aggregation = {}, {}, {}
     for edge in REPS:
         rows, sources, shard_states, meta_rows = [], [], [], []
@@ -241,6 +241,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
         if mismatch_agg > REGRESSION_TOL:
             raise ValueError(f"new aggregation does not reproduce legacy collector for edge {edge}: {mismatch_agg}")
         V.append(v_stable)
+        V_LEGACY.append(v_legacy)
         source_checks[str(edge)] = {
             "support": len(u0), "norm": state_norm(u0),
             "max_relative_source_mismatch_across_24_shards": mismatch,
@@ -261,6 +262,11 @@ def run(root: Path, out_dir: Path, source_commit: str):
         shard_metas[str(edge)] = rows
 
     result = metrics(U, V)
+    legacy_result = metrics(U, V_LEGACY)
+    moment_regression = {
+        name: float(np.linalg.norm(result[name] - legacy_result[name]) / max(np.linalg.norm(legacy_result[name]), 1e-300))
+        for name in ("K", "A", "B")
+    }
     finite = all(np.isfinite(M.real).all() and np.isfinite(M.imag).all()
                  for M in (result["K"], result["A"], result["B"]))
     symmetry = all(result[k]["hermiticity_relative_defect"] < 3e-7
@@ -271,7 +277,8 @@ def run(root: Path, out_dir: Path, source_commit: str):
         "all_72_shards_present_and_passed": True,
         "source_states_identical": True,
         "finite_amplitudes_and_moments": bool(finite),
-        "legacy_collector_regression": all(x["legacy_collector_relative_difference"] <= REGRESSION_TOL for x in aggregation.values()),
+        "legacy_collector_state_regression": all(x["legacy_collector_relative_difference"] <= REGRESSION_TOL for x in aggregation.values()),
+        "legacy_collector_moment_regression": all(x <= REGRESSION_TOL for x in moment_regression.values()),
         "S4_three_orbit_consistency": bool(symmetry),
         "nonnegative_depth2_variance_with_frozen_tolerance": bool(variance),
     }
@@ -301,6 +308,7 @@ def run(root: Path, out_dir: Path, source_commit: str):
         },
         "source_consistency": source_checks, "shard_diagnostics": shard_stats,
         "aggregation_diagnostics": aggregation,
+        "legacy_moment_regression_relative_errors": moment_regression,
         "moments": {
             "K_matrix": [[[float(z.real), float(z.imag)] for z in row] for row in result["K"]],
             "A_matrix": [[[float(z.real), float(z.imag)] for z in row] for row in result["A"]],
