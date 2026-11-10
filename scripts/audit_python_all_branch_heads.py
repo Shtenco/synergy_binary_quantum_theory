@@ -11,6 +11,11 @@ import argparse
 import ast
 import base64
 import json
+import hashlib
+import io
+import stat
+import tarfile
+import zipfile
 import os
 import re
 import sys
@@ -25,6 +30,11 @@ API = "https://api.github.com"
 PY_EXTS = {".py", ".pyi", ".pyx", ".pxd"}
 IPYNB_EXT = ".ipynb"
 MAX_WORKERS = 8
+ARCHIVE_SUFFIXES = (".tar.gz.b64", ".tgz.b64", ".zip.b64")
+MAX_EMBEDDED_ARCHIVE_BYTES = 64 * 1024 * 1024
+MAX_EMBEDDED_MEMBER_BYTES = 16 * 1024 * 1024
+MAX_EMBEDDED_TOTAL_SOURCE_BYTES = 128 * 1024 * 1024
+MAX_EMBEDDED_MEMBERS = 20000
 
 
 def api_json(url: str, token: str):
@@ -140,6 +150,147 @@ def scan_notebook(source: str, path: str, blob: str, findings: list, totals: Cou
         scan_source(code, f"{path}#cell-{i}", blob, findings, totals, locations)
 
 
+
+def safe_archive_member(name: str) -> bool:
+    normalized = name.replace("\\", "/")
+    parts = Path(normalized).parts
+    return (
+        bool(normalized)
+        and not normalized.startswith("/")
+        and not re.match(r"^[A-Za-z]:", normalized)
+        and ".." not in parts
+    )
+
+
+def scan_embedded_source(payload: bytes, member_path: str, findings: list,
+                         totals: Counter, locations=None):
+    source_sha = hashlib.sha256(payload).hexdigest()
+    try:
+        source = payload.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        record(findings, "embedded_source_decode_error", member_path,
+               f"sha256:{source_sha}", None, str(exc), locations)
+        totals["embedded_source_decode_errors"] += 1
+        return
+    if Path(member_path.split("!/", 1)[-1]).suffix.lower() == IPYNB_EXT:
+        scan_notebook(source, member_path, f"sha256:{source_sha}",
+                      findings, totals, locations)
+    else:
+        scan_source(source, member_path, f"sha256:{source_sha}",
+                    findings, totals, locations)
+    totals["embedded_python_sources"] += 1
+    totals["embedded_python_source_bytes"] += len(payload)
+
+
+def scan_embedded_archive(encoded: str, archive_path: str, archive_sha: str,
+                          findings: list, totals: Counter, locations=None):
+    try:
+        compact = "".join(encoded.split())
+        raw = base64.b64decode(compact, validate=True)
+    except Exception as exc:
+        record(findings, "embedded_archive_decode_error", archive_path,
+               archive_sha, None, str(exc), locations)
+        totals["embedded_archive_errors"] += 1
+        return
+    if len(raw) > MAX_EMBEDDED_ARCHIVE_BYTES:
+        record(findings, "embedded_archive_size_limit", archive_path,
+               archive_sha, None, f"archive bytes {len(raw)} exceed limit", locations)
+        totals["embedded_archive_errors"] += 1
+        return
+
+    suffix = archive_path.lower()
+    member_count = 0
+    source_bytes = 0
+    try:
+        if suffix.endswith((".tar.gz.b64", ".tgz.b64")):
+            with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as archive:
+                for member in archive:
+                    member_count += 1
+                    if member_count > MAX_EMBEDDED_MEMBERS:
+                        raise RuntimeError("embedded archive member-count limit exceeded")
+                    if member.issym() or member.islnk() or member.isdev() or member.isfifo():
+                        record(findings, "embedded_archive_link_or_device",
+                               f"{archive_path}!/{member.name}", archive_sha,
+                               None, "link/device member is not followed", locations)
+                        totals["embedded_archive_unsafe_members"] += 1
+                        continue
+                    if not member.isfile():
+                        continue
+                    if not safe_archive_member(member.name):
+                        record(findings, "embedded_archive_unsafe_path",
+                               f"{archive_path}!/{member.name}", archive_sha,
+                               None, "absolute or traversal member path", locations)
+                        totals["embedded_archive_unsafe_members"] += 1
+                        continue
+                    if Path(member.name).suffix.lower() not in PY_EXTS | {IPYNB_EXT}:
+                        continue
+                    if member.size > MAX_EMBEDDED_MEMBER_BYTES:
+                        record(findings, "embedded_archive_member_size_limit",
+                               f"{archive_path}!/{member.name}", archive_sha,
+                               None, f"member bytes {member.size} exceed limit", locations)
+                        totals["embedded_archive_errors"] += 1
+                        continue
+                    stream = archive.extractfile(member)
+                    if stream is None:
+                        raise RuntimeError(f"could not read regular member {member.name}")
+                    payload = stream.read(MAX_EMBEDDED_MEMBER_BYTES + 1)
+                    if len(payload) != member.size or len(payload) > MAX_EMBEDDED_MEMBER_BYTES:
+                        raise RuntimeError(f"member size mismatch or limit exceeded: {member.name}")
+                    source_bytes += len(payload)
+                    if source_bytes > MAX_EMBEDDED_TOTAL_SOURCE_BYTES:
+                        raise RuntimeError("embedded archive total source-byte limit exceeded")
+                    scan_embedded_source(payload, f"{archive_path}!/{member.name}",
+                                         findings, totals, locations)
+        elif suffix.endswith(".zip.b64"):
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                for member in archive.infolist():
+                    member_count += 1
+                    if member_count > MAX_EMBEDDED_MEMBERS:
+                        raise RuntimeError("embedded archive member-count limit exceeded")
+                    mode = member.external_attr >> 16
+                    if stat.S_ISLNK(mode):
+                        record(findings, "embedded_archive_link_or_device",
+                               f"{archive_path}!/{member.filename}", archive_sha,
+                               None, "symlink member is not followed", locations)
+                        totals["embedded_archive_unsafe_members"] += 1
+                        continue
+                    if member.is_dir():
+                        continue
+                    if not safe_archive_member(member.filename):
+                        record(findings, "embedded_archive_unsafe_path",
+                               f"{archive_path}!/{member.filename}", archive_sha,
+                               None, "absolute or traversal member path", locations)
+                        totals["embedded_archive_unsafe_members"] += 1
+                        continue
+                    if Path(member.filename).suffix.lower() not in PY_EXTS | {IPYNB_EXT}:
+                        continue
+                    if member.file_size > MAX_EMBEDDED_MEMBER_BYTES:
+                        record(findings, "embedded_archive_member_size_limit",
+                               f"{archive_path}!/{member.filename}", archive_sha,
+                               None, f"member bytes {member.file_size} exceed limit", locations)
+                        totals["embedded_archive_errors"] += 1
+                        continue
+                    payload = archive.read(member)
+                    if len(payload) != member.file_size:
+                        raise RuntimeError(f"member size mismatch: {member.filename}")
+                    source_bytes += len(payload)
+                    if source_bytes > MAX_EMBEDDED_TOTAL_SOURCE_BYTES:
+                        raise RuntimeError("embedded archive total source-byte limit exceeded")
+                    scan_embedded_source(payload, f"{archive_path}!/{member.filename}",
+                                         findings, totals, locations)
+        else:
+            raise RuntimeError("unsupported embedded archive suffix")
+    except Exception as exc:
+        record(findings, "embedded_archive_error", archive_path,
+               archive_sha, None, f"{type(exc).__name__}: {exc}", locations)
+        totals["embedded_archive_errors"] += 1
+        return
+
+    totals["embedded_archives_scanned"] += 1
+    totals["embedded_archive_members"] += member_count
+    totals["embedded_archive_source_bytes"] += source_bytes
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "Shtenco/synergy_binary_quantum_theory"))
@@ -158,6 +309,7 @@ def main():
     commits = sorted(set(branches.values()))
     snapshots = []
     occurrences = []
+    archive_occurrences = []
     errors = []
 
     def get_tree(commit):
@@ -167,18 +319,26 @@ def main():
         entries = obj.get("tree", [])
         files = [e for e in entries if e.get("type") == "blob"
                  and Path(e["path"]).suffix.lower() in PY_EXTS | {IPYNB_EXT}]
-        return commit, len(entries), files
+        archives = [e for e in entries if e.get("type") == "blob"
+                    and e["path"].lower().endswith(ARCHIVE_SUFFIXES)]
+        return commit, len(entries), files, archives
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         futures = [pool.submit(get_tree, c) for c in commits]
         for future in as_completed(futures):
             try:
-                commit, tree_count, files = future.result()
-                snapshots.append({"commit": commit, "tree_entries": tree_count, "python_files": len(files)})
+                commit, tree_count, files, archives = future.result()
+                snapshots.append({"commit": commit, "tree_entries": tree_count,
+                                  "python_files": len(files), "embedded_archives": len(archives)})
                 for f in files:
                     occurrences.append({
                         "commit": commit, "path": f["path"], "blob_sha": f["sha"],
                         "size": f.get("size", 0), "extension": Path(f["path"]).suffix.lower(),
+                    })
+                for f in archives:
+                    archive_occurrences.append({
+                        "commit": commit, "path": f["path"], "blob_sha": f["sha"],
+                        "size": f.get("size", 0),
                     })
             except Exception as exc:
                 errors.append(str(exc))
@@ -222,6 +382,25 @@ def main():
     if errors:
         raise SystemExit("blob audit incomplete: " + " | ".join(errors[:10]))
 
+    archive_locations = defaultdict(list)
+    for item in archive_occurrences:
+        archive_locations[item["blob_sha"]].append({
+            "commit": item["commit"], "path": item["path"]
+        })
+    for locations in archive_locations.values():
+        locations.sort(key=lambda x: (x["path"], x["commit"]))
+    for archive_sha in sorted(archive_locations):
+        locations = archive_locations[archive_sha]
+        representative = locations[0]["path"]
+        try:
+            encoded = blob_text(args.repo, archive_sha, token)
+            scan_embedded_archive(encoded, representative, archive_sha,
+                                  findings, totals, locations)
+        except Exception as exc:
+            record(findings, "embedded_archive_fetch_error", representative,
+                   archive_sha, None, f"{type(exc).__name__}: {exc}", locations)
+            totals["embedded_archive_errors"] += 1
+
     path_versions = {(x["path"], x["blob_sha"]) for x in occurrences}
     unique_paths = {x["path"] for x in occurrences}
     main_locations = [x for x in occurrences if x["commit"] == main_head]
@@ -246,6 +425,14 @@ def main():
         "unique_python_paths_across_branches": len(unique_paths),
         "unique_path_and_content_versions": len(path_versions),
         "unique_blob_contents_audited": fetched,
+        "embedded_archive_file_occurrences": len(archive_occurrences),
+        "unique_embedded_archive_blobs": len(archive_locations),
+        "embedded_archives_scanned": totals["embedded_archives_scanned"],
+        "embedded_archive_members": totals["embedded_archive_members"],
+        "embedded_python_sources": totals["embedded_python_sources"],
+        "embedded_python_source_bytes": totals["embedded_python_source_bytes"],
+        "embedded_archive_unsafe_members": totals["embedded_archive_unsafe_members"],
+        "embedded_archive_errors": totals["embedded_archive_errors"],
         "tree_snapshots": len(snapshots),
         "tree_entries_across_unique_heads": sum(x["tree_entries"] for x in snapshots),
         "parsed_sources": totals["parsed_sources"],
@@ -266,9 +453,13 @@ def main():
         "main_python_file_occurrences", "main_syntax_errors", "main_ast_status",
         "branch_snapshot_python_file_occurrences", "unique_python_paths_across_branches",
         "unique_path_and_content_versions", "unique_blob_contents_audited",
-        "parsed_sources", "syntax_errors", "finding_counts", "elapsed_seconds",
+        "parsed_sources", "syntax_errors", "embedded_archive_file_occurrences",
+        "unique_embedded_archive_blobs", "embedded_archives_scanned",
+        "embedded_archive_members", "embedded_python_sources",
+        "embedded_archive_unsafe_members", "embedded_archive_errors",
+        "finding_counts", "elapsed_seconds",
     )}, indent=2))
-    return 1 if main_syntax_errors else 0
+    return 1 if main_syntax_errors or totals['embedded_archive_errors'] else 0
 
 
 if __name__ == "__main__":
