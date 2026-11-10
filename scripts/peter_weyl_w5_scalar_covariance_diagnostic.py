@@ -29,6 +29,14 @@ def add(dst, src, scale=1.0, tol=0.0):
     CK.add_state(dst, src, scale, tol)
 
 
+def _json_default(value):
+    if hasattr(value, "item"):
+        return value.item()
+    if isinstance(value, (set, tuple)):
+        return list(value)
+    raise TypeError(f"not JSON serializable: {type(value).__name__}")
+
+
 def norm(state):
     return math.sqrt(sum(abs(z) ** 2 for z in state.values()))
 
@@ -251,7 +259,7 @@ def main():
                 "and H_sine and inspect oriented-spec and T/Tdag contributions."
             ),
         }
-        args.output.write_text(json.dumps(partial, indent=2) + "\n", encoding="utf-8")
+        args.output.write_text(json.dumps(partial, indent=2, default=_json_default) + "\n", encoding="utf-8")
 
     checkpoint("RUNNING_W5_SCALAR_COVARIANCE_DIAGNOSTIC")
     for cutoff in args.cutoffs:
@@ -305,7 +313,7 @@ def main():
         ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(result, indent=2, default=_json_default) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": result["status"],
         "node": args.node,
