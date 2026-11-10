@@ -377,13 +377,14 @@ def run_pair(source_s2, reference_dir=None):
     amplitude_endpoint_matrix = amplitude_endpoint["weights"]
     sensitivity = refinement_perturbation_sensitivity(T1, T2, source, middle, target, direct, source_s2)
     defect = direct - scalar_product
+    amplitude_endpoint_defect = amplitude_endpoint_matrix - scalar_product
 
     def row_error(matrix):
         return float(np.max(np.abs(np.sum(matrix, axis=1) - 1.0)))
 
     finite = all(
         np.isfinite(matrix).all()
-        for matrix in (F1, F2, scalar_product, direct, defect)
+        for matrix in (F1, F2, scalar_product, direct, defect, amplitude_endpoint_matrix, amplitude_endpoint_defect)
     )
     structural_checks_passed = bool(
         finite
@@ -454,7 +455,9 @@ def run_pair(source_s2, reference_dir=None):
         "direct_two_step_amplitude_level_endpoint_row_sums": amplitude_endpoint["row_sums"],
         "direct_two_step_amplitude_level_endpoint_row_stochasticity_error": amplitude_endpoint["row_stochasticity_error"],
         "direct_two_step_amplitude_level_endpoint_semantics": amplitude_endpoint["semantics"],
-        "global_microscopic_endpoint_overlap_matrix_legacy_alias": direct.tolist(),
+        "amplitude_level_endpoint_vs_scalar_markov_defect": amplitude_endpoint_defect.tolist(),
+        "amplitude_level_endpoint_vs_scalar_markov_defect_max_abs": float(np.max(np.abs(amplitude_endpoint_defect))),
+        "amplitude_level_endpoint_vs_scalar_markov_defect_frobenius": float(np.linalg.norm(amplitude_endpoint_defect, ord="fro")),
         "direct_endpoint_overlap_semantics": (
             "Direct two-step endpoint projector overlap obtained by composing the two "
             "microscopic refinement maps through the intermediate rank-2 carrier. "
