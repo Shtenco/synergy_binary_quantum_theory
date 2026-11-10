@@ -234,7 +234,8 @@ def leakage_summary(diag):
     if not isinstance(diag, dict):
         return {"complete": False, "maximum": None, "missing": list(LEAK_FIELDS), "invalid": []}
     missing = sorted(set(LEAK_FIELDS) - set(diag))
-    invalid = []
+    unknown = sorted(set(diag) - set(LEAK_FIELDS) - {"exact_empty_input_zero_fields"})
+    invalid = [f"unknown:{key}" for key in unknown]
     for key in LEAK_FIELDS:
         if key not in diag:
             continue
@@ -244,7 +245,7 @@ def leakage_summary(diag):
             invalid.append(key)
     complete = not missing and not invalid
     maximum = max(float(diag[key]) for key in LEAK_FIELDS) if complete else None
-    return {"complete": complete, "maximum": maximum, "missing": missing, "invalid": invalid}
+    return {"complete": complete, "maximum": maximum, "missing": missing, "invalid": invalid, "unknown": unknown}
 
 
 def merge_leakage_max(dst, missing_ever, invalid_ever, source):
