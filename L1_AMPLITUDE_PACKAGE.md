@@ -4,9 +4,11 @@
 
 This schema binds sparse complex amplitudes to their operator implementation,
 Hilbert carrier, background, shard provenance, and aggregation procedure.
-Version 1 is deliberately an **E-only regression precursor**. It is not a
-complete physical L1 package and cannot be consumed as evidence for the joint
-E+S+R carrier, metric calibration, Lorentzian Schur reduction, or HDA closure.
+Version 1 is deliberately an **E-only regression precursor**. It retains all
+72 source shards and all 72 second-action shard states, as well as the three
+reconstructed source and response states. It is not a complete physical L1
+package and cannot be consumed as evidence for the joint E+S+R carrier, metric
+calibration, Lorentzian Schur reduction, or HDA closure.
 
 ## Files
 
