@@ -88,15 +88,47 @@ def cv_slot_norms(use_tetra):
     if ctx is None:return compute()
     with ctx:return compute()
 
-def charged_spectral_rows():
-    rows=[]
+def charged_spin_sectors():
     base=[1,1,1,1]
     for leg in range(4):
         for doubled_spin in (0,2):
-            spins=base.copy();spins[leg]=doubled_spin;spins=tuple(spins)
-            diagnostics=tetra_volume_diagnostics(spins,1)
-            rows.append({"spins":list(spins),"J2":1,"diagnostics":diagnostics})
+            spins=base.copy();spins[leg]=doubled_spin
+            yield tuple(spins)
+
+
+def charged_spectral_rows():
+    rows=[]
+    for spins in charged_spin_sectors():
+        for J2 in CV.all_total_J2(spins):
+            if not CH.allowed_charged_labels(spins,J2):
+                continue
+            diagnostics=tetra_volume_diagnostics(spins,J2)
+            rows.append({"spins":list(spins),"J2":int(J2),"diagnostics":diagnostics})
     return rows
+
+
+def spectral_matrix_bundle():
+    """Persist raw Q_{J,M} blocks and V_J blocks; no averaging is hidden."""
+    arrays={}
+    index=[]
+    for spins in charged_spin_sectors():
+        for J2 in CV.all_total_J2(spins):
+            labels=CH.allowed_charged_labels(spins,J2)
+            if not labels:
+                continue
+            V=tetra_volume_block_general(spins,J2)
+            stem="s"+"_".join(str(x) for x in spins)+f"_J2_{int(J2)}"
+            vkey=stem+"_V"
+            arrays[vkey]=np.asarray(V,dtype=np.complex128)
+            index.append({"kind":"V_J","key":vkey,"spins":list(spins),
+                          "J2":int(J2),"shape":list(V.shape)})
+            for M2 in PW.m2vals_t(J2):
+                Q,_,_=tetra_q_block(spins,J2,M2)
+                qkey=stem+f"_M2_{int(M2)}_Q_raw"
+                arrays[qkey]=np.asarray(Q,dtype=np.complex128)
+                index.append({"kind":"Q_JM_raw","key":qkey,"spins":list(spins),
+                              "J2":int(J2),"M2":int(M2),"shape":list(Q.shape)})
+    return arrays,index
 
 
 def global_magnetic_operator_rows():
@@ -165,6 +197,7 @@ def run():
     k5=he_pair(boundary_4simplex());cell=he_pair(seed_16cell_boundary())
     oldslots=cv_slot_norms(False);newslots=cv_slot_norms(True)
     spectral_rows=charged_spectral_rows()
+    matrix_arrays,matrix_index=spectral_matrix_bundle()
     tensor_rows=tensor_reconstruction_rows()
     global_rows=global_magnetic_operator_rows()
     oldnorm=[x['matrix_Frobenius_norm'] for x in oldslots];newnorm=[x['matrix_Frobenius_norm'] for x in newslots]
@@ -178,7 +211,17 @@ def run():
       'tetra_CV_all_slots_nonzero':min(newnorm)>1e-3,
       'tetra_CV_slot_covariance_restored':newspread<1e-12,
       'tetra_CV_basis_complete':max(x['max_complete_basis_leakage'] for x in newslots)<1e-10,
-      'charged_spectral_sectors_explicitly_evaluated':len(spectral_rows)==8,
+      'charged_spectral_sectors_explicitly_evaluated':len(spectral_rows)>8,
+      'every_raw_M_block_spectrum_recorded':all(
+          len(x['diagnostics']['raw_Q_M_block_eigenvalues'])==len(x['diagnostics']['M_values_doubled'])
+          and all(len(ev)==len(CH.allowed_charged_labels(tuple(x['spins']),x['J2']))
+                  and all(math.isfinite(v) for v in ev)
+                  for ev in x['diagnostics']['raw_Q_M_block_eigenvalues'])
+          for x in spectral_rows),
+      'every_raw_M_block_matrix_norm_recorded':all(
+          len(x['diagnostics']['raw_Q_M_block_frobenius_norms'])==len(x['diagnostics']['M_values_doubled'])
+          and all(math.isfinite(v) for v in x['diagnostics']['raw_Q_M_block_frobenius_norms'])
+          for x in spectral_rows),
       'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=math.inf)<1e-10,
       'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=math.inf)<1e-10,
       'charged_Q_preserves_total_JM_sectors_before_reduction':max((x['diagnostics']['max_Q_sector_leakage_relative'] for x in spectral_rows),default=math.inf)<1e-10,
@@ -196,14 +239,28 @@ def run():
             'max_charged_nonproportional_residual_old_vs_tetra':max_nonprop,'max_tetra_Q_norm_where_old_q123_was_zero':oldzero,
             'K5_H_E_comparison':k5,'sixteen_cell_H_E_comparison':cell,
             'old_q123_CV_slots':oldslots,'tetrahedral_CV_slots':newslots,
-            'charged_spectral_rows':spectral_rows,'magnetic_tensor_reconstruction_rows':tensor_rows,
+            'charged_spectral_rows':spectral_rows,'spectral_matrix_index':matrix_index,
+            'spectral_matrix_array_count':len(matrix_arrays),
+            'magnetic_tensor_reconstruction_rows':tensor_rows,
             'global_magnetic_operator_rows':global_rows,
             'old_CV_slot_norm_spread':oldspread,'tetra_CV_slot_norm_spread':newspread,
             'interpretation':'The fixed q_123 extension is valid for frozen Gauss absolute volume but not for charged intermediate states. The four-leg completion restores local tetrahedral slot covariance while leaving the gauge-invariant Euclidean Hamiltonian columns unchanged on both regulators.',
             'consequence':'All Lorentzian C(K)/S calculations that used the old charged q_123 extension are retained only as historical diagnostics and must be recomputed with the tetrahedral backend before physical promotion.',
             'scope_note':'This correction does not change the already tested E_sine amplitudes. Full corrected Lorentzian normalization/HDA must be re-audited.'}
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path);a=p.parse_args();o=run();t=json.dumps(o,indent=2);print(t)
-    if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(t+'\n',encoding='utf-8')
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--output',type=Path)
+    p.add_argument('--matrix-output',type=Path)
+    a=p.parse_args()
+    o=run()
+    t=json.dumps(o,indent=2)
+    print(t)
+    if a.output:
+        a.output.parent.mkdir(parents=True,exist_ok=True)
+        a.output.write_text(t+'\n',encoding='utf-8')
+    if a.matrix_output:
+        a.matrix_output.parent.mkdir(parents=True,exist_ok=True)
+        arrays,_=spectral_matrix_bundle()
+        np.savez_compressed(a.matrix_output,**arrays)
     return 0 if o['passed'] else 1
 if __name__=='__main__':raise SystemExit(main())
