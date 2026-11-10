@@ -181,6 +181,7 @@ def run():
       'charged_spectral_sectors_explicitly_evaluated':len(spectral_rows)==8,
       'charged_Q_raw_Hermitian_before_symmetrization':max((max(x['diagnostics']['raw_Q_hermiticity_defects']) for x in spectral_rows),default=math.inf)<1e-10,
       'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=math.inf)<1e-10,
+      'charged_Q_preserves_total_JM_sectors_before_reduction':max((x['diagnostics']['max_Q_sector_leakage_relative'] for x in spectral_rows),default=math.inf)<1e-10,
       'charged_volume_spectral_functional_calculus':max((x['diagnostics']['V4_minus_Q2_relative_error'] for x in spectral_rows),default=math.inf)<1e-9,
       'complete_magnetic_tensor_reconstruction_and_finite_output':len(tensor_rows)==2 and all(x['finite_output'] for x in tensor_rows),
       'global_raw_Q_and_V_hermiticity':len(global_rows)==2 and max(x['raw_global_Q_hermiticity_relative'] for x in global_rows)<1e-10 and max(x['global_V_hermiticity_relative'] for x in global_rows)<1e-10,
