@@ -326,6 +326,7 @@ def epsilon_sum_state(initial, source_v):
                 "omitted_neighbor": omit,
                 "ordered_edges": [a, b, c],
                 "coefficient": coef,
+                "exact_empty_input_zero_fields": diag.get("exact_empty_input_zero_fields", []),
                 "support": len(st),
                 "norm": math.sqrt(norm2(st)),
                 "exact_empty_input_zero_fields": list(diag.get("exact_empty_input_zero_fields", [])),
