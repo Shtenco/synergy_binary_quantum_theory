@@ -214,24 +214,41 @@ The recovered one-node K=0 slice gives direct forbidden weights:
 - H-plus: 4.529569123612589e-30;
 - H-sine: 3.719781592525875e-30.
 
-These are not a reproduction of the five-seed failure. Source inspection shows
-that the standalone diagnostic constructs a one-endpoint covariant seed and
-projects with charged_nodes=(node,). The failing W5 KKV path reaches
-C_K_component, applies inverse_complete, and then evaluates K with both
-(source_v,target_v) charged endpoints. Thus the one-node diagnostic does not
-test the exact two-endpoint state at which restore_scalar_charge_M fails.
+These are not yet a reproduction of the five-seed failure. An important
+correction was established by reading the complete traceback of run
+[42781449559](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449559)
+against the actual call graph. The exception occurs in the FIRST, direct branch
+of C_K_component:
+
+C_K_component -> direct_K_covariant -> apply_K_complete_custom
+-> apply_HE_complete_state_custom -> restore_scalar_charge_M.
+
+The failing call is therefore the one-endpoint direct K branch with
+charged_nodes=(source_v,), BEFORE inverse_complete and before the two-endpoint
+K branch. The earlier interpretation that the exception first occurred after
+inverse_complete was incorrect and is superseded. The one-endpoint standalone
+diagnostic is consequently closer in endpoint structure than previously stated,
+but it still does not establish equivalence of the exact canonical input key,
+the H_E input state, the full sequence path, or the per-sequence coherent sum.
 Its tiny residual must not be used to explain or dismiss the five-seed
 5.390512613173637e-20 wrong-sector weight.
 
-A separate one-seed CI probe was added in commits
+The probe was added in commits
 [1dbcce60b53f2e64bfc4757a787d785c0d45c15f](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/1dbcce60b53f2e64bfc4757a787d785c0d45c15f)
 and
 [49a539f24077c860894dab9269356f84a0011272](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/49a539f24077c860894dab9269356f84a0011272).
-It runs the real one-seed W5 KKV path and captures, without disabling the guard:
-- the exact input and canonical keys;
-- source and target charged endpoints;
-- whether the failing H_E is before or after the volume action in K=[V,H_E];
-- the complete output J,M weight distribution and largest components.
+It captures the exact input, canonical key, charged endpoint, K call kind,
+H_E position relative to V, full output J,M distribution and largest components.
 
-This probe is diagnostic only. It does not alter the operator, projection, tolerance,
-or acceptance criteria. Its result is pending; no cause is assigned yet.
+Commit
+[c20132781af557c529efb41b721edec15ccbce7f](https://github.com/Shtenco/synergy_binary_quantum_theory/commit/c20132781af557c529efb41b721edec15ccbce7f)
+extends the probe with passive per-sequence tracing inside the exact
+complete_HE_sine loop. It records each oriented specification, adjoint choice,
+T sequence, branch count and J,M leakage before and after oriented-spec
+coherent accumulation. The physical output accumulator retains the original
+addition order and no projection, threshold, operator coefficient or guard is
+changed.
+
+This probe is diagnostic only. It does not alter the operator, projection,
+tolerance, or acceptance criteria. Its CI result is pending; no physical cause
+is assigned yet.
