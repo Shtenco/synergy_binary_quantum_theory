@@ -20,7 +20,7 @@ def run(root):
         d=json.loads(p.read_text(encoding='utf-8'))
         if d.get('operator_version')!=VERSION:continue
         if d.get('passed') is not True:raise RuntimeError(f'v4 pair must explicitly pass with boolean true: {p}')
-        for field in ('max_primitive_physical_leakage','max_primitive_nonscalar_rejected_norm'):
+        for field in ('max_primitive_physical_leakage','max_primitive_charge_leakage','max_primitive_nonscalar_rejected_norm'):
             value=d.get(field)
             if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(float(value)) or float(value)<0.0:
                 raise RuntimeError(f'invalid {field} in {p}')
@@ -43,7 +43,9 @@ def run(root):
     S={k:a for k,a in S.items() if abs(a)>TOL}
     seed=((1,)*32,(0,)*16);seedpar=sum(seed[0])%2;wrong=sum(1 for k in S if sum(k[0])%2!=seedpar)
     finite=all(np.isfinite([z.real,z.imag]).all() for z in S.values())
-    maxleak=max(r['max_primitive_leakage'] for r in rows);maxrej=max(r['max_primitive_rejected'] for r in rows)
+    maxleak=max(r['max_primitive_leakage'] for r in rows)
+    maxcharge=max(r['max_primitive_charge_leakage'] for r in rows)
+    maxrej=max(r['max_primitive_rejected'] for r in rows)
     checks={'all_12_physical_pairs_loaded':len(rows)==12,'orbit_complete_unique':seen==expect,
             'finite_combined_amplitudes':finite,'max_primitive_leakage_below_1e-8':maxleak<1e-8,
             'max_primitive_nonscalar_rejection_below_1e-8':maxrej<1e-8,
@@ -52,7 +54,8 @@ def run(root):
       'science_status':'AMPLITUDE_PRECURSOR_S_NODE0_V4','operator_version':VERSION,'source_node':0,'Jmax':3.5,
       'checks':checks,'pair_count':12,'primitive_orderings_covered':48,
       'S_support':len(S),'S_norm':norm(S),'S_max_spin':max_spin(S),'wrong_seed_parity_outputs':wrong,
-      'max_primitive_physical_leakage':maxleak,'max_primitive_nonscalar_rejected_norm':maxrej,'pairs':sorted(rows,key=lambda r:(r['omit'],r['cycle'])),
+      'max_primitive_physical_leakage':maxleak,'max_primitive_charge_leakage':maxcharge,
+      'max_primitive_nonscalar_rejected_norm':maxrej,'pairs':sorted(rows,key=lambda r:(r['omit'],r['cycle'])),
       'definition':'sum of 12 exact -i/2 eta Tr_aux({[C_a(K),C_b(K)],C_c(V_tet)}) physical pair columns',
       'provenance_note':'No slot-orbit reconstruction. Each pair directly evaluates the same four V2 primitive orderings with shared caches and combines them before final collection.',
       'science_guard':'Nonzero S is reported, not required. Promotion to canonical C1 additionally requires the identity gate and at least one independently serialized V2 primitive-pair comparison.'}
