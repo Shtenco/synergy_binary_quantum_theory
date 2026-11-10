@@ -8,12 +8,21 @@ malformed ZIP archives.
 from __future__ import annotations
 
 import argparse
-import io
+import hashlib
 import json
 import os
+import shutil
+import sys
 import urllib.request
 import zipfile
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROOF_TOOLS = ROOT / "proof_tools"
+if str(PROOF_TOOLS) not in sys.path:
+    sys.path.insert(0, str(PROOF_TOOLS))
+
+from safe_archive import safe_artifact_directory, safe_extract_zip
 
 API = "https://api.github.com"
 
@@ -29,6 +38,29 @@ def request(url: str, token: str) -> bytes:
     )
     with urllib.request.urlopen(req, timeout=120) as r:
         return r.read()
+
+def download_to_file(url: str, token: str, destination: Path) -> tuple[int, str]:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "BQG-artifact-downloader",
+        },
+    )
+    digest = hashlib.sha256()
+    size = 0
+    with urllib.request.urlopen(req, timeout=120) as response, destination.open("xb") as output:
+        while True:
+            chunk = response.read(1024 * 1024)
+            if not chunk:
+                break
+            output.write(chunk)
+            digest.update(chunk)
+            size += len(chunk)
+    return size, digest.hexdigest()
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -75,18 +107,42 @@ def main() -> int:
         )
 
     args.out.mkdir(parents=True, exist_ok=True)
+    digest_verified = 0
     for n, name in enumerate(sorted(by_name), 1):
         a = by_name[name]
-        raw = request(
+        expected_digest = str(a.get("digest") or "")
+        if not expected_digest.startswith("sha256:"):
+            raise SystemExit(f"artifact {name!r} has no SHA-256 digest; refusing unverified input")
+        expected_sha256 = expected_digest.split(":", 1)[1].lower()
+        if len(expected_sha256) != 64 or any(ch not in "0123456789abcdef" for ch in expected_sha256):
+            raise SystemExit(f"artifact {name!r} has malformed SHA-256 digest")
+
+        dest = safe_artifact_directory(args.out, name)
+        dest.mkdir(parents=True, exist_ok=True)
+        zip_path = args.out / f".{name}.download.zip"
+        size, actual_sha256 = download_to_file(
             f"{API}/repos/{args.repo}/actions/artifacts/{int(a['id'])}/zip",
             token,
+            zip_path,
         )
-        dest = args.out / name
-        dest.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
-            zf.extractall(dest)
+        try:
+            expected_size = int(a.get("size_in_bytes", size))
+            if size != expected_size:
+                raise SystemExit(
+                    f"artifact {name!r} size mismatch: expected {expected_size}, got {size}"
+                )
+            if actual_sha256 != expected_sha256:
+                raise SystemExit(
+                    f"artifact {name!r} SHA-256 mismatch: expected {expected_sha256}, got {actual_sha256}"
+                )
+            with zipfile.ZipFile(zip_path) as zf:
+                safe_extract_zip(zf, dest)
+            digest_verified += 1
+        finally:
+            zip_path.unlink(missing_ok=True)
+
         if n % 20 == 0 or n == args.expected:
-            print(f"downloaded {n}/{args.expected}", flush=True)
+            print(f"downloaded and digest-verified {n}/{args.expected}", flush=True)
 
     print(json.dumps({
         "repo": args.repo,
@@ -94,6 +150,7 @@ def main() -> int:
         "prefix": args.prefix,
         "expected": args.expected,
         "downloaded": len(by_name),
+        "digest_verified": digest_verified,
         "output": str(args.out),
     }, indent=2))
     return 0
