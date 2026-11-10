@@ -3,7 +3,7 @@ name: BQG full channel flow matrix
 
 on:
   push:
-    branches: [main]
+    branches: [main, audit/rg-refinement-strict-20261110]
     paths:
       - 'scripts/bqg_full_channel_flow_matrix.py'
       - '.github/workflows/bqg-full-channel-flow.yml'
