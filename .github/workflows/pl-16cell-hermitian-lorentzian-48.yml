@@ -85,6 +85,7 @@ jobs:
           assert d['passed']
           assert d['worker_count']==48
           assert d['max_worker_physical_leakage'] < 1e-8
+          assert d['max_worker_complete_charge_leakage'] < 1e-8
           assert d['max_worker_nonscalar_rejected_norm'] < 1e-8
           assert d['wrong_seed_parity_outputs']==0
           assert d['max_spin_S'] <= 3.5 + 1e-12
