@@ -63,6 +63,7 @@ def ordered_dagger_state(seed,source,a,b,c):
     # Do not prefill diagnostics: if a stage never ran, its leakage is unknown
     # until explicitly classified as an empty-input stage by a separate rule.
     diag={}
+    volume_operator_called = False
     for i,j,k in itertools.product(range(2),repeat=3):
         s1,d1=LP.RAW.KCOMP.C_K_component(psi,source,a,j,i,JMAX2)
         update_diag(diag,{
@@ -78,9 +79,14 @@ def ordered_dagger_state(seed,source,a,b,c):
         # Final C(V) is rank 0+1, so only source J=0,1 can return to scalar J=0.
         s2={key:amp for key,amp in s2.items() if key[2] in (0,2)}
         if not s2:continue
+        volume_operator_called = True
         s3,leak=LP.RAW.COMP.C_volume_component(s2,source,c,i,k,JMAX2)
-        diag['CV_complete_basis_leakage']=max(diag['CV_complete_basis_leakage'],float(leak))
+        diag['CV_complete_basis_leakage']=max(diag.get('CV_complete_basis_leakage',0.0),float(leak))
         add(total,s3)
+    if not volume_operator_called:
+        # The final CV operator had exactly empty input on every branch.
+        diag['CV_complete_basis_leakage']=0.0
+        diag['exact_empty_input_zero_fields']=['CV_complete_basis_leakage']
     return total,diag
 
 def save_state(path,state,nedges,nverts):
@@ -142,6 +148,7 @@ def run(index,mode='forward',source=0):
       'gauss_max_spin':max_spin(gauss),'exact_zero_ordered_term':len(cov)==0 and len(gauss)==0,
       'scalar_closure_fraction':scalar_fraction,'nonscalar_rejected_norm':math.sqrt(max(rejected2,0.0)),
       'physical_acceptance_max_leakage':physical,'complete_charge_diagnostic':charge,
+      'exact_empty_input_zero_fields':diag.get('exact_empty_input_zero_fields',[]),
       'cache_info':cache_info,'checks':checks,'weighted_here':False,
       'orientation_note':'Coefficient = tetrahedral local orientation sign times permutation parity; on boundary-4-simplex this reduces to orientation[v] times the historical K5 epsilon orbit.',
       'scope_note':'One of 24 forward or 24 adjoint exact ordered terms. Physical S is formed only after both complete sums are collected.'}
