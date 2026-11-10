@@ -38,7 +38,7 @@ class FullChannelFlowGuardTests(unittest.TestCase):
         self.assertEqual(result["shape"], [2, 4])
         self.assertEqual(result["numerical_rank"], 2)
         self.assertLess(result["row_gram_identity_defect"], 1e-12)
-        self.assertLess(result["column_gram_projector_defect"], 1e-12)
+        self.assertLess(result["column_gram_idempotence_defect"], 1e-12)
         self.assertIn("no unit-isometry assumption", result["normalization_claim"])
 
     def test_induced_refinement_tensor_rejects_nonfinite_entries(self):
