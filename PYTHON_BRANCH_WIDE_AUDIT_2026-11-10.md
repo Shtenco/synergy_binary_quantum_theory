@@ -21,7 +21,7 @@ The audit enumerated every branch head returned by GitHub, deduplicated identica
 | Syntax errors | 2 |
 | Total tree entries across unique branch heads | 46,182 |
 
-The current `main` snapshot is smaller: 728 tree entries and 198 `.py` files. The larger repository-wide count comes from the many historical and experimental branches. The 18,674 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 674 distinct paths and 757 path/content versions. There are 754 distinct blob contents, of which 752 parsed successfully and two failed syntax parsing.
+At the original audit head, `main` contained 728 tree entries and 198 `.py` files. A later main snapshot at commit `99dd3c2a31610b0ab9b9c56cd1b3937cddda070c` contains 739 tree entries and 207 `.py` files; the branch-wide refresh for that newer head is tracked separately. The larger repository-wide count comes from the many historical and experimental branches. The 18,674 figure counts appearances across branch snapshots, not distinct modules; after deduplication there are 674 distinct paths and 757 path/content versions. There are 754 distinct blob contents, of which 752 parsed successfully and two failed syntax parsing.
 
 ## Findings
 
@@ -34,24 +34,63 @@ Two distinct Python blobs fail AST parsing. Both are absent from the current `ma
 
 The later V26 branch has a different, parseable worker version; this does not retroactively make the V23 branch executable. Do not treat the V23 branch as a valid runnable checkpoint without repairing or explicitly freezing it as archival.
 
-### 2. Archive extraction and pickle trust boundary
+### 2. Artifact ingestion and pickle trust boundary — refreshed status
 
-Across branch-head source versions the scanner found:
+The initial branch-wide audit correctly identified unsafe archive extraction,
+unrestricted pickle deserialization, unvalidated artifact directory names, and
+missing digest checks in the then-current aggregator path. **That description
+is superseded by the hardening now present on main.**
 
-- 16 archive-extraction call sites using `extractall`;
-- 33 `pickle.load/loads` calls across 23 paths.
+Current protections:
 
-The most important current-`main` cases are:
+- `proof_tools/safe_archive.py` rejects absolute and parent-traversal paths,
+  backslashes, duplicate destinations, links and device members. Tar extraction
+  requires Python's `filter="data"`; ZIP extraction is performed member by
+  member and rejects links/special entries.
+- `proof_tools/safe_pickle.py` uses a restricted unpickler. It permits a
+  bounded set of inert built-ins and, when explicitly requested, NumPy numeric
+  arrays/scalars. It rejects unlisted globals and validates that arrays are
+  numeric and non-object. Both current-main depth-6 streaming aggregators now
+  call `safe_load_numpy_pickle`, not unrestricted `pickle.load`.
+- `scripts/download_workflow_artifacts_paginated.py` validates artifact names,
+  streams ZIP downloads to disk, checks the GitHub-reported size and SHA-256
+  digest, and uses safe ZIP extraction. Its redirect handler refuses non-HTTPS
+  redirects and strips the GitHub bearer token on cross-origin redirects.
+- `scripts/extract_base64_tar_safe.py` applies compressed and uncompressed
+  archive-size limits before safe extraction of the tracked proof bundles.
 
-- `proof_tools/bqg_mixed_master_aggregate_streaming.py`: tar extraction without a data filter or member-path validation, followed by pickle loading of extracted block maps.
-- `proof_tools/bqg_s4sign_aggregate_streaming.py`: the same extraction/deserialization pattern.
-- `scripts/download_workflow_artifacts_paginated.py`: ZIP artifact extraction with no explicit validation of the artifact name used to construct the destination directory.
+These are substantive mitigations, but not a proof that pickle is an ideal
+long-term interchange format. Restricted unpickling still has a parser and
+resource-exhaustion attack surface: a hostile numeric payload could attempt
+excessive allocation or CPU use before post-load object validation. The
+artifact ZIP downloader verifies the compressed artifact digest and size, but
+the generic ZIP/TAR extractors do not impose a universal total uncompressed
+byte/member-count cap. The base64 proof-bundle extractor has explicit caps;
+the workflow-artifact extraction path should still gain producer-specific
+uncompressed limits.
 
-Untrusted pickle data can execute arbitrary code during deserialization. Untrusted tar members can write outside the intended extraction directory, including through link entries if not rejected. These are conditional vulnerabilities when input artifacts can be supplied or influenced by an untrusted party; they are not proof that the current trusted CI artifacts are malicious.
+Remaining provenance and integrity work:
 
-One older `mixed_parallel/bqg_mixed_master_recovery.py` version checks member paths before extraction, but does not fully reject symlink/hardlink entries. That check is not a complete substitute for safe extraction.
+1. Replace pickle maps with a versioned, non-executable numeric format
+   (NPZ with `allow_pickle=False` or a validated tensor format) when practical.
+2. Add a content-addressed per-shard manifest binding producer repository,
+   source commit, workflow run/attempt, shard index, artifact ZIP digest,
+   extracted map/summary digests, and operator version.
+3. The S4-sign aggregator now pins the exact triggering producer SHA. The
+   mixed Stage A/Stage B workflows still check out the mutable
+   `research/depth6-s4sign-proof` branch tip; propagate the original source
+   SHA through a provenance artifact and pin those worker/aggregator checkouts.
+4. The mixed-master aggregator checks the number of summaries and global
+   block/map coverage, but unlike the S4-sign aggregator it does not yet
+   explicitly require unique shard IDs equal to `range(expected)`. Confirm
+   the producer summary schema and add that guard before accepting a PASS.
+5. Preserve read-only permissions, disabled checkout credentials, and
+   producer-branch restrictions in artifact-processing jobs.
 
-**Recommended hardening:** use `tarfile.extractall(..., filter="data")` on supported Python versions; fail closed on unsupported runtimes; explicitly validate ZIP artifact names and member paths; reject link/device members; verify artifact digests/manifests before deserialization; and document that pickle inputs must come only from trusted producers. Prefer a non-executable interchange format for long-lived artifacts where practical.
+The risk should therefore be described as a **remaining conditional
+supply-chain and resource-exhaustion concern**, not as unrestricted
+pickle-code-execution still being present on main. No evidence has been found
+that any existing artifact is malicious.
 
 ### 3. Exception handling
 
@@ -172,3 +211,88 @@ The `workflow_run` aggregation workflow previously checked out the mutable `rese
 **Correction on main:** `.github/workflows/bqg-depth6-s4sign-aggregate.yml` now (a) requires a successful triggering run from the same repository and the expected proof branch, (b) checks out the triggering run's exact `head_sha`, and (c) verifies that `git -C proofsrc rev-parse HEAD` equals that SHA before unpacking its proof bundle. This changes no scientific operator, numerical tolerance, or certificate claim.
 
 The aggregator still needs a per-shard manifest binding producer SHA, shard index, raw artifact digest, extracted matrix-map digests, and operator-version metadata. GitHub artifact ZIP digest verification and producer checkout pinning are necessary but not sufficient for end-to-end provenance. The source checkout change has been committed, but the next producer-triggered aggregation has not yet been observed to complete; do not label it a verified end-to-end PASS.
+
+
+## Phase 5 — finite RG completion and CI/provenance follow-up
+
+### Five-step multiplicity-channel ancestry
+
+The final full channel-flow shard, (s_2=7), completed in workflow run
+[42797583866](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42797583866).
+Its matrix is persisted at
+`docs/numerical_continuation/BQG_FULL_CHANNEL_FLOW_S2_7.json`. The full
+sequence (s_2=3,4,5,6,7) now has five consecutive passed matrices. The
+maximum-overlap dynamic-programming path is
+
+[
+a_0^{(3/2)}	o a_1^{(2)}	o a_1^{(5/2)}
+	o a_1^{(3)}	o a_2^{(7/2)}	o a_2^{(4)}.
+]
+
+Its cumulative overlap product is 0.49282787562801145; the all-low-index
+shortcut gives 4.694570240506031e-5, a ratio of 10497.8273. The path, five
+matrices, and regression test are persisted in
+`BQG_FULL_CHANNEL_FLOW_MATRIX.md`,
+`BQG_RG_ANCESTRY_PATH.md`,
+`docs/numerical_continuation/BQG_RG_ANCESTRY_PATH_5STEP.json`, and
+`tests/test_bqg_rg_ancestry_path.py`.
+
+This remains a finite representation-RG projector-overlap result. It is not
+a physical transition probability, a physical-time history, a continuum
+fixed point, or a physical-projector convergence theorem.
+
+### Mixed depth-6 workflow checkout correction
+
+The aggregate jobs in
+`.github/workflows/bqg-depth6-mixed-stage-a.yml` and
+`.github/workflows/bqg-depth6-mixed-stage-b-final.yml` had duplicate
+`path` keys in a single checkout `with` mapping. The correction leaves the
+main orchestration checkout at the workspace root and places the research
+source checkout explicitly at `proofsrc`. The existing bundle and aggregator
+paths then resolve unambiguously. This is a workflow-layout correction only;
+it changes no operator, matrix, rank tolerance, or scientific criterion.
+
+The push-triggered Stage A workflow run
+[42819682938](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42819682938)
+was queued when this note was updated; no completed Stage A aggregate result
+is inferred from the queue state. The first Stage B push-triggered workflow
+file-validation run occurred before its corresponding path correction and
+failed without jobs; it is not evidence of a numerical failure.
+
+### W5 tolerance ablation: timeout and one-pass replacement
+
+The original eight-pass W5 tolerance-ablation run
+[42795399991](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42795399991)
+was cancelled at the 35-minute job limit before its result JSON was created.
+It produced no ablation evidence.
+
+To address the runtime bottleneck without relaxing the scalar guard, a new
+one-pass runner was added:
+`scripts/w5_scalar_tolerance_ablation_onepass.py`. It generates each
+T-sequence branch once, evaluates both projection tolerances on that same
+branch, and feeds production/zero accumulator variants in parallel. It
+preserves the captured key, operator path, sequence order, coefficients,
+internal basis cutoff and scalar-preservation guard. The workflow now invokes
+this runner; its run
+[42820210450](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42820210450)
+was queued when this note was written. Until that run completes and its
+per-variant full-map comparisons are inspected, the pruning/aggregation cause
+of the W5 residual remains unresolved.
+
+### Current finite carrier-leakage computation
+
+The compressed-return (L,D) calculation for the 243-dimensional coarse
+carrier and 32-dimensional embedded fine carrier is still running in
+[42797344820](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42797344820).
+No value of the off-carrier leakage, Galerkin defect, or Hermiticity
+consistency check is claimed before its artifact is available. Even when
+completed, its scope is the compressed local-singlet return operator; it is
+not the full graph-changing habitat residual (E_a,F_a).
+
+### Critical numerical gates under Python optimization
+
+A separate regression now checks that the canonical refinement-residual gate
+uses explicit runtime checks rather than optimization-sensitive `assert`
+statements, and that it still passes under `python -O`. This is a focused
+guard improvement; it does not change the algebraic theorem or numerical
+acceptance thresholds.
