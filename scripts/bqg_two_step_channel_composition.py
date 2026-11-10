@@ -122,6 +122,53 @@ def compose_refinement_tensors(T1, T2, P_middle):
     return np.einsum("rmb,mn,nca->rcab", T2, P_middle, T1, optimize=True)
 
 
+def direct_microscopic_endpoint_channel_weights(T_composed, source, target, context):
+    """Contract both microscopic tensors before channel normalization.
+
+    Returns norm fractions of the composed source-channel carrier in each
+    target master channel, after the explicitly declared intermediate P22
+    projection. These are finite two-step Hilbert-space norm weights, not
+    physical-time probabilities and not a full six-level endpoint overlap.
+    """
+    target_projectors = projectors(target)
+    target_basis = target["P22_basis"]
+    rows = []
+    total_norms = []
+    completeness_defects = []
+    for source_index, source_channel in enumerate(source["channels"]):
+        # T_composed[r,c,a,b], source_channel[c,u] -> endpoint carrier
+        # G[r,u,a,b], retaining both ancilla indices and source multiplicity.
+        G = np.einsum("rcab,cu->ruab", T_composed, source_channel, optimize=True)
+        G = G.reshape(G.shape[0], -1)
+        G22 = target_basis @ (target_basis.conj().T @ G)
+        total = float(np.linalg.norm(G22, ord="fro") ** 2)
+        if not math.isfinite(total) or total <= 1e-300:
+            raise RuntimeError(f"{context}: source channel {source_index} has zero/nonfinite endpoint norm")
+        weights = []
+        for target_index, Ptarget in enumerate(target_projectors):
+            projected = Ptarget @ G22
+            weight = float(np.linalg.norm(projected, ord="fro") ** 2 / total)
+            if not math.isfinite(weight) or weight < -1e-10 or weight > 1.0 + 1e-8:
+                raise RuntimeError(f"{context}: invalid endpoint channel weight")
+            weights.append(weight)
+        row_sum = float(sum(weights))
+        defect = abs(row_sum - 1.0)
+        rows.append(weights)
+        total_norms.append(total)
+        completeness_defects.append(defect)
+    return {
+        "weights": np.asarray(rows, dtype=float),
+        "endpoint_norm_squared_by_source": total_norms,
+        "row_sums": [float(np.sum(row)) for row in rows],
+        "row_stochasticity_error": max(completeness_defects, default=0.0),
+        "semantics": (
+            "Two-step amplitude-level tensor contraction with intermediate P22 projection; "
+            "norm fractions over target master channels. Not physical-time probability "
+            "and not the full multi-level/global microscopic endpoint overlap."
+        ),
+    }
+
+
 def normalized_refinement_spectral_distance(left_diag, right_diag):
     left_sv = np.asarray(left_diag["singular_values"], dtype=float)
     right_sv = np.asarray(right_diag["singular_values"], dtype=float)
@@ -324,6 +371,10 @@ def run_pair(source_s2, reference_dir=None):
         )
 
     direct = np.asarray(direct_rows, dtype=float)
+    amplitude_endpoint = direct_microscopic_endpoint_channel_weights(
+        T_composed, source, target, f"two-step s2={source_s2}"
+    )
+    amplitude_endpoint_matrix = amplitude_endpoint["weights"]
     sensitivity = refinement_perturbation_sensitivity(T1, T2, source, middle, target, direct, source_s2)
     defect = direct - scalar_product
 
@@ -341,6 +392,8 @@ def run_pair(source_s2, reference_dir=None):
         and row_error(F1) < 1e-8
         and row_error(F2) < 1e-8
         and row_error(direct) < 1e-8
+        and amplitude_endpoint["row_stochasticity_error"] < 1e-8
+        and np.isfinite(amplitude_endpoint_matrix).all()
         and all(rank == 2 for rank in first_ranks + second_ranks)
         and all(rank == 2 for rank in direct_first_ranks + direct_second_ranks)
         and max(basis_rotation_defects, default=0.0) < 1e-8
@@ -396,6 +449,11 @@ def run_pair(source_s2, reference_dir=None):
         "max_product_intermediate_channel_index": max_product_middle_channel.tolist(),
         "G_direct_composed": direct.tolist(),
         "direct_two_step_endpoint_projector_overlap_matrix": direct.tolist(),
+        "direct_two_step_amplitude_level_endpoint_channel_weights": amplitude_endpoint_matrix.tolist(),
+        "direct_two_step_amplitude_level_endpoint_norm_squared_by_source": amplitude_endpoint["endpoint_norm_squared_by_source"],
+        "direct_two_step_amplitude_level_endpoint_row_sums": amplitude_endpoint["row_sums"],
+        "direct_two_step_amplitude_level_endpoint_row_stochasticity_error": amplitude_endpoint["row_stochasticity_error"],
+        "direct_two_step_amplitude_level_endpoint_semantics": amplitude_endpoint["semantics"],
         "global_microscopic_endpoint_overlap_matrix_legacy_alias": direct.tolist(),
         "direct_endpoint_overlap_semantics": (
             "Direct two-step endpoint projector overlap obtained by composing the two "
