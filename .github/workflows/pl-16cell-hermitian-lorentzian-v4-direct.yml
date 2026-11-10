@@ -13,6 +13,7 @@ on:
       - 'scripts/tetrahedral_volume_backend.py'
       - 'scripts/pl_lorentzian_triple_worker.py'
       - 'scripts/pl_lorentzian_group_worker.py'
+      - 'tests/test_pl_lorentzian_missing_diagnostics.py'
       - '.github/workflows/pl-16cell-hermitian-lorentzian-v4-direct.yml'
   workflow_dispatch:
 
@@ -36,6 +37,8 @@ jobs:
           python -m py_compile scripts/lorentzian_direct_hermitian_identity_gate.py scripts/pl_lorentzian_physical_pair_worker_v4.py scripts/pl_lorentzian_physical_pair_collect_v4.py
           python scripts/lorentzian_direct_hermitian_identity_gate.py --output verification_results/LORENTZIAN_DIRECT_HERMITIAN_IDENTITY.json
           python scripts/tetrahedral_charged_volume_audit_gate.py --output verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT.json
+      - name: Test missing operator diagnostics are not synthesized as zero
+        run: python -m unittest discover -s tests -p 'test_pl_lorentzian_missing_diagnostics.py'
       - name: Hard pre-result guards
         run: |
           python - <<'PY'
