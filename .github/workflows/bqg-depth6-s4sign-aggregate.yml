@@ -16,10 +16,13 @@ jobs:
     steps:
       - name: Checkout main orchestration
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Checkout proof branch
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: research/depth6-s4sign-proof
           path: proofsrc
 
@@ -30,10 +33,11 @@ jobs:
       - name: Install numerical dependencies
         run: pip install --disable-pip-version-check numpy sympy
 
-      - name: Unpack exact BQG proof bundle
+      - name: Safely unpack exact BQG proof bundle
         run: |
-          mkdir -p proof_parallel/runtime
-          base64 -d proofsrc/proof_parallel/bqg_s4sign_bundle.tar.gz.b64 | tar xz -C proof_parallel/runtime
+          python scripts/extract_base64_tar_safe.py \
+            --archive proofsrc/proof_parallel/bqg_s4sign_bundle.tar.gz.b64 \
+            --destination proof_parallel/runtime
 
       - name: Download all 128 v2 shard artifacts with pagination
         env:

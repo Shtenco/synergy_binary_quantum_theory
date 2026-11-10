@@ -27,14 +27,20 @@ jobs:
         with:
           persist-credentials: false
           ref: research/depth6-s4sign-proof
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+          path: orchestrator
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install --disable-pip-version-check numpy sympy
-      - name: Unpack mixed proof bundle
+      - name: Safely unpack mixed proof bundle
         run: |
-          mkdir -p mixed_runtime
-          base64 -d mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 | tar xz -C mixed_runtime
+          python orchestrator/scripts/extract_base64_tar_safe.py \
+            --archive mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 \
+            --destination mixed_runtime
       - name: Run [3,2] shard
         env:
           OMP_NUM_THREADS: '1'
@@ -66,14 +72,20 @@ jobs:
         with:
           persist-credentials: false
           ref: research/depth6-s4sign-proof
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+          path: orchestrator
           path: proofsrc
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install --disable-pip-version-check numpy sympy
       - run: |
-          mkdir -p mixed_runtime
-          base64 -d proofsrc/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 | tar xz -C mixed_runtime
+          python scripts/extract_base64_tar_safe.py \
+            --archive proofsrc/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 \
+            --destination mixed_runtime
       - name: Download all 112 [3,2] shard artifacts with pagination
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -126,14 +138,20 @@ jobs:
         with:
           persist-credentials: false
           ref: research/depth6-s4sign-proof
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+          path: orchestrator
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install --disable-pip-version-check numpy sympy
-      - name: Unpack mixed proof bundle
+      - name: Safely unpack mixed proof bundle
         run: |
-          mkdir -p mixed_runtime
-          base64 -d mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 | tar xz -C mixed_runtime
+          python orchestrator/scripts/extract_base64_tar_safe.py \
+            --archive mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 \
+            --destination mixed_runtime
       - name: Run [3,1,1] shard
         env:
           OMP_NUM_THREADS: '1'
@@ -165,14 +183,20 @@ jobs:
         with:
           persist-credentials: false
           ref: research/depth6-s4sign-proof
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+          path: orchestrator
           path: proofsrc
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: pip install --disable-pip-version-check numpy sympy
       - run: |
-          mkdir -p mixed_runtime
-          base64 -d proofsrc/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 | tar xz -C mixed_runtime
+          python scripts/extract_base64_tar_safe.py \
+            --archive proofsrc/mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64 \
+            --destination mixed_runtime
       - name: Download all 112 [3,1,1] shard artifacts with pagination
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
