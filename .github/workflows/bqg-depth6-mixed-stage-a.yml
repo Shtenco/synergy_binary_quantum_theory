@@ -3,10 +3,6 @@ on:
   workflow_run:
     workflows: ["BQG depth6 S4-sign aggregate"]
     types: [completed]
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/bqg-depth6-mixed-stage-a.yml'
 
 permissions:
   contents: read
@@ -14,7 +10,7 @@ permissions:
 
 jobs:
   mixed32_shard:
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       max-parallel: 20
