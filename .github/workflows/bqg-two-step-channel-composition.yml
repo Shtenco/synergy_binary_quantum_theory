@@ -2,7 +2,7 @@ name: BQG two-step channel composition gate
 
 on:
   push:
-    branches: [main]
+    branches: [main, audit/rg-refinement-strict-20261110]
     paths:
       - "scripts/bqg_two_step_channel_composition.py"
       - ".github/workflows/bqg-two-step-channel-composition.yml"
