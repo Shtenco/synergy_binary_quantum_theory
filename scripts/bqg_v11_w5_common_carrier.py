@@ -86,6 +86,7 @@ def build_carrier(
     max_depth=8,
     amp_tol=1e-12,
     crosscheck_tol=1e-8,
+    leakage_tol=1e-9,
     v09_module=None,
     v10_module=None,
 ):
@@ -94,8 +95,8 @@ def build_carrier(
         raise ValueError("source_nodes must be a sorted, nonempty subset of 0..4")
     if Jmax2 < 10 or max_states < len(W5_K) or max_depth < 0:
         raise ValueError("invalid W5 cutoff or closure limits")
-    if amp_tol <= 0 or crosscheck_tol <= 0:
-        raise ValueError("amp_tol and crosscheck_tol must be positive")
+    if amp_tol <= 0 or crosscheck_tol <= 0 or leakage_tol <= 0:
+        raise ValueError("amp_tol, crosscheck_tol and leakage_tol must be positive")
 
     here = Path(__file__).resolve().parent
     if str(here) not in sys.path:
@@ -151,6 +152,21 @@ def build_carrier(
                 raise RuntimeError(f"V09 did not complete all 24 epsilon terms: node={node}, K={K}")
             if result.get("B_scalar_projection_rejections"):
                 raise RuntimeError(f"V09 scalar projection rejected terms: node={node}, K={K}")
+            max_term_leakage = max(
+                (float(x["max_basis_leakage"]) for x in result["term_diagnostics"]),
+                default=0.0,
+            )
+            non_scalar_ratio = float(result["B_non_scalar_covariant_norm"]) / max(
+                float(result["B_raw_norm"]), 1e-30
+            )
+            if max_term_leakage > leakage_tol:
+                raise RuntimeError(
+                    f"V09 component leakage {max_term_leakage} exceeds {leakage_tol}: node={node}, K={K}"
+                )
+            if non_scalar_ratio > leakage_tol:
+                raise RuntimeError(
+                    f"V09 non-scalar covariant ratio {non_scalar_ratio} exceeds {leakage_tol}: node={node}, K={K}"
+                )
             a = _decode_v09_sparse(result["A_Euclidean_sine_Gauss"], "V09 A")
             b = _decode_v09_sparse(result["B_Lorentzian_raw_KKV_Gauss"], "V09 B")
             _add(A_by_K[K], a)
@@ -164,10 +180,8 @@ def build_carrier(
                 "A_norm": result["A_norm"],
                 "B_raw_norm": result["B_raw_norm"],
                 "B_non_scalar_covariant_norm": result["B_non_scalar_covariant_norm"],
-                "max_term_leakage": max(
-                    (float(x["max_basis_leakage"]) for x in result["term_diagnostics"]),
-                    default=0.0,
-                ),
+                "max_term_leakage": max_term_leakage,
+                "non_scalar_covariant_ratio": non_scalar_ratio,
             })
 
     B_forward_by_K = {}
@@ -195,6 +209,7 @@ def build_carrier(
             "Jmax2": Jmax2,
             "source_nodes": list(nodes),
             "crosscheck_tolerance": crosscheck_tol,
+        "leakage_tolerance": leakage_tol,
             "crosschecks": crosschecks,
             "v10_closure_basis_id_sha256": closure["basis_id_sha256"],
             "claim_scope": "raw engine mismatch; no common carrier or joint-Gram input emitted",
@@ -309,6 +324,7 @@ def main():
     ap.add_argument("--max-depth", type=int, default=8)
     ap.add_argument("--amp-tol", type=float, default=1e-12)
     ap.add_argument("--crosscheck-tol", type=float, default=1e-8)
+    ap.add_argument("--leakage-tol", type=float, default=1e-9)
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--joint-output", type=Path)
     ap.add_argument("--c-e", type=float)
@@ -323,6 +339,7 @@ def main():
         max_depth=args.max_depth,
         amp_tol=args.amp_tol,
         crosscheck_tol=args.crosscheck_tol,
+        leakage_tol=args.leakage_tol,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(carrier, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
