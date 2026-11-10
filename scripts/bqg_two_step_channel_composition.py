@@ -28,7 +28,8 @@ def flow_matrix(T, source, target):
     rows = []
     singular_values = []
     ranks = []
-    for source_channel in source["channels"]:
+    block_rows = []
+    for source_index, source_channel in enumerate(source["channels"]):
         Pblock, svals, rank = FLOW.generated_copy(
             T, source_channel, target["P22_basis"]
         )
@@ -38,7 +39,10 @@ def flow_matrix(T, source, target):
             float(np.trace(Pblock @ Ptarget).real / 2.0)
             for Ptarget in target_projectors
         ])
-    return np.asarray(rows, dtype=float), singular_values, ranks
+        diagnostics = block_diagnostics(Pblock, target_projectors)
+        diagnostics["source_channel"] = source_index
+        block_rows.append(diagnostics)
+    return np.asarray(rows, dtype=float), singular_values, ranks, block_rows
 
 
 def orthonormal_range(projector, expected_rank, context):
@@ -98,8 +102,8 @@ def run_pair(source_s2):
     T1, leakage1 = FLOW.refinement_tensor(source_s2)
     T2, leakage2 = FLOW.refinement_tensor(source_s2 + 1)
 
-    F1, first_singulars, first_ranks = flow_matrix(T1, source, middle)
-    F2, second_singulars, second_ranks = flow_matrix(T2, middle, target)
+    F1, first_singulars, first_ranks, first_block_diagnostics = flow_matrix(T1, source, middle)
+    F2, second_singulars, second_ranks, second_block_diagnostics = flow_matrix(T2, middle, target)
     scalar_product = F1 @ F2
     max_product_path = np.zeros_like(scalar_product)
     max_product_middle_channel = np.zeros(scalar_product.shape, dtype=int)
@@ -139,7 +143,7 @@ def run_pair(source_s2):
     direct_second_singulars = []
     direct_first_ranks = []
     direct_second_ranks = []
-    channel_blocks = []
+    direct_endpoint_block_diagnostics = []
     basis_rotation_defects = []
 
     for source_index, source_channel in enumerate(source["channels"]):
@@ -173,9 +177,9 @@ def run_pair(source_s2):
         direct_second_singulars.append([float(x) for x in s2])
         direct_first_ranks.append(int(rank1))
         direct_second_ranks.append(int(rank2))
-        channel_blocks.append(
-            block_diagnostics(P1, middle_projectors)
-        )
+        endpoint_diagnostics = block_diagnostics(P2, target_projectors)
+        endpoint_diagnostics["source_channel"] = source_index
+        direct_endpoint_block_diagnostics.append(endpoint_diagnostics)
 
     direct = np.asarray(direct_rows, dtype=float)
     defect = direct - scalar_product
@@ -250,7 +254,18 @@ def run_pair(source_s2):
         "max_intermediate_basis_rotation_invariance_defect": max(
             basis_rotation_defects, default=0.0
         ),
-        "intermediate_channel_block_diagnostics": channel_blocks,
+        "first_refinement_channel_block_diagnostics": first_block_diagnostics,
+        "second_refinement_channel_block_diagnostics": second_block_diagnostics,
+        "direct_endpoint_channel_block_diagnostics": direct_endpoint_block_diagnostics,
+        "max_first_refinement_off_diagonal_frobenius": max(
+            (row["max_off_diagonal_frobenius"] for row in first_block_diagnostics), default=0.0
+        ),
+        "max_second_refinement_off_diagonal_frobenius": max(
+            (row["max_off_diagonal_frobenius"] for row in second_block_diagnostics), default=0.0
+        ),
+        "max_direct_endpoint_off_diagonal_frobenius": max(
+            (row["max_off_diagonal_frobenius"] for row in direct_endpoint_block_diagnostics), default=0.0
+        ),
         "interpretation": (
             "G_direct composes the actual generated rank-2 carrier subspace "
             "through both microscopic refinement tensors. F_first @ F_second "
