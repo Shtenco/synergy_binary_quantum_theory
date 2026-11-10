@@ -70,6 +70,46 @@ class LorentzianCheckpointProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing required leakage"):
             BASE.validate_leakage_map(merged, require_all=True)
 
+    def test_exact_empty_input_zero_requires_explicit_provenance(self):
+        meta = {
+            "operator_input_support": 0,
+            "operator_stage_applied": False,
+            "exact_empty_input_zero_fields": [
+                "CK_outer_complete_basis_leakage",
+                "CK_internal_volume_sector_leakage",
+                "CK_complete_charge_basis_leakage",
+            ],
+        }
+        result = BASE.validate_operator_provenance(meta)
+        self.assertFalse(result["operator_stage_applied"])
+        self.assertEqual(len(result["exact_empty_input_zero_fields"]), 3)
+
+    def test_empty_input_provenance_cannot_be_claimed_for_nonempty_input(self):
+        meta = {
+            "operator_input_support": 4,
+            "operator_stage_applied": True,
+            "exact_empty_input_zero_fields": [
+                "CK_outer_complete_basis_leakage",
+                "CK_internal_volume_sector_leakage",
+                "CK_complete_charge_basis_leakage",
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "provenance mismatch"):
+            BASE.validate_operator_provenance(meta)
+
+    def test_operator_skipped_flag_must_match_input_support(self):
+        meta = {
+            "operator_input_support": 0,
+            "operator_stage_applied": True,
+            "exact_empty_input_zero_fields": [
+                "CK_outer_complete_basis_leakage",
+                "CK_internal_volume_sector_leakage",
+                "CK_complete_charge_basis_leakage",
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "execution flag mismatch"):
+            BASE.validate_operator_provenance(meta)
+
     def test_missing_nan_and_negative_diagnostics_fail_closed(self):
         for value in (float("nan"), float("inf"), -1.0, True, "0"):
             with self.subTest(value=value):
