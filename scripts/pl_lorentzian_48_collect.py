@@ -12,11 +12,32 @@ import numpy as np
 TOL=1e-10
 
 def load_state(path):
-    d=np.load(path)
-    return {(tuple(map(int,s)),tuple(map(int,k))):complex(a) for s,k,a in zip(d['spins'],d['Ks'],d['amp'])}
+    with np.load(path, allow_pickle=False) as d:
+        spins=np.asarray(d['spins']);Ks=np.asarray(d['Ks']);amp=np.asarray(d['amp'])
+    if spins.ndim!=2 or Ks.ndim!=2 or amp.ndim!=1:
+        raise ValueError(f"malformed NPZ array ranks in {path}")
+    if spins.shape[1]!=32 or Ks.shape[1]!=16 or not(len(spins)==len(Ks)==len(amp)):
+        raise ValueError(f"malformed NPZ key dimensions or row alignment in {path}")
+    if not np.issubdtype(spins.dtype,np.integer) or not np.issubdtype(Ks.dtype,np.integer):
+        raise ValueError(f"spin and K arrays must be integer-valued in {path}")
+    if not np.isfinite(amp.real).all() or not np.isfinite(amp.imag).all():
+        raise ValueError(f"non-finite amplitudes in {path}")
+    out={}
+    for spin_row,k_row,value in zip(spins,Ks,amp):
+        key=(tuple(map(int,spin_row)),tuple(map(int,k_row)))
+        if key in out:raise ValueError(f"duplicate sparse-state key in {path}: {key}")
+        out[key]=complex(value)
+    return out
 def add(dst,src,scale=1.0):
-    for k,a in src.items():dst[k]=dst.get(k,0j)+scale*a
-def prune(s,tol=TOL):return {k:a for k,a in s.items() if abs(a)>tol}
+    for k,a in src.items():
+        if not np.isfinite([a.real,a.imag]).all():raise ValueError(f"non-finite input amplitude for {k}")
+        z=dst.get(k,0j)+scale*a
+        if not np.isfinite([z.real,z.imag]).all():raise ValueError(f"non-finite accumulated amplitude for {k}")
+        dst[k]=z
+def prune(s,tol=TOL):
+    if not all(np.isfinite([a.real,a.imag]).all() for a in s.values()):
+        raise ValueError("refusing to prune a sparse state containing NaN or infinity")
+    return {k:a for k,a in s.items() if abs(a)>tol}
 def norm(s):return math.sqrt(sum(abs(a)**2 for a in s.values()))
 def max_spin(s):return max((max(k[0]) for k in s),default=0)/2.0
 
@@ -36,8 +57,21 @@ def run(root):
     metas=[]
     for p in Path(root).rglob('term_*.json'):
         d=json.loads(p.read_text())
-        if not d.get('passed'):raise RuntimeError(f'failed worker {p}: {d.get("error")}')
+        if d.get('passed') is not True:raise RuntimeError(f'worker must explicitly pass with boolean true: {p}')
+        required_checks=('all_required_leakage_diagnostics_present_and_finite','physical_basis_and_charge_leakage')
+        if not isinstance(d.get('checks'),dict) or any(d['checks'].get(k) is not True for k in required_checks):
+            raise RuntimeError(f'missing/failed charge-complete diagnostics in {p}')
+        for key in ('physical_acceptance_max_leakage','complete_charge_diagnostic','nonscalar_rejected_norm','scalar_closure_fraction'):
+            value=d.get(key)
+            if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(float(value)) or float(value)<0.0:
+                raise RuntimeError(f'invalid required numeric metadata {key} in {p}')
+        if d['scalar_closure_fraction']>1.0+1e-10:
+            raise RuntimeError(f'invalid scalar closure fraction in {p}')
+        if d.get('exact_zero_ordered_term') not in (True,False):
+            raise RuntimeError(f'missing exact-zero declaration in {p}')
         mode=d['mode'];idx=int(d['index'])
+        if mode not in ('forward','adjoint') or not 0<=idx<24:
+            raise RuntimeError(f'invalid worker identity in {p}')
         # The state paired with this metadata must have the exact same stem.
         # A previous implementation selected the first arbitrary *.npz in the
         # parent directory, which is unsafe in merged/materialized layouts.
