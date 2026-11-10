@@ -228,7 +228,7 @@ def main():
                 save_result(args.checkpoint_dir,args.stage,(i,j,k),out,freeze,diag,
                             {"pruned_by_frozen_scalar_channel":before-len(out)})
         else:
-            total={};diag={k:0. for k in LEAK_FIELDS};branch=[]
+            total={};diag={};branch=[]
             for i,j,k in itertools.product(range(2),repeat=3):
                 state,meta=load_result(args.checkpoint_dir,"ka",(i,j,k),freeze)
                 LP.add(total,state) # exactly old pruning/TOL semantics
