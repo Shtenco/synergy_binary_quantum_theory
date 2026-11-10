@@ -23,7 +23,7 @@ import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_lorentzian_logical_projection_gate as LP
 import peter_weyl_zeroaware_volume_migration_experiment as ZVM
-from tetrahedral_volume_backend import apply_tetra_volume_tensor,tetra_q_block,tetra_volume_block_general,tetra_volume_diagnostics,install_tetrahedral_volume_backend
+from tetrahedral_volume_backend import apply_q_tetra,apply_tetra_volume_tensor,tetra_q_block,tetra_volume_block_general,tetra_volume_diagnostics,install_tetrahedral_volume_backend
 from pl_dual_complex import DualComplex,boundary_4simplex,seed_16cell_boundary
 from pl_peter_weyl_euclidean import PLPeterWeylEuclidean
 from pl_covariant_backend import install_pl_graph
@@ -99,6 +99,48 @@ def charged_spectral_rows():
     return rows
 
 
+def global_magnetic_operator_rows():
+    rows=[]
+    for spins in ((1,1,1,1),(0,1,1,1)):
+        shape=tuple(value+1 for value in spins)
+        dimension=int(np.prod(shape))
+        Q=np.zeros((dimension,dimension),complex)
+        V=np.zeros_like(Q)
+        for column in range(dimension):
+            basis=np.zeros(shape,dtype=complex)
+            basis.flat[column]=1.0
+            Q[:,column]=apply_q_tetra(basis,spins).reshape(-1)
+            V[:,column]=apply_tetra_volume_tensor(basis,spins).reshape(-1)
+        qherm=float(np.linalg.norm(Q-Q.conj().T,ord="fro"))
+        vherm=float(np.linalg.norm(V-V.conj().T,ord="fro"))
+        vmin=float(np.min(np.linalg.eigvalsh(0.5*(V+V.conj().T))))
+        qscale=max(float(np.linalg.norm(Q,ord="fro")),1.0)
+        vscale=max(float(np.linalg.norm(V,ord="fro")),1.0)
+        functional=float(np.linalg.norm((V@V)@(V@V)-Q@Q,ord="fro")/max(float(np.linalg.norm(Q@Q,ord="fro")),1.0))
+        commutators=[]
+        for axis in range(3):
+            total=np.zeros_like(Q)
+            for leg,spin in enumerate(spins):
+                factors=[np.eye(s+1,dtype=complex) for s in spins]
+                factors[leg]=PW.spin_mats_cached(spin)[axis]
+                term=factors[0]
+                for factor in factors[1:]:
+                    term=np.kron(term,factor)
+                total+=term
+            commutators.append(float(np.linalg.norm(Q@total-total@Q,ord="fro")))
+        rows.append({
+            "spins":list(spins),"magnetic_dimension":dimension,
+            "raw_global_Q_hermiticity_relative":qherm/qscale,
+            "global_V_hermiticity_relative":vherm/vscale,
+            "global_V_min_eigenvalue":vmin,
+            "global_V4_minus_Q2_relative":functional,
+            "global_Q_rotation_commutator_max":max(commutators),
+            "all_finite":bool(np.isfinite(Q.real).all() and np.isfinite(Q.imag).all()
+                              and np.isfinite(V.real).all() and np.isfinite(V.imag).all()),
+        })
+    return rows
+
+
 def tensor_reconstruction_rows():
     rows=[]
     for spins in ((1,1,1,1),(0,1,1,1)):
@@ -124,6 +166,7 @@ def run():
     oldslots=cv_slot_norms(False);newslots=cv_slot_norms(True)
     spectral_rows=charged_spectral_rows()
     tensor_rows=tensor_reconstruction_rows()
+    global_rows=global_magnetic_operator_rows()
     oldnorm=[x['matrix_Frobenius_norm'] for x in oldslots];newnorm=[x['matrix_Frobenius_norm'] for x in newslots]
     oldspread=max(oldnorm)-min(oldnorm);newspread=max(newnorm)-min(newnorm)
     checks={
@@ -140,6 +183,10 @@ def run():
       'charged_Q_raw_M_independent_before_averaging':max((x['diagnostics']['max_raw_Q_M_block_defect'] for x in spectral_rows),default=math.inf)<1e-10,
       'charged_volume_spectral_functional_calculus':max((x['diagnostics']['V4_minus_Q2_relative_error'] for x in spectral_rows),default=math.inf)<1e-9,
       'complete_magnetic_tensor_reconstruction_and_finite_output':len(tensor_rows)==2 and all(x['finite_output'] for x in tensor_rows),
+      'global_raw_Q_and_V_hermiticity':len(global_rows)==2 and max(x['raw_global_Q_hermiticity_relative'] for x in global_rows)<1e-10 and max(x['global_V_hermiticity_relative'] for x in global_rows)<1e-10,
+      'global_V_positive_and_functional_calculus':min(x['global_V_min_eigenvalue'] for x in global_rows)>-1e-10 and max(x['global_V4_minus_Q2_relative'] for x in global_rows)<1e-9,
+      'global_Q_rotational_scalar':max(x['global_Q_rotation_commutator_max'] for x in global_rows)<1e-9,
+      'global_operator_matrices_finite':all(x['all_finite'] for x in global_rows),
     }
     return {'status':'tetrahedral charged-volume covariance correction audit','passed':bool(all(checks.values())),
             'science_status':'PRE_LORENTZIAN_OPERATOR_CORRECTION','definition':'Q_tet=(1/4) sum_r (-1)^r q_{omit r}; V_tet=sqrt(abs(Q_tet)) with production zero-aware spectral convention',
@@ -149,6 +196,7 @@ def run():
             'K5_H_E_comparison':k5,'sixteen_cell_H_E_comparison':cell,
             'old_q123_CV_slots':oldslots,'tetrahedral_CV_slots':newslots,
             'charged_spectral_rows':spectral_rows,'magnetic_tensor_reconstruction_rows':tensor_rows,
+            'global_magnetic_operator_rows':global_rows,
             'old_CV_slot_norm_spread':oldspread,'tetra_CV_slot_norm_spread':newspread,
             'interpretation':'The fixed q_123 extension is valid for frozen Gauss absolute volume but not for charged intermediate states. The four-leg completion restores local tetrahedral slot covariance while leaving the gauge-invariant Euclidean Hamiltonian columns unchanged on both regulators.',
             'consequence':'All Lorentzian C(K)/S calculations that used the old charged q_123 extension are retained only as historical diagnostics and must be recomputed with the tetrahedral backend before physical promotion.',
