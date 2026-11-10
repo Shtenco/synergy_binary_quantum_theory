@@ -26,8 +26,8 @@ jobs:
           python-version: '3.11'
       - name: Enumerate and statically audit Python blobs across every branch head
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: \${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python -m py_compile scripts/audit_python_all_branch_heads.py
           python scripts/audit_python_all_branch_heads.py --out verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
