@@ -1,0 +1,36 @@
+name: W5 scalar tolerance ablation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/w5_scalar_tolerance_ablation.py"
+      - ".github/workflows/w5-scalar-tolerance-ablation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tolerance-ablation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Compare projection, accumulation and aggregation tolerances
+        run: |
+          python scripts/w5_scalar_tolerance_ablation.py \
+            --output verification_results/W5_SCALAR_TOLERANCE_ABLATION.json
+      - name: Upload ablation result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w5-scalar-tolerance-ablation-k0-node0-j10
+          path: verification_results/W5_SCALAR_TOLERANCE_ABLATION.json
+          if-no-files-found: warn
+          retention-days: 30
