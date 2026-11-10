@@ -15,11 +15,18 @@ The current matrix has 68 unique row vectors and two duplicate rows:
 
 Thus each pair receives exactly the same formula from the six-dimensional exponent basis. Yet the target dictionary assigns different measured masses to each member of each pair. A single shared formula cannot distinguish the members; any claimed separate prediction requires an additional quantum number/parameter or a different row, neither of which appears in this matrix.
 
-## 3. The claimed LLL reduction is absent from the checked-in implementation
+## 3. The repository contains several incompatible matrix versions
 
-The source imports SymPy and NumPy. Its get_exact_invariants() calls M_sp.T.nullspace(), clears denominators, divides by the gcd, computes the residual exponent vector, and sorts by Euclidean norm. There is no call to an LLL algorithm or an LLL library in this file. Therefore the article's statement that LLL reduction selected 29 short invariants is not reproduced by this implementation as checked in.
+The article reports a 55×6 matrix (nullity 49). The current public repository contains at least these distinct versions:
 
-Sorting a chosen nullspace basis by norm is not LLL reduction. Moreover, a nullspace basis is not unique; the short vectors found depend on the basis and the integer-lattice reduction method. A reproducible LLL claim requires an explicit lattice basis, algorithm, implementation/version, and output.
+- matrix_analysis.py: 70×6, 70 names, rank 6, nullity 64; this file computes a nullspace and sorts vectors but does not call LLL.
+- draft/stress_kernel.py: 30×6, 30 names; it explicitly calls SymPy's .lll() on a 24×30 integer kernel basis, so this is a real LLL implementation for a different, 30-observable matrix.
+- physics_constants/constant_matrix_analysis.py: 69 matrix rows but 70 names in the current file, and it does call .lll(); this is a shape/label consistency failure requiring investigation before its outputs can be trusted.
+- physics_constants/matrix_analysis.md: reports a 30×6 matrix, nullity 24, and 14 short LLL invariants.
+
+Thus LLL does exist in some repository scripts, but the cited/current matrix_analysis.py does not implement it, and the 30-row LLL result is not the article's claimed 55-row/49-nullity result. The exact 55×6 matrix and exact 29-vector LLL output used for the article have not yet been located in the current source tree.
+
+Sorting a chosen nullspace basis by norm is not LLL reduction. A reproducible LLL claim requires a pinned matrix, exact integer lattice basis, algorithm/implementation version, and output. The repository currently mixes multiple matrices and reports different dimensions/counts.
 
 ## 4. Rank 6 does not establish a minimal physical basis
 
@@ -30,6 +37,6 @@ Rank 6 establishes only that the six columns of this chosen exponent matrix are 
 - Current checked-in M dimensions: 70×6, not 55×6.
 - Numeric rank: 6; corresponding nullity: 64, not 49.
 - Duplicate exponent rows: 2 pairs.
-- LLL reduction in source: NOT IMPLEMENTED.
+- LLL reduction: implemented in a 30×6 draft, absent from the 70×6 matrix_analysis.py; the article's 55×6 / 29-vector result is not yet reproduced.
 - Physical interpretation of the six basis columns: NOT ESTABLISHED by rank alone.
 - Article/repository version consistency: FAIL.
