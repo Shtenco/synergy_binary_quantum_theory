@@ -123,6 +123,17 @@ No coefficient may be adjusted to force a joint kernel, maximize a small singula
 5. Derive \(\mathcal N_{W5}^{reg}\) by translating one selected primary classical regularization into the exact code conventions. Do not transplant a literature prefactor without mapping every factor.
 6. Only then form the common-carrier physical \(H_E+H_L\) and its joint kernel.
 
+## 7.1. V10 implementation update (11 November 2026)
+
+The V10 runner has now been extended to serialize, on a complete adjoint-closed basis, three separate sparse column families:
+- (B_{comm,sym}=(B_{comm}+B_{comm}^\dagger)/2);
+- (B_{comm,anti}=(B_{comm}-B_{comm}^\dagger)/2);
+- (B_{H,sym}|_{\hbar=1}=-B_{comm,sym}).
+
+The runner explicitly labels the last object as a dimensionless (\hbar=1) algebraic candidate. It does not mark the physical ordering as selected and does not insert the missing external regularization coefficient.
+
+A new unit test constructs a complex matrix and checks (S=S^\dagger), (A=-A^\dagger), (S+A=B), and (B_{H,sym}|_{\hbar=1}=-S). This is a matrix-algebra regression test, not a W5 production result. The corresponding Actions run must pass before this new code path is treated as tested.
+
 ## 8. Current verdict
 
 **Established algebraically:** the minus \(\hbar^{-2}\) conversion for two anti-Hermitian commutator legs, and the unique minimal symmetric completion of the chosen raw map once its full direct adjoint is known.
