@@ -242,7 +242,7 @@ def build_carrier(
             "Jmax2": Jmax2,
             "source_nodes": list(nodes),
             "crosscheck_tolerance": crosscheck_tol,
-        "leakage_tolerance": leakage_tol,
+            "leakage_tolerance": leakage_tol,
             "crosschecks": crosschecks,
             "decomposition_checks": decomposition_checks,
             "v10_closure_basis_id_sha256": closure["basis_id_sha256"],
