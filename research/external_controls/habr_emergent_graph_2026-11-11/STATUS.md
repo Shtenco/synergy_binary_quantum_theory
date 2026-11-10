@@ -18,7 +18,9 @@
 - FINDINGS_002.md — N provenance conflicts, constants/code mismatch, strange-quark mismatch, fitting protocol.
 - FINDINGS_003.md — all 380 JSON mass-ratio rows, teta inversion, formula-string parser audit, dependence structure.
 - FINDINGS_004.md — neutron lifetime comparison against PDG 2026.
+- FINDINGS_007.md — matrix-version drift, 70×6 vs 55×6 vs 30×6, duplicate rows, and LLL implementation status.
 - FINDINGS_005.md — finite graph zeta identities, TSCO, current, unitarity, metric, mass scaling.
+- FINDINGS_006.md — independent recalculation of all 82 code targets at four N conventions and LOO.
 
 ## Confirmed initial quantitative checks
 
