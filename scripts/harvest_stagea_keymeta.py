@@ -13,6 +13,7 @@ requires exact 112/112 metadata coverage.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -24,6 +25,9 @@ import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'proof_tools'))
+from safe_archive import safe_extract_zip
 
 
 API_HEADERS = {
@@ -84,6 +88,8 @@ def download(url: str, token: str, dst: Path):
         location = exc.headers.get('Location')
         if not location:
             raise RuntimeError(f'artifact redirect {exc.code} missing Location') from exc
+        if urllib.parse.urlparse(location).scheme.lower() != 'https':
+            raise RuntimeError('refusing non-HTTPS signed artifact URL')
         signed_req = urllib.request.Request(location, headers={
             'User-Agent': API_HEADERS['User-Agent'],
         })
@@ -152,11 +158,16 @@ def main() -> int:
             download(str(art['archive_download_url']), token, zpath)
             zdir = tmp_root / 'zip'
             zdir.mkdir()
+            expected_digest = str(art.get('digest') or '')
+            if not expected_digest.startswith('sha256:'):
+                raise RuntimeError('artifact metadata has no SHA-256 digest')
+            actual_digest = hashlib.sha256(zpath.read_bytes()).hexdigest()
+            if actual_digest != expected_digest.split(':', 1)[1].lower():
+                raise RuntimeError('artifact ZIP SHA-256 mismatch')
+            if zpath.stat().st_size != int(art.get('size_in_bytes') or -1):
+                raise RuntimeError('artifact ZIP size mismatch')
             with zipfile.ZipFile(zpath) as zf:
-                bad = [n for n in zf.namelist() if Path(n).is_absolute() or '..' in Path(n).parts]
-                if bad:
-                    raise RuntimeError(f'unsafe zip members: {bad[:3]}')
-                zf.extractall(zdir)
+                safe_extract_zip(zf, zdir)
             raw = zdir / f'{a.prefix}{shard}.tar.gz'
             if not raw.is_file():
                 matches = list(zdir.rglob(f'{a.prefix}{shard}.tar.gz'))
@@ -175,7 +186,10 @@ def main() -> int:
                 '--source-artifact-digest', str(art.get('digest') or ''),
                 '--engine-git-blob-sha', a.engine_git_blob_sha,
             ]
-            subprocess.run(cmd, check=True)
+            child_env = os.environ.copy()
+            child_env.pop(a.token_env, None)
+            child_env.pop('GITHUB_TOKEN', None)
+            subprocess.run(cmd, check=True, env=child_env)
             stats = json.loads(out_json.read_text())
             manifest['harvested'][str(shard)] = {
                 'artifact_id': int(art['id']),
