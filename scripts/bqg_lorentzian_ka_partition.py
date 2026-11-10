@@ -36,17 +36,32 @@ def cli():
  if a.parts<1 or not 0<=a.part_index<a.parts:p.error("invalid partition index")
  return a
 def parse_key(s):return tuple(int(c) for c in s)
+def expected_freeze(a):
+ if a.source not in Base.PW.VERT or len({a.a,a.b,a.c})!=3 or not all(v in Base.PW.NEIG[a.source] for v in (a.a,a.b,a.c)):
+  raise ValueError("partition triple/source does not match the frozen local graph")
+ if a.coefficient not in (-1,1):
+  raise ValueError("partition epsilon coefficient must be +/-1")
+ basis=Base.PW.basis_full_jhalf()
+ if not 0<=a.column_index<len(basis):
+  raise ValueError("partition column-index is outside the 32D logical basis")
+ initial=basis[a.column_index]
+ return dict(source=a.source,column_index=a.column_index,input_key=repr(initial),
+  input_Ks=list(initial[1]),triple=[a.a,a.b,a.c],epsilon=a.coefficient,
+  JMAX2=Base.JMAX2,TOL=Base.TOL,checkpoint_schema=Base.CHECKPOINT_SCHEMA,
+  runtime=Base.runtime_fingerprint(),modules=Base.source_hashes())
+
+def key_digest(keys):
+ payload="\\n".join(repr(key) for key in keys).encode("utf-8")
+ return hashlib.sha256(payload).hexdigest()
+
 def run():
  a=cli();ijk=parse_key(a.channel);checkpoint=a.checkpoint_dir
- source,orig=Base.load_result(checkpoint,"kb",ijk,
-     Base.source_hashes() if False else read_freeze(checkpoint,ijk))
+ expected=expected_freeze(a)
+ source,orig=Base.load_result(checkpoint,"kb",ijk,expected)
  freeze=orig["freeze"]
- assert freeze["source"]==a.source and freeze["column_index"]==a.column_index
- assert freeze["triple"]==[a.a,a.b,a.c] and freeze["epsilon"]==a.coefficient
- assert freeze["JMAX2"]==Base.JMAX2 and freeze["TOL"]==Base.TOL
- assert freeze["modules"]==Base.source_hashes()
  rows=sorted(source.items(),key=lambda kv:repr(kv[0]))
- subset=dict(rows[a.part_index::a.parts])
+ part_rows=rows[a.part_index::a.parts]
+ subset=dict(part_rows)
  if a.mode=="part":
   LP.JMAX2=Base.JMAX2
   restore,_=LP.install_sine_cached_stack()
@@ -60,7 +75,8 @@ def run():
    stem=checkpoint/f"ka_{a.channel}_part{a.part_index:03d}_of{a.parts:03d}"
    Base.persist_state(stem.with_suffix(".npz"),out)
    meta=dict(stage="ka_part",parts=a.parts,part_index=a.part_index,channel=list(ijk),
-      kb_sha256=orig["sha256"],freeze=freeze,rows=len(subset),support=len(out),
+      kb_sha256=orig["sha256"],freeze=freeze,rows=len(subset),
+      input_keys_sha256=key_digest([key for key,_ in part_rows]),support=len(out),
       norm=Base.norm(out),sha256=Base.digest(stem.with_suffix(".npz")),
       leakage_max=h)
    Base.write_atomic(stem.with_suffix(".json"),
@@ -75,9 +91,12 @@ def run():
   stem=checkpoint/f"ka_{a.channel}_part{part:03d}_of{a.parts:03d}"
   meta=json.loads(stem.with_suffix(".json").read_text())
   file=stem.with_suffix(".npz")
+  expected_part_rows=rows[part::a.parts]
   if (meta.get("kb_sha256")!=orig["sha256"] or meta.get("freeze")!=freeze or
        meta.get("part_index")!=part or meta.get("parts")!=a.parts or
-       meta.get("channel")!=list(ijk) or meta.get("sha256")!=Base.digest(file)):
+       meta.get("channel")!=list(ijk) or meta.get("sha256")!=Base.digest(file) or
+       meta.get("rows")!=len(expected_part_rows) or
+       meta.get("input_keys_sha256")!=key_digest([key for key,_ in expected_part_rows])):
    raise ValueError(f"ERROR: mismatched/missing checkpoint part {part}")
   state=Base.restore_state(file)
   if len(state)!=meta["support"] or not math.isclose(Base.norm(state),meta["norm"],abs_tol=1e-12,rel_tol=1e-12):
@@ -93,8 +112,5 @@ def run():
            "note":"Floating-point order differs from monolithic; must check independent small-input/control."})
  print("PASS_MERGE",a.channel,"all",a.parts,"support",len(total),"norm",Base.norm(total))
  return 0
-def read_freeze(root,ijk):
- d=json.loads(Base.prefix(root,"kb",ijk).with_suffix(".json").read_text())
- return d["freeze"]
 if __name__=="__main__":
  raise SystemExit(run())

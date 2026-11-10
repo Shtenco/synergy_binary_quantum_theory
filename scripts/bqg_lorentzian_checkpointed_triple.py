@@ -9,7 +9,7 @@ Stage options: cv, kb, ka, finish. Each stage is one durable GitHub Actions job.
 This computes a *single raw ordered triple*, NOT the full Hermitian Lorentzian H.
 """
 from __future__ import annotations
-import argparse, hashlib, itertools, json, math, os, sys, time
+import argparse, ast, hashlib, itertools, json, math, os, sys, time
 from pathlib import Path
 import numpy as np
 
@@ -26,11 +26,56 @@ TOL=1e-10
 LEAK_FIELDS=("CV_complete_basis_leakage","CK_outer_complete_basis_leakage",
              "CK_internal_volume_sector_leakage","CK_complete_charge_basis_leakage")
 STAGES=("cv","kb","ka","finish")
-BASE_FILES=("k5_peter_weyl_safe_hda_column.py",
-            "peter_weyl_lorentzian_logical_projection_gate.py",
-            "peter_weyl_lorentzian_gauss_action_gate.py",
-            "peter_weyl_lorentzian_ordered_triple_gate.py",
-            "peter_weyl_covariant_volume_leg_gate.py")
+CHECKPOINT_SCHEMA = 2
+ROOT_MODULES = (
+    "bqg_lorentzian_checkpointed_triple",
+    "bqg_lorentzian_ka_partition",
+)
+
+def runtime_fingerprint():
+    return {"python": sys.version.split()[0], "numpy": np.__version__}
+
+def _local_module_path(name):
+    relative = Path(*name.split("."))
+    module_file = HERE / relative.with_suffix(".py")
+    package_file = HERE / relative / "__init__.py"
+    if module_file.is_file():
+        return module_file
+    if package_file.is_file():
+        return package_file
+    return None
+
+def source_hashes():
+    """Hash the complete transitive closure of local imports used by both workers."""
+    pending = list(ROOT_MODULES)
+    visited = set()
+    hashes = {}
+    while pending:
+        name = pending.pop()
+        if name in visited:
+            continue
+        visited.add(name)
+        path = _local_module_path(name)
+        if path is None:
+            continue
+        relative = path.relative_to(HERE).as_posix()
+        hashes[relative] = digest(path)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                pending.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level == 0 and node.module:
+                    pending.append(node.module)
+                elif node.level > 0:
+                    package = path.relative_to(HERE).with_suffix("").parts[:-1]
+                    keep = max(0, len(package) - node.level + 1)
+                    parts = package[:keep]
+                    if node.module:
+                        parts += tuple(node.module.split("."))
+                    if parts:
+                        pending.append(".".join(parts))
+    return dict(sorted(hashes.items()))
 def digest(path):
     h=hashlib.sha256()
     with Path(path).open("rb") as f:
@@ -122,7 +167,8 @@ def main():
     initial=basis[args.column_index]
     freeze=dict(source=args.source,column_index=args.column_index,input_key=repr(initial),
                 input_Ks=list(initial[1]),triple=[args.a,args.b,args.c],epsilon=args.coefficient,
-                JMAX2=JMAX2,TOL=TOL,modules=source_hashes())
+                JMAX2=JMAX2,TOL=TOL,checkpoint_schema=CHECKPOINT_SCHEMA,
+                runtime=runtime_fingerprint(),modules=source_hashes())
     args.checkpoint_dir.mkdir(parents=True,exist_ok=True)
     LP.JMAX2=JMAX2
     restore,caches=LP.install_sine_cached_stack()
