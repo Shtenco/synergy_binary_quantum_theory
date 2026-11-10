@@ -547,5 +547,32 @@ These checks reject malformed artifact metadata only. They do not change
 the master operator, support graph, SVD threshold, rank criterion, or
 scientific result. The first CI run containing the complete strict-index
 change is
-[42822893945](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42822893945);
+[42823223090](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42823223090);
 it was pending when this phase was recorded.
+
+
+## Phase 9 — ZIP Unix file-type validation
+
+The archive helper's ZIP path previously rejected symlinks, character/block
+devices and FIFOs, but did not reject every other special Unix file type
+(e.g. a socket), and it did not verify consistency between Unix mode bits
+and the ZIP filename's directory marker. The extractor would write such an
+entry as an ordinary file rather than create a socket, so this was not a
+path-escape or code-execution primitive; it was nevertheless inconsistent
+with the helper's documented regular-file/directory-only contract.
+
+`safe_extract_zip` now uses an allowlist of ZIP Unix file types: unknown or
+special types are rejected; only absent type metadata, regular files, and
+directories are accepted. It also rejects a directory mode without a
+directory name and a regular-file mode with a directory name. Regression
+tests cover socket metadata and type/name mismatch. Normal Windows ZIP
+entries with no Unix type bits remain accepted.
+
+The fix changes no legitimate file payload or extraction destination. The
+branch-wide audit run containing this change is
+[42823223090](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42823223090);
+it was pending when this phase was recorded. Numerical continuation and
+core regression for the same commit were queued as runs
+[42823223134](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42823223134)
+and
+[42823223142](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42823223142).
