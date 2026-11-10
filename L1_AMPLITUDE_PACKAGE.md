@@ -98,6 +98,31 @@ collector and also compares the full (K,A,B) moment matrices. A successful
 self-test is only a unit-level numerical control; the E-only regression status
 requires the real 72-shard input set.
 
+## Reproduction commands
+
+After all 72 shard triplets have been produced into `SHARD_DIR`, run from the
+repository checkout:
+
+```bash
+SOURCE_COMMIT="$(git rev-parse HEAD)"
+python scripts/collective_l1_amplitude_producer.py \
+  --root SHARD_DIR \
+  --output-dir verification_results/l1_amplitude_package \
+  --source-commit "$SOURCE_COMMIT"
+
+python scripts/validate_l1_amplitude_package.py \
+  --manifest verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.json \
+  --archive verification_results/l1_amplitude_package/L1_AMPLITUDE_PACKAGE.npz \
+  --producer-source scripts/collective_l1_amplitude_producer.py
+```
+
+The producer's regression comparison is against the historical collector and
+uses the frozen relative tolerance (3\\times10^{-7}). The stable assembler
+uses a single post-sum absolute amplitude threshold (10^{-10}), matching the
+legacy cutoff value but not its intermediate-pruning semantics. The discarded
+global L2 norm is reported. Neither tolerance is adjusted after observing the
+result.
+
 ## Status semantics
 
 - `PASS_E_ONLY_REGRESSION_PRECURSOR`: the E-only ingestion and regression
