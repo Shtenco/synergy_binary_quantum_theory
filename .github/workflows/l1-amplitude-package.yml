@@ -1,0 +1,32 @@
+name: L1 amplitude package producer
+on:
+  push:
+    branches:
+      - research/l1-amplitude-package-20261110
+    paths:
+      - "scripts/collective_l1_amplitude_producer.py"
+      - "scripts/validate_l1_amplitude_package.py"
+      - "tests/test_collective_l1_amplitude_producer.py"
+      - "tests/test_validate_l1_amplitude_package.py"
+      - "L1_AMPLITUDE_PACKAGE.md"
+      - ".github/workflows/l1-amplitude-package.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  producer-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install minimal runtime
+        run: python -m pip install --disable-pip-version-check numpy
+      - name: Compile producer, validator, and tests
+        run: python -m py_compile scripts/collective_l1_amplitude_producer.py scripts/validate_l1_amplitude_package.py tests/test_collective_l1_amplitude_producer.py tests/test_validate_l1_amplitude_package.py
+      - name: Run producer and package-integrity unit tests
+        run: |
+          python -m unittest discover -s tests -p "test_collective_l1_amplitude_producer.py" -v
+          python -m unittest discover -s tests -p "test_validate_l1_amplitude_package.py" -v
