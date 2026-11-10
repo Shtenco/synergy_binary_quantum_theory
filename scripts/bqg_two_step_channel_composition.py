@@ -416,11 +416,12 @@ def run_pair(source_s2, reference_dir=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-s2", type=int, choices=(3, 4), required=True)
+    parser.add_argument("--source-s2", type=int, choices=(3, 4, 5, 6, 7), required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--reference-dir", type=Path)
     args = parser.parse_args()
 
-    result = run_pair(args.source_s2)
+    result = run_pair(args.source_s2, args.reference_dir)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2), flush=True)
