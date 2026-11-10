@@ -1,0 +1,67 @@
+{
+  "status": "maximum-fidelity ancestry path through BQG multiplicity channels",
+  "source_s2_start": 3,
+  "target_s2_end": 8,
+  "input_matrix_s2": [3, 4, 5, 6, 7],
+  "channel_path": [0, 1, 1, 1, 2, 2],
+  "best_log_fidelity": -0.7075953025590171,
+  "best_cumulative_fidelity": 0.49282787562801145,
+  "steps": [
+    {
+      "source_j": 1.5,
+      "target_j": 2.0,
+      "source_channel": 0,
+      "target_channel": 1,
+      "source_master_eigenvalue": 11.86424574046416,
+      "target_master_eigenvalue": 5.807713077901408,
+      "overlap": 0.9459578674471627,
+      "mismatch": 0.23246963791608852
+    },
+    {
+      "source_j": 2.0,
+      "target_j": 2.5,
+      "source_channel": 1,
+      "target_channel": 1,
+      "source_master_eigenvalue": 5.807713077901404,
+      "target_master_eigenvalue": 22.499018693031907,
+      "overlap": 0.8688492971205302,
+      "mismatch": 0.36214734967892537
+    },
+    {
+      "source_j": 2.5,
+      "target_j": 3.0,
+      "source_channel": 1,
+      "target_channel": 1,
+      "source_master_eigenvalue": 22.499018693031918,
+      "target_master_eigenvalue": 10.264684071155518,
+      "overlap": 0.8826884371011211,
+      "mismatch": 0.3425077559689399
+    },
+    {
+      "source_j": 3.0,
+      "target_j": 3.5,
+      "source_channel": 1,
+      "target_channel": 2,
+      "source_master_eigenvalue": 10.264684071155518,
+      "target_master_eigenvalue": 36.381268968404214,
+      "overlap": 0.7836251466890334,
+      "mismatch": 0.46516110468413696
+    },
+    {
+      "source_j": 3.5,
+      "target_j": 4.0,
+      "source_channel": 2,
+      "target_channel": 2,
+      "source_master_eigenvalue": 36.381268968404214,
+      "target_master_eigenvalue": 16.14026591974106,
+      "overlap": 0.866888447374884,
+      "mismatch": 0.3648445595388754
+    }
+  ],
+  "naive_lowest_channel_path": [0, 0, 0, 0, 0, 0],
+  "naive_lowest_cumulative_fidelity": 0.00004694570240506031,
+  "ancestry_to_lowest_product_ratio": 10497.827285142275,
+  "workflow_run_id": 42797583866,
+  "workflow_commit": "890dc7051601008f5cb724928df9318f2e8654ce",
+  "claim_boundary": "Finite representation-RG projector-overlap ancestry only; not a physical probability, physical-time trajectory, continuum fixed point, or physical-projector convergence result."
+}
