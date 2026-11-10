@@ -213,6 +213,31 @@ def update_diag(dst, name, value):
     dst[name] = max(dst.get(name, 0.0), float(value))
 
 
+LEAK_FIELDS = (
+    "CV_complete_basis_leakage",
+    "CK_outer_complete_basis_leakage",
+    "CK_internal_volume_sector_leakage",
+    "CK_complete_charge_basis_leakage",
+)
+
+
+def leakage_summary(diag):
+    if not isinstance(diag, dict):
+        return {"complete": False, "maximum": None, "missing": list(LEAK_FIELDS), "invalid": []}
+    missing = sorted(set(LEAK_FIELDS) - set(diag))
+    invalid = []
+    for key in LEAK_FIELDS:
+        if key not in diag:
+            continue
+        value = diag[key]
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(float(value)) or float(value) < 0.0):
+            invalid.append(key)
+    complete = not missing and not invalid
+    maximum = max(float(diag[key]) for key in LEAK_FIELDS) if complete else None
+    return {"complete": complete, "maximum": maximum, "missing": missing, "invalid": invalid}
+
+
 def ordered_triple_state(initial, source_v, a, b, c):
     """Return the actual covariant state for Tr[C_a(K)C_b(K)C_c(V)]|initial>."""
     psi = CV.gauss_to_covariant({initial: 1 + 0j}, source_v)
@@ -370,13 +395,12 @@ def run(source_v=0):
             for name, fn in caches.items()
         }
 
+        leakage = leakage_summary(diagmax)
         passed = (
             len(columns) == 2
             and all(x["full_output_support"] > 0 for x in all_logical_support)
-            and max(diagmax.get("CV_complete_basis_leakage", 0.0),
-                    diagmax.get("CK_outer_complete_basis_leakage", 0.0),
-                    diagmax.get("CK_internal_volume_sector_leakage", 0.0),
-                    diagmax.get("CK_complete_charge_basis_leakage", 0.0)) < 1e-8
+            and leakage["complete"]
+            and leakage["maximum"] < 1e-8
         )
 
         return {
@@ -394,6 +418,10 @@ def run(source_v=0):
             "environment_excited_logical_norm2_by_input": env_excited_norm2,
             "columns": all_logical_support,
             "max_diagnostics": diagmax,
+            "leakage_diagnostics_complete": leakage["complete"],
+            "leakage_diagnostics_missing": leakage["missing"],
+            "leakage_diagnostics_invalid": leakage["invalid"],
+            "physical_acceptance_max_leakage": leakage["maximum"],
             "cache_info": cache_info,
             "raw_projection_nonzero": bool(local_norm > 1e-10),
             "interpretation": (
