@@ -140,3 +140,36 @@ coefficient fit, full Gram, or joint-kernel calculation is authorized by this
 pilot. The previously derived conversion
 `K_H=K_comm/(i hbar)` and two-K factor `-1/hbar^2` remains an algebraic
 normalization identity; it does not repair this scalar-covariance failure.
+
+
+## Repeated five-seed pilot: blocker reproduced (2026-11-10)
+
+The latest five-seed pilot, workflow run
+[42781449559](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449559),
+completed with **FAIL** at 2026-11-10 08:28:24 UTC. It again failed inside
+`restore_scalar_charge_M`, reached through
+`he_sine_reduced -> apply_HE_complete_key -> apply_K_complete_custom ->
+C_K_component -> triple_forward`. The exact exception is unchanged:
+
+```text
+RuntimeError: scalar H_E violated canonical J,M preservation
+at node 0: input J2=0, canonical M2=0, output=(2, 0)
+```
+
+The requested `W5_ADJOINT_NODE0_J10_SEED_PILOT.json` was not created; the
+artifact upload step explicitly reported that no file existed. Thus this
+run returned **zero certified W5 seed columns** and no adjoint-closure
+diagnostic. This is a reproduction of the earlier blocker, not a new
+independent measurement of its amplitude: the exception occurs before the
+runner can return the complete output-sector weights.
+
+The run used node 0, doubled-spin wall Jmax2=10, five seed values
+K=(0,2,4,6,8), max_states=5 and max_depth=0. It does not test closure beyond
+the seeds.
+
+At the same time, the independent scalar-covariance diagnostic run
+[42781449616](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449616)
+and the refreshed jhalf-to-j1 RG run
+[42781449706](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42781449706)
+were still running when this note was updated. No result from either is
+inferred from the five-seed failure.
