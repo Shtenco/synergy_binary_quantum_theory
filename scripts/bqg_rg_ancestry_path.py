@@ -38,6 +38,8 @@ def validate_refinement_spectrum(item, context):
     expected_rank = int(np.sum(singular > rank_tol))
     if isinstance(rank, bool) or not isinstance(rank, int) or rank != expected_rank:
         raise ValueError(f"{context}: numerical rank does not match singular spectrum")
+    if float(np.sum(singular * singular)) <= 0.0:
+        raise ValueError(f"{context}: induced refinement tensor has zero spectral mass")
     expected_row = np.sort(np.concatenate((np.zeros(max(0, shape[0] - singular.size)),
                                            singular * singular)))
     if expected_row.shape != row_gram.shape:
