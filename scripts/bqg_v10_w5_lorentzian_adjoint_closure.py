@@ -234,6 +234,34 @@ def sparse_sum_difference_norm(columns_a, columns_b, sign=1.0):
         total2 += sum(abs(a.get(k, 0j) + sign * b.get(k, 0j)) ** 2 for k in keys)
     return math.sqrt(total2)
 
+def sparse_ordering_parts(forward_columns, adjoint_columns):
+    """Return B_sym=(B+B†)/2, B_anti=(B-B†)/2 and B_H,sym at hbar=1.
+
+    The final object is only the algebraic two-Hermitian-K conversion
+    B_H,sym=-B_sym/hbar^2 evaluated at hbar=1. It is not the full physical
+    Lorentzian constraint; its external regularization coefficient is open.
+    """
+    if len(forward_columns) != len(adjoint_columns):
+        raise ValueError("forward and adjoint column counts differ")
+    symmetric, antihermitian, hermitian_k_hbar1 = [], [], []
+    for forward, adjoint in zip(forward_columns, adjoint_columns):
+        sym, anti, kh = {}, {}, {}
+        for key in set(forward) | set(adjoint):
+            f = forward.get(key, 0j)
+            d = adjoint.get(key, 0j)
+            s = 0.5 * (f + d)
+            a = 0.5 * (f - d)
+            h = -s
+            if s != 0:
+                sym[key] = s
+                kh[key] = h
+            if a != 0:
+                anti[key] = a
+        symmetric.append(sym)
+        antihermitian.append(anti)
+        hermitian_k_hbar1.append(kh)
+    return symmetric, antihermitian, hermitian_k_hbar1
+
 
 def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
     source_nodes = tuple(sorted(set(source_nodes)))
@@ -423,6 +451,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             ])
         return encoded
 
+    Bsym_columns, Banti_columns, BHsym_hbar1_columns = sparse_ordering_parts(
+        forward_sorted, adjoint_sorted
+    )
     hard_leak_names = (
         "CV_complete_basis_leakage",
         "CK_outer_complete_basis_leakage",
@@ -454,6 +485,19 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         "basis_keys_repr": [repr(k) for k in basis_keys],
         "forward_B_columns_sparse": encode_columns(forward_sorted),
         "direct_Bdag_columns_sparse": encode_columns(adjoint_sorted),
+        "hermitian_ordering_candidate": {
+            "B_comm_symmetric_definition": "0.5*(B_comm + B_comm_dagger)",
+            "B_comm_antihermitian_definition": "0.5*(B_comm - B_comm_dagger)",
+            "B_H_symmetric_definition": "-B_comm_symmetric/hbar^2",
+            "B_H_symmetric_numeric_columns_at_hbar_1": encode_columns(BHsym_hbar1_columns),
+            "B_comm_symmetric_columns": encode_columns(Bsym_columns),
+            "B_comm_antihermitian_columns": encode_columns(Banti_columns),
+            "symmetric_part_is_hermitian_by_construction": True,
+            "antihermitian_part_is_antihermitian_by_construction": True,
+            "physical_ordering_selected": False,
+            "external_beta_kappa_planck_trace_regulator_prefactor_fixed": False,
+            "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
+        },
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
             "direct_adjoint_absolute_residual": err,
