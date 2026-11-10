@@ -80,6 +80,8 @@ def one_root(root: Path, label: str, expected_counts: dict):
     seen=set()
     for jp in files:
         meta=json.loads(jp.read_text(encoding="utf-8"))
+        if meta.get("passed") is not True:
+            raise RuntimeError(f"{label}: term is not explicitly passed: {jp}")
         mode=meta.get("mode"); idx=meta.get("index")
         if mode not in MODES or isinstance(idx,bool) or not isinstance(idx,int) or not 0<=idx<24:
             raise RuntimeError(f"{label}: invalid term identity in {jp}")
@@ -90,7 +92,10 @@ def one_root(root: Path, label: str, expected_counts: dict):
         npz=jp.with_suffix(".npz")
         if not npz.is_file(): raise RuntimeError(f"{label}: missing paired NPZ {npz}")
         digest=hashlib.sha256(npz.read_bytes()).hexdigest()
-        if meta.get("state_sha256") and digest!=meta["state_sha256"]:
+        expected_digest=meta.get("state_sha256")
+        if not isinstance(expected_digest,str) or len(expected_digest)!=64:
+            raise RuntimeError(f"{label}: missing mandatory state_sha256 in {jp}")
+        if digest!=expected_digest:
             raise RuntimeError(f"{label}: state SHA mismatch in {jp}")
         state=load_sparse(npz)
         execution=meta.get("execution_version","direct-v2-default")
