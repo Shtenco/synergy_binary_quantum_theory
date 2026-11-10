@@ -165,7 +165,7 @@ def evolve_detailed(jmax: float, nmax: int, prune_tol: float):
         rows.append({
             "power": power,
             "support_after_pruning": len(state),
-            "support_before_pruning_exact_nonzero": len(exact_nonzero),
+            "support_before_pruning_float_nonzero": len(exact_nonzero),
             "pruned_amplitude_count": len(dropped),
             "pruned_amplitude_l2_norm": float(math.sqrt(sum(abs(x) ** 2 for x in dropped))),
             "norm_squared": norm2,
