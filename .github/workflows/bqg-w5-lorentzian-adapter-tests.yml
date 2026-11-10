@@ -1,5 +1,9 @@
 name: BQG W5 Lorentzian adapter tests
 
+concurrency:
+  group: bqg-w5-adapter-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, research/lemaitre-bqg-causal-cone-20261110]
