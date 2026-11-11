@@ -208,6 +208,17 @@ F\left(\sum_j c_j e_j\right)
 
 Порог PASS должен быть preregistered и согласован с precision/conditioning. Не выбирать его после просмотра желаемого результата.
 
+### 5.1. L1 reference prototype, пока не подключённый к V10
+
+В репозитории добавляются:
+- scripts/bqg_sparse_linear_accumulator.py — накопление комплексных sparse-вкладов без state-amplitude pruning, с math.fsum для real/imag частей; отдельная фиксированная sparsification mask применяется только к уже собранным matrix columns; действие фиксированной матрицы на коэффициенты не порогуется.
+- tests/test_bqg_production_linearity.py — проверки coherent subthreshold accumulation, complex additivity/homogeneity, permutation stability и линейности fixed-matrix action.
+- .github/workflows/bqg-production-linearity-l1.yml — отдельный workflow с ручным запуском, не вмешивающийся в уже поставленные V09/V10/V11 CI runs.
+
+Три characterization tests для legacy COMP.add и CK.add_state помечены unittest.expectedFailure: они намеренно фиксируют известную нелинейность текущих production helpers. Когда strict accumulator будет внедрён в активный KKV call graph, expectedFailure необходимо убрать; тогда эти тесты станут обязательными PASS gates.
+
+Граница результата: reference accumulator пока не подключён к V10 и не исправляет production map. Он является проверяемым эталоном для L1 и основой безопасного поэтапного рефакторинга. Сам факт наличия workflow не означает, что он уже запускался.
+
 ## 6. Рекомендуемая архитектура строгого linear mode
 
 1. Заморозить конечные input/output bases и их content hashes.
