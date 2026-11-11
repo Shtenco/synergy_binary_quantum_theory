@@ -247,12 +247,16 @@ def volume_raw_hermiticity_diagnostics(
             isinstance(key, tuple) and len(key) == 3
             and all(isinstance(x, (int, np.integer)) and x >= 0 for x in key)
         )
-        defect = float(raw.get("relative_antihermitian_defect", float("nan")))
-        raw_norm = float(raw.get("raw_norm", float("nan")))
+        try:
+            defect = float(raw.get("relative_antihermitian_defect", float("nan")))
+            raw_norm = float(raw.get("raw_norm", float("nan")))
+        except (AttributeError, TypeError, ValueError, OverflowError):
+            defect = float("nan")
+            raw_norm = float("nan")
         defect_finite = math.isfinite(defect)
         norm_finite = math.isfinite(raw_norm)
         record = {
-            "spin_triple": list(key) if key_valid else None,
+            "spin_triple": [int(x) for x in key] if key_valid else None,
             "invalid_key_repr": None if key_valid else repr(key),
             "relative_antihermitian_defect": defect if defect_finite else None,
             "raw_norm": raw_norm if norm_finite else None,
@@ -266,9 +270,9 @@ def volume_raw_hermiticity_diagnostics(
     )
     passed = bool(records) and not failures and coverage_complete
     finite_defects = [
-        float(raw["relative_antihermitian_defect"])
-        for raw in registry.values()
-        if math.isfinite(float(raw.get("relative_antihermitian_defect", float("nan"))))
+        record["relative_antihermitian_defect"]
+        for record in records
+        if record["relative_antihermitian_defect"] is not None
     ]
     return {
         "passed": passed,
