@@ -124,6 +124,14 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
                 psd_tolerance=1e-9
             )
 
+    def test_hermitian_relative_defect_is_scale_invariant(self):
+        base = np.array([[1.0, 1.0j], [0.0, 2.0]], dtype=complex)
+        relative = [
+            pilot.hermitian_diagnostics(base * scale)[1]
+            for scale in (1e-150, 1e-12, 1.0, 1e12, 1e150)
+        ]
+        np.testing.assert_allclose(relative, np.full(5, relative[2]), rtol=2e-15)
+
     def test_hermitian_diagnostics_rejects_nonfinite_matrix(self):
         with self.assertRaisesRegex(ValueError, "non-finite"):
             pilot.hermitian_diagnostics(np.array([[complex(float("nan"), 0.0)]]))
