@@ -511,3 +511,12 @@ The earlier all-spin-1 selected-input wall result is a special case. The new tes
 Added `scripts/test_k5_assembled_node_hermiticity.py` (one unittest method) and registered it as the seventh command in `.github/workflows/bqg-sparse-pruning.yml`. The test builds the complete projected 2×2 matrix (P H_0 P) on two allowed orthonormal input kets, with all link doubled spins 1 and recoupling channels `00000` and `00002`. Each column comes from the production `apply_H_cached_state(..., mode="no_prune")`; it then checks M=M†, finite amplitudes, and emits leakage count/L2/max outside the selected subspace.
 
 The one-action upper wall is `Jmax2=3`, justified by the universal per-edge hit multiplicity ≤2 bound for the current T/T†/H monomials. This is a complete projected-block check, not a full finite-sector matrix certificate. Leakage is explicitly measured rather than assumed zero. The test source was fetched back and inspected; local execution is unavailable in this environment because DNS resolution for github.com fails, and CI execution is not yet confirmed. Do not record PASS until a run completes.
+
+
+### 36.1 Non-vacuity correction and exact local structural check
+
+The initial fixed-spin two-ket projection was vacuous. All 32 T monomials for every oriented specification have edge-hit multiplicities (1,1,1,2), so three edges are hit exactly once and must change doubled spin by ±1. No output can therefore have the same ten-link spin vector as the input. Any block restricted to multiple K-channel states sharing that same spin vector is exactly zero. Do not use the original test's zero block as evidence for Hermiticity.
+
+Commit 779d0a6d89c915ad152f74b9c202a2f8f22c0cc7 replaces that design with a non-vacuous adaptive pair: compute H on the all-spin-1/K=0 input, select the deterministic largest nonzero output amplitude, compute H on that output independently, and assemble the full projected 2×2 matrix. The test asserts a nonzero off-diagonal transition and nonzero matrix norm before the Hermiticity comparison. Each action uses its own analytically sufficient upper wall S+2. The same two-column leakage ledger remains.
+
+A local independent combinatorial reconstruction was run over all 1920 sequences and returned zero counterexamples to the (1,1,1,2) multiplicity invariant. Full production Python execution is still not available locally because GitHub DNS resolution fails; CI for the corrective commit remains unconfirmed. Keep these evidence categories separate.
