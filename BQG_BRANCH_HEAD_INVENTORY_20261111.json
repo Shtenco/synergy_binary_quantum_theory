@@ -7,7 +7,7 @@
   "default_branch": "main",
   "default_branch_head": "254f19fdab41d32b920bf454f987aa7c0fdba34d",
   "audit_branch_heads": {
-    "research/consolidated-bqg-audit-20261111": "7c00e711a3730150d85d6e9bd22f71787ac3988a",
+    "research/consolidated-bqg-audit-20261111": "381e8995fcc35c40fe7a558da989b0cdb4e398e5",
     "research/lemaitre-bqg-causal-cone-20261110": "78a0d58085bbc69ed310d348348ce6695b1dff70"
   },
   "branches": [
@@ -1775,5 +1775,5 @@
       ]
     }
   ],
-  "audit_branch_heads_note": "Audit branch SHA records the consolidated research HEAD immediately before the inventory refresh commit; the inventory commit itself necessarily advances that HEAD."
+  "audit_branch_heads_note": "The consolidated research SHA is the HEAD immediately before this inventory refresh commit; a manifest cannot include the SHA of the commit that writes itself."
 }
