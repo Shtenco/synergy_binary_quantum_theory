@@ -373,3 +373,35 @@ Thus the one-dimensional S4 pseudoscalar result is independently supported, but 
 - The current workflow's preflight failure prevents the later S4 covariance and Euclidean-invariance checks from being rerun in CI on the current code. The local JSON values remain historical until the workflow is green.
 
 **Disposition:** retain the tetrahedral completion as a strong finite-sector candidate and retain the exact uniqueness result, but keep the charged-volume production gate RED until the mixed-tolerance correction, exact-rank gate, diagnostic context and fresh artifacts are committed and executed.
+
+
+## 13. Lorentzian ordered-triple linearity workflow: repeated vacuous zero-output failure
+
+Audited branch: `audit/pl48-volume-failclosed-20261110`.
+
+The latest inspected `lorentzian-superposition-linearity` run was `42839123248` at HEAD `36b8cd90466df79d6bab18c36722f7379bbb3b06`. Its script blob `2067bc9e7e7c9822ea349dbe55cf66151910ff63` is unchanged at the current branch HEAD.
+
+The artifact `PETER_WEYL_LORENTZIAN_SUPERPOSITION_LINEARITY.json` reports:
+- `passed=false`;
+- `superposition_support=0`, `column_sum_support=0`;
+- `superposition_norm=0`, `column_sum_norm=0`;
+- `relative_linearity_error=0.0`;
+- `superposition_output_nonzero=false`;
+- `C_K` cache: zero hits, zero misses, zero entries;
+- `HE_reduced` cache: zero hits, zero misses, zero entries;
+- C(V) and inverse caches were exercised, but the K-composition path was not reached.
+
+The gate correctly fails because the nonzero-output requirement is false. The reported zero relative error is vacuous: both sides of the linearity comparison are the zero map on this chosen fixture. Since `ordered_triple_covariant_from_gauss` skips the K legs when the first C(V) output is empty, the run provides no evidence about C(K) or the full Lorentzian ordered triple.
+
+The current fixture is hard-coded to source node 0, ordered edges (2,3,4), and the first two entries of `PW.basis_full_jhalf()`. Those choices produce no output at `Jmax=5/2`. The correct next step is a deterministic fixture search over reachable basis keys and valid ordered triples, then freeze a nonzero fixture with:
+- nonzero C(V) support and norm;
+- nonzero first C(K) support and norm;
+- nonzero second C(K) or final scalar Gauss output;
+- a complex superposition whose output remains nonzero;
+- direct-vs-column reconstruction checked with a strict accumulator and fixed support.
+
+The current helper `add` prunes every accumulated value below `TOL=10^{-10}`; this is another state-dependent numerical boundary in a test whose purpose is to certify linearity. The test should use a no-prune/stable reference accumulator, or a fixed matrix mask, and separately characterize the production threshold.
+
+The workflow `.github/workflows/lorentzian-superposition-linearity.yml` also has an incomplete path filter. The test imports and calls the K5 producer, C(V), ordered-triple, C(K), and recoupling modules, but the workflow watches only the superposition script, logical-projection script, Gauss-action script and its own YAML. Changes in important operator dependencies can therefore fail to trigger this test.
+
+**Disposition:** this is not evidence that the physical operator is nonlinear. It is a correctly detected non-vacuity/fixture failure, and it currently does not exercise C(K). Keep the Lorentzian superposition claim unproven until a nonzero end-to-end fixture and dependency-closed CI run pass.
