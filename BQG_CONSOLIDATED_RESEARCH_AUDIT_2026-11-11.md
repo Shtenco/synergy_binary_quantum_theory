@@ -696,3 +696,25 @@ Added `test_oriented_volume_tensor_is_self_adjoint_at_every_vertex` to `scripts/
 This specifically covers the vertex-dependent epsilon conjugations around the local (sqrt{|Q|}) action. It is a finite local tensor-space adjointness gate; it does not establish adjointness of the full graph-changing primitive or full H.
 
 **Inventory:** 42 methods across six workflow scripts (12 + 11 + 4 + 7 + 3 + 5). Test source is committed in `50c807d03c8616dce639487afc83704ec19c5b36`. Actions run #29 is expected from this code push; check its actual state before reporting execution. No PASS is claimed.
+
+
+## 25. Repository state snapshot after the 2026-11-11 deepening pass
+
+Latest branch head at this snapshot: `40e47031f4ee1d7f1de7d56f8499dde38580f9fc`. Comparison against `main`: diverged, 107 commits ahead and 2 behind. No merge, rebase, or write to `main` was performed.
+
+The six workflow-invoked test files contain **42 methods by source inventory**:
+- sparse-pruning helper: 12;
+- K5 policy wiring: 11;
+- synthetic dense oracle: 4;
+- production raw-volume operator: 7;
+- production link-hit adjoint: 3;
+- production primitive/orientation: 5.
+
+Recent additions in this pass:
+- all-vertex exact 12-spec orientation combinatorics;
+- one selected matrix element of the full coherent 32-term T/T† sum;
+- local vertex-oriented volume tensor self-adjointness in the Frobenius inner product.
+
+Latest Actions observations: run #29 `42944880600` for the oriented-volume test commit `50c807d03c8616dce639487afc83704ec19c5b36`, run #28 `42944740425`, run #27 `42944352617`, and run #26 `42942768669` were all queued. No completed job result, local test execution, or PASS is available. Later commits in this snapshot update audit documents only.
+
+This is the authoritative current source/evidence inventory; earlier section counts are historical snapshots. Keep the distinction between committed test, executed test, CI PASS, finite mathematical identity, and physical/continuum claim.
