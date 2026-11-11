@@ -280,15 +280,24 @@ def run(depth: int = 1, jmax2: int = 5, mode: str = "no_prune",
             raw_herm["full_master_raw_hermiticity"],
         )
     )
-    decomposition_ok = raw_herm["full_minus_projected_identity_frobenius"] <= (
-        64 * np.finfo(float).eps * max(1.0, np.linalg.norm(masters["full_raw"], ord="fro"))
+    decomposition_scale = float(np.linalg.norm(masters["full_raw"], ord="fro"))
+    decomposition_tolerance = (
+        64 * np.finfo(float).eps * max(decomposition_scale, np.finfo(float).tiny)
     )
+    decomposition_ok = (
+        raw_herm["full_minus_projected_identity_frobenius"] <= decomposition_tolerance
+    )
+    leakage_psd = [
+        classify_psd_spectrum(G, rel_tol=zero_rtol)
+        for G in leakage_grams
+    ]
+    leakage_psd_ok = all(item["psd_pass"] for item in leakage_psd)
     finite_ok = all(
         np.all(np.isfinite(matrix.real)) and np.all(np.isfinite(matrix.imag))
         for matrix in (masters["projected_raw"], masters["leakage_raw"], masters["full_raw"])
     )
     structural_ok = bool(
-        finite_ok and herm_ok and decomposition_ok
+        finite_ok and herm_ok and decomposition_ok and leakage_psd_ok
         and full_spec["psd_pass"] and projected_spec["psd_pass"]
     )
 
@@ -323,6 +332,11 @@ def run(depth: int = 1, jmax2: int = 5, mode: str = "no_prune",
         "full_master_zero_threshold": full_spec["zero_threshold"],
         "full_master_psd_pass": full_spec["psd_pass"],
         "projected_master_psd_pass": projected_spec["psd_pass"],
+        "per_node_leakage_gram_psd_pass": [item["psd_pass"] for item in leakage_psd],
+        "per_node_leakage_gram_min_eigenvalue": [
+            float(np.min(item["eigenvalues"])) for item in leakage_psd
+        ],
+        "assembly_identity_tolerance": decomposition_tolerance,
         "projected_zero_projector_graph_blocks": projected_blocks,
         "full_zero_projector_graph_blocks": blocks,
         "full_nonzero_cross_graph_block_count": len(changed_blocks),
