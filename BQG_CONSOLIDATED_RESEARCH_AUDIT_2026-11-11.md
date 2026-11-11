@@ -470,7 +470,7 @@ The new independent helper separates coherent aggregation from pruning:
 - A verifier checks the full-minus-pruned identity against the ledger.
 - A telescoping error-bound helper implements the propagated stage-error inequality.
 
-Eight committed unit tests cover permutation invariance, cancellation before thresholding, constructive accumulation, a dense-vector oracle, ledger identity, no-prune retention, telescoping-bound verification, and rejection of pre-aggregation pruning.
+Twelve committed unit tests cover permutation invariance, cancellation before thresholding, constructive accumulation, a dense-vector oracle, ledger identity, no-prune retention, telescoping-bound verification, and rejection of pre-aggregation pruning.
 
 **Verification boundary:** both source files were fetched back from GitHub and inspected. A separate local Python harness passed core checks for deterministic aggregation, cancellation/constructive accumulation, ledger norms, dense-vector comparison, and the telescoping bound. The committed unittest file itself has not yet been executed against a local checkout. Crucially, the K5 producer is not yet wired to this helper; existing HH outputs remain legacy-thresholded and are not promoted to pruning-certified status. The integration requirements and acceptance gate are recorded in the new design document.
 
@@ -489,3 +489,10 @@ A new source-grounded integration contract is preserved in [K5_NO_PRUNE_INTEGRAT
 Added [`.github/workflows/bqg-sparse-pruning.yml`](.github/workflows/bqg-sparse-pruning.yml). It installs NumPy and runs the committed test file directly as `python scripts/test_bqg_sparse_pruning.py` (the direct invocation is intentional because that test currently imports `bqg_sparse_pruning` from the script directory). The workflow is scoped to the helper, its tests, and itself, and supports manual dispatch.
 
 **Status boundary:** workflow definition is committed and fetched back from GitHub; no CI run result is claimed in this audit update. A green CI result must be confirmed from the actual run and job logs before the eight tests are called CI-verified. This workflow validates only the standalone pruning primitive, not the K5 producer integration or any physical BQG claim.
+
+
+## 15. Sparse-pruning helper input-integrity hardening — 2026-11-11
+
+The standalone helper received additional fail-closed validation: non-finite aggregated amplitudes are rejected by `apply_pruning`; non-finite scales are rejected even for empty mappings; ledger verification rejects negative/non-finite `atol`; and non-finite overflow in the full-minus-pruned difference is rejected. Four negative-path regression tests were added, bringing the committed suite to twelve tests. The helper and test files were fetched back from GitHub after the updates.
+
+The GitHub Actions workflow is configured to run the committed test file directly. The repository's combined commit status query for the latest test update returned no statuses at the time of this record; therefore no CI PASS is claimed. These tests still cover only the standalone helper, not K5 producer integration.
