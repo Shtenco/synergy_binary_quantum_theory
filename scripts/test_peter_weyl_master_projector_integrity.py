@@ -80,6 +80,37 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported pruning mode"):
             pilot.constraint_columns([], (), 5, mode="magic")
 
+    def test_cross_gram_master_matches_independent_dense_column_assembly(self):
+        nodes = (0, 1)
+        dim = 2
+        columns = {
+            (0, 0): {"x": 1.0 + 2.0j, "y": 0.5},
+            (0, 1): {"x": -0.25j, "z": 2.0},
+            (1, 0): {"y": 1.5j, "z": 0.25},
+            (1, 1): {"x": 1.0, "z": -1.0j},
+        }
+        B = pilot.cross_gram(columns, nodes, dim)
+        G = np.array([[2.0, 0.3 + 0.4j], [0.3 - 0.4j, 1.5]], dtype=complex)
+        gram_master = pilot.master_from_gram(B, G)
+
+        # Independent direct construction: align every sparse output key into
+        # one dense row space, then form sum_vw G_vw H_v^dag H_w.
+        output_keys = sorted(
+            {key for mapping in columns.values() for key in mapping}
+        )
+        dense = {}
+        for v in nodes:
+            H = np.zeros((len(output_keys), dim), dtype=complex)
+            for a in range(dim):
+                for row, key in enumerate(output_keys):
+                    H[row, a] = columns[(v, a)].get(key, 0j)
+            dense[v] = H
+        direct = np.zeros((dim, dim), dtype=complex)
+        for v in nodes:
+            for w in nodes:
+                direct += G[v, w] * (dense[v].conj().T @ dense[w])
+        np.testing.assert_allclose(gram_master, direct, rtol=1e-13, atol=1e-13)
+
     def test_run_rejects_negative_tolerances(self):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
             pilot.run(zero_rtol=-1.0)
