@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Streaming TSQR + SVD for tall, narrow complex constraint maps.
 
-Input is an iterable of row blocks of the original operator C. No Gram matrix
-is formed. Each block and merge is reduced with Householder QR; the final
-right singular vectors come from an SVD of the compact R.
+The input is an iterable of row blocks of the original operator C. No Gram
+matrix is formed. Each block and merge is reduced with Householder QR; the
+final right singular vectors are obtained from an SVD of the compact R.
 
-This certifies properties of supplied floating-point row blocks only. It does
-not estimate upstream operator-construction error.
+This module certifies properties of the supplied floating-point row blocks
+only. It does not estimate the upstream operator-construction error.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class StreamingSVDResult:
     row_count: int
     block_count: int
     input_scale: float
-    max_abs_entry: float
+    max_abs_component: float
     rank: int
     rank_rtol: float
     method: str = "binary-tree Householder TSQR followed by SVD(R)"
@@ -45,7 +45,7 @@ def _checked_block(block: np.ndarray, n_columns: int) -> np.ndarray:
 
 
 def _qr_r(matrix: np.ndarray) -> np.ndarray:
-    # NumPy/LAPACK reduced QR uses Householder reflectors.
+    # NumPy's LAPACK reduced QR uses Householder reflectors.
     _, r = np.linalg.qr(matrix, mode="reduced")
     return r
 
@@ -56,7 +56,7 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
 
     rank_rtol is a relative singular-value threshold:
     sigma_i > rank_rtol * sigma_max. A dynamic common scale reduces overflow
-    risk while keeping every block in the same numerical units.
+    risk while retaining a common scale across all blocks.
     """
     if not isinstance(n_columns, int) or n_columns <= 0:
         raise ValueError("n_columns must be a positive integer")
@@ -78,7 +78,10 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         block_count += 1
         row_count += int(block.shape[0])
         complex_input = complex_input or np.iscomplexobj(block)
-        local_scale = float(np.max(np.abs(block)))
+        # Use the largest real/imaginary component as scale. Unlike abs(z),
+        # this cannot overflow merely because both complex components are large.
+        local_scale = float(max(np.max(np.abs(block.real)),
+                                np.max(np.abs(block.imag)) if np.iscomplexobj(block) else 0.0))
         max_abs = max(max_abs, local_scale)
         if local_scale == 0.0:
             continue
@@ -112,6 +115,7 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         rank = 0
     else:
         compact_r = None
+        # Deterministic merge of remaining binary-tree nodes.
         for r in reversed(levels):
             if r is not None:
                 compact_r = r if compact_r is None else _qr_r(np.vstack((compact_r, r)))
@@ -135,7 +139,7 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         row_count=row_count,
         block_count=block_count,
         input_scale=scale,
-        max_abs_entry=max_abs,
+        max_abs_component=max_abs,
         rank=rank,
         rank_rtol=float(rank_rtol),
     )
