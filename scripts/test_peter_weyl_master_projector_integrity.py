@@ -80,6 +80,12 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported pruning mode"):
             pilot.constraint_columns([], (), 5, mode="magic")
 
+    def test_sparse_inner_product_uses_compensated_complex_sums(self):
+        a = {"large_pos": 1e16 + 1e16j, "small": 1.0 + 2.0j,
+             "large_neg": -1e16 - 1e16j}
+        b = {key: 1.0 + 0.0j for key in a}
+        self.assertEqual(pilot.inner_sparse(a, b), 1.0 + 2.0j)
+
     def test_cross_gram_master_matches_independent_dense_column_assembly(self):
         nodes = (0, 1)
         dim = 2
