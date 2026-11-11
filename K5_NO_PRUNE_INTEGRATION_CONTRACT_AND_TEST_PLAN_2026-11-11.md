@@ -293,3 +293,6 @@ Added scripts/test_k5_hit_adjoint.py. It checks the actual production Clebsch-Go
 Scope: this is a local link-hit adjoint control. It does not yet establish that the complete primitive, T, or node-H maps are adjoints on the full coupled K5 state space. Those require independent assembled matrix-element tests, including coherent sums and all recoupling channels.
 
 The CI workflow now runs five test scripts: 12 sparse-helper + 11 K5 policy-wiring + 4 synthetic dense-oracle/adjoint + 3 raw-volume + 3 link-hit-adjoint = 33 committed test methods. No test run or CI PASS is claimed.
+
+
+Workflow wiring review: all five test scripts are now present in both push and pull_request path filters, and all five have explicit execution steps. This closes a CI-configuration omission where the newest test files were initially present only in push filters. The final workflow blob SHA is 7caec171b996b3c662b4445681764ff24f1d2a1f. The workflow's actual run result is still not visible; configuration correctness is not a CI PASS.
