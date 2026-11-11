@@ -617,6 +617,17 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
         legacy_direct, no_prune_direct, dim, threshold_grid
     )
 
+    # Positive node metrics may reshape the nonzero spectrum, but cannot
+    # change the exact common kernel. Record Loewner bounds independently
+    # for legacy and no-prune direct constraint maps.
+    metric_seed = 20261111
+    metric_bounds = {}
+    for metric_name, metric_matrix in PILOT.positive_metrics(len(nodes), metric_seed).items():
+        metric_bounds[metric_name] = {
+            "legacy": positive_metric_spectral_bounds(legacy_direct, metric_matrix),
+            "no_prune": positive_metric_spectral_bounds(no_prune_direct, metric_matrix),
+        }
+
     legacy_spec = spectrum_of_gram(legacy_gram, rank_rtol)
     no_prune_spec = spectrum_of_gram(no_prune_gram, rank_rtol)
     delta_spec = spectrum_of_gram(delta_gram, rank_rtol)
@@ -659,6 +670,15 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
         },
         "physical_kernel_subspace_comparison": kernel_comparison,
         "spectral_threshold_sensitivity": threshold_sensitivity,
+        "positive_metric_spectral_bounds": {
+            "metric_seed": metric_seed,
+            "interpretation": (
+                "For M_G=C^dagger(G tensor I)C, positive-definite G preserves "
+                "ker(C) and bounds every ordered master eigenvalue between "
+                "lambda_min(G)*sigma_i(C)^2 and lambda_max(G)*sigma_i(C)^2."
+            ),
+            "metrics": metric_bounds,
+        },
         "weyl_rank_stability_sufficient_condition": {
             "delta_operator_norm": delta_norm,
             "legacy_minimum_singular_value": sigma_min,
