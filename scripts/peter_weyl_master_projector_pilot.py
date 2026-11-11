@@ -106,9 +106,10 @@ def master_from_gram(B: np.ndarray, G: np.ndarray) -> np.ndarray:
 def hermitian_diagnostics(M: np.ndarray):
     if not np.all(np.isfinite(M)):
         raise ValueError("raw master matrix contains non-finite entries")
-    defect = float(np.linalg.norm(M - M.conj().T, ord="fro"))
-    scale = max(float(np.linalg.norm(M, ord="fro")), np.finfo(float).tiny)
-    return defect, defect / scale
+    defect = stable_complex_norm((M - M.conj().T).ravel())
+    scale = stable_complex_norm(M.ravel())
+    relative = defect / scale if scale > 0.0 else (0.0 if defect == 0.0 else float("inf"))
+    return defect, relative
 
 
 def spectral_thresholds(evals: np.ndarray, zero_rtol: float, psd_rtol: float):
