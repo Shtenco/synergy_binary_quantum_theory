@@ -1111,3 +1111,16 @@ Source blobs at this update:
 - `scripts/peter_weyl_constraint_stability.py`: `060f7f0630b5f4fb6bf9d5d34b8cffe0f0a166e0`
 - `scripts/test_peter_weyl_constraint_stability.py`: `0caf326438668b61ad2df0eccb5b0b60e1193348`
 
+## Follow-up: metric positive-gap resolution guard
+
+A further review found that testing only \(\lambda_{\min}(G)>0\) can accept a numerically unresolved near-singular metric. The helper now requires the relative gap
+
+\[
+\frac{\lambda_{\min}(G)}{\max_i|\lambda_i(G)|}
+>
+100\,\epsilon_{64}\,\dim(G).
+\]
+
+This is scale-free: it rejects a metric such as \(\operatorname{diag}(1,10^{-16})\) at float64 precision, but does not reject a well-conditioned metric merely because its absolute scale is subnormal (for example \(10^{-320}I\)). The implementation separately reports when the *absolute* diagnostic threshold underflows, while retaining the relative gap test.
+
+Two additional regression methods cover near-singular rejection and tiny-scale positive-metric acceptance. The current static method count is **40**. No test suite execution or CI PASS is claimed.
