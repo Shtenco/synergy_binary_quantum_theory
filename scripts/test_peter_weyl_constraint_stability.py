@@ -214,6 +214,13 @@ class ConstraintStabilityTests(unittest.TestCase):
              1: {(0, "r"): -np.cos(theta)}}, 2
         )
         def result(direct, digest):
+            maps = {
+                0: {(0, "a"): 1.0},
+                1: {(0, "b"): 2.0},
+            } if digest == "cut1" else {
+                0: {(0, "a"): 1.5},
+                1: {(0, "b"): 2.0, (1, "c"): 0.25},
+            }
             return {
                 "domain_dimension": 2,
                 "legacy": {
@@ -224,6 +231,7 @@ class ConstraintStabilityTests(unittest.TestCase):
                     "direct_svd": direct,
                     "stacked_column_sha256": digest + "-N",
                 },
+                "_operator_maps": {"legacy": maps, "no_prune": maps},
             }
         with patch.object(
             stability, "run",
@@ -233,10 +241,14 @@ class ConstraintStabilityTests(unittest.TestCase):
                 "low", [1, 3], block_rows=16
             )
         self.assertEqual(mocked.call_count, 2)
+        self.assertTrue(all(call.kwargs["retain_operator_maps"] for call in mocked.call_args_list))
         self.assertEqual(sweep["doubled_spin_cutoffs"], [1, 3])
         self.assertEqual(len(sweep["points"]), 2)
         self.assertEqual(len(sweep["adjacent_cutoff_comparisons"]), 1)
         comparison = sweep["adjacent_cutoff_comparisons"][0]
+        self.assertAlmostEqual(
+            comparison["no_prune"]["operator_difference_norm_2"], 0.5, places=12
+        )
         self.assertEqual(
             comparison["no_prune_kernel_subspace"]["status"],
             "SAME_DIMENSION_SUBSPACE_DISTANCE"
@@ -245,6 +257,42 @@ class ConstraintStabilityTests(unittest.TestCase):
             comparison["no_prune_kernel_subspace"]["max_principal_angle_sine"],
             abs(np.sin(theta)), places=12
         )
+
+    def test_adjacent_cutoff_operator_difference_uses_common_row_union(self):
+        previous = {
+            0: {(0, "a"): 1.0},
+            1: {(0, "b"): 2.0},
+        }
+        current = {
+            0: {(0, "a"): 1.5},
+            1: {(0, "b"): 2.0, (1, "new_state"): 0.25},
+        }
+        result = stability.adjacent_cutoff_operator_difference(
+            previous, current, 2, singular_rtol=1e-12, block_rows=2
+        )
+        self.assertEqual(
+            result["classification"], "FINITE_FLOAT64_COMMON_ROW_EMBEDDING"
+        )
+        self.assertAlmostEqual(result["operator_difference_norm_2"], 0.5, places=12)
+        self.assertEqual(result["row_count_union"], 3)
+        self.assertFalse(result["scale_separation_warning"])
+        self.assertFalse(result["exact_operator_norm_certified"])
+
+    def test_adjacent_cutoff_operator_difference_blocks_scale_loss(self):
+        previous = {0: {(0, "a"): 1.0}, 1: {(0, "b"): 1.0}}
+        current = {0: {(0, "a"): 1.0 + 1e-200}, 1: {(0, "b"): 1.0}}
+        with patch.object(
+            stability, "direct_svd_from_columns",
+            return_value={"scale_separation_loss": True, "rank": 2,
+                          "singular_values": [0.0, 0.0], "row_count": 2,
+                          "block_count": 1}
+        ):
+            result = stability.adjacent_cutoff_operator_difference(
+                previous, current, 2
+            )
+        self.assertEqual(result["classification"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertIsNone(result["operator_difference_norm_2"])
+        self.assertIsNone(result["difference_rank_at_declared_tolerance"])
 
     def test_cutoff_sweep_rejects_nonincreasing_or_invalid_cutoffs(self):
         with patch.object(stability, "run") as mocked:
