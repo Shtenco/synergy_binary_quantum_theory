@@ -178,7 +178,7 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
 
 
 
-def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
+def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expected_metric_dim=None):
     """Bound the weighted master spectrum using a strictly positive node metric.
 
     For C the direct-sum constraint map and M_G=C^dagger(G tensor I)C,
@@ -210,6 +210,16 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
     G = np.asarray(metric, dtype=np.complex128)
     if G.ndim != 2 or G.shape[0] != G.shape[1] or G.shape[0] == 0:
         raise ValueError("metric must be a nonempty square matrix")
+    if expected_metric_dim is not None:
+        if (not isinstance(expected_metric_dim, int)
+                or isinstance(expected_metric_dim, bool)
+                or expected_metric_dim <= 0):
+            raise ValueError("expected_metric_dim must be a positive integer")
+        if G.shape[0] != expected_metric_dim:
+            raise ValueError(
+                f"metric dimension {G.shape[0]} does not match expected node count "
+                f"{expected_metric_dim}"
+            )
     if not np.all(np.isfinite(G)):
         raise ValueError("metric contains non-finite entries")
     defect = float(np.linalg.norm(G - G.conj().T, ord="fro"))
@@ -239,8 +249,17 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
     condition_resolved = math.isfinite(metric_condition)
     if not condition_resolved:
         metric_condition = None
+    # Detect underflow at both stages: sigma**2 itself, and multiplication
+    # by lambda_min/lambda_max. A nonzero sigma can square to exact zero in
+    # float64, in which case both reported spectral bounds silently collapse.
+    singular_square_underflow = bool(np.any(
+        (singular > 0.0) & (sigma_squared == 0.0)
+    ))
     lower_bound_underflow = bool(np.any(
-        (sigma_squared > 0.0) & (lower == 0.0)
+        (singular > 0.0) & (lower == 0.0)
+    ))
+    upper_bound_underflow = bool(np.any(
+        (singular > 0.0) & (upper == 0.0)
     ))
     return {
         "status": "FINITE_SPD_METRIC_SPECTRAL_BOUNDS",
@@ -253,7 +272,12 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
         "constraint_singular_values_descending": singular.tolist(),
         "master_eigenvalue_lower_bounds": lower.tolist(),
         "master_eigenvalue_upper_bounds": upper.tolist(),
+        "singular_value_square_underflow_detected": singular_square_underflow,
         "lower_bound_underflow_detected": lower_bound_underflow,
+        "upper_bound_underflow_detected": upper_bound_underflow,
+        "spectral_bounds_numerically_resolved": not (
+            singular_square_underflow or lower_bound_underflow or upper_bound_underflow
+        ),
         "kernel_equivalence_applicable": True,
         "kernel_equivalence": "ker(C^dagger(G tensor I)C)=ker(C) for G strictly positive definite",
         "inequality": "lambda_min(G)*sigma_i(C)^2 <= lambda_i(M_G) <= lambda_max(G)*sigma_i(C)^2",
@@ -636,8 +660,12 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     metric_bounds = {}
     for metric_name, metric_matrix in PILOT.positive_metrics(len(nodes), metric_seed).items():
         metric_bounds[metric_name] = {
-            "legacy": positive_metric_spectral_bounds(legacy_direct, metric_matrix),
-            "no_prune": positive_metric_spectral_bounds(no_prune_direct, metric_matrix),
+            "legacy": positive_metric_spectral_bounds(
+                legacy_direct, metric_matrix, expected_metric_dim=len(nodes)
+            ),
+            "no_prune": positive_metric_spectral_bounds(
+                no_prune_direct, metric_matrix, expected_metric_dim=len(nodes)
+            ),
         }
 
     legacy_spec = spectrum_of_gram(legacy_gram, rank_rtol)
