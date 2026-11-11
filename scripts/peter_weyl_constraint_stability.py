@@ -71,9 +71,13 @@ def spectrum_of_gram(G, gram_eigenvalue_rtol):
     """Gram-only diagnostic; its tolerance is relative to eigenvalues, not sigmas."""
     if not math.isfinite(gram_eigenvalue_rtol) or gram_eigenvalue_rtol < 0:
         raise ValueError("gram_eigenvalue_rtol must be finite and nonnegative")
-    raw_hermiticity = float(np.linalg.norm(G - G.conj().T, ord="fro"))
-    H = 0.5 * (G + G.conj().T)
+    if not np.all(np.isfinite(G)):
+        raise ValueError("Gram matrix contains non-finite entries")
+    raw_hermiticity = PILOT.stable_complex_norm((G - G.conj().T).ravel())
+    H = 0.5 * G + 0.5 * G.conj().T
     evals = np.linalg.eigvalsh(H)
+    if not np.all(np.isfinite(evals)):
+        raise FloatingPointError("Gram eigensolver returned non-finite eigenvalues")
     scale = float(np.max(np.abs(evals))) if len(evals) else 0.0
     psd_tol = 100.0 * np.finfo(float).eps * scale
     if len(evals) and float(np.min(evals)) < -psd_tol:
