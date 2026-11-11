@@ -19,6 +19,7 @@ import argparse, functools, itertools, json, math
 from pathlib import Path
 import numpy as np
 import sympy as sp
+from bqg_sparse_pruning import aggregate_mappings, coherent_aggregate
 from sympy.physics.wigner import clebsch_gordan
 
 VERT=tuple(range(5))
@@ -32,6 +33,7 @@ for p in itertools.permutations(range(3)):
     inv=sum(p[i]>p[j] for i in range(3) for j in range(i+1,3))
     EPS3[p]=(-1)**inv
 EPS2=np.array([[0,1],[-1,0]],complex)
+VOLUME_RAW_DEFECTS={}
 
 @functools.lru_cache(None)
 def cg2(s1,s2,S,m1,m2,M):
@@ -167,6 +169,9 @@ def volume123_matrix(s1,s2,s3):
         e=EPS3[a,b,c]
         if e:
             Q += e*np.kron(np.kron(mats[0][a],mats[1][b]),mats[2][c])
+    qnorm=float(np.linalg.norm(Q))
+    defect=float(np.linalg.norm(Q-Q.conj().T)/max(qnorm,np.finfo(float).tiny))
+    VOLUME_RAW_DEFECTS[(s1,s2,s3)]={"relative_antihermitian_defect":defect,"raw_norm":qnorm}
     Q=(Q+Q.conj().T)/2
     ev,U=np.linalg.eigh(Q)
     return (U*np.sqrt(np.abs(ev)))@U.conj().T
@@ -188,10 +193,13 @@ def apply_volume_tensor_oriented(T,spins_local,v):
             X=apply_axis_np(X,leg,epsilon_j(spins_local[leg]))
     return X
 
-def add_dict(dst,src,scale=1):
+def add_dict(dst,src,scale=1,mode="legacy"):
     for k,a in src.items():
         v=dst.get(k,0j)+scale*a
-        if abs(v)>1e-13: dst[k]=v
+        if mode=="no_prune":
+            if v != 0j: dst[k]=v
+            elif k in dst: del dst[k]
+        elif abs(v)>1e-13: dst[k]=v
         elif k in dst: del dst[k]
 
 def adjoint_path(path,iout,iin):
@@ -228,7 +236,7 @@ def oriented_specs(v):
         specs += [(sign,(v,a,b,c)),(sign,(v,b,c,a)),(sign,(v,c,a,b))]
     return tuple(specs)
 
-def apply_primitive_oriented(input_key,seq,Jmax2):
+def apply_primitive_oriented(input_key,seq,Jmax2,mode="legacy"):
     branches=[initial_factorized_oriented(input_key)]
     for op in seq:
         if op[0]=='V':
@@ -245,51 +253,64 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             branches=nb
         if not branches: break
     out={}
+    contributions=[]
     for spins,tensors,amp in branches:
         local_opts=[];ok=True
         for v in VERT:
             ls=local_spins(spins,v);opts=[]
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
-                if abs(c)>1e-12: opts.append((K,c))
+                if (c != 0j) if mode=="no_prune" else (abs(c)>1e-12): opts.append((K,c))
             if not opts: ok=False;break
             local_opts.append(opts)
         if not ok: continue
         for ch in itertools.product(*local_opts):
             val=amp
             for _,c in ch: val*=c
-            if abs(val)>1e-12:
+            if (val != 0j) if mode=="no_prune" else (abs(val)>1e-12):
                 ko=(spins,tuple(k for k,_ in ch))
-                out[ko]=out.get(ko,0j)+val
+                contributions.append((ko,val))
+    if mode=="no_prune": return coherent_aggregate(contributions)
+    for ko,val in contributions: out[ko]=out.get(ko,0j)+val
     return {k:v for k,v in out.items() if abs(v)>1e-11}
 
-def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False):
-    out={}
+def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False,mode="legacy"):
+    maps=[];scales=[]
     for coef,seq in T_sequences(v,a,b,c):
         if adj: seq=adjoint_sequence(seq)
-        add_dict(out,apply_primitive_oriented(input_key,seq,Jmax2),coef)
+        maps.append(apply_primitive_oriented(input_key,seq,Jmax2,mode));scales.append(coef)
+    if mode=="no_prune": return aggregate_mappings(maps,scales)
+    out={}
+    for mapping,coef in zip(maps,scales): add_dict(out,mapping,coef)
     return out
 
 @functools.lru_cache(None)
-def T_cached(key,v,a,b,c,Jmax2,adj):
-    return tuple(apply_T_oriented_basis(key,v,a,b,c,Jmax2,adj).items())
+def T_cached(key,v,a,b,c,Jmax2,adj,mode="legacy"):
+    return tuple(apply_T_oriented_basis(key,v,a,b,c,Jmax2,adj,mode).items())
 
-def apply_T_cached_state(state,spec,Jmax2,adj=False):
-    out={}
+def apply_T_cached_state(state,spec,Jmax2,adj=False,mode="legacy"):
+    maps=[];scales=[]
     for key,amp0 in state.items():
-        for ko,c in T_cached(key,*spec,Jmax2,adj):
-            out[ko]=out.get(ko,0j)+amp0*c
+        maps.append(dict(T_cached(key,*spec,Jmax2,adj,mode)));scales.append(amp0)
+    if mode=="no_prune": return aggregate_mappings(maps,scales)
+    out={}
+    for mapping,amp0 in zip(maps,scales):
+        for ko,c in mapping.items(): out[ko]=out.get(ko,0j)+amp0*c
     return {k:v for k,v in out.items() if abs(v)>1e-10}
 
-def apply_H_cached_state(state,v,Jmax2):
-    out={}
+def apply_H_cached_state(state,v,Jmax2,mode="legacy"):
+    maps=[];scales=[]
     for sign,spec in oriented_specs(v):
-        rr=apply_T_cached_state(state,spec,Jmax2,False)
-        aa=apply_T_cached_state(state,spec,Jmax2,True)
-        add_dict(out,rr,0.5*sign);add_dict(out,aa,0.5*sign)
+        rr=apply_T_cached_state(state,spec,Jmax2,False,mode)
+        aa=apply_T_cached_state(state,spec,Jmax2,True,mode)
+        maps.extend((rr,aa));scales.extend((0.5*sign,0.5*sign))
+    if mode=="no_prune": return aggregate_mappings(maps,scales)
+    out={}
+    for mapping,scale in zip(maps,scales): add_dict(out,mapping,scale)
     return out
 
-def prune_state(st,tol=1e-8):
+def prune_state(st,tol=1e-8,mode="legacy"):
+    if mode=="no_prune": return dict(st)
     return {k:v for k,v in st.items() if abs(v)>tol}
 
 def prev_intertwiners():
@@ -323,22 +344,27 @@ def basis_full_jhalf():
 def norm2_state(state):
     return float(sum(abs(v)**2 for v in state.values()))
 
-def compose_on_sparse(state,target_v,Jmax2):
-    out={}
+def compose_on_sparse(state,target_v,Jmax2,mode="legacy"):
+    maps=[];scales=[]
     for key,amp in state.items():
-        rr=apply_H_cached_state({key:1+0j},target_v,Jmax2)
-        for ko,c in rr.items(): out[ko]=out.get(ko,0j)+amp*c
-    return prune_state(out,1e-8)
+        maps.append(apply_H_cached_state({key:1+0j},target_v,Jmax2,mode));scales.append(amp)
+    out=aggregate_mappings(maps,scales) if mode=="no_prune" else {}
+    if mode!="no_prune":
+        for mapping,amp in zip(maps,scales):
+            for ko,c in mapping.items(): out[ko]=out.get(ko,0j)+amp*c
+    return prune_state(out,1e-8,mode)
 
-def run():
+def run(mode="legacy"):
     JMAX2=5
     initial=basis_full_jhalf()[0]
     psi0={initial:1+0j}
-    h0=prune_state(apply_H_cached_state(psi0,0,JMAX2),1e-8)
-    h1=prune_state(apply_H_cached_state(psi0,1,JMAX2),1e-8)
-    h1h0=compose_on_sparse(h0,1,JMAX2)
-    h0h1=compose_on_sparse(h1,0,JMAX2)
-    comm={};add_dict(comm,h0h1,+1);add_dict(comm,h1h0,-1);comm=prune_state(comm,1e-8)
+    h0=prune_state(apply_H_cached_state(psi0,0,JMAX2,mode),1e-8,mode)
+    h1=prune_state(apply_H_cached_state(psi0,1,JMAX2,mode),1e-8,mode)
+    h1h0=compose_on_sparse(h0,1,JMAX2,mode)
+    h0h1=compose_on_sparse(h1,0,JMAX2,mode)
+    comm=aggregate_mappings([h0h1,h1h0],[+1,-1]) if mode=="no_prune" else {}
+    if mode!="no_prune":
+        add_dict(comm,h0h1,+1);add_dict(comm,h1h0,-1);comm=prune_state(comm,1e-8,mode)
     total2=norm2_state(comm)
     fixed={k:v for k,v in comm.items() if k[0]==(1,)*10}
     fixed2=norm2_state(fixed)
@@ -348,14 +374,16 @@ def run():
     coeffs=[(full[idx],val/v5norm) for idx,val in enumerate(V5) if abs(val)>1e-12]
     h0v={}
     for key,amp in coeffs:
-        rr=apply_H_cached_state({key:1+0j},0,JMAX2)
+        rr=apply_H_cached_state({key:1+0j},0,JMAX2,mode)
         for ko,c in rr.items(): h0v[ko]=h0v.get(ko,0j)+amp*c
-    h0v=prune_state(h0v,1e-8);h0v2=norm2_state(h0v)
+    h0v=prune_state(h0v,1e-8,mode);h0v2=norm2_state(h0v)
     h0v_fixed={k:v for k,v in h0v.items() if k[0]==(1,)*10}
     h0v_max_spin2=max(max(k[0]) for k in h0v) if h0v else 0
 
     result={
-      'status':'first regulator-safe Peter-Weyl K5 HH column','Jmax':2.5,
+      'status':'first regulator-safe Peter-Weyl K5 HH column','pruning_mode':mode,
+      'volume_raw_hermiticity_max_relative_defect':max((v["relative_antihermitian_defect"] for v in VOLUME_RAW_DEFECTS.values()),default=0.0),
+      'volume_raw_hermiticity_triples_checked':len(VOLUME_RAW_DEFECTS),'Jmax':2.5,
       'input':'all ten links j=1/2; all five recoupling labels K=0',
       'H0_support':len(h0),'H1_support':len(h1),'H1H0_support':len(h1h0),'H0H1_support':len(h0h1),
       'commutator_support':len(comm),'commutator_norm':math.sqrt(total2),'commutator_norm_squared':total2,
@@ -380,8 +408,12 @@ def run():
     return result
 
 def main():
-    ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--output',type=Path);a=ap.parse_args()
-    out=run();txt=json.dumps(out,indent=2);print(txt)
+    ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--output',type=Path)
+    ap.add_argument('--mode',choices=('legacy','no_prune'),default='legacy',
+                    help='legacy reproduces historical thresholds; no_prune disables all amplitude thresholds')
+    a=ap.parse_args()
+    out=run(a.mode);txt=json.dumps(out,indent=2);print(txt)
     if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(txt+'\n',encoding='utf-8')
     return 0 if out['passed_regression'] else 1
 
