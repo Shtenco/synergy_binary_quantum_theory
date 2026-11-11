@@ -496,3 +496,12 @@ Added [`.github/workflows/bqg-sparse-pruning.yml`](.github/workflows/bqg-sparse-
 The standalone helper received additional fail-closed validation: non-finite aggregated amplitudes are rejected by `apply_pruning`; non-finite scales are rejected even for empty mappings; ledger verification rejects negative/non-finite `atol`; and non-finite overflow in the full-minus-pruned difference is rejected. Four negative-path regression tests were added, bringing the committed suite to twelve tests. The helper and test files were fetched back from GitHub after the updates.
 
 The GitHub Actions workflow is configured to run the committed test file directly. The repository's combined commit status query for the latest test update returned no statuses at the time of this record; therefore no CI PASS is claimed. These tests still cover only the standalone helper, not K5 producer integration.
+
+
+## 16. Initial K5 producer no-prune integration — 2026-11-11
+
+The K5 producer source scripts/k5_peter_weyl_safe_hda_column.py has been updated with explicit --mode legacy|no_prune. The default remains legacy for historical regression continuity. The strict mode bypasses the identified local coefficient, primitive output, cached T, state/HH composition, top-level H/commutator, and V5-input amplitude cutoffs; coherent aggregation is used at the main branch-combination boundaries. mode is part of the T_cached key. A MemoryError produces an explicit resource_limit result and nonzero exit rather than silent fallback. The volume routine records the raw pre-symmetrization anti-Hermitian defect by encountered spin triple.
+
+Added six focused K5 wiring tests in scripts/test_k5_sparse_policy_wiring.py and extended the GitHub Actions workflow to install SymPy and run both the 12 sparse-pruning tests and the K5 wiring tests. Workflow paths include the producer and both test files for push and pull-request events.
+
+Evidence boundary: source files and workflow were fetched back from GitHub after updates. No CI PASS is asserted yet; no full no-prune HH run, K5 dense oracle, production bilinear adjoint test, threshold ladder, or certified leakage Gram is claimed. Raw volume defect is currently recorded but not yet used as a fail gate. This is initial producer integration, not completion of the K5 acceptance plan.
