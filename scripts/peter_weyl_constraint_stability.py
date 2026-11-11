@@ -58,10 +58,8 @@ def subtract_stacked(left, right, dim):
 def gram_from_columns(columns, dim):
     G = np.empty((dim, dim), dtype=complex)
     for a in range(dim):
-        for b in range(a, dim):
-            value = PILOT.inner_sparse(columns[a], columns[b])
-            G[a, b] = value
-            G[b, a] = np.conjugate(value)
+        for b in range(dim):
+            G[a, b] = PILOT.inner_sparse(columns[a], columns[b])
     return G
 
 
@@ -182,7 +180,7 @@ def main():
         f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_{args.domain}_J{args.jmax2}.json"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
