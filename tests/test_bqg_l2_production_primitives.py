@@ -62,6 +62,29 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
                 f"{len(cls.complete_state)}"
             )
 
+    def test_fixture_volume_map_is_nonzero(self):
+        result = CK.apply_volume_complete_state(self.complete_state, 0)
+        self.assertTrue(
+            result,
+            "Frozen Peter-Weyl fixture has no volume output; L2 cannot be inferred.",
+        )
+
+    def test_fixture_HE_state_map_is_nonzero(self):
+        result = output_dict(CK.apply_HE_complete_state(self.complete_state, 0, 5))
+        self.assertTrue(
+            result,
+            "Frozen Peter-Weyl fixture has no H_E output; L2 cannot be inferred.",
+        )
+
+    def test_fixture_custom_HE_map_is_nonzero(self):
+        result = output_dict(
+            KCOMP.apply_HE_complete_state_custom(self.complete_state, 0, 5, (0,))
+        )
+        self.assertTrue(
+            result,
+            "Frozen Peter-Weyl fixture has no custom H_E output; L2 cannot be inferred.",
+        )
+
     def _assert_safe_domain_homogeneity(self, map_fn, label):
         alpha = 1.25 + 1.5j
         base_scale = 1e6
