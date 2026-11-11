@@ -205,6 +205,18 @@ class ConstraintStabilityTests(unittest.TestCase):
             stability.singular_threshold_sweep(direct, 2, [1e-5, 1e-8])
         with self.assertRaisesRegex(ValueError, "finite"):
             stability.singular_threshold_sweep(direct, 2, [float("nan")])
+        with self.assertRaisesRegex(ValueError, "boolean"):
+            stability.singular_threshold_sweep(direct, 2, [True])
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            stability.singular_threshold_sweep(direct, True, [1e-8])
+
+    def test_threshold_sweep_rejects_nonorthonormal_right_singular_vectors(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 1.0}, 1: {(1, "s"): 1e-5}}, 2
+        )
+        direct["right_singular_vectors_real"] = np.zeros((2, 2)).tolist()
+        with self.assertRaisesRegex(ValueError, "not orthonormal"):
+            stability.singular_threshold_sweep(direct, 2, [1e-8])
 
     def test_threshold_sweep_comparison_reports_projector_distance(self):
         left = stability.direct_svd_from_columns(

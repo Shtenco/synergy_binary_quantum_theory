@@ -262,7 +262,18 @@ def compare_kernel_projectors(legacy_direct, no_prune_direct, dim):
 
 def singular_threshold_sweep(direct, dim, rtol_values):
     """Audit rank/kernel sensitivity across a declared relative-SVD threshold grid."""
-    values = [float(x) for x in rtol_values]
+    if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
+        raise ValueError("dim must be a positive integer")
+    try:
+        raw_values = list(rtol_values)
+    except TypeError as exc:
+        raise ValueError("threshold grid must be an iterable of finite nonnegative values") from exc
+    if any(isinstance(x, (bool, np.bool_)) for x in raw_values):
+        raise ValueError("boolean values are not valid singular-value thresholds")
+    try:
+        values = [float(x) for x in raw_values]
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("threshold grid must contain finite numeric values") from exc
     if not values or any(not math.isfinite(x) or x < 0.0 for x in values):
         raise ValueError("threshold grid must be nonempty, finite, and nonnegative")
     if values != sorted(set(values)):
@@ -279,6 +290,18 @@ def singular_threshold_sweep(direct, dim, rtol_values):
     vectors = real + 1j * imag
     if not np.all(np.isfinite(vectors)):
         raise ValueError("right singular vectors contain non-finite entries")
+    # Kernel projectors and principal-angle identities require a unitary
+    # full right-singular-vector matrix, not merely finite entries and shape.
+    unitarity_defect = float(np.linalg.norm(
+        vectors.conj().T @ vectors - np.eye(dim), ord="fro"
+    ))
+    unitarity_tolerance = 1e-8 * max(1.0, math.sqrt(dim))
+    if (not math.isfinite(unitarity_defect)
+            or unitarity_defect > unitarity_tolerance):
+        raise ValueError(
+            "right singular vectors are not orthonormal: "
+            f"defect={unitarity_defect}, tolerance={unitarity_tolerance}"
+        )
     sigma_max = float(singular[0]) if dim else 0.0
     normalized = singular / sigma_max if sigma_max > 0.0 else np.zeros(dim)
     rows = []
@@ -314,6 +337,8 @@ def singular_threshold_sweep(direct, dim, rtol_values):
             plateaus[-1]["grid_points"] += 1
     return {
         "spectral_scale": sigma_max,
+        "right_singular_vector_unitarity_defect_frobenius": unitarity_defect,
+        "right_singular_vector_unitarity_tolerance": unitarity_tolerance,
         "scale_separation_warning": bool(direct.get("scale_separation_loss", True)),
         "rank_plateaus_on_declared_grid": plateaus,
         "threshold_results": rows,

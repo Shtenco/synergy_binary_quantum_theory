@@ -643,3 +643,33 @@ continues; no manual reruns or workflow dispatches were started.
 The low-domain and full 32-state production legacy/no-prune comparisons have
 not been executed. No physical-kernel equivalence, exact rank, regulator
 stability, or continuum theorem is established.
+
+
+## Follow-up: singular-threshold and subspace-geometry hardening (2026-11-11 14:38 UTC)
+
+The threshold-sensitivity helper computes numerical ranks from direct singular
+values of the represented constraint map C, normalizes by its largest singular
+value, and compares right-kernel projectors at an identical declared threshold
+grid. For equal-dimensional kernels, the spectral norm of the projector
+difference equals the sine of the largest principal angle. Grid plateaus remain
+sampling diagnostics only; they do not certify exact rank or exclude a
+transition between sampled thresholds.
+
+The input-integrity gate now rejects non-positive or boolean dimensions,
+boolean threshold entries, and full right-singular-vector matrices that are
+not orthonormal within a dimension-scaled floating-point tolerance. This is
+necessary because projector-distance and principal-angle claims rely on an
+orthonormal singular-vector basis; finite entries and correct array shape alone
+are insufficient.
+
+The threshold-stability suite now contains 20 test methods. Static source
+inventory across the four focused suites is therefore 78 methods:
+31 master-projector integrity, 20 constraint stability, 13 streaming
+TSQR/direct-SVD, and 14 raw-volume operator tests. These are source counts,
+not execution receipts. The newly added method and validation have not been
+executed in this environment.
+
+This hardening is based on branch head b31517b0c94f297813562c930a152b2ede346e0e. The branch was observed as
+309 commits ahead of main and two behind immediately before this patch.
+Main remains untouched; no merge was performed. CI was still queued at the
+last observed API snapshot, and no manual rerun or dispatch was initiated.
