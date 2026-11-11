@@ -247,7 +247,11 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expect
     metric_spd_resolution_threshold = (
         100.0 * np.finfo(float).eps * max(1, G.shape[0]) * metric_spectral_scale
     )
+    metric_spd_threshold_underflow = bool(
+        metric_spectral_scale > 0.0 and metric_spd_resolution_threshold == 0.0
+    )
     if (not math.isfinite(metric_spd_resolution_threshold)
+            or metric_spd_threshold_underflow
             or lambda_min <= metric_spd_resolution_threshold):
         raise ValueError(
             "metric must be strictly positive definite with a numerically resolved positive gap"
@@ -284,6 +288,7 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expect
         "metric_min_eigenvalue": lambda_min,
         "metric_max_eigenvalue": lambda_max,
         "metric_spd_resolution_threshold": metric_spd_resolution_threshold,
+        "metric_spd_threshold_underflow_detected": metric_spd_threshold_underflow,
         "metric_positive_gap_over_resolution_threshold": (
             lambda_min / metric_spd_resolution_threshold
             if metric_spd_resolution_threshold > 0.0 else None
