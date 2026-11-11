@@ -118,5 +118,26 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                 )
 
 
+    def test_volume_square_reconstructs_absolute_raw_spectrum(self):
+        # Check V^2 = |Q| from an independently assembled eigenspectral
+        # reference. Positivity and Hermiticity alone do not establish that
+        # the square-root spectral map was reconstructed correctly.
+        for spins in self.CASES:
+            with self.subTest(spins=spins):
+                q_raw = k5.volume123_raw_operator(*spins)
+                q_hermitian = (q_raw + q_raw.conj().T) / 2
+                eigenvalues, eigenvectors = np.linalg.eigh(q_hermitian)
+                abs_q = (
+                    eigenvectors * np.abs(eigenvalues)
+                ) @ eigenvectors.conj().T
+                volume = k5.volume123_matrix(*spins)
+                np.testing.assert_allclose(
+                    volume @ volume,
+                    abs_q,
+                    rtol=5e-12,
+                    atol=5e-12,
+                )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
