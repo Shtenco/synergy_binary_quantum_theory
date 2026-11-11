@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import inspect
 import unittest
+from unittest.mock import patch
 
+import numpy as np
 import k5_peter_weyl_safe_hda_column as k5
 
 
@@ -31,6 +33,46 @@ class K5SparsePolicyTests(unittest.TestCase):
         params = inspect.signature(k5.T_cached).parameters
         self.assertIn("mode", params)
         self.assertIsNotNone(k5.T_cached.cache_info)
+
+
+    def test_primitive_no_prune_retains_subthreshold_local_channel(self):
+        fake_branch = (((1,),), (np.array([1.0]),), 1.0 + 0.0j)
+        patches = [
+            patch.object(k5, "initial_factorized_oriented", return_value=fake_branch),
+            patch.object(k5, "VERT", (0,)),
+            patch.object(k5, "local_spins", return_value=()),
+            patch.object(k5, "allowed_k2_t", return_value=(0,)),
+            patch.object(k5, "oriented_intertwiner", return_value=np.array([1.0])),
+            patch.object(k5.np, "vdot", return_value=1e-13 + 0.0j),
+        ]
+        with patches[0], patches[1], patches[2], patches[3], patches[4], patches[5]:
+            strict = k5.apply_primitive_oriented(("input",), (), 5, "no_prune")
+            legacy = k5.apply_primitive_oriented(("input",), (), 5, "legacy")
+        self.assertEqual(len(strict), 1)
+        self.assertAlmostEqual(next(iter(strict.values())).real, 1e-13)
+        self.assertEqual(legacy, {})
+
+    def test_no_prune_hh_composition_aggregates_before_threshold(self):
+        state = {"a": 1.0 + 0.0j, "b": 1.0 + 0.0j}
+        def fake_h(single_state, target_v, jmax2, mode="legacy"):
+            key = next(iter(single_state))
+            return {"coherent": 0.75e-8 if key == "a" else -0.25e-8}
+        with patch.object(k5, "apply_H_cached_state", side_effect=fake_h):
+            strict = k5.compose_on_sparse(state, 0, 5, "no_prune")
+            legacy = k5.compose_on_sparse(state, 0, 5, "legacy")
+        self.assertAlmostEqual(strict["coherent"].real, 0.5e-8)
+        self.assertEqual(legacy, {})
+
+    def test_cache_separates_legacy_and_no_prune_results(self):
+        k5.T_cached.cache_clear()
+        def fake_apply(key, v, a, b, c, jmax2, adj=False, mode="legacy"):
+            return {"mode": 1.0 if mode == "legacy" else 2.0}
+        with patch.object(k5, "apply_T_oriented_basis", side_effect=fake_apply):
+            legacy = dict(k5.T_cached(("key",), 0, 1, 2, 3, 5, False, "legacy"))
+            strict = dict(k5.T_cached(("key",), 0, 1, 2, 3, 5, False, "no_prune"))
+        self.assertEqual(legacy, {"mode": 1.0})
+        self.assertEqual(strict, {"mode": 2.0})
+        k5.T_cached.cache_clear()
 
     def test_raw_volume_hermiticity_is_recorded_before_symmetrization(self):
         k5.VOLUME_RAW_DEFECTS.clear()
