@@ -1527,3 +1527,77 @@ This is a local reproduction of the validator logic against the exact fetched fi
 The validator's unsupported `\\(...\\)` / `\\[...\\]` syntax remains a latent compatibility limitation. The current public surface now uses the supported dollar-delimiter style consistently. A separate unit-test fixture should eventually exercise both supported and escaped-delimiter syntaxes before the validator is generalized.
 
 README repair commit chain ends at `5c554760fa8017a543f6bee43a106d2e126e3d84` before the audit/inventory checkpoint updates.
+
+
+## 34. Recovered latest successful branch-wide Python AST scan and reconciled census
+
+A second, later successful all-branch AST artifact was recovered during this audit and was not linked from the earlier Markdown report:
+
+- workflow: `python-all-branches-audit`;
+- successful run: `42823223090`, created `2026-11-10T13:17:49Z`;
+- run event HEAD: `1f9f09c4320abace3939120d8eb8c9af2f992516`;
+- artifact: `python-all-branches-audit`, ID `13801636701`;
+- the artifact's actual branch-snapshot `main_head_sha` is `23669209c83fe0aa2741612e5b2b119562ee6d7d` (the scanner enumerates live refs when it runs).
+
+This supersedes the older documented 157-ref / 146-unique-head audit as the latest recovered scan. The later artifact covers 167 branch refs and 156 unique HEAD commits:
+
+| Measure | Recovered run 42823223090 |
+|---|---:|
+| Branch refs / unique HEADs | 167 / 156 |
+| Python-file occurrences across snapshots | 21,038 |
+| Unique Python paths | 713 |
+| Path/content versions | 837 |
+| Unique Python source blobs | 834 |
+| Unique Git blobs loaded for the scan | 1,786 |
+| Explicit inline-source file occurrences | 22,895 |
+| Unique inline-source blobs | 942 |
+| Parsed Python source units | 1,383 |
+| Python code blocks in supported archives | 335 |
+| Supported archives / members inspected | 10 / 983 |
+| Unsafe archive members / archive errors | 0 / 0 |
+| Assert statements counted | 2,327 |
+| Explicit random seeds | 14 |
+
+The two reported AST syntax findings require different dispositions:
+
+1. `scripts/pl_lorentzian_group_worker_v2.py:49` is a genuine `IndentationError` in a historical worker blob, shared by four branch-head locations. It remains an archival branch defect; it is not in the current `main` source tree.
+2. `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2:86` is a scanner false positive, not invalid workflow execution. The raw heredoc contains `idx=${{ matrix.idx }}`; GitHub substitutes the expression before the shell passes the script to Python. The scanner parses the pre-substitution template as raw Python and therefore reports an expected template token as a syntax error.
+
+The earlier run `42805938831` had also reported `tests/test_v21_c1_checkpoint_repair.py:455`; that finding is absent from the later 167/156 artifact. Do not combine the two artifacts' syntax findings into one timeless list. The latest recovered scan has one confirmed historical Python syntax defect plus one workflow-template parser false positive.
+
+The later artifact's branch-wide findings include 1,866 production-path `assert` findings, 100 broad-exception findings, one bare `except`, 55 process-execution call sites, 17 network call sites, 32 pickle-deserialization call sites and 12 archive-extraction call sites. These are cross-snapshot static findings, not all defects and not all current-main findings. On the scanned main snapshot, AST status was PASS with zero syntax errors; the main-only findings included eight broad exceptions, two network call sites and seven process-execution call sites, with no raw pickle-deserialization finding. The existing safe-archive and restricted-pickle hardening on main remains a material improvement over older branch snapshots.
+
+### 34.1. Current 168/157 census reconciliation
+
+The live census remains 168 refs / 157 unique HEADs. Relative to the recovered 167/156 artifact, the additional ref/head is the later-created `research/consolidated-bqg-audit-20261111` branch. The two commits by which current `main` advanced from the artifact's `2366920...` snapshot to `254f19f...` changed only two Markdown files; both contain no Python fences or Python heredocs. Thus the old scan still covers the current main Python-source and explicitly marked inline-Python content, but it does not cover the new consolidated research branch snapshot.
+
+The inventory JSON was refreshed to record the consolidated branch HEAD `d491331625d638feacc80cde67a1b16d8079f58e` immediately before the inventory-refresh commit `13319f4f3c2986a7250ac11bcceea0aedad1487b`. The census counts remain 168 / 157. The inventory cannot include its own resulting commit SHA; its branch-head value is a deliberate pre-commit snapshot.
+
+The remaining AST closure is therefore bounded and explicit: scan the current consolidated research tree (226 tracked `.py` files, plus its marked inline Python and supported archive members), then deduplicate its parsed blobs against the recovered 834-blob artifact if a complete unique-blob total is required. This current-branch delta scan has not been executed. The recovered run is a successful historical CI artifact, not a fresh 2026-11-11 scan of all 168 refs.
+
+For context compression, the recovered 13,302,607-byte JSON artifact was independently LZMA-compressed in memory to 137,216 bytes (98.97% reduction). This compressed the audit JSON only, not the Git repository or every source blob.
+
+## 35. Consolidated-branch Python delta: production wiring and validation gaps
+
+The current consolidated research tree at the inspected source snapshot `d491331625d638feacc80cde67a1b16d8079f58e` contains 771 tree entries, 749 files, 226 Python files, 28 test-path matches and 36 workflows. The comparison snapshot on `main` contains 746 tree entries, 724 files, 210 Python files, 17 test-path matches and 35 workflows. The research branch is diverged from main (353 commits ahead, two behind at the `d491...` snapshot); no merge or main mutation was performed.
+
+The sparse-pruning workflow runs 11 test files. A source-level count across those files finds 132 `test_*` methods. This is a static declaration count, not an execution receipt. The workflow does not run the full `peter_weyl_master_projector_pilot.py --domain full --mode no_prune` production calculation, nor the complete high-cutoff K5 commutator calculation.
+
+The new leakage module has a concrete integration gap:
+- `scripts/bqg_sparse_leakage_gram.py` is not in the sparse-pruning workflow's path filters or test commands;
+- there is no dedicated unittest file for it;
+- the K5 producer imports coherent aggregation helpers from `bqg_sparse_pruning.py`, but does not call `assemble_leakage_gram`;
+- the module's input contract explicitly requires complete, coherently aggregated output columns, which the current producer-to-leakage path does not yet publish.
+
+A further numerical hardening issue exists in `assemble_leakage_gram`: finite amplitudes are accepted, but the implementation accumulates `abs(amp)**2` and forms unscaled outer products `outer(vals.conj(), vals)`. Independent arithmetic with the finite scalar amplitude (10^{200}) shows that squaring/outer-product formation exceeds float64 range (Python scalar square raises `OverflowError`; NumPy outer product contains `inf`). The module neither rescales these products nor verifies all assembled Gram outputs remain finite. This is a source-level robustness finding; the module's full self-test was not executed. Required fix: scaled accumulation with an explicit retained scale (or a fail-closed `FloatingPointError` before returning non-finite Gram matrices), plus an overflow regression test and workflow wiring.
+
+The K5 producer's `no_prune` mode uses deterministic coherent aggregation and bypasses the explicit amplitude thresholds in the reviewed composition layers. It does not yet emit the pruning ledger from `PruningPolicy/apply_pruning`, and it remains a finite-(J_{max}), floating-point computation. Thus `no_prune` means “no configured amplitude-threshold deletion in this path”, not exact symbolic arithmetic, infinite spin, or a certified zero construction error.
+
+The projected adjointness tests are deliberately finite:
+- the assembled-node Hermiticity test checks a non-vacuous projected (2\times2) block;
+- the rectangular node-H test checks a deterministic top-4-by-2 projection and reports omitted forward support;
+- the primitive tests cover selected finite sectors and recoupling channels.
+
+These are meaningful independent checks, but they do not establish self-adjointness of the complete infinite-domain operator or full quantum HDA closure.
+
+At the time of this source audit, the latest sparse-pruning workflow run was `43044422606`, queued on source SHA `dda2d4fe252df9bc38c5148639a09a0d9aea2dbd`. The current research HEAD `d491...` is three commits beyond that SHA, and the only file changed across those three commits was the audit Markdown file. Therefore the queued run targets the same reviewed Python source snapshot, but it has no result yet. Do not report PASS.
