@@ -81,6 +81,21 @@ class StreamingSVDTests(unittest.TestCase):
             )
             self.assertEqual(scaled.rank, base.rank)
 
+    def test_reports_underflow_from_extreme_block_scale_separation(self):
+        blocks = [
+            np.array([[1e308, 0.0]]),
+            np.array([[0.0, 1e-308]]),
+        ]
+        result = tsqr.streaming_svd(blocks, 2)
+        self.assertTrue(result.scale_separation_loss)
+
+    def test_complex_component_scaling_avoids_abs_overflow(self):
+        value = 1.2e308 + 1.2e308j
+        result = tsqr.streaming_svd([np.array([[value]])], 1)
+        expected = np.hypot(1.2e308, 1.2e308)
+        self.assertAlmostEqual(result.singular_values[0] / expected, 1.0, places=14)
+        self.assertFalse(result.scale_separation_loss)
+
     def test_all_zero_matrix(self):
         got = tsqr.streaming_svd(
             [np.zeros((5, 3)), np.zeros((2, 3))], 3
