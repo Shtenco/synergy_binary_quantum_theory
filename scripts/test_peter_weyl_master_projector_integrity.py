@@ -219,6 +219,15 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
             "symmetrization_delta_frobenius_norm": 1e-4,
             "symmetrization_delta_spectral_norm_upper_bound": 1e-4,
             "symmetrization_relative_frobenius_bound": 5e-5,
+            "hermitian_spectrum_resolution": {
+                "spectral_scale": 1.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 1e-13,
+                "resolved_numerical_nullity": 0,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 1.0,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.5,
+            },
         }}
         self.assertFalse(
             pilot.volume_raw_hermiticity_diagnostics(bad, rtol=1e-10)["passed"]
