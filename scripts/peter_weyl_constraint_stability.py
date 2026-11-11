@@ -173,17 +173,48 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
 
 
 def kernel_projector_from_direct_svd(direct, dim):
-    """Build the right-kernel projector from a full-V direct SVD certificate."""
+    """Build a kernel projector only from a self-consistent full-V SVD record."""
+    if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
+        raise ValueError("dim must be a positive integer")
     rank = direct.get("rank")
+    if not isinstance(rank, int) or isinstance(rank, bool) or rank < 0 or rank > dim:
+        raise ValueError("direct-SVD rank is outside the input dimension")
+    singular = np.asarray(direct.get("singular_values"), dtype=float)
+    if (singular.shape != (dim,) or not np.all(np.isfinite(singular))
+            or np.any(singular < 0.0)):
+        raise ValueError("direct singular values must be a finite nonnegative dim-vector")
+    if np.any(singular[:-1] < singular[1:]):
+        raise ValueError("direct singular values must be sorted descending")
+    rtol = direct.get("singular_value_rtol")
+    if (isinstance(rtol, (bool, np.bool_)) or not isinstance(rtol, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(rtol)) or float(rtol) < 0.0):
+        raise ValueError("direct SVD record must contain a finite nonnegative singular_value_rtol")
+    sigma_max = float(singular[0])
+    expected_rank = (
+        int(np.count_nonzero(singular / sigma_max > float(rtol)))
+        if sigma_max > 0.0 else 0
+    )
+    if rank != expected_rank:
+        raise ValueError(
+            "direct-SVD rank is inconsistent with singular values and singular_value_rtol"
+        )
     real = np.asarray(direct.get("right_singular_vectors_real"), dtype=float)
     imag = np.asarray(direct.get("right_singular_vectors_imag"), dtype=float)
-    if not isinstance(rank, int) or rank < 0 or rank > dim:
-        raise ValueError("direct-SVD rank is outside the input dimension")
     if real.shape != (dim, dim) or imag.shape != (dim, dim):
         raise ValueError("full right-singular-vector matrices must be dim x dim")
     vectors = real + 1j * imag
     if not np.all(np.isfinite(vectors)):
         raise ValueError("right singular vectors contain non-finite entries")
+    unitarity_defect = float(np.linalg.norm(
+        vectors.conj().T @ vectors - np.eye(dim), ord="fro"
+    ))
+    unitarity_tolerance = 1e-8 * max(1.0, math.sqrt(dim))
+    if (not math.isfinite(unitarity_defect)
+            or unitarity_defect > unitarity_tolerance):
+        raise ValueError(
+            "right singular vectors are not orthonormal: "
+            f"defect={unitarity_defect}, tolerance={unitarity_tolerance}"
+        )
     kernel_basis = vectors[:, rank:]
     nullity = dim - rank
     orthogonality = (
@@ -195,6 +226,7 @@ def kernel_projector_from_direct_svd(direct, dim):
     return {
         "rank": rank, "nullity": nullity, "kernel_basis": kernel_basis,
         "projector": projector,
+        "right_singular_vector_unitarity_defect_frobenius": unitarity_defect,
         "kernel_basis_orthogonality_defect_frobenius": orthogonality,
         "projector_hermiticity_defect_frobenius":
             float(np.linalg.norm(projector - projector.conj().T, ord="fro")),
