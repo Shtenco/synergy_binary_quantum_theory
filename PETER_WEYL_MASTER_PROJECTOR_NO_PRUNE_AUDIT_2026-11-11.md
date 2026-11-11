@@ -673,3 +673,53 @@ This hardening is based on branch head b31517b0c94f297813562c930a152b2ede346e0e.
 309 commits ahead of main and two behind immediately before this patch.
 Main remains untouched; no merge was performed. CI was still queued at the
 last observed API snapshot, and no manual rerun or dispatch was initiated.
+
+
+## Follow-up: fail-closed validation of kernel SVD certificates (2026-11-11 14:49 UTC)
+
+A further audit found that the threshold-sweep path checked full right-singular-vector
+unitarity, but the primary `kernel_projector_from_direct_svd` path did not.
+That left a validation asymmetry: a malformed full-V matrix could reach the
+kernel-projector comparison without first proving that it was a unitary SVD
+basis. The projector's own idempotence and Hermiticity checks are not a
+substitute for validating the full singular-vector frame.
+
+The kernel-projector constructor now fails closed unless all of the following
+hold:
+
+- dimension is a positive integer and not a boolean;
+- rank is an integer in range and not a boolean;
+- the singular spectrum is a finite, nonnegative, descending vector of the
+  declared dimension;
+- the record contains a finite nonnegative `singular_value_rtol`;
+- the declared rank exactly matches the thresholded singular spectrum;
+- the full complex right-singular-vector matrix is finite and unitary within
+  the same dimension-scaled floating-point tolerance used by the threshold
+  sweep.
+
+The constructor now records the full-frame unitarity defect in addition to
+the kernel-basis and projector geometry defects. Three negative regression
+tests were added for a non-unitary frame, a rank/spectrum inconsistency, and
+boolean rank/dimension values.
+
+Static source inventory now counts 81 methods across the four focused suites:
+31 master-projector integrity, 23 constraint stability, 13 streaming
+TSQR/direct-SVD, and 14 raw-volume operator tests. This is a source count only;
+the tests have not been executed locally in this environment.
+
+The code and test commits are:
+- `97e14833cecd1015aebbeaf8a9fd00349a4aa73f` — validate the full SVD certificate;
+- `f908871db55b460126d9daff87b5ec9aa108edff` — add negative regression tests.
+
+The latest confirmed branch head is `f908871db55b460126d9daff87b5ec9aa108edff`.
+It is 312 commits ahead of main and two behind; merge base remains
+`23669209c83fe0aa2741612e5b2b119562ee6d7d`. Main remains
+`254f19fdab41d32b920bf454f987aa7c0fdba34d`; no merge was performed.
+
+GitHub Actions run `43042013274` (test commit) and run `43041993637`
+(implementation commit) are both queued with no conclusion. The branch has
+127 recorded workflow runs in the latest API response, confirming that the
+queue backlog persists. No rerun or manual dispatch was initiated, and no CI
+PASS is claimed. The low-domain and full 32-state production calculations
+remain unexecuted; no physical-kernel equivalence, exact rank, regulator
+stability, or continuum theorem is established.
