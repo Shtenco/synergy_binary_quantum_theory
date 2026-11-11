@@ -245,3 +245,17 @@ The K5 wiring suite now contains nine focused tests (up from six). Three new tes
 3. the same T_cached call arguments with distinct policy modes return distinct values, demonstrating that the mode participates in the cache key.
 
 The tests are intentionally small and deterministic. They test the producer's policy wiring with controlled primitives, not the physical K5 operator's full numerical output. Combined with the 12 helper tests, the committed suite now contains 21 tests. Latest K5 test blob: b83733713aca6bcfa03fdf9212ec7b7f97613e5c. No CI PASS is claimed; combined commit status remains empty. A local clone/test attempt was blocked because this execution environment could not resolve github.com, so no local execution claim is made either.
+
+
+## 13. Acceptance-gate correction: legacy regression is not a no-prune oracle
+
+A final control-flow review found that the first integration version applied the historical regression targets to both modes. That is logically invalid: the no-prune output is expected to differ from the legacy-thresholded output, so a nonzero process exit based solely on legacy target mismatch would misclassify a completed strict calculation.
+
+The producer now uses apply_acceptance_gate(result, mode):
+- legacy: compares the three frozen historical regression targets and sets passed_regression accordingly;
+- no_prune: sets calculation_completed=true, leaves passed_regression and regression_errors as null, and labels the scope unpruned_calculation_completed_not_physically_certified;
+- unsupported modes are rejected.
+
+The CLI returns zero for a completed no-prune calculation, but that return code means computation completed only; it is not a numerical or physical PASS. Legacy mode still exits according to the historical regression gate. Two additional tests cover this separation, bringing K5 wiring tests to eleven and the combined committed suite to twenty-three.
+
+Latest producer blob: 7db5bae2bb22535cc99f9d86f5dda0f024db7fbc. Latest K5 test blob: 0d43625f3d82f079f3f70c8b547fb4ac88039b8b. The producer, tests and docs have been fetched back from GitHub. No CI execution result or local test execution is available; no test PASS is claimed.
