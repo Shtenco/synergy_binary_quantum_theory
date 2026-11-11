@@ -122,6 +122,25 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non-finite"):
             pilot.hermitian_diagnostics(np.array([[complex(float("nan"), 0.0)]]))
 
+    def test_annihilation_keeps_tiny_nonzero_coefficients(self):
+        columns = {(0, 0): {"x": 1e15 + 0j}}
+        norm = pilot.constraint_annihilation_norm(
+            columns, np.array([1e-15 + 0j]), nodes=(0,)
+        )
+        self.assertAlmostEqual(norm, 1.0, places=14)
+
+    def test_annihilation_skips_only_exactly_zero_coefficients(self):
+        columns = {
+            (0, 0): {"x": 1e15 + 0j},
+            (0, 1): {"x": -1e15 + 0j},
+        }
+        # The tiny first contribution must survive and cancel only through
+        # the explicitly supplied second contribution, not a magic cutoff.
+        norm = pilot.constraint_annihilation_norm(
+            columns, np.array([1e-15 + 0j, 0j]), nodes=(0,)
+        )
+        self.assertAlmostEqual(norm, 1.0, places=14)
+
     def test_run_rejects_negative_tolerances(self):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
             pilot.run(zero_rtol=-1.0)
