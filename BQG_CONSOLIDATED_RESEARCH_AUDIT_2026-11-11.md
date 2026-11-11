@@ -685,3 +685,14 @@ This tests the coherent signed 32-term sum, not only one monomial. It is still o
 The full 32-term T-sum test was committed as `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`, which triggered Actions run #28 (`42944740425`) on that exact test commit. At the last status query, runs #26, #27 and #28 were all `queued`, with no completed job result. The audit documents were subsequently updated in later documentation-only commits; run #28 therefore tests the code commit containing the new test, not the later documentation commits.
 
 The correct remaining target is now **matrix-wide** T/T† adjointness across a declared finite basis and multiple input columns/orientation triples. The newly committed test checks one matrix element of the full coherent sum and must not be described as a full matrix adjoint certificate.
+
+
+## 24. Vertex-oriented production volume tensor self-adjointness gate — 2026-11-11
+
+Added `test_oriented_volume_tensor_is_self_adjoint_at_every_vertex` to `scripts/test_k5_volume_raw_operator.py`. Using deterministic complex test tensors and the Frobenius inner product, it evaluates the actual `apply_volume_tensor_oriented` routine at all five K5 vertices and all four existing finite spin triples, with a spectator fourth leg. It checks
+[
+\langle A,V_vB\rangle_F=\langle V_vA,B\rangle_F.
+]
+This specifically covers the vertex-dependent epsilon conjugations around the local (sqrt{|Q|}) action. It is a finite local tensor-space adjointness gate; it does not establish adjointness of the full graph-changing primitive or full H.
+
+**Inventory:** 42 methods across six workflow scripts (12 + 11 + 4 + 7 + 3 + 5). Test source is committed in `50c807d03c8616dce639487afc83704ec19c5b36`. Actions run #29 is expected from this code push; check its actual state before reporting execution. No PASS is claimed.
