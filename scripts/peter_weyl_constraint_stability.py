@@ -259,6 +259,111 @@ def compare_kernel_projectors(legacy_direct, no_prune_direct, dim):
         ),
     }
 
+
+def singular_threshold_sweep(direct, dim, rtol_values):
+    """Audit rank/kernel sensitivity across a declared relative-SVD threshold grid."""
+    values = [float(x) for x in rtol_values]
+    if not values or any(not math.isfinite(x) or x < 0.0 for x in values):
+        raise ValueError("threshold grid must be nonempty, finite, and nonnegative")
+    if values != sorted(set(values)):
+        raise ValueError("threshold grid must be strictly increasing")
+    singular = np.asarray(direct.get("singular_values"), dtype=float)
+    if singular.shape != (dim,) or not np.all(np.isfinite(singular)) or np.any(singular < 0.0):
+        raise ValueError("direct singular values must be a finite nonnegative dim-vector")
+    if np.any(singular[:-1] < singular[1:]):
+        raise ValueError("direct singular values must be sorted descending")
+    real = np.asarray(direct.get("right_singular_vectors_real"), dtype=float)
+    imag = np.asarray(direct.get("right_singular_vectors_imag"), dtype=float)
+    if real.shape != (dim, dim) or imag.shape != (dim, dim):
+        raise ValueError("full right-singular-vector matrices must be dim x dim")
+    vectors = real + 1j * imag
+    if not np.all(np.isfinite(vectors)):
+        raise ValueError("right singular vectors contain non-finite entries")
+    sigma_max = float(singular[0]) if dim else 0.0
+    normalized = singular / sigma_max if sigma_max > 0.0 else np.zeros(dim)
+    rows = []
+    for rtol in values:
+        rank = int(np.count_nonzero(normalized > rtol)) if sigma_max > 0.0 else 0
+        basis = vectors[:, rank:]
+        projector = basis @ basis.conj().T
+        rows.append({
+            "singular_value_rtol": rtol,
+            "rank": rank,
+            "nullity": dim - rank,
+            "largest_retained_normalized_sigma":
+                float(normalized[rank - 1]) if rank else None,
+            "largest_discarded_normalized_sigma":
+                float(normalized[rank]) if rank < dim else None,
+            "threshold_gap_below":
+                float(normalized[rank - 1] - rtol) if rank else None,
+            "threshold_gap_above":
+                float(rtol - normalized[rank]) if rank < dim else None,
+            "kernel_projector": projector,
+        })
+    plateaus = []
+    for row in rows:
+        if not plateaus or plateaus[-1]["rank"] != row["rank"]:
+            plateaus.append({
+                "rank": row["rank"], "nullity": row["nullity"],
+                "rtol_min": row["singular_value_rtol"],
+                "rtol_max": row["singular_value_rtol"],
+                "grid_points": 1,
+            })
+        else:
+            plateaus[-1]["rtol_max"] = row["singular_value_rtol"]
+            plateaus[-1]["grid_points"] += 1
+    return {
+        "spectral_scale": sigma_max,
+        "scale_separation_warning": bool(direct.get("scale_separation_loss", True)),
+        "rank_plateaus_on_declared_grid": plateaus,
+        "threshold_results": rows,
+    }
+
+
+def compare_threshold_sweeps(legacy_direct, no_prune_direct, dim, rtol_values):
+    """Compare ranks and kernel geometry at each identical threshold."""
+    left = singular_threshold_sweep(legacy_direct, dim, rtol_values)
+    right = singular_threshold_sweep(no_prune_direct, dim, rtol_values)
+    scale_warning = (
+        left["scale_separation_warning"] or right["scale_separation_warning"]
+    )
+    comparisons = []
+    for a, b in zip(left["threshold_results"], right["threshold_results"]):
+        same_nullity = a["nullity"] == b["nullity"]
+        distance = float(np.linalg.norm(
+            a["kernel_projector"] - b["kernel_projector"], ord=2
+        ))
+        if not same_nullity:
+            status, angle = "NULLITY_MISMATCH", None
+        elif a["nullity"] == 0:
+            status, angle = "TRIVIAL_ZERO_KERNEL", 0.0
+        else:
+            status = "SAME_DIMENSION_SUBSPACE_DISTANCE"
+            angle = min(1.0, max(0.0, distance))
+        if scale_warning:
+            status, angle = "INCONCLUSIVE_SCALE_SEPARATION", None
+        comparisons.append({
+            "singular_value_rtol": a["singular_value_rtol"],
+            "legacy_rank": a["rank"], "no_prune_rank": b["rank"],
+            "legacy_nullity": a["nullity"], "no_prune_nullity": b["nullity"],
+            "same_nullity": same_nullity,
+            "projector_difference_spectral_norm": distance,
+            "max_principal_angle_sine": angle,
+            "status": status,
+        })
+    return {
+        "threshold_semantics": "relative threshold on singular values of C, not eigenvalues of C^dagger C",
+        "legacy_rank_plateaus": left["rank_plateaus_on_declared_grid"],
+        "no_prune_rank_plateaus": right["rank_plateaus_on_declared_grid"],
+        "comparisons": comparisons,
+        "scale_separation_warning": scale_warning,
+        "interpretation": (
+            "Grid-based sensitivity diagnostic only. A rank plateau over sampled "
+            "thresholds is not a proof of exact rank; thresholds between grid points "
+            "and upstream operator-construction error remain unbounded."
+        ),
+    }
+
 def column_digest(columns):
     records = []
     for a in sorted(columns):
@@ -312,6 +417,10 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     kernel_comparison = compare_kernel_projectors(
         legacy_direct, no_prune_direct, dim
     )
+    threshold_grid = (1e-14, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4)
+    threshold_sensitivity = compare_threshold_sweeps(
+        legacy_direct, no_prune_direct, dim, threshold_grid
+    )
 
     legacy_spec = spectrum_of_gram(legacy_gram, rank_rtol)
     no_prune_spec = spectrum_of_gram(no_prune_gram, rank_rtol)
@@ -348,6 +457,7 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
             "interpretation": "operator norm of C_no_prune-C_legacy",
         },
         "physical_kernel_subspace_comparison": kernel_comparison,
+        "spectral_threshold_sensitivity": threshold_sensitivity,
         "weyl_rank_stability_sufficient_condition": {
             "delta_operator_norm": delta_norm,
             "legacy_minimum_singular_value": sigma_min,
