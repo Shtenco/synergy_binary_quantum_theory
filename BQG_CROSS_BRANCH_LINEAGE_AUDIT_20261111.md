@@ -1007,3 +1007,130 @@ Checkpoint:
 - main was not modified or merged.
 
 The branch manifest remains 168 refs / 157 unique HEADs. This tranche deep-inspected selected physical TT, scalar-history, HDA and operator-micro-dynamics branches; it is not a completed semantic audit or fresh AST scan of all 157 unique heads. The next pass must continue by deduplicating the remaining unique commit trees and blobs, then extract each candidate theorem together with its executable source, test fixture, cutoff policy, workflow dependency closure and actual run/artifact status.
+
+
+## 27. CI evidence recovery and independent local recomputation (2026-11-11 audit pass)
+
+### 27.1. Actual Actions status on the frozen physical TT branch
+
+The inspected branch `physical-tt-kernel-leading-ir` is at `e3118e1a710b83d23622af57d9c41ed66d7da2c4`. GitHub Actions associates three completed successful runs with that exact commit:
+
+| Workflow | Run | Result |
+|---|---:|---|
+| `core-regression` | `34542820459` | success; 4/4 jobs |
+| `BQG frozen PL Hermitian S adapter` | `34542820360` | success; 1/1 job |
+| `bqg-signed-five-block-bridge` | `34542820317` | success; 2/2 jobs |
+
+The `core-regression` jobs were `canonical-core`, `higher-shell`, `l1-q4-metric`, and `directional-regge`. Their completed steps include canonical truth-ledger validation, Python compilation, q=2 dimension/manifold/qubit gluing, graph-link representation, Plebanski/Urbantke reconstruction, 32D Peter-Weyl normalization, two-/three-node HDA controls, Lorentzian support bounds, held-out Regge L6, TT propagator/vacuum, exact six-dimensional S4 TT quotient, Feshbach identity, nearest-block S3, six-Wilson predictor and scale-translator algebra. All listed steps completed successfully.
+
+The five-block run completed both `fiveblock-p-carrier` and `bridge-selftests`. The former reran all 61 complete six-link face-recoupling patterns, constructed the 30-column carrier, and passed all hard guards. The latter passed both signed-operator assembler and Schur/metric/TT extractor selftests. The adapter preflight separately passed frozen upstream SHA, direct-Hermitian identity and 24-term bookkeeping.
+
+These are successful historical runs attached to the exact frozen branch commit (artifact timestamps 2026-09-10), not a claim that a fresh workflow was dispatched on 2026-11-11. The consolidated audit branch itself has no associated PR-triggered workflow run.
+
+### 27.2. Downloaded artifact: independent five-block recomputation
+
+Downloaded artifact ID `10178025209`, name `bqg-fiveblock-p-carrier`, from run `34542820317`. Its SHA-256 for the serialized NPZ is
+[
+	exttt{f6aa57478dafa952fe8b7cddd26eaa2ea41b4d74bbb9f4a50f50d1363c79a637}.
+]
+The NPZ contains `basis_spins2: (960,768)`, `basis_K2: (960,384)`, and `P_real/P_imag: (960,30)`. I reconstructed the complex P matrix directly from the downloaded arrays, without calling the producer, and recomputed:
+[
+\operatorname{rank}(P^\dagger P)=30,
+\qquad
+\frac{\|P^\dagger P-I\|_F}{\|P^\dagger P\|_F}
+=4.4269925586208663\times10^{-16}.
+]
+The raw reconstructed Gram anti-Hermitian relative norm is (1.0802605865622026\times10^{-34}); the eigenvalues round to ([1,1]), and maximum column norm defect is (3.3306690738754696\times10^{-16}).
+
+A stronger structural property is visible in the serialized artifact: every one of the 960 global basis rows has exactly one nonzero entry across all 30 columns, and every column has exactly 32 nonzero entries. Thus the 30 *stored* columns have pairwise disjoint support, not merely disjoint support between different parent blocks. The smallest stored nonzero amplitude magnitude is (0.02723397555824756), far above the producer's (10^{-10}) retention threshold. This does **not** prove that amplitudes discarded before serialization were exactly zero; it proves that all retained serialized amplitudes are well separated from the threshold.
+
+The artifact's own JSON records `P_Gram_I30_relative_defect=1.812986607347358e-16`, `serialized_P_Gram_relative_defect=2.771854347690155e-16`, rank 30, zero cross-block overlap/collisions and all boundary/exterior checks true. The independent recomputation differs slightly at machine-roundoff scale, as expected from sparse-vs-dense accumulation order.
+
+### 27.3. Full six-link recoupling artifact
+
+The same artifact includes the prerequisite `COLLECTIVE_FACE_COMPLETE_RECOUPLING.json`:
+- all 61 ordered q4 face patterns tested;
+- recoupling dimensions 16 through 144;
+- total doubled-spin support ({0,2,4,6,8});
+- worst left/right unitarity defect (4.637311052790768\times10^{-15});
+- historical maximal-(J_3) Dicke subblock defect (1.1102230246251565\times10^{-16});
+- all five hard checks true.
+
+The current Markdown production-status page reports nearby but non-identical values for the P Gram and worst recoupling defect ((4.5324665\times10^{-17}) and (5.1388141\times10^{-15}), respectively). These are all machine-precision-scale results, but they are not the values in the downloaded run-34542820317 JSON. Treat the run-specific JSON/NPZ and hashes as canonical for that run; do not silently combine values from different production snapshots. The status page should be annotated with run IDs and artifact hashes in a future provenance cleanup.
+
+### 27.4. Independent local reproduction of finite physicalization controls
+
+The `physicalization-truth.yml` workflow is present on the inspected branch, but its triggers are restricted to pushes on `main` and pull requests targeting `main`; it does not run merely because this research branch was updated. I therefore reproduced the mathematical controls independently from the inspected definitions rather than reporting an unavailable branch CI run.
+
+**Finite master-constraint projector.** For stacked constraints (mathcal C:mathcal H\to\mathbb C^m\otimesmathcal H) and a positive-definite matrix (G>0), the exact identity is
+[
+M_G=\mathcal C^\dagger(G\otimes I)\mathcal C,
+\qquad
+\langle\psi|M_G|\psi\rangle
+=\|(G^{1/2}\otimes I)\mathcal C\psi\|^2.
+]
+Since (G^{1/2}\otimes I) is invertible,
+[
+\boxed{\ker M_G=\ker\mathcal C=\bigcap_a\ker C_a.}
+]
+This is an exact finite-dimensional theorem. Strict positive definiteness matters: for merely semidefinite (G), the kernel can enlarge to include nonzero (mathcal C\psi\) in (ker(G\otimes I)).
+
+I reproduced the registered seed-1729, (8)-dimensional, four-constraint numerical gate with four independently sampled positive (G) matrices. The common kernel rank was 2 in all four cases; maximum constraint-on-kernel residual (1.3519683390710954\times10^{-15}); maximum pairwise zero-projector difference (3.4902265593583572\times10^{-15}); heat-kernel convergence identity maximum error (3.3306690738754696\times10^{-16}). This validates the finite algebra and numerical implementation, not the full gravity constraint family or the refinement/rigging limit.
+
+**Finite C8 relational history.** Reconstructed the exact SymPy matrices for (S_{clock}), (J), (G=S\otimes J), and
+[
+P_{rel}=\frac18\sum_{t=0}^{7}G^t.
+]
+All nine core identities passed exactly: (J^2=-I), (J^8=I), (G^8=I), normalized history, (G)-invariance, Hermitian/idempotent combined projector, generation of history from the seed, clock-only projector idempotence, and annihilation of the nontrivial history by clock-only averaging. This remains a positive-control clock, not a derived gravitational clock.
+
+**Finite q=2 metric-source control.** Independently reconstructed (V), relationalized (X,Z,Y), and the frozen shape-to-metric Jacobian. All 18 checks passed exactly: (V^\dagger V=I), (VV^\dagger=P_{rel}), relational observables commute with (G), intertwine and compress to their original operators, and
+[
+B^TB=\frac92 I_2,\quad
+\operatorname{rank}C_{metric}=2,\quad
+C C^+ C=C,\quad C^+ C C^+=C^+.
+]
+The Moore-Penrose inverse is valid only on the two-dimensional shape tangent. This does not add a conformal scalar or a connected inter-block physical kernel.
+
+**Schur algebra stress test.** For a random positive (18\times18) Hermitian block matrix with a six-dimensional P sector, direct minimization over Q reproduced (A-BD^{-1}B^\dagger) for 20 probes with maximum relative discrepancy (7.50\times10^{-16}). A decoupled Q zero mode is compatible with the Moore-Penrose Schur complement; a coupled Q zero mode is not. This is an independent algebra regression, not a BQG amplitude calculation.
+
+### 27.5. Independent higher-shell artifact verification
+
+Downloaded higher-shell artifact ID `10178516490`. From its stored 32x32 complex matrices, I independently reconstructed:
+[
+K=K^\dagger>0,\qquad
+\Lambda=\Lambda^\dagger>0,
+\]
+with (operatorname{rank}K=32), (lambda(K)\in[4.3060759870,13.3527813527]), and
+[
+\lambda(\Lambda)\in[10.6357598783,15.0599276660].
+]
+The stored block-Lanczos matrices satisfy
+[
+\frac{\|B_1^2-K\|}{\|K\|}=2.94\times10^{-15},
+\qquad
+\frac{\|B_2^2-\Lambda\|}{\|\Lambda\|}=2.97\times10^{-15}.
+]
+Thus the reported non-scalar higher-shell (Lambda) is independently reproduced from the archived matrices; its relative distance from a scalar identity is (0.0944046183). Scope remains the finite Euclidean (H_{E0}+H_{E1}) calculation at (J_{max}=5/2).
+
+### 27.6. What the recovered CI does *not* prove — important negative controls
+
+The recovered 30-file core evidence package contains both positive and negative results. The following distinctions are mandatory:
+
+1. **HDA:** the old factorized Hamiltonian is exactly ruled out; the route-normal principal-symbol construction passes, but `full_quantum_HDA_closed=false`. The remaining task is to couple the route factor to the full Peter-Weyl Lorentzian geometry Hamiltonian on the same cylindrical domain and evaluate the off-shell joint commutator.
+2. **Regge/EH:** the finite-lattice Regge/EH (c_2) ratios are (0.4539164) at (L=5) and (0.4670130) at (L=6), not the target (0.5). The (c_3/c_2) relative discrepancies are (18.10\%) and (12.83\%). The artifact explicitly says full Einstein IR is not proved; this is not a closure result.
+3. **Qubit-to-Einstein:** the oracle geometry reconstruction passes to high precision, but `microscopic_rule_derived=false`; the face-qubit dynamics has not been shown to generate that input geometry.
+4. **TT vacuum vs observer smoothing:** the reduced free TT Gaussian vacuum has (P(k)\sim k^{-1}) and block-RMS exponent 1. The observer-smoothing defect has a different exponent near 2.0017. The artifact explicitly rejects identifying the smoothing defect with the free TT vacuum spectrum without a changed interacting/history/RG universality class.
+5. **Physical scale:** the translator's (lambda_{R,eff}=1) is an input placeholder, not a value derived by the reduced transfer. Its (eta_2) is a bare reduced-transfer scalar projection; the physical (eta_2), physical six-vector and common scale remain open. The printed SI/LVK values are therefore conditional diagnostics, not frozen BQG predictions.
+6. **Joint regulator limit:** the exponent (1.0064429) and zero truncation error above (J_{max}=5/2) (Euclidean) / (13/2) (Lorentzian support bound) apply to the declared finite fixed-input HH family. A uniform theorem for unbounded collective input spin under refinement is still open.
+7. **Registered theory status:** the archived integration artifact records 34 structural core gates and `structural_candidate_closed=true`, while `physical_projector_history_closed=false`, `physical_tt_kernel_frozen=false`, `ir_six_wilson_vector_frozen=false`, `common_physical_scale_calibrated=false`, `physicalization_complete=false`, and experimental confirmation false.
+8. **L1 metric split:** the (E/T_2) splitting (0.08359565) is a finite Euclidean tangent-Gram precursor, not the dynamic effective-action Hessian or physical quartic anisotropy.
+
+### 27.7. Immediate next calculations
+
+1. Make the five-block producer threshold-stable by re-running it from the frozen upstream source at a cutoff ladder and, if feasible, a no-prune sparse reference. The downloaded NPZ alone cannot reconstruct discarded amplitudes. The local container could not clone GitHub (DNS/network unavailable), so no claim of a fresh source-level rerun is made.
+2. Add raw pre-symmetrization Hermiticity measurements to the P producer and rerun its workflow.
+3. Build and archive the actual (H_E^{sine}P) and (SP) amplitude images, complete their shared-face recoupling, whiten the target-independent Q support and measure the wall/leakage. This is still the decisive missing microscopic calculation.
+4. Preserve the no-go/negative-control results in the integration ledger: full quantum HDA, finite Regge/EH discrepancy, oracle-vs-generated geometry, TT vacuum mismatch and uncalibrated scale.
+5. Run the physicalization truth validator on a PR targeting main (or reproduce the full ledger locally) while keeping every physical gate open until the actual graph-changing rigging/history and connected metric response exist.
+
+Classification: successful historical CI for the frozen physical branch; independently recomputed archived finite P and higher-shell matrices; independently reproduced finite master/projector/relational/Schur algebra; several exact finite identities; substantial structural and HDA progress; full physical BQG projector/history, connected physical TT/scalar kernels, joint quantum HDA, IR six-vector, common physical scale and experimental validation remain open.
