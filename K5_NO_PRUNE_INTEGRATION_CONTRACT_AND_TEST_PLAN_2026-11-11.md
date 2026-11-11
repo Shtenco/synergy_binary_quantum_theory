@@ -342,3 +342,15 @@ The parity sign in the raw (Q) transformation disappears under the absolute-valu
 The volume suite now checks the defining spectral identity V²=|Q|, not only Hermiticity and nonnegative eigenvalues of V. For each of the four existing finite spin triples, the reference |Q| is assembled from a fresh eigendecomposition of the Hermitian part of the raw production Q, then compared with the square of the production volume123_matrix result.
 
 The volume test file now has six methods; the six workflow scripts contain **38 committed test methods** by source inventory. This new gate is committed but not execution-verified. It tests finite spectral reconstruction and does not establish the physical correctness of the chosen triple-product operator, its orientation convention, or full K5 HH closure.
+
+
+## 27. Complete T-monomial production adjoint gate
+
+Added a matrix-element adjoint check for one complete five-hit monomial from the actual `T_sequences` generator. It includes the local volume insertion and three path factors, then compares every nonzero forward output coefficient with the corresponding return coefficient from the reversed production sequence.
+
+Acceptance identity:
+\[
+\langle y|A|x\rangle=\overline{\langle x|A^\dagger|y\rangle}.
+\]
+
+Scope is explicitly finite: one monomial, one all-spin-1/all-(K=0) input ket, and doubled-spin wall 2. This does not certify the coherent 32-monomial T sum, all orientation triples, or the assembled node Hamiltonian. The test is committed and included through the already-existing primitive test workflow step; no execution or CI PASS is claimed.
