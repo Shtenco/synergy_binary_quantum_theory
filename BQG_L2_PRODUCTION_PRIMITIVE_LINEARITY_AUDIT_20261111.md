@@ -111,3 +111,23 @@ Do not wire the L1 reference accumulator into the live V10 path until L2/L3 esta
 At the time of this audit, L1 runs `42930769907` and `42929934053` were still queued and had no artifacts. The existing L1 workflow runs reference-accumulator tests and imports/compiles selected production modules; it does not execute the L2 map-by-map matrix above. No L1 PASS, L2 PASS, production-linearity PASS, spectral convergence or physical conclusion is claimed here.
 
 **Next gate:** implement L2 tests first for `CK.apply_volume_complete_state`, `CK.apply_HE_complete_state`, and `COMP.apply_HE_complete_state_custom`, because these isolate the state-level thresholds that sit directly on the active KKV path. Then extend to `C_K_component`, `C_volume_component`, and finally the L3 whole-map reconstruction.
+
+
+## 7. L2 executable characterization added — 11 November 2026, 01:00 UTC
+
+Two executable artifacts were added after the source audit:
+
+- `tests/test_bqg_l2_production_primitives.py`: constructs a real finite Peter–Weyl basis state, converts it through the existing covariant/complete representation adapters, applies the same zero-aware volume convention as the research composition path, and calls the actual production functions:
+  - `CK.apply_volume_complete_state`;
+  - `CK.apply_HE_complete_state`;
+  - `KCOMP.apply_HE_complete_state_custom`.
+- `.github/workflows/bqg-production-linearity-l2.yml`: compiles the relevant modules, runs the L2 suite on Python 3.11, and preserves the execution log as an artifact.
+
+The tests have two roles:
+
+1. Hard safe-domain complex-homogeneity checks at a scale well above the output thresholds.
+2. `unittest.expectedFailure` threshold-boundary characterizations. For each map, the test calibrates an input coefficient from the actual unit-state output so that two individually subthreshold contributions are compared with their coherent sum. These are intentionally expected to expose the currently documented output/accumulator threshold behavior.
+
+The fixture is a real finite-sector key, but the tests are still finite-sector numerical characterization, not a proof of full operator linearity, convergence, or physical correctness. The L2 workflow has just been added; no run result is claimed until its job and artifact are inspected. The tests do not yet exercise `COMP.C_K_component` or `COMP.C_volume_component`; those remain subsequent integration-level tests.
+
+**Next gate:** inspect the first L2 workflow execution. If safe-domain homogeneity fails, investigate cache/patch contamination or a genuine fixed-domain mismatch before relaxing tolerances. Confirm that each expected failure occurs for the intended threshold reason rather than a fixture/import exception.
