@@ -289,16 +289,25 @@ def volume_raw_hermiticity_diagnostics(
                     and isinstance(nullity, int) and not isinstance(nullity, bool)
                     and nullity >= 0
                 )
+                expected_dimension = (
+                    math.prod(int(x) + 1 for x in key) if key_valid else None
+                )
+                nullity_in_range = (
+                    expected_dimension is not None and nullity <= expected_dimension
+                )
                 if spectral_scale == 0.0:
                     spectrum_shape_valid = (
-                        min_resolved is None and normalized_gap is None
+                        nullity_in_range and nullity == expected_dimension
+                        and min_resolved is None and normalized_gap is None
                         and derivative is None and spectral_threshold == 0.0
                     )
                 else:
                     spectrum_shape_valid = (
-                        min_resolved is not None and normalized_gap is not None
+                        nullity_in_range and nullity < expected_dimension
+                        and min_resolved is not None and normalized_gap is not None
                         and derivative is not None
                         and math.isfinite(min_resolved) and min_resolved > 0.0
+                        and min_resolved <= spectral_scale
                         and math.isfinite(normalized_gap) and 0.0 < normalized_gap <= 1.0
                         and math.isfinite(derivative) and derivative > 0.0
                         and abs(normalized_gap - min_resolved / spectral_scale)
