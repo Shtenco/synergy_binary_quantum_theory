@@ -246,6 +246,17 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertIsNone(result["records"][0]["spin_triple"])
 
+    def test_volume_registry_rejects_malformed_record_without_crashing(self):
+        malformed = {
+            (1, 1, 1): None,
+            (1, 1, 2): {"relative_antihermitian_defect": "bad", "raw_norm": 1.0},
+        }
+        result = pilot.volume_raw_hermiticity_diagnostics(malformed)
+        self.assertFalse(result["passed"])
+        self.assertEqual(len(result["failures"]), 2)
+        import json
+        json.dumps(result, allow_nan=False)
+
     def test_absolute_annihilation_wrapper_keeps_zero_vector_compatibility(self):
         columns = {(0, 0): {"x": 1.0 + 0j}}
         self.assertEqual(
