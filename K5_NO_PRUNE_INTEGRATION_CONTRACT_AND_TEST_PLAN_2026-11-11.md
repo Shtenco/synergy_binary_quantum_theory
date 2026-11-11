@@ -541,3 +541,12 @@ Commit 122258ff0ac489f9e7bf3b5dd8f669acec485a30 adds an explicit assertion that 
 ### 36.4 CI timeout budget
 
 The BQG workflow timeout is now 15 minutes (commit `cf40a267ba38867acc4db206617eb37d40cc07f4`) to avoid treating the reference-quality no-prune H column as a five-minute smoke test. Runtime remains unmeasured until a runner starts; this is only a budget adjustment.
+
+
+## 37. Matrix-wide H adjointness: rectangular design and staged scope
+
+Do not force an invariant square basis: one H action changes link-spin labels. Define an input basis D, collect the complete no-prune output support R, and build A[y,x]=<y|H|x>. Independently build B[x,y]=<x|H|y> using production T/T† actions. The target is A=B† on every declared pair in D×R.
+
+Walls: forward Jmax2≥S_D+2; reverse Jmax2≥S_y+2 for each output y, or uniform Jmax2≥S_D+4. For each pair, only specs whose exact hit support contains all changed link edges can contribute to the reverse matrix element. This is a strict structural filter, not numerical pruning. Reuse reverse maps across input kets with the same spin vector.
+
+Stage the computation: begin with 2–4 input kets, gather full R, then either test the full rectangular block or choose deterministic top-k outputs and publish the omitted forward leakage. Expand to all 32 K-channel kets only after resource measurements. Report Frobenius and maximum-entry adjoint defects plus per-column/per-row residuals. Distinguish complete reachable support from a truncated projected R_k. Only after this one-action matrix gate should HH and the leakage Gram be built.
