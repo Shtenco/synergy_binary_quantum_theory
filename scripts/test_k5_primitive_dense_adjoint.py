@@ -162,6 +162,69 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
                 ])
             self.assertEqual(specs, tuple(independently_expected))
 
+    def test_full_32_term_T_sum_matches_reverse_matrix_element(self):
+        # Test the coherent T sum itself, not merely its 32 monomial pieces.
+        # Accumulate the forward and reverse matrix elements independently
+        # with fsum, preserving the coefficient signs and cross-term addition.
+        import math
+        from collections import defaultdict
+
+        vertex, a, b, c = 0, 1, 2, 3
+        spin_wall = 2
+        input_key = ((1,) * len(k5.EDGES), (0,) * len(k5.VERT))
+        terms = k5.T_sequences(vertex, a, b, c)
+        self.assertEqual(len(terms), 32)
+
+        forward_terms = defaultdict(list)
+        for coefficient, sequence in terms:
+            column = k5.apply_primitive_oriented(
+                input_key, sequence, spin_wall, mode="no_prune"
+            )
+            for output_key, amplitude in column.items():
+                forward_terms[output_key].append(coefficient * amplitude)
+
+        forward = {
+            key: complex(
+                math.fsum(value.real for value in values),
+                math.fsum(value.imag for value in values),
+            )
+            for key, values in forward_terms.items()
+        }
+        forward = {key: value for key, value in forward.items() if value != 0j}
+        self.assertTrue(forward, "the complete 32-term T column unexpectedly vanished")
+
+        # Select the largest-magnitude nonzero element deterministically.
+        output_key = min(
+            forward,
+            key=lambda key: (-abs(forward[key]), repr(key)),
+        )
+        forward_element = forward[output_key]
+
+        reverse_contributions = []
+        for coefficient, sequence in terms:
+            reverse_sequence = k5.adjoint_sequence(sequence)
+            reverse_column = k5.apply_primitive_oriented(
+                output_key, reverse_sequence, spin_wall, mode="no_prune"
+            )
+            reverse_contributions.append(
+                coefficient * reverse_column.get(input_key, 0j)
+            )
+        reverse_element = complex(
+            math.fsum(value.real for value in reverse_contributions),
+            math.fsum(value.imag for value in reverse_contributions),
+        )
+
+        np.testing.assert_allclose(
+            reverse_element,
+            np.conjugate(forward_element),
+            rtol=1e-10,
+            atol=1e-11,
+            err_msg=(
+                "the coherent 32-term production T sum disagrees with "
+                "the independently accumulated reversed matrix element"
+            ),
+        )
+
     def test_full_five_hit_T_monomial_matches_reverse_matrix_elements(self):
         # One complete production monomial from T_sequences contains the
         # volume insertion and all three holonomy paths (five link hits).
