@@ -127,3 +127,22 @@ The new L2 test plan prioritizes real production maps: `CK.apply_volume_complete
 **CI status remains unchanged:** runs `42930769907` and `42929934053` were observed queued, with no artifacts. The existing L1 workflow does not execute the new L2 test matrix. No L1/L2/L3 PASS is claimed.
 
 **Next gate:** implement and execute the three highest-priority L2 tests before changing production semantics. Do not wire the reference accumulator into V10 until the exact insertion boundary and regression behavior are established.
+
+
+## 9. Executable L2 gate added — 11 November 2026, 01:00 UTC
+
+Added `tests/test_bqg_l2_production_primitives.py` and `.github/workflows/bqg-production-linearity-l2.yml`.
+
+The L2 suite initializes a real Peter–Weyl basis state, converts it through the repository's covariant/complete adapters, applies the preregistered zero-aware volume patch and calls three actual production primitives: `CK.apply_volume_complete_state`, `CK.apply_HE_complete_state`, and `KCOMP.apply_HE_complete_state_custom`.
+
+Each primitive has:
+- a hard complex-homogeneity test at a safe scale above its output threshold;
+- an expected-failure threshold-boundary additivity characterization, calibrated from the actual unit-state output so the test compares two individually subthreshold contributions with their coherent sum.
+
+The workflow compiles the production modules, runs the suite on Python 3.11 and uploads the test log even if a test fails. The suite does not yet test the full `COMP.C_K_component` / `COMP.C_volume_component` maps. This is an executable L2 characterization, not evidence of full production linearity or physical validity.
+
+**New commits:** `340f311f9eba27ff0e53c3a0255ca15f39f2d206` (L2 primitive tests), `060b50dca818e2552067e5f905ccf240a4da6b85` (L2 workflow), followed by documentation updates.
+
+**CI status:** L2 run has only just been triggered by the scoped push. Do not claim PASS/FAIL until its job steps and uploaded log are inspected. The previous L1 runs remain separately tracked.
+
+**Next:** inspect L2 safe-domain homogeneity and each expected-failure reason; then extend to the full covariant maps and L3 direct-superposition/matrix reconstruction.
