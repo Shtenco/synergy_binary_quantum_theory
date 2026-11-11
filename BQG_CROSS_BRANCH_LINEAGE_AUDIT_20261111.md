@@ -1325,3 +1325,180 @@ A block can be removed only if
 After every accepted removal, uniqueness must be recomputed. A failed block remains in the residual set; it is not a kernel vector. A residual set requires a coupled cross-block Gram on shared output keys before any nullity conclusion.
 
 Classification: exact representation/multiplicity and per-row covariance reductions; one-orbit distributed smoke PASS; 15/112 actual-q keymeta coverage independently recovered; global S4-sign rank proof and [3,2] schedule remain incomplete; inventory salvage-selection bug identified.
+
+
+## 30. Strengthened finite physical-projector no-go: one positive metric is enough, with a Loewner bound
+
+Primary branch: `research/post-hda-physicalization-v2`, HEAD `6d3f23860fc134ec0f10259fa17adb2c32588739`.
+Source blobs:
+- `scripts/peter_weyl_master_projector_pilot.py`: `eba2c491f9468c9fd4980e6fcb0ec9d5b8fa8b9c`;
+- `scripts/k5_peter_weyl_safe_hda_column.py`: `e7e1e0705c4b833dcee167a2036ef5f8929a4388`;
+- `scripts/master_constraint_physical_projector_gate.py`: `26054c5203c2568de3e610eaed1bac2a07dd276b`;
+- `.github/workflows/post-hda-physicalization-smoke.yml`: `9f56ac55da05f99bb189820e796234548c5c29ee`.
+
+### 30.1. Exact theorem, including the metric dependence
+
+Let (mathcal H) be the declared finite carrier, (mathcal K) the common output Hilbert space, and
+[
+mathcal C:mathcal H	omathbb C^motimesmathcal K,
+qquad
+mathcal Cpsi=sum_{v=1}^m|vangleotimes H_vpsi.
+]
+For a Hermitian positive-definite constraint metric (Gsucc0), define
+[
+M_G=mathcal C^dagger(Gotimes I_{mathcal K})mathcal C.
+]
+Then
+[
+langlepsi,M_Gpsiangle
+=|(G^{1/2}otimes I)mathcal Cpsi|^2,
+]
+and invertibility of (G^{1/2}otimes I) gives the exact identity
+[
+oxed{ker M_G=kermathcal C=igcap_vker H_v.}
+]
+Thus the exact common kernel is independent of the choice of *strictly positive* metric (G), not merely of the three sampled matrices.
+
+A stronger quantitative statement follows from (Gsucceqlambda_{min}(G)I_m):
+[
+oxed{M_Gsucceqlambda_{min}(G)M_I,qquad
+lambda_{min}(M_G)gelambda_{min}(G)lambda_{min}(M_I).}
+]
+Therefore, once (M_I) is strictly positive on the carrier, every positive-definite (G) is excluded from having a zero mode there. No parameter sweep over positive metrics is mathematically needed to establish the exact-kernel statement.
+
+For (Gsucceq0) singular, the conclusion changes:
+[
+ker M_G={psi:(G^{1/2}otimes I)mathcal Cpsi=0},
+]
+which may be larger than (cap_vker H_v). A semidefinite metric can discard constraint combinations; it is not interchangeable with a positive-definite metric in this theorem.
+
+An independent exact rational 3D witness was also checked: with
+[
+G=\begin{pmatrix}2&1\\1&2\end{pmatrix},quad
+mathcal C=\begin{pmatrix}1&0&1\\0&1&0\\0&1&0\\1&0&1\end{pmatrix},
+]
+both (kermathcal C) and (ker(mathcal C^T(Gotimes I_2)mathcal C)) are exactly (operatorname{span}{(-1,0,1)^T}). This is a symbolic theorem sanity check, not a substitute for the gravitational operator data.
+
+### 30.2. Recovered full-32D CI evidence and independent arithmetic
+
+The actual successful run is `post-hda-physicalization-smoke`, run `32129094215`; job `physical-projector` (`95686252742`) completed successfully. The workflow steps include compilation, exact finite master-projector theorem selftest, full-32D Peter–Weyl pilot and artifact upload. Artifact `post-hda-physicalization-full32`, ID `9322145616`, ZIP SHA-256 `806df0a740eae831f1fdf6a93bf6cf28c8c6fa056c962cd74c4b252dcc0232f2`.
+
+The archived JSON declares all 32 distinct ((K_0,ldots,K_4)in{0,2}^5) states, ten links all at (j=1/2), five node constraints and (J_{max}=5/2). There are 160 nonempty (H_v|aangle) output columns; support sizes range 39–84.
+
+Recorded identity-metric spectrum:
+[
+lambda_{min}(M_I)=9.65181110814688,
+quad
+\epsilon_{zero}=1.448385062982326\times10^{-9}.
+]
+The spectral margin is
+[
+lambda_{min}(M_I)/\epsilon_{zero}
+=6.663843307\times10^9.
+]
+The diagonal metric has (lambda_{min}(G)=1), observed (lambda_{min}(M_G)=29.0389990597). The random positive metric has (lambda_{min}(G)=0.7247424644), observed (lambda_{min}(M_G)=130.5945311561). The independent Loewner lower bounds are respectively (9.6518111081) and (6.9950773686), both positive and both far above the declared zero threshold. These calculations were recomputed locally from the archived spectra and metric minima.
+
+The 8D synthetic selftest is logically separate: it prescribes a two-dimensional common kernel and verifies metric-independent projectors and heat-kernel convergence. It tests the theorem machinery, not the gravity application.
+
+### 30.3. Two diagnostic fields are vacuous/tautological in the empty-kernel case
+
+Source audit found:
+1. `master_from_gram()` returns (\tfrac12(M+M^dagger)). The subsequently reported `hermiticity_error = ||M-M^dagger||` is therefore measured *after* explicit hermitization and is identically zero by construction. The raw unsymmetrized contraction should be measured and reported before cleanup.
+2. `zero_sector_constraint_annihilation_max_norm` is zero when the selected zero rank is zero, because no selected zero eigenvectors exist. It is a vacuous diagnostic in this run.
+3. Pairwise zero-projector differences are zero because all three projectors are the zero matrix. This is not an additional independent physical result.
+
+These points do not overturn the positive identity-metric spectrum. They narrow which checks are genuinely independent and should be corrected in a future gate.
+
+### 30.4. Finite-cutoff and sparse-threshold boundary
+
+The no-go applies to the computed finite map, not to a mathematically untruncated continuum operator. The implementation fixes (J_{max}=5/2) (`jmax2=5`) and uses amplitude filters at multiple stages: primitive state outputs retain (|a|>10^{-11}), cached (T)-state outputs retain (|a|>10^{-10}), and each (H_v) column is pruned again at (10^{-10}). Consequently the rigorously honest object is (H_v^{(J_{max},\epsilon)}) and its master matrix, with the stated finite spin wall and sparse policy.
+
+The next robust version must publish a cutoff ladder for every filtering stage, retain a no-prune or substantially tighter reference where feasible, compare (lambda_{min}(M_I)), singular values of the stacked constraint map (mathcal C), output-support growth and raw Hermiticity. It must also distinguish the exact common kernel of the thresholded finite operator from a spectral window of the untruncated operator.
+
+Classification: exact finite operator-algebra theorem; strong finite numerical evidence for an empty common kernel on the declared 32D (j=1/2,K\in\{0,2\}) carrier; all-(G\succ0) extension follows analytically from the Loewner inequality; sparse/cutoff stability and continuum/rigging limit remain open.
+
+## 31. Lorentzian sine (H_L): exact scalar selection rule is ready; full operator gate is not
+
+Inspected branch: `research/hl-sine-dag`, HEAD `299e3d896a7845688ca6f3e7cb6c4b379c6a73f1`.
+Key source blobs:
+- `scripts/peter_weyl_lorentzian_sine_scalar_channel_gate.py`: `255a26e7285ab6b0af509402d675c62cc0363ad4`;
+- `scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py`: `d750a7437c5aeef1b635176fe0908777a28851f4`;
+- `scripts/peter_weyl_lorentzian_sine_full_HL_gate.py`: `60143e678259de1c1f73bd389db4c225607a9c79`;
+- `scripts/peter_weyl_lorentzian_sine_scalar_triple_fast_gate.py`: `6fb01dbdb15c34af89c2d64375af1ebd641235bf`;
+- `scripts/peter_weyl_sine_scalar_runtime.py`: `293df5eeff41a84875f3c515e6e8f035e09a5ead`;
+- `.github/workflows/sine-lorentzian-frontier.yml`: `27b7502f0baa37dbbcb5a513fd754da0f3fa5764`.
+
+### 31.1. Independently rederived scalar-channel decomposition
+
+Each fundamental covariant leg carries
+[
+\tfrac12\otimes\tfrac12^*=0\oplus1.
+]
+Starting from source scalar (J_0=0), three such legs can return to (J_3=0) only along five rank words:
+[
+oxed{000, 011, 101, 110, 111.}
+]
+The allowed intermediate spins after the second leg are exactly
+[
+oxed{J_2\in\{0,1\};\quad J_2=2\text{ cannot return to }J_3=0}
+]
+because the last leg has rank at most one. This was independently enumerated locally by exhaustive integer-spin coupling; exactly five scalar paths were recovered.
+
+This is an exact representation-theoretic pruning theorem. It authorizes deleting (J=2) *after the middle operator has acted*, but does not authorize deleting any amplitudes inside the retained (J=0,1) channels.
+
+### 31.2. Cutoff walls derived from hit counts
+
+For the registered per-link support counts (r_e(H_E)=2), (r_e(H_L)=6), input (j=1/2), the exact conservative walls are
+[
+J_{max}(H_L)=\tfrac12+\tfrac62=\tfrac72,
+]
+[
+J_{max}([H_E,H_L])=\tfrac12+\tfrac{2+6}{2}=\tfrac92,
+qquad
+J_{max}([H_L,H_L])=\tfrac12+\tfrac{12}{2}=\tfrac{13}{2}.
+]
+With (dim\mathcal H_{link}^{J} = \sum_{n=1}^{2J+1}n^2), the corresponding single-link dimensions are 204, 385 and 1015. The first wall is used by the ordered single-(H_L) triple; the mixed and (H_LH_L) walls remain requirements for the next commutator stages.
+
+### 31.3. The 24-term full-(H_L) script has an unclosed equivalence obligation
+
+The full script loops over 12 oriented cyclic specs and forms 24 terms:
+[
+H_L^{raw}|\psi\rangle
+=\sum_{spec} s_{spec}
+(T_{abc}-T_{bac})|\psi\rangle,
+\quad
+T_{abc}=\operatorname{Tr}_{aux}[C_a(K_{sine})C_b(K_{sine})C_c(V)].
+]
+It uses `SineScalarRuntime` and the scalar-channel pruning above. However:
+- the script's own `reference_requirement` says the accelerated ordered triple must match the unrestricted reference first;
+- the script does not itself perform that reference comparison;
+- the `sine-lorentzian-frontier.yml` workflow runs Euclidean sine ordering, (C(V)), (C(K_{sine})), and one unrestricted ordered triple, but does **not** invoke the full 24-term `peter_weyl_lorentzian_sine_full_HL_gate.py`;
+- the full script's `passed` predicate checks nonzero output, final scalar weight, leakage and spin wall, but not reference equivalence or the final Hermitian Lorentzian ordering;
+- the runtime has explicit amplitude thresholds (including (10^{-11}) accumulation and (10^{-13}) coefficient selection), so “exact” applies to the SU(2) selection pruning, not to all floating-point amplitudes.
+
+The branch HEAD did not yield a matching PR-triggered Actions run through the commit-run lookup. Do not describe the full 24-term gate as CI-executed or as a validated physical (H_L).
+
+### 31.4. Required closure sequence
+
+1. Freeze one canonical unrestricted sine-ordered triple as the reference and compare every retained output amplitude, not just norm/support, against the accelerated triple.
+2. Add a property-based suite over all 12 cyclic specs, all source nodes related by K5 symmetry, and selected independent input states.
+3. Compare the 24-term accelerated (H_L^{raw}) column to a separately assembled unaccelerated 24-term reference.
+4. Derive and implement the Hermitian Lorentzian ordering; check (H_L^dagger-H_L) before any symmetrization.
+5. Run the mixed ([H_E^{sine},H_L]) at (J_{max}=9/2), then ([H_L,H_L]) at (13/2), with full support/leakage accounting.
+6. Only then test the same-domain off-shell HDA commutator and compare it to the independent route-normal RHS.
+
+Classification: exact SU(2) scalar-path selection rule and conservative support walls; finite single-triple amplitude gate; full 24-term accelerated (H_L) is not yet independently equivalent, Hermitian-ordered, workflow-integrated or HDA-closed.
+
+## 32. Historical core-regression failure is a validator defect, not a physics result
+
+On the post-HDA branch commit, the Actions lookup found:
+- `post-hda-physicalization-smoke` run `32129094215`: **success**;
+- adjacent `core-regression` run `32129094214`: **failure**.
+
+The core job passed scope audit (181 text/code files, 92 Python files), Python compileall, and the 24-entry theory-gate ledger validator (`valid=true`, `complete=false`; the latter is an explicit open-proof status, not an execution error). It failed at `validate_github_latex.py`: 22 reports of “TeX command outside a math delimiter” in `README.md`, `THEORY_STATUS.md`, and `OPEN_PROBLEMS.md`.
+
+Source inspection explains the failure: the validator recognizes only dollar delimiters `$` and `$$`, while those public documents at that historical commit use standard Markdown display delimiters `\\[...\\]` and `\\[...\\]` closure. The validator therefore classifies valid TeX inside display math as ordinary prose. The failure is a parser false positive, not a mathematical gate failure.
+
+At the current consolidated research HEAD the four public files selected by core CI use dollar-delimited math and contain no `\\(` or `\\[` delimiters, so the specific historical 22-error failure is not shown to reproduce on that snapshot. Nevertheless the validator remains incomplete: it should parse escaped inline `\\(...\\)` and display `\\[...\\]` delimiters, handle fenced code and unmatched delimiters, and include regression fixtures for all four supported styles. Do not silently label the old core-regression run green; retain its actual failure and its exact cause.
+
+Classification: historical CI failure independently diagnosed as validator/parser defect; post-HDA physical-projector workflow separately passed; current validator has a latent format-coverage bug.
