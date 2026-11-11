@@ -7,6 +7,8 @@ on:
     paths:
       - "scripts/bqg_sparse_pruning.py"
       - "scripts/test_bqg_sparse_pruning.py"
+      - "scripts/k5_peter_weyl_safe_hda_column.py"
+      - "scripts/test_k5_sparse_policy_wiring.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -30,6 +32,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install numerical test dependency
-        run: python -m pip install --disable-pip-version-check numpy
+        run: python -m pip install --disable-pip-version-check numpy sympy
       - name: Run committed sparse-pruning regression tests
         run: python scripts/test_bqg_sparse_pruning.py
+      - name: Run K5 policy wiring tests
+        run: python scripts/test_k5_sparse_policy_wiring.py
