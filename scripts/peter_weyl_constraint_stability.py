@@ -801,6 +801,218 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
     }
 
 
+
+def _canonical_key_payload(value):
+    """Type-tagged recursive encoding for deterministic row-key ordering."""
+    if isinstance(value, tuple):
+        return ["tuple", [_canonical_key_payload(item) for item in value]]
+    if isinstance(value, int) and not isinstance(value, bool):
+        return ["int", str(value)]
+    if isinstance(value, str):
+        return ["str", value]
+    raise TypeError(
+        "row keys must contain only tuples, non-boolean integers, and strings"
+    )
+
+
+def _row_key_order(key):
+    return json.dumps(
+        _canonical_key_payload(key), ensure_ascii=True, separators=(",", ":")
+    )
+
+
+def cutoff_difference_from_columns(lower, upper, dim):
+    """Embed two represented sparse maps into their exact union row space.
+
+    Missing sparse entries mean exact zero in the represented dictionaries.
+    This is an algebraic comparison of the supplied maps, not a claim that
+    either cutoff is a restriction/projection of an unregulated operator.
+    """
+    if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
+        raise ValueError("dim must be a positive integer")
+    if set(lower) != set(range(dim)) or set(upper) != set(range(dim)):
+        raise ValueError("both maps must contain exactly the declared columns")
+    lower_rows = set()
+    upper_rows = set()
+    for a in range(dim):
+        lower_rows.update(lower[a])
+        upper_rows.update(upper[a])
+    common = lower_rows & upper_rows
+    lower_only = lower_rows - upper_rows
+    upper_only = upper_rows - lower_rows
+    changed_common = 0
+    max_common_delta = 0.0
+    common_delta_frob_sq = 0.0
+    delta = {}
+    for a in range(dim):
+        keys = set(lower[a]) | set(upper[a])
+        col = {}
+        for key in keys:
+            lv = complex(lower[a].get(key, 0j))
+            uv = complex(upper[a].get(key, 0j))
+            if not (math.isfinite(lv.real) and math.isfinite(lv.imag)
+                    and math.isfinite(uv.real) and math.isfinite(uv.imag)):
+                raise ValueError("cutoff maps must contain finite complex coefficients")
+            difference = uv - lv
+            if difference != 0j:
+                col[key] = difference
+            if key in common:
+                magnitude = abs(difference)
+                if magnitude != 0.0:
+                    changed_common += 1
+                    max_common_delta = max(max_common_delta, magnitude)
+                    common_delta_frob_sq += magnitude * magnitude
+        delta[a] = col
+    return delta, {
+        "lower_row_count": len(lower_rows),
+        "upper_row_count": len(upper_rows),
+        "common_row_count": len(common),
+        "lower_only_row_count": len(lower_only),
+        "upper_only_row_count": len(upper_only),
+        "changed_common_coefficients": changed_common,
+        "max_abs_common_coefficient_change": max_common_delta,
+        "common_coefficient_difference_frobenius_norm": math.sqrt(common_delta_frob_sq),
+        "row_embedding_semantics": (
+            "exact union of represented sparse row keys; absent dictionary entries "
+            "are zero in the represented maps only"
+        ),
+    }
+
+
+def dense_operator_from_columns(columns, dim, max_entries=200000):
+    """Materialize a guarded dense oracle matrix for small finite comparisons."""
+    if not isinstance(max_entries, int) or isinstance(max_entries, bool) or max_entries <= 0:
+        raise ValueError("max_entries must be a positive integer")
+    rows = set()
+    for a in range(dim):
+        rows.update(columns[a])
+    ordered = sorted(rows, key=_row_key_order)
+    if len(ordered) * dim > max_entries:
+        raise ValueError(
+            f"dense oracle requires {len(ordered) * dim} entries; limit is {max_entries}"
+        )
+    row_index = {key: i for i, key in enumerate(ordered)}
+    matrix = np.zeros((max(1, len(ordered)), dim), dtype=np.complex128)
+    for a in range(dim):
+        for key, value in columns[a].items():
+            matrix[row_index[key], a] = complex(value)
+    return matrix, ordered
+
+
+def compare_cutoff_operator_columns(lower, upper, dim, block_rows=4096,
+                                    dense_max_entries=200000):
+    """Compare two already-built maps, with TSQR and an independent dense oracle."""
+    delta, embedding = cutoff_difference_from_columns(lower, upper, dim)
+    direct = direct_svd_from_columns(delta, dim, 0.0, block_rows)
+    if direct["scale_separation_loss"]:
+        return {
+            "status": "INCONCLUSIVE_SCALE_SEPARATION",
+            "row_embedding": embedding,
+            "difference_operator_norm_tsqr": None,
+            "dense_oracle": None,
+            "weyl_singular_value_bound": None,
+        }
+    lower_dense, lower_keys = dense_operator_from_columns(
+        lower, dim, dense_max_entries
+    )
+    upper_dense, upper_keys = dense_operator_from_columns(
+        upper, dim, dense_max_entries
+    )
+    union_keys = sorted(set(lower_keys) | set(upper_keys), key=_row_key_order)
+    row_index = {key: i for i, key in enumerate(union_keys)}
+    lower_embedded = np.zeros((max(1, len(union_keys)), dim), dtype=np.complex128)
+    upper_embedded = np.zeros_like(lower_embedded)
+    for a in range(dim):
+        for key, value in lower[a].items():
+            lower_embedded[row_index[key], a] = complex(value)
+        for key, value in upper[a].items():
+            upper_embedded[row_index[key], a] = complex(value)
+    dense_delta = upper_embedded - lower_embedded
+    dense_singular = np.linalg.svd(dense_delta, compute_uv=False)
+    dense_norm = float(dense_singular[0]) if dense_singular.size else 0.0
+    tsqr_singular = np.asarray(direct["singular_values"], dtype=float)
+    tsqr_norm = float(tsqr_singular[0]) if tsqr_singular.size else 0.0
+    norm_abs_error = abs(tsqr_norm - dense_norm)
+    norm_scale = max(tsqr_norm, dense_norm, np.finfo(float).tiny)
+    singular_count = min(len(tsqr_singular), len(dense_singular))
+    singular_abs_error = (
+        float(np.max(np.abs(tsqr_singular[:singular_count]
+                            - dense_singular[:singular_count])))
+        if singular_count else 0.0
+    )
+    oracle_tolerance = 5e-11 * max(1.0, norm_scale)
+    return {
+        "status": (
+            "DENSE_ORACLE_AGREEMENT"
+            if norm_abs_error <= oracle_tolerance
+            and singular_abs_error <= oracle_tolerance
+            else "DENSE_ORACLE_DISAGREEMENT"
+        ),
+        "row_embedding": embedding,
+        "difference_operator_norm_tsqr": tsqr_norm,
+        "difference_operator_norm_dense": dense_norm,
+        "tsqr_dense_operator_norm_abs_error": norm_abs_error,
+        "tsqr_dense_max_singular_value_abs_error": singular_abs_error,
+        "dense_oracle_tolerance": oracle_tolerance,
+        "dense_oracle_shape": list(dense_delta.shape),
+        "dense_oracle_singular_values": dense_singular.tolist(),
+        "tsqr_singular_values": tsqr_singular.tolist(),
+        "weyl_singular_value_bound": {
+            "operator_difference_norm": dense_norm,
+            "scope": "represented finite float64 maps in the exact union row-key embedding",
+            "upstream_operator_construction_error_included": False,
+        },
+    }
+
+
+def cutoff_operator_sweep(domain="low", jmax2_values=(1, 3),
+                          block_rows=4096, dense_max_entries=200000):
+    """Build and compare adjacent no-prune cutoff maps in a common row space."""
+    cutoffs = list(jmax2_values)
+    if (not cutoffs or any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 1
+            for value in cutoffs)):
+        raise ValueError("cutoffs must be nonempty doubled-spin integers >= 1")
+    if cutoffs != sorted(set(cutoffs)):
+        raise ValueError("cutoffs must be strictly increasing")
+    nodes = tuple(PILOT.PW.VERT)
+    basis = PILOT.carrier_basis(domain)
+    dim = len(basis)
+    maps = []
+    for cutoff in cutoffs:
+        raw, _ = PILOT.constraint_columns(
+            basis, nodes, cutoff, mode="no_prune"
+        )
+        stacked, _ = stack_columns(raw, nodes, dim)
+        maps.append(stacked)
+        del raw
+        if hasattr(PILOT.PW.T_cached, "cache_clear"):
+            PILOT.PW.T_cached.cache_clear()
+        gc.collect()
+    comparisons = []
+    for index in range(1, len(cutoffs)):
+        comparison = compare_cutoff_operator_columns(
+            maps[index - 1], maps[index], dim,
+            block_rows=block_rows, dense_max_entries=dense_max_entries,
+        )
+        comparison["from_jmax2"] = cutoffs[index - 1]
+        comparison["to_jmax2"] = cutoffs[index]
+        comparisons.append(comparison)
+    return {
+        "status": "finite no-prune cutoff operator comparison",
+        "domain": domain,
+        "domain_dimension": dim,
+        "doubled_spin_cutoffs": cutoffs,
+        "adjacent_operator_comparisons": comparisons,
+        "claim_boundary": (
+            "Dense/TSQR agreement validates the represented finite-map difference "
+            "only. It does not prove nestedness of the analytic operator, regulator "
+            "independence, or continuum convergence."
+        ),
+    }
+
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--domain", choices=("low", "full"), default="low")
