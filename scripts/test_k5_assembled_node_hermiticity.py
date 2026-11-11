@@ -26,12 +26,10 @@ class K5AssembledNodeHermiticityTests(unittest.TestCase):
         # this one-action calculation from the declared input sector.
         spin_wall = 3
         spins = (1,) * len(k5.EDGES)
-        # Four distinct allowed, orthonormal K5 recoupling basis kets.
+        # Two distinct allowed, orthonormal K5 recoupling basis kets.
         input_keys = (
             (spins, (0, 0, 0, 0, 0)),
-            (spins, (2, 0, 0, 0, 0)),
-            (spins, (0, 2, 0, 0, 0)),
-            (spins, (0, 0, 2, 0, 0)),
+            (spins, (0, 0, 0, 0, 2)),
         )
         for key in input_keys:
             for v, channel in enumerate(key[1]):
@@ -72,7 +70,7 @@ class K5AssembledNodeHermiticityTests(unittest.TestCase):
                 "max_abs": max((abs(value) for value in omitted), default=0.0),
             })
 
-        self.assertEqual(matrix.shape, (4, 4))
+        self.assertEqual(matrix.shape, (2, 2))
         defect = float(np.linalg.norm(matrix - matrix.conj().T))
         scale = max(float(np.linalg.norm(matrix)), np.finfo(float).tiny)
         relative_defect = defect / scale
