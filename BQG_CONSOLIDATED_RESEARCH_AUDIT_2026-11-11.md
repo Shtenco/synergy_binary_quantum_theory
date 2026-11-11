@@ -633,3 +633,17 @@ V(Q)^2=|Q|.
 This is stronger than checking only that V is Hermitian and positive semidefinite: a positive Hermitian matrix can still be the wrong spectral function. The test covers all four existing finite spin triples (1,1,1), (1,1,2), (1,2,2), (2,2,2).
 
 The volume test file now has **6 methods**; the six workflow-invoked scripts have **38 committed test methods** by source inventory. This is a finite-sector numerical reconstruction identity, not a proof of the full four-valent volume operator or a continuum result. The source is committed; execution and CI PASS remain unconfirmed.
+
+
+## 20. Complete five-hit T-monomial adjoint matrix-element gate — 2026-11-11
+
+Extended `scripts/test_k5_primitive_dense_adjoint.py` with a production matrix-element test for one complete monomial selected from `T_sequences(0,1,2,3)). The selected sequence contains the volume insertion and all three holonomy paths (five link hits in total). Starting from the all-doubled-spin-1, all-(K=0) basis ket, the test computes the full strict sparse forward column. For every nonzero output basis key, it independently applies the reversed production sequence and compares the coefficient returning to the original input:
+\[
+\langle y|A|x\rangle
+=
+\overline{\langle x|A^\dagger|y\rangle}.
+\]
+
+This is a stronger acceptance gate than checking `adjoint_sequence` as an involution: it exercises the actual production branch expansion, local volume action, all five hits, recoupling projection, and reverse matrix elements. It remains deliberately scoped to one monomial, one input ket, and one finite spin wall (`Jmax2=2`). It does not yet certify the 32-term coherent sum (T), the other 11 oriented specifications, the assembled node (H), or unrestricted adjointness.
+
+The primitive dense-adjoint file now contains three test methods. The total source inventory across six workflow-invoked scripts is **39 test methods** (pending a full recount from the current branch). The workflow already invokes this test file. The change is committed; execution and CI PASS are not yet confirmed.
