@@ -221,3 +221,17 @@ The T_cached cache signature includes mode, so legacy and no-prune values occupy
 Added scripts/test_k5_sparse_policy_wiring.py with six focused checks: tiny-amplitude retention in no-prune accumulation, legacy cutoff preservation, no-prune state retention, legacy state pruning, policy-bearing cache signature, and raw volume defect recording. CI installs NumPy and SymPy and runs both pruning and K5 wiring test scripts on push and pull-request path changes.
 
 Not yet certified: the full no-prune K5 HH run has not been executed; the new focused test scripts have not yet returned a confirmed CI PASS; no actual K5 dense-matrix oracle or production bilinear adjoint test has been completed. The V5 input coefficient selection is now threshold-free in no-prune mode, but the no-prune result still needs a real run manifest and independent comparison. The raw volume defect is exposed diagnostically, not yet gated against a declared tolerance or independently derived exact value.
+
+
+## 11. Exact implementation snapshot and source-level threshold review
+
+Latest K5 producer blob after integration: a87cc00c3be07b4a66c249c16ec840cb8cb5629d (17378 characters). The source-level review confirms that each remaining absolute-amplitude cutoff is guarded by the legacy branch or occurs after an early return from the no-prune branch:
+- add_dict: the 1e-13 update cutoff is only applied when mode is not no_prune;
+- primitive local channel 1e-12 and output 1e-12 / final 1e-11 filters are bypassed by no_prune;
+- T cached-state 1e-10 filtering is after the no-prune aggregate-and-return branch;
+- prune_state and HH/top-level 1e-8 cuts are bypassed by no_prune;
+- the V5 coefficient 1e-12 input cutoff is used only in legacy mode.
+
+This is a source-path inspection, not yet a dynamic proof that every execution route is complete. The committed tests are six K5 wiring tests and twelve standalone pruning-helper tests. Their latest blobs are 476255880c123289b7f35d13b4bc81d03f1a4f50 and a1c2cbbb772b814355a520194e4bb32b19aa2383; the workflow blob is ffd43126b2d6003a7e551a5f51e2d5d59bde60de. No test execution result is available in the repository status query, so no green CI claim is made.
+
+No-prune can consume substantially more memory. The CLI catches MemoryError and emits resource_limit without switching modes. It does not yet catch every possible OS-level kill or external timeout; such termination may leave no JSON artifact. A future run wrapper should add wall-time and memory-budget supervision outside the Python process.
