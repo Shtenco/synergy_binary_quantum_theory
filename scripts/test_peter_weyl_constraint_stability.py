@@ -278,6 +278,21 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertFalse(result["scale_separation_warning"])
         self.assertFalse(result["exact_operator_norm_certified"])
 
+    def test_adjacent_cutoff_operator_difference_rejects_invalid_controls(self):
+        maps = {0: {(0, "a"): 1.0}, 1: {(0, "b"): 1.0}}
+        with self.assertRaisesRegex(ValueError, "singular_rtol"):
+            stability.adjacent_cutoff_operator_difference(
+                maps, maps, 2, singular_rtol=True
+            )
+        with self.assertRaisesRegex(ValueError, "block_rows"):
+            stability.adjacent_cutoff_operator_difference(
+                maps, maps, 2, block_rows=0
+            )
+        with self.assertRaisesRegex(ValueError, "every input column"):
+            stability.adjacent_cutoff_operator_difference(
+                {0: maps[0]}, maps, 2
+            )
+
     def test_adjacent_cutoff_operator_difference_blocks_scale_loss(self):
         previous = {0: {(0, "a"): 1.0}, 1: {(0, "b"): 1.0}}
         current = {0: {(0, "a"): 1.0 + 1e-200}, 1: {(0, "b"): 1.0}}
