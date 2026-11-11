@@ -819,3 +819,67 @@ operator tests). This is source inspection only; no test execution is claimed.
 This change is based on branch head 9dd4f9eb73922d4355bf3648575b8f6b4a4c4479. Main remains untouched and no
 merge is performed. It does not establish regulator convergence or
 physical-kernel equivalence.
+
+
+## Follow-up: direct adjacent-regulator operator-difference norm (2026-11-11 14:56 UTC)
+
+The initial spin-cutoff sweep compared kernel projectors and normalized
+singular-spectrum shapes, but did not measure the operator change between
+successive cutoffs. That is now strengthened.
+
+For each adjacent pair, the runner temporarily retains the sparse constraint
+columns and forms the difference in a common row-label embedding:
+`Delta C = C_(J_next) - C_J`. The ambient row set is the union of the
+canonical direct-sum labels `(node, Peter-Weyl output-state)`; a row absent
+at one cutoff is zero-extended. Since the state key carries the spin and
+intertwiner labels, identical labels refer to the same canonical output
+basis vector. The difference is then passed to the direct streaming
+TSQR/SVD, and its largest singular value is reported as the represented
+float64 operator 2-norm. Both no-prune and legacy cutoff differences are
+reported, together with the previous kernel-projector and normalized-spectrum
+diagnostics.
+
+The comparison helper validates the carrier dimension, complete input-column
+index set, non-boolean finite nonnegative singular tolerance, and positive
+block size. If TSQR reports scale-separation loss, the operator norm and
+difference rank are suppressed rather than inferred from a possibly lossy
+spectrum. The sweep retains only the previous cutoff's sparse maps while
+building the next cutoff, avoiding accumulation of all cutoff maps in memory.
+
+Synthetic tests now cover:
+- a common row union with a newly appearing output state and an analytic
+  operator-difference norm of 0.5;
+- the adjacent-cutoff sweep wiring, including operator norm and kernel angle;
+- suppression of the norm and rank when scale-separation loss is flagged;
+- rejection of invalid tolerance, block-size, and incomplete-column inputs.
+
+This is a meaningful upgrade from shape-only comparison, but it is not yet
+a convergence theorem. The norm is exact only for the represented float64
+matrices up to the numerical SVD error; it does not bound errors in
+recoupling coefficients, finite-spin truncation of the underlying theory,
+or the correctness of the canonical basis embedding itself. Those require
+independent producer-level and representation-level error bounds. In
+particular, a small adjacent difference over a few cutoffs is not enough to
+prove a Cauchy sequence or a regulator-independent physical kernel.
+
+The constraint-stability suite now contains 30 test methods. The static
+inventory across the four focused suites is **88 methods**: 31 master-projector
+integrity, 30 constraint stability, 13 streaming TSQR/direct-SVD, and 14
+raw-volume operator tests. These counts are source inspection only; the
+updated tests and production cutoff sweep have not been executed here.
+
+Commits for this stage:
+- `6d9e6daf68077e1eca1345dfbcd48e36052e74a9` — add adjacent-cutoff
+  common-row operator norm;
+- `184631ab25bac0b836b03fe102b7ec9404fd357a` — wire operator norm,
+  kernel-projector and normalized-spectrum comparisons into the sweep;
+- `555fbb7d0bee58af0f9fc2e60582c2dd6078a461` — test common-row embedding
+  and operator norm;
+- `2fdfab5d8a27d42ccda7dacbd781bd595735de4c` — validate comparison inputs;
+- `a7956fcd508074b4380286fbd328955e67190c0a` — test invalid controls.
+
+The branch head at this report update is `a7956fcd508074b4380286fbd328955e67190c0a`,
+326 commits ahead and two behind main. Main remains unchanged and no merge
+was performed. GitHub Actions remains queued; no CI PASS or local test
+execution is claimed. The full production low-domain and 32-state runs
+remain outstanding.
