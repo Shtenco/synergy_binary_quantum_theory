@@ -14,6 +14,8 @@ on:
     paths:
       - "scripts/bqg_sparse_pruning.py"
       - "scripts/test_bqg_sparse_pruning.py"
+      - "scripts/k5_peter_weyl_safe_hda_column.py"
+      - "scripts/test_k5_sparse_policy_wiring.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   workflow_dispatch:
 
