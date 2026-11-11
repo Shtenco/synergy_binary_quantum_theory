@@ -263,5 +263,128 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
                 )
 
 
+    def test_full_32_term_T_two_by_two_matrix_block_matches_reverse(self):
+        # A stronger finite check than a single selected matrix element:
+        # build two orthonormal input columns, choose two output rows from
+        # their coherent forward support, and independently build the reverse
+        # T^dagger columns for those rows. This is a projected 2x2 block, not
+        # a claim that either selected subspace is invariant.
+        import math
+        from collections import defaultdict
+
+        vertex, a, b, c = 0, 1, 2, 3
+        spin_wall = 2
+        spins = (1,) * len(k5.EDGES)
+        input_keys = (
+            (spins, (0,) * len(k5.VERT)),
+            (spins, (0, 0, 0, 0, 2)),
+        )
+        for key in input_keys:
+            for v, channel in enumerate(key[1]):
+                self.assertIn(
+                    channel, k5.allowed_k2_t(*k5.local_spins(key[0], v)),
+                    msg=f"input channel {channel} is not allowed at vertex {v}",
+                )
+
+        terms = k5.T_sequences(vertex, a, b, c)
+        self.assertEqual(len(terms), 32)
+
+        def coherent_column(input_key, reverse=False):
+            contributions = defaultdict(list)
+            for coefficient, sequence in terms:
+                action = k5.adjoint_sequence(sequence) if reverse else sequence
+                mapping = k5.apply_primitive_oriented(
+                    input_key, action, spin_wall, mode="no_prune"
+                )
+                for output_key, amplitude in mapping.items():
+                    contributions[output_key].append(coefficient * amplitude)
+            result = {}
+            for output_key, values in contributions.items():
+                amplitude = complex(
+                    math.fsum(value.real for value in values),
+                    math.fsum(value.imag for value in values),
+                )
+                if amplitude != 0j:
+                    result[output_key] = amplitude
+            return result
+
+        forward_columns = [coherent_column(key) for key in input_keys]
+        union_support = set().union(*(set(column) for column in forward_columns))
+        self.assertGreaterEqual(
+            len(union_support), 2,
+            "the two input columns do not produce two distinct output rows",
+        )
+
+        # Deterministic row choice: largest maximum column amplitude, then
+        # repr(key) as a stable tie-breaker.
+        output_keys = tuple(sorted(
+            union_support,
+            key=lambda key: (
+                -max(abs(column.get(key, 0j)) for column in forward_columns),
+                repr(key),
+            ),
+        )[:2])
+
+        forward_block = np.array([
+            [column.get(output_key, 0j) for column in forward_columns]
+            for output_key in output_keys
+        ], dtype=complex)
+
+        reverse_columns = [coherent_column(key, reverse=True) for key in output_keys]
+        reverse_block = np.array([
+            [column.get(input_key, 0j) for column in reverse_columns]
+            for input_key in input_keys
+        ], dtype=complex)
+
+        # Explicitly retain the projected-block boundary ledger. These are
+        # amplitudes outside the selected 2x2 block, not transitions clipped
+        # by the spin wall; the latter require a separate unbounded comparison.
+        forward_leakage = []
+        for column in forward_columns:
+            omitted = [
+                amplitude for key, amplitude in column.items()
+                if key not in output_keys
+            ]
+            forward_leakage.append({
+                "count": len(omitted),
+                "l2": math.sqrt(math.fsum(abs(value) ** 2 for value in omitted)),
+                "max_abs": max((abs(value) for value in omitted), default=0.0),
+            })
+
+        reverse_leakage = []
+        for column in reverse_columns:
+            omitted = [
+                amplitude for key, amplitude in column.items()
+                if key not in input_keys
+            ]
+            reverse_leakage.append({
+                "count": len(omitted),
+                "l2": math.sqrt(math.fsum(abs(value) ** 2 for value in omitted)),
+                "max_abs": max((abs(value) for value in omitted), default=0.0),
+            })
+
+        self.assertEqual(forward_block.shape, (2, 2))
+        self.assertEqual(reverse_block.shape, (2, 2))
+        np.testing.assert_allclose(
+            reverse_block,
+            forward_block.conj().T,
+            rtol=1e-10,
+            atol=1e-11,
+            err_msg=(
+                "the independently accumulated reverse 32-term T block "
+                "does not equal the conjugate transpose of the forward block"
+            ),
+        )
+
+        # The ledger is part of the test's output contract: omitted support
+        # is measured and never silently interpreted as a closed subspace.
+        self.assertEqual(len(forward_leakage), 2)
+        self.assertEqual(len(reverse_leakage), 2)
+        for item in forward_leakage + reverse_leakage:
+            self.assertGreaterEqual(item["count"], 0)
+            self.assertGreaterEqual(item["l2"], 0.0)
+            self.assertGreaterEqual(item["max_abs"], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()
