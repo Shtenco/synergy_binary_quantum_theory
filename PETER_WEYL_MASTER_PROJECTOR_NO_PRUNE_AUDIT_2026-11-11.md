@@ -77,6 +77,52 @@ Threshold-free float64 finite-carrier calculation:
 
 The full 32-state no-prune calculation has **not** been executed in this audit. Its output must not be described as PASS or as a physical no-go until it has completed and its artifacts have been independently inspected. No-prune removes amplitude thresholds; it does not provide exact arithmetic or eliminate floating-point roundoff.
 
+## Legacy/no-prune constraint-map perturbation harness
+
+Added `scripts/peter_weyl_constraint_stability.py`. It constructs the
+direct-sum map
+
+`C psi = (H_0 psi, ..., H_4 psi)`
+
+for the same finite carrier and spin cutoff in both pruning modes. It then
+forms only the small input-space Gram matrices (C^\dagger C), using sparse
+output dictionaries, and evaluates:
+
+- `sigma_min(C_legacy)` (including numerical nullity);
+- `sigma_min(C_no_prune)`;
+- `||C_no_prune-C_legacy||_2`;
+- support counts and deterministic SHA-256 digests of the stacked columns;
+- the sufficient Weyl rank-stability inequality.
+
+The script avoids materializing a potentially enormous dense output-space
+matrix. Its small Gram matrices are assembled independently in both
+conjugate directions, so the raw Hermiticity defect is not imposed to zero by
+construction. Sparse inner products now use compensated real/imaginary
+`math.fsum` sums.
+
+Important numerical limitation: singular values are estimated from
+`eigvalsh(C^dagger C)`, which squares the condition number. The script
+therefore uses a roundoff-scaled PSD tolerance (`100 * machine epsilon`),
+reports whether the declared Gram-eigenvalue rank threshold clears that
+resolution floor, and refuses to certify the Weyl sufficient condition when
+the legacy rank threshold does not resolve roundoff. A near-null result still
+needs an independent high-precision or stable QR/SVD cross-check.
+
+Added five synthetic dense-oracle tests in
+`scripts/test_peter_weyl_constraint_stability.py`, including direct
+comparison of the sparse perturbation norm with dense SVD. Both new files
+are included in push and pull-request workflow path filters, and the tests
+are part of the CI job. The production full-32 comparison has not yet run.
+
+Reproduction:
+
+`python scripts/peter_weyl_constraint_stability.py --domain low --jmax2 5`
+
+`python scripts/peter_weyl_constraint_stability.py --domain full --jmax2 5`
+
+The low-domain run is a six-state smoke calculation; only the full-domain run
+addresses the complete 32-state carrier.
+
 ## Current scientific boundary
 
 Even a successful no-prune finite-carrier result is a regulated finite-dimensional Galerkin diagnostic. It is not a continuum rigging map, a continuum no-go theorem, or a complete quantum HDA closure proof. The next quantitative comparison is to assemble legacy and no-prune constraint columns on the same declared carrier and compute
