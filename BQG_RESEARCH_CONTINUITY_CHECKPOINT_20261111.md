@@ -298,3 +298,26 @@ The push-triggered run for the full (C(V)) test is now identified:
 At this poll, the earlier five L2 runs (`42935840345`, `42935968925`, `42936480504`, `42936669007`, `42936684504`) and both L1 runs (`42929934053`, `42930769907`) also remain queued without artifacts. The V10 full-node closure, adapter, and V11 common-carrier runs previously enumerated in section 14 remain queued; the two older runs listed there remain cancelled. No CI PASS/FAIL is available.
 
 No production operator code was changed in this pass. No local execution was performed. `main` remains untouched; no merge was performed. The next step is to obtain the run #7 log and diagnose the actual (C(V)) result before broadening to other matrix components or (C(K)).
+
+
+## 19. C(V)/C(K) source audit and 01:33 UTC CI re-poll — 11 November 2026
+
+A dedicated source audit was added as [BQG_L2_CV_CK_SOURCE_AUDIT_20261111.md](BQG_L2_CV_CK_SOURCE_AUDIT_20261111.md), commit `b28c48972663c668f926429741eaffb3da6967d4`. It records the exact composition structure of `COMP.C_volume_component` and `COMP.C_K_component`, the threshold boundaries inherited from `COMP.add`, and a dependency-ordered plan for expanding L2 and adding L3.
+
+Important source distinction for C(V): the direct volume term is included only for diagonal matrix components (i=j), while the hVh term is subtracted for every component. The current full covariant C(V) independent-support test covers only edge (0,1), component (0,0), and two independent basis inputs. It is not evidence for the other three components. The accumulator threshold is `TOL=1e-11` and is applied at multiple intermediate composition stages.
+
+For C(K), `apply_HE_complete_state_custom` scales unit-key columns by arbitrary input coefficients and passes them through thresholded `COMP.add`; `apply_K_complete_custom` combines VH and HV with further thresholded additions; `C_K_component` adds inverse-holonomy/K/forward-holonomy composition and a diagonal direct term. Thus C(K) has its own unresolved production-linearity risk and must be tested independently.
+
+### 01:33 UTC CI status
+
+The following jobs were re-polled and remain queued, with no conclusion and no artifacts:
+- L2: `42937467628` (job `130250982584`), `42936684504`, `42936669007`, `42936480504`, `42935968925`, `42935840345`.
+- L1: `42930769907` (job `130228642399`), `42929934053` (job `130225807106`).
+
+The artifact endpoint for `42937467628` returned an empty list. Therefore no fixture, homogeneity, XFAIL-reason, or independent-support residual has yet been confirmed by execution. Queued is not PASS or FAIL.
+
+The branch was at `d8a4d1b47c59e122f13eb45d43017e186c42ca15` before this documentation-only commit, with 47 commits ahead and 0 behind base `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef`. This commit changes no production code, tests, workflows, or thresholds. No local test execution was performed. `main` remains untouched.
+
+### Dependency gate retained
+
+Do not expand the remaining C(V) matrix components or begin C(K) tests until run `42937467628` is inspected. If C(V) passes, test the remaining components with non-vacuous fixtures; then add a separate C(K) independent-support test; then perform L3 direct-superposition versus frozen basis-matrix reconstruction with complex phases, cancellation, and near-threshold vectors. Do not loosen tolerances to manufacture a pass.
