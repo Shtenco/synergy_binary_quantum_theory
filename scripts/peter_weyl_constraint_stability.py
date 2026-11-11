@@ -9,6 +9,7 @@ never by materializing the potentially enormous output Hilbert-space matrix.
 from __future__ import annotations
 
 import argparse
+import gc
 import hashlib
 import json
 import math
@@ -121,6 +122,7 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10):
     # the second calculation cannot accidentally reuse legacy cache entries.
     if hasattr(PILOT.PW.T_cached, "cache_clear"):
         PILOT.PW.T_cached.cache_clear()
+    gc.collect()
 
     no_prune_raw, no_prune_supports = PILOT.constraint_columns(
         basis, nodes, jmax2, mode="no_prune"
