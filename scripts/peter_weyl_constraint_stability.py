@@ -147,9 +147,14 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
         "block_count": result.block_count,
         "input_scale": result.input_scale,
         "max_abs_component": result.max_abs_component,
+        "scale_separation_loss": result.scale_separation_loss,
         "method": result.method,
         "exact_rank_certified": False,
-        "classification": "NUMERICAL_ONLY_NO_UPSTREAM_ERROR_BOUND",
+        "classification": (
+            "INCONCLUSIVE_SCALE_SEPARATION_UNDERFLOW"
+            if result.scale_separation_loss
+            else "NUMERICAL_ONLY_NO_UPSTREAM_ERROR_BOUND"
+        ),
     }
 
 
@@ -212,6 +217,8 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     stable = bool(
         legacy_direct["rank"] == dim
         and delta_norm < sigma_min
+        and not legacy_direct["scale_separation_loss"]
+        and not delta_direct["scale_separation_loss"]
     )
     return {
         "status": "legacy versus no-prune finite Peter-Weyl constraint-map comparison",
