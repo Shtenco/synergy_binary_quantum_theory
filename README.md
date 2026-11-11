@@ -1262,3 +1262,14 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 
 
 **Commit ledger CI-hardening:** `aed2d7c` (add C(V) trigger/compile), `530fe47` (track transitive imports), `4669811` (deduplicate and re-read final workflow), `afa017b` (audit note), `d7f4caf` (continuity ledger), `bdb1f5e` (README), `873be93` (exact commit ledger). Final L2 workflow blob SHA after deduplication: `7a8398a40f7efce21587958782f0e81843a9cb83`. The Actions connector did not expose an all-push-run listing or workflow-dispatch action; no new run ID is asserted. The old C(V) run `42937467628` remains queued with no artifacts at the latest direct poll.
+
+
+### Г.12. Повторный CI-полл и уточнение C(K) — 01:57 UTC
+
+Выполнена повторная проверка восьми отслеживаемых L1/L2 jobs через job и artifact endpoints. Все шесть L2 runs (`42937467628`, `42936684504`, `42936669007`, `42936480504`, `42935968925`, `42935840345`) и оба L1 runs (`42930769907`, `42929934053`) по-прежнему имеют статус `queued`, без conclusion и artifacts. Ключевой C(V) run `42937467628` не предоставил лог. Это не PASS и не FAIL, а отсутствие доступного исполнения/наблюдаемого результата. Доступный GitHub-интерфейс не предоставляет all-push-run listing или workflow-dispatch; новый run ID не выдумывается.
+
+Повторный source review C(K) выделил три самостоятельные зоны пороговой нелинейности: масштабирование базисного H_E-столбца произвольным коэффициентом до `COMP.add`; отдельная сборка и последующее вычитание VH/HV в K-коммутаторе; пороговая сборка внешних hKh-ветвей и диагонального прямого вклада в C(K). Поэтому C(K) требует независимого теста additivity и не выводится из теста cached-column H_E.
+
+Подробности и строгий контракт отчёта L2 внесены в [source audit, section 8](BQG_L2_CV_CK_SOURCE_AUDIT_20261111.md) и [continuity checkpoint, section 21](BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md). Изменения этого шага документальные: production operator, тесты, workflow, численные пороги и физические утверждения не менялись. Ни один PASS/FAIL не заявляется; локального исполнения не было.
+
+Открытые ворота остаются прежними: получить и диагностировать фактический C(V) лог; затем закрыть оставшиеся три компонента C(V), отдельный C(K), L3 reconstruction и только после доказательства production-linearity возвращаться к adjoint/spectral/physical gates. `main` не изменялась, merge не выполнялся.
