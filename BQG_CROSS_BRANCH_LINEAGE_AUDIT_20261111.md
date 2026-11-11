@@ -405,3 +405,23 @@ The current helper `add` prunes every accumulated value below `TOL=10^{-10}`; th
 The workflow `.github/workflows/lorentzian-superposition-linearity.yml` also has an incomplete path filter. The test imports and calls the K5 producer, C(V), ordered-triple, C(K), and recoupling modules, but the workflow watches only the superposition script, logical-projection script, Gauss-action script and its own YAML. Changes in important operator dependencies can therefore fail to trigger this test.
 
 **Disposition:** this is not evidence that the physical operator is nonlinear. It is a correctly detected non-vacuity/fixture failure, and it currently does not exercise C(K). Keep the Lorentzian superposition claim unproven until a nonzero end-to-end fixture and dependency-closed CI run pass.
+
+
+## 14. Collective FEM spectral-dimension precursor: useful independent evidence, not a killer pass
+
+The `audit/pl48-volume-failclosed-20261110` branch contains an intrinsic tetrahedral FEM spectral-dimension calculation on the canonical barycentric PL-S3 carrier. The method is distinct from graph-hop fitting:
+- local FEM stiffness is assembled from each tetrahedron's intrinsic Gram matrix;
+- a lumped mass matrix defines the symmetric Laplacian `M^{-1/2} K M^{-1/2}`;
+- L0–L2 are diagonalized directly;
+- L3 (40,256 vertices / 221,184 tetrahedra) uses 24 deterministic Rademacher/Hutchinson probes;
+- the L3 time window is predicted from the L2 peak using h² scaling and scanned on a preregistered fixed interval.
+
+The checked-in local artifact reports:
+`D_peak = [1.9085210169, 2.3877002596, 2.7553265235, 2.8529008753 ± 0.0217976734]`.
+Total intrinsic PL volume is conserved to relative spread `1.9984e-15`. The L3 central value remains `0.1470991247` away from 3, so the declared static `0.10` threshold is **not met**.
+
+The code correctly marks this as `PRECURSOR_ONLY`, says not to populate `D_space_metric`, and does not promote a static background observable to the dynamic E/S/R collective killer. Its `passed=true` refers only to internal checks (volume conservation, monotone peak sequence, L3>L2 and finite uncertainty), not to the GR target comparison.
+
+The artifact is local, not a CI artifact on this branch. The workflow's push trigger is restricted to `research/bcqg-core-candidate-v1`; on this branch it would require manual `workflow_dispatch`. No matching Actions run was found for `audit/pl48-volume-failclosed-20261110`.
+
+**Disposition:** retain as a useful independent static FEM precursor and a nontrivial monotone refinement trend; do not call it a three-dimensionality proof, a killer pass, or a dynamical collective result. More probes and independent seed checks can improve the uncertainty estimate, but cannot remove the current 0.1471 central-value miss by themselves.
