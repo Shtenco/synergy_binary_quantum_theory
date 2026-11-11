@@ -1014,7 +1014,7 @@ main remains untouched. The latest observed Actions runs are queued with no
 conclusion. No CI PASS or production execution is claimed.
 
 
-## Follow-up: positive-metric kernel theorem and spectral bounds (2026-11-11 15:0x UTC)
+## Follow-up: positive-metric kernel theorem and spectral bounds (2026-11-11 15:02 UTC)
 
 For the direct-sum constraint map
 `C psi = (H_0 psi, ..., H_(n-1) psi)`, the weighted master operator is
