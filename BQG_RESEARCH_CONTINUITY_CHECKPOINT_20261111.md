@@ -382,3 +382,26 @@ Operational decision: do not create more duplicate push-triggered runs while 54 
 
 
 At the 01:57 UTC queue-diagnosis checkpoint, before the final documentation-only consistency commits, the verified branch tip was `64ba147757c70ccb4bfa4e24c20e1892c8090bbc`, comparing **67 commits ahead, 0 behind** `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef`. Subsequent commits only reconcile the documentation metadata; the current exact branch tip and compare count are reported in the live session ledger. This is the isolated research branch; `main` remains untouched.
+
+
+### Exact commit ledger for the 01:57 UTC documentation and CI-observability audit
+
+The following commits were created sequentially on this research branch. They modify only the audit/checkpoint/README records; no production code, tests, workflow configuration, or numerical thresholds were changed in this documentation series.
+
+- `771a3e818fccfe956a6ebf9bff512cf322d5c30f` — extend C(V)/C(K) audit with 01:57 source and queue review.
+- `01c41e6c60cb3bda12088d63b58599adcca59c9c` — checkpoint the initial 01:57 re-poll.
+- `ecf4c979ca66d9a53a4dfc056396912e35c5515e` — README record of initial 01:57 findings.
+- `f065dcb0b4512ccc6a5912b7adf4e393600fa7db` — correct run inventory using full Actions listing.
+- `2542c09544ae9e67dc27a0141660ddd9a9ed67ab` — checkpoint complete twelve-run L1/L2 inventory.
+- `326ad694299f315c025dae195d0e6fd0a8175293` — README complete L1/L2 inventory.
+- `60320e1646ab329fa61395f6d69f9f0d8a3eca46` — add branch-wide Actions queue diagnosis.
+- `78bda255f7525980f3e81eb56e3724ba4074963b` — checkpoint branch-wide queue diagnosis.
+- `64ba147757c70ccb4bfa4e24c20e1892c8090bbc` — README branch-wide queue diagnosis.
+- `da1cebd868aa4ca9958078e696336c5ddad94252` — refresh audit heading and historical inspection metadata.
+- `aa80700d8e44e4aeda9ccaf68be98b54e529f6bc` — clarify checkpoint timing of the intermediate branch tip.
+- `5bbdb2f7a5c0fb09fba04d4d83923933f1231ac8` — record intermediate branch tip in README.
+- `742d7515bd3f4846eb23e1a9d883b71230fd55ef` — clarify historical metadata in source audit.
+- `e13e430c6e314019e0ec5899f6d23defa96a7815` — clarify checkpoint timing.
+- `8726a47e9c779a82a0610a57fd9106f354420ae7` — final README metadata-timing correction.
+
+The live branch ref was independently compared after the final commit; the exact current tip and ahead/behind count are reported in the final session response.
