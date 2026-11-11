@@ -26,6 +26,7 @@
 
 
 **Production-linearity and closure-loss audit (11 ноября 2026):** [новый технический аудит](BQG_PRODUCTION_LINEARITY_AND_CLOSURE_AUDIT_20261111.md) отделяет фиксированное разреживание матричных коэффициентов от state-dependent amplitude pruning. Зафиксирован риск нелинейности production KKV при пороговом накоплении масштабированных вкладов; V10 adjoint residual поэтому трактуется как matrix-level check, а не как доказательство линейности полного production map. Документ задаёт L1/L2/L3 additivity/homogeneity gates, обязательные below-threshold loss diagnostics и cutoff-convergence protocol. Это аудит и план проверок, не заявление о прохождении новых тестов.
+
 **L2 production-primitive audit (11 ноября 2026):** [расширенный source audit](BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md) фиксирует дополнительные state-level threshold boundaries в KKV: произвольные input coefficients, ветвевые суммы, volume action и commutator assembly. Определены map-by-map L2 additivity/homogeneity tests, L3 matrix-reconstruction contract и раздельный loss ledger. Это подтверждённый аудит исходного кода и план gate, не отчёт о прохождении тестов.
 
 ---
