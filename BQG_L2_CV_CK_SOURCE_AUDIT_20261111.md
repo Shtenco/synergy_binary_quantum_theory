@@ -104,20 +104,24 @@ This is a CI coverage correction, not a production-operator change and not a tes
 
 ### 8.1 Direct CI re-poll
 
-The eight previously identified L1/L2 runs were queried again through both the job and artifact endpoints:
+The first-page repository Actions listing was then fetched directly through the GitHub read endpoint, which resolved the earlier observability gap: the branch has ten L2 push runs and two L1 push runs. Job and artifact endpoints were checked for all twelve:
 
 | Family | Run | Job | Job status | Conclusion | Artifacts |
 |---|---:|---:|---|---|---|
-| L2 | 42937467628 | 130250982584 | queued | none | none |
-| L2 | 42936684504 | 130248370659 | queued | none | none |
-| L2 | 42936669007 | 130248321716 | queued | none | none |
-| L2 | 42936480504 | 130247689781 | queued | none | none |
-| L2 | 42935968925 | 130246013044 | queued | none | none |
-| L2 | 42935840345 | 130245591568 | queued | none | none |
-| L1 | 42930769907 | 130228642399 | queued | none | none |
-| L1 | 42929934053 | 130225807106 | queued | none | none |
+| L2 #10 | 42940595199 | 130261199735 | queued | none | none |
+| L2 #9 | 42940569108 | 130261114491 | queued | none | none |
+| L2 #8 | 42940509183 | 130260916112 | queued | none | none |
+| L2 #7 | 42937467628 | 130250982584 | queued | none | none |
+| L2 #6 | 42937241196 | 130250218083 | queued | none | none |
+| L2 #5 | 42936684504 | 130248370659 | queued | none | none |
+| L2 #4 | 42936669007 | 130248321716 | queued | none | none |
+| L2 #3 | 42936480504 | 130247689781 | queued | none | none |
+| L2 #2 | 42935968925 | 130246013044 | queued | none | none |
+| L2 #1 | 42935840345 | 130245591568 | queued | none | none |
+| L1 #2 | 42930769907 | 130228642399 | queued | none | none |
+| L1 #1 | 42929934053 | 130225807106 | queued | none | none |
 
-This repeated observation establishes a queue/observability blockage for these tracked runs, not a numerical result. In particular, run 42937467628 still has no execution log or artifact. No PASS, FAIL, skip count, XFAIL cause, or numerical residual can be inferred. The connector still does not expose an all-push-run listing or workflow-dispatch operation, so the run created by the later workflow correction cannot be identified from the available interface. No run ID is guessed.
+All twelve are genuinely present in the repository Actions listing; the three post-hardening L2 runs are #8–#10, and the previously omitted run #6 is now included. Every queried job is still queued and every artifact list is empty. Thus the earlier observability gap is resolved, but the execution queue remains blocked. In particular, run 42937467628 still has no execution log or artifact. No PASS, FAIL, skip count, XFAIL cause, or numerical residual can be inferred. The generic read endpoint provides run discovery; no workflow-dispatch capability has been established.
 
 ### 8.2 Additional C(K) source-level precision
 
