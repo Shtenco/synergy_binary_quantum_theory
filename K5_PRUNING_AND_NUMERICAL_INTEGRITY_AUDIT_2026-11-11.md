@@ -135,3 +135,16 @@ The K5 producer now exposes its raw unsymmetrized triple-product Q through volum
 ## 9. Local link-hit adjoint convention
 
 A dedicated test now checks the actual production Clebsch-Gordan link-hit matrices for the doubled-spin transition 1 -> 2 across all four endpoint channel pairs. Orientation reversal with endpoint-channel swap must equal the conjugate transpose and preserve normalization. Path and operator-sequence adjunction are tested as involutions. This is a local convention check, not full primitive/T/H adjoint certification.
+
+
+## 8. Raw volume orientation/permutation covariance test — 2026-11-11
+
+The production raw-volume test suite now also checks all six permutations of the three tensor legs for a nontrivial mixed-spin sector `(1,2,2)). It constructs the explicit tensor-factor permutation unitary (U_\pi) and checks the expected alternating-tensor covariance:
+[
+Q(s_{\pi(1)},s_{\pi(2)},s_{\pi(3)})
+=\operatorname{sgn}(\pi)\,
+U_\pi Q(s_1,s_2,s_3)U_\pi^\dagger.
+]
+This catches leg-order or epsilon-sign mistakes that Hermiticity and positivity alone cannot detect.
+
+The check is applied to the unsymmetrized production `volume123_raw_operator`, so a later Hermitian completion cannot conceal a covariance failure. The volume test script now has four methods; the repository inventory rises to 36 committed test methods across six scripts. The existing workflow already runs the volume test script. This is source-committed but not yet executed; no numerical PASS is claimed.
