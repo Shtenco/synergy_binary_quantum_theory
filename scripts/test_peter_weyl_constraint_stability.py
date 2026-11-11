@@ -279,6 +279,32 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertFalse(result["scale_separation_warning"])
         self.assertFalse(result["exact_operator_norm_certified"])
 
+        # Independent dense oracle: assemble C_current-C_previous in the
+        # explicit union of row labels, then compare the complete singular list.
+        delta = stability.subtract_stacked(previous, current, 2)
+        row_keys = sorted(
+            {key for column in delta.values() for key in column}, key=repr
+        )
+        dense_delta = np.asarray([
+            [delta[column].get(key, 0j) for column in range(2)]
+            for key in row_keys
+        ], dtype=np.complex128)
+        dense_singular = np.linalg.svd(dense_delta, compute_uv=False)
+        tsqr_singular = stability.direct_svd_from_columns(
+            delta, 2, singular_rtol=0.0, block_rows=1
+        )["singular_values"]
+        np.testing.assert_allclose(
+            tsqr_singular[:len(dense_singular)],
+            dense_singular,
+            rtol=5e-12,
+            atol=5e-14,
+        )
+        self.assertAlmostEqual(
+            float(tsqr_singular[0]),
+            float(dense_singular[0]),
+            places=12,
+        )
+
     def test_adjacent_cutoff_operator_difference_rejects_invalid_controls(self):
         maps = {0: {(0, "a"): 1.0}, 1: {(0, "b"): 1.0}}
         with self.assertRaisesRegex(ValueError, "singular_rtol"):
