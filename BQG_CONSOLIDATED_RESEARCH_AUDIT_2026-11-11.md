@@ -912,3 +912,8 @@ The follow-up commit `9fa78b944a737951cc9b93da6308a45a6931ca58` replaces a secon
 The two diagonal entries vanish by the exact three-single-hit-edge selection rule: no individual monomial can preserve the complete link-spin vector. The forward column is fully evaluated with production H; the reverse off-diagonal entry is independently evaluated with the exact support filter. A local independent filter audit covered 120 support cases (five vertices × twelve specs × two possible changed-edge patterns); it found no false negative for the originating specification, with one or two candidate specs per case. The current test source, including the exact reverse-support filter and three-or-four changed-edge assertion, passes Python 3.13 syntax compilation locally. This remains a pairwise projected test, not a full reverse H column or a complete finite-sector adjoint matrix.
 
 The test was further hardened in commit 122258ff0ac489f9e7bf3b5dd8f669acec485a30 to assert that the selected transition changes exactly three or four undirected link-spin labels, as required by the three single-hit edges and optional net change on the double-hit edge.
+
+
+### 30.4 CI runtime budget
+
+The workflow job timeout was increased from 5 to 15 minutes in commit `cf40a267ba38867acc4db206617eb37d40cc07f4`. Reason: the non-pruned assembled H action evaluates all 12 signed specifications and both T/T† sums; the exact reverse support filter limits the second-direction work but this remains materially heavier than a single primitive test. This is a runtime allowance, not evidence that the test completes within that budget. The workflow path filter includes the test and the workflow itself, so this change creates a fresh push run.
