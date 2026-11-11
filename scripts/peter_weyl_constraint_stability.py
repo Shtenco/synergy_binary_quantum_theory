@@ -79,21 +79,28 @@ def spectrum_of_gram(G, gram_eigenvalue_rtol):
     if not np.all(np.isfinite(evals)):
         raise FloatingPointError("Gram eigensolver returned non-finite eigenvalues")
     scale = float(np.max(np.abs(evals))) if len(evals) else 0.0
-    psd_tol = 100.0 * np.finfo(float).eps * scale
-    if len(evals) and float(np.min(evals)) < -psd_tol:
-        raise ValueError(f"Gram matrix is not PSD: min eigenvalue {float(np.min(evals))}")
+    normalized = np.zeros_like(evals) if scale == 0.0 else evals / scale
+    psd_rtol = 100.0 * np.finfo(float).eps
+    if len(evals) and float(np.min(normalized)) < -psd_rtol:
+        raise ValueError(f"Gram matrix is not PSD: min normalized eigenvalue {float(np.min(normalized))}")
+    # Classify in normalized units: rtol*scale can underflow to zero for
+    # subnormal Gram matrices, even though the relative spectral information
+    # remains representable.
     threshold = gram_eigenvalue_rtol * scale
     clipped = np.maximum(evals, 0.0)
     singular = np.sqrt(clipped)
-    positive = singular[evals > threshold]
+    positive = singular[normalized > gram_eigenvalue_rtol]
+    psd_tol = psd_rtol * scale
     return {
         "gram_hermiticity_defect_frobenius": raw_hermiticity,
         "gram_min_eigenvalue": float(np.min(evals)) if len(evals) else 0.0,
         "gram_max_eigenvalue": float(np.max(evals)) if len(evals) else 0.0,
         "gram_eigenvalue_scale": scale,
+        "normalized_gram_eigenvalues": normalized.tolist(),
         "rank_threshold_on_gram_eigenvalues": threshold,
-        "rank_threshold_resolves_roundoff": bool(threshold > psd_tol),
-        "estimated_rank": int(np.count_nonzero(evals > threshold)),
+        "normalized_rank_threshold_on_gram_eigenvalues": float(gram_eigenvalue_rtol),
+        "rank_threshold_resolves_roundoff": bool(gram_eigenvalue_rtol > psd_rtol),
+        "estimated_rank": int(np.count_nonzero(normalized > gram_eigenvalue_rtol)),
         "minimum_singular_value_including_nullity": float(singular[0]) if len(singular) else 0.0,
         "smallest_positive_singular_value": float(np.min(positive)) if len(positive) else None,
         "largest_singular_value": float(singular[-1]) if len(singular) else 0.0,
