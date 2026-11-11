@@ -536,3 +536,8 @@ Commit `9fa78b944a737951cc9b93da6308a45a6931ca58` optimizes the reverse entry: r
 A separate local check exercised 120 support-filter cases and found no false negatives; candidate-spec counts were one or two. The test source passed Python 3.13 syntax compilation. This is not a second full H column: it is an exact filtered computation of the reverse matrix element, and the test remains a 2×2 projected check rather than a full-sector adjoint certificate.
 
 Commit 122258ff0ac489f9e7bf3b5dd8f669acec485a30 adds an explicit assertion that the selected pair differs on exactly three or four undirected link edges, preventing a false non-vacuity classification.
+
+
+### 36.4 CI timeout budget
+
+The BQG workflow timeout is now 15 minutes (commit `cf40a267ba38867acc4db206617eb37d40cc07f4`) to avoid treating the reference-quality no-prune H column as a five-minute smoke test. Runtime remains unmeasured until a runner starts; this is only a budget adjustment.
