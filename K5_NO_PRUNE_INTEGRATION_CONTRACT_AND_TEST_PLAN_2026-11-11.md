@@ -335,3 +335,10 @@ V_\pi=U_\pi VU_\pi^\dagger.
 The parity sign in the raw (Q) transformation disappears under the absolute-value spectral map. This catches a mismatch in the derived volume reconstruction that a raw-Q-only test would not detect.
 
 **Inventory update:** `scripts/test_k5_volume_raw_operator.py` now has five test methods; the six workflow scripts contain **37 committed test methods** by source inventory. The existing workflow already invokes the volume test file. This gate is committed but not yet execution-verified. It checks one mixed-spin finite sector and does not certify all spin triples, epsilon-orientation conjugations, the four-valent intertwiner restriction, or the full HH calculation.
+
+
+## 26. Volume square-root spectral reconstruction gate — 2026-11-11
+
+The volume suite now checks the defining spectral identity V²=|Q|, not only Hermiticity and nonnegative eigenvalues of V. For each of the four existing finite spin triples, the reference |Q| is assembled from a fresh eigendecomposition of the Hermitian part of the raw production Q, then compared with the square of the production volume123_matrix result.
+
+The volume test file now has six methods; the six workflow scripts contain **38 committed test methods** by source inventory. This new gate is committed but not execution-verified. It tests finite spectral reconstruction and does not establish the physical correctness of the chosen triple-product operator, its orientation convention, or full K5 HH closure.
