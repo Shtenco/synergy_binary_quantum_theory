@@ -86,5 +86,37 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                 )
 
 
+    def test_derived_volume_is_covariant_under_all_leg_permutations(self):
+        # Q changes sign under odd permutations, but sqrt(|Q|) must not:
+        # | -U Q U† | = U |Q| U†. This checks the production spectral
+        # reconstruction rather than inferring it from raw-Q covariance.
+        spins = (1, 2, 2)
+        dims = tuple(s + 1 for s in spins)
+        volume = k5.volume123_matrix(*spins)
+        old_indices = list(itertools.product(*(range(d) for d in dims)))
+        old_flat = {index: n for n, index in enumerate(old_indices)}
+
+        for permutation in itertools.permutations(range(3)):
+            with self.subTest(permutation=permutation):
+                new_spins = tuple(spins[i] for i in permutation)
+                new_dims = tuple(dims[i] for i in permutation)
+                new_indices = list(
+                    itertools.product(*(range(d) for d in new_dims))
+                )
+                new_flat = {index: n for n, index in enumerate(new_indices)}
+                unitary = np.zeros((len(new_indices), len(old_indices)), dtype=complex)
+                for old_index in old_indices:
+                    new_index = tuple(old_index[i] for i in permutation)
+                    unitary[new_flat[new_index], old_flat[old_index]] = 1.0
+
+                volume_permuted = k5.volume123_matrix(*new_spins)
+                np.testing.assert_allclose(
+                    volume_permuted,
+                    unitary @ volume @ unitary.conj().T,
+                    rtol=4e-13,
+                    atol=4e-13,
+                )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
