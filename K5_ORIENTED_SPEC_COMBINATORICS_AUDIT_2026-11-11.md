@@ -50,3 +50,9 @@ This is a materially stronger local acceptance gate, but not a full matrix adjoi
 The full 32-term test is committed in code commit `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`; its Actions run #28 (`42944740425`) was queued at the last observation. Runs #26 and #27 were also queued. No PASS is claimed.
 
 The test checks one selected matrix element of the complete coherent T sum. It is not a matrix-wide adjoint certificate. The next target is an explicit finite-basis matrix comparison over multiple input columns and orientation triples, with spin-wall clipping recorded rather than hidden.
+
+## Local oriented-volume self-adjointness gate added
+
+The volume suite now includes a direct test of the vertex-oriented tensor action under the Frobenius inner product. It checks all five vertices and all four spin triples, with deterministic complex test tensors, and therefore exercises the production epsilon conjugations before and after the local spectral volume map.
+
+This expands the volume test file to seven methods and the six-script source inventory to 42. The test is committed in `50c807d03c8616dce639487afc83704ec19c5b36`. It remains unexecuted until the corresponding Actions job completes.
