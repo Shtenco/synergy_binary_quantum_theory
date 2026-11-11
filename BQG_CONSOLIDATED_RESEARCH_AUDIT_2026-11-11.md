@@ -569,3 +569,17 @@ This is a materially stronger check than testing `adjoint_path` as an involution
 **Test inventory:** 34 committed test methods across six scripts (12 sparse-helper, 11 K5 policy-wiring, 4 synthetic dense-oracle, 3 raw-volume, 3 local hit-adjoint, 1 production primitive dense-adjoint). The workflow explicitly invokes all six scripts and includes the new test in both push and pull-request path filters.
 
 **Verification status:** the new source, workflow and audit record are committed and fetched back from GitHub. No test execution or CI PASS is confirmed. The next acceptance step is to run this test and inspect any failure at the first differing matrix element; do not relax tolerances or symmetrize the matrices to force agreement. After it passes, extend the same independent matrix construction to the remaining primitive path families, individual T terms, and the assembled node-H map, with explicit finite-wall boundary accounting.
+
+
+## 15. Repository snapshot after primitive dense-adjoint gate — 2026-11-11
+
+The production finite-sector primitive test and workflow were fetched back from the research branch after the final path-filter correction:
+
+- Test: `scripts/test_k5_primitive_dense_adjoint.py`, blob `48a49d1235c86cf54db0ad4c3a466a327ffcd03e`.
+- Workflow: `.github/workflows/bqg-sparse-pruning.yml`, blob `c4afb09aa973afa884a7900ce996471aa3411b50`.
+- The new test is present in both `push.paths` and `pull_request.paths`, and has an explicit Python execution step.
+- The workflow now invokes six test scripts, with 34 committed test methods by source inventory.
+
+The branch comparison against `main` reports `diverged`, 75 commits ahead and 2 behind at this snapshot. The two commits on `main` remain unmerged; no rebase, merge, or main-branch write was performed.
+
+The combined commit-status query for the latest workflow update returned an empty status list. No Actions run or green CI result is confirmed. The test suite is committed and statically inspected, not yet execution-verified. The finite-sector matrix test is an acceptance gate intended to reveal a convention mismatch if one exists; it must not be described as passed until its actual test output is available.
