@@ -11,6 +11,7 @@ on:
       - "scripts/test_k5_sparse_policy_wiring.py"
       - "scripts/test_bqg_sparse_dense_oracle.py"
       - "scripts/test_k5_volume_raw_operator.py"
+      - "scripts/test_k5_hit_adjoint.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -45,3 +46,5 @@ jobs:
         run: python scripts/test_bqg_sparse_dense_oracle.py
       - name: Run production K5 raw volume operator tests
         run: python scripts/test_k5_volume_raw_operator.py
+      - name: Run production K5 link-hit adjoint tests
+        run: python scripts/test_k5_hit_adjoint.py
