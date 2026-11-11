@@ -108,3 +108,8 @@ The helper now rejects non-finite amplitudes supplied directly to `apply_pruning
 The K5 producer now exposes --mode legacy|no_prune. The strict path bypasses the previously identified thresholds, coherently aggregates at major composition boundaries, includes the mode in the T cache key, and fails explicitly with a resource_limit status on MemoryError. Six producer wiring tests were added and included in the CI workflow. The default remains legacy for reproducibility.
 
 This is an initial integration milestone only. The actual no-prune HH computation, dense K5 oracle, production adjoint tests, threshold-ladder stability, and raw-volume acceptance gate remain open. Do not describe the operator as pruning-certified until those checks pass.
+
+
+## 11. Acceptance semantics for strict mode
+
+The producer's historical regression constants apply only to the legacy mode. The no-prune mode reports calculation completion separately and leaves passed_regression null; a zero CLI exit in no-prune mode means only that the computation completed. It is not a numerical or physical certification. Eleven K5 wiring tests now include two tests for this acceptance distinction. The combined suite has 23 committed tests, none yet confirmed by a CI result in this session.
