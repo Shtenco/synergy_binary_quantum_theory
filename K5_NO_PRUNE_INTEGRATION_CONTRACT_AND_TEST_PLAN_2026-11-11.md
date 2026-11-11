@@ -284,3 +284,12 @@ Added scripts/test_k5_volume_raw_operator.py with three test methods over double
 3. the recorded raw defect and raw norm agree with independently recomputed diagnostics from Q.
 
 These are tests of the actual production K5 spin/volume routines in small finite sectors, not a full HH computation and not a proof of continuum volume properties. The workflow now includes this test file. Committed test-method inventory: 12 sparse helper + 11 K5 wiring + 4 synthetic dense oracle/adjoint + 3 production raw-volume tests = 30. No test run or CI PASS is claimed in this update.
+
+
+## 16. Production link-hit adjoint controls
+
+Added scripts/test_k5_hit_adjoint.py. It checks the actual production Clebsch-Gordan link-hit matrices for the j=1/2 -> j=1 transition in all four binary endpoint channels. Reversing edge orientation and swapping endpoint channel labels must return the conjugate-transpose matrices and the same real normalization. Additional structural tests verify that path reversal and sequence adjunction are involutions.
+
+Scope: this is a local link-hit adjoint control. It does not yet establish that the complete primitive, T, or node-H maps are adjoints on the full coupled K5 state space. Those require independent assembled matrix-element tests, including coherent sums and all recoupling channels.
+
+The CI workflow now runs five test scripts: 12 sparse-helper + 11 K5 policy-wiring + 4 synthetic dense-oracle/adjoint + 3 raw-volume + 3 link-hit-adjoint = 33 committed test methods. No test run or CI PASS is claimed.
