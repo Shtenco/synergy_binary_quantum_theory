@@ -86,3 +86,12 @@ The comparison is only a finite wall-sensitivity diagnostic; it is neither an un
 For the selected all-link doubled-spin-1 input and one complete T sum, each monomial hits edge ((c,v)) twice and each of the other path edges at most once. Every hit changes doubled spin by ±1, so no reachable edge spin can exceed doubled spin 3. The test was extended to walls 2, 4, and 6 and now asserts exact equality of the complete wall-4 and wall-6 coherent output maps. Thus wall 4 is analytically sufficient for this narrowly defined input/operator experiment; this does not establish sufficiency for other spin sectors or HH.
 
 Commit: `088c4ccf5dcde17e982c0a625e67ba71df4fd561`. The result is a source-level combinatorial ceiling and an unexecuted test assertion, not yet an observed numerical saturation result.
+
+
+## Exhaustive K5 T/H edge-hit multiplicity theorem — 2026-11-11
+
+A new test exhaustively checks all 1,920 current production T monomials (five vertices × 12 oriented specifications × 32 signed sequences). Every sequence contains exactly five link hits on four distinct undirected edges with multiplicity pattern (1,1,1,2); the adjoint-reversed sequence preserves this multiset.
+
+Consequently, from any input support whose maximum doubled edge spin is S, one T, T†, or node-H action has no reachable doubled edge spin above S+2. For n successive node-H actions, S+2n is a conservative upper-wall bound. This is a structural combinatorial result for the present production sequence generator, not an executed numerical test and not a claim about arbitrary future operators.
+
+Code commit: `4fc916a5e2e85650d5a6ca7dea1c7f72bd3a456a`. The test file now has eight methods; six workflow scripts contain 45 methods by source inspection. CI execution is not yet confirmed.
