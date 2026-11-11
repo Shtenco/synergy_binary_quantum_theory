@@ -362,6 +362,67 @@ class ConstraintStabilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "block_rows"):
             stability.run(jmax2=1, block_rows=0)
 
+    def test_positive_metric_bounds_and_kernel_invariance_match_dense_oracle(self):
+        # Two constraint nodes, two output rows per node, three input states.
+        C = np.array([
+            [1.0, 0.0, 1.0],
+            [0.0, 2.0, 2.0],
+            [1.0, 0.0, 1.0],
+            [0.0, 3.0, 3.0],
+        ], dtype=np.complex128)
+        G = np.array([
+            [2.0, 0.3 + 0.2j],
+            [0.3 - 0.2j, 1.4],
+        ], dtype=np.complex128)
+        singular = np.linalg.svd(C, compute_uv=False)
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": singular.tolist(),
+        }
+        bounds = stability.positive_metric_spectral_bounds(direct, G)
+        weighted = C.conj().T @ np.kron(G, np.eye(2)) @ C
+        eigenvalues = np.linalg.eigvalsh(weighted)[::-1]
+        lower = np.asarray(bounds["master_eigenvalue_lower_bounds"])
+        upper = np.asarray(bounds["master_eigenvalue_upper_bounds"])
+        self.assertEqual(bounds["status"], "FINITE_SPD_METRIC_SPECTRAL_BOUNDS")
+        self.assertTrue(np.all(eigenvalues >= lower - 1e-12))
+        self.assertTrue(np.all(eigenvalues <= upper + 1e-12))
+
+        _, _, vh = np.linalg.svd(C, full_matrices=True)
+        kernel_C = vh.conj().T[:, 2:]
+        evals, vectors = np.linalg.eigh(weighted)
+        kernel_M = vectors[:, :1]
+        P_C = kernel_C @ kernel_C.conj().T
+        P_M = kernel_M @ kernel_M.conj().T
+        self.assertAlmostEqual(float(np.linalg.norm(P_C - P_M, ord=2)), 0.0, places=12)
+        self.assertTrue(bounds["kernel_equivalence_applicable"])
+
+    def test_positive_metric_bounds_reject_semidefinite_and_nonhermitian_metrics(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [2.0, 1.0],
+        }
+        with self.assertRaisesRegex(ValueError, "strictly positive definite"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.diag([1.0, 0.0])
+            )
+        with self.assertRaisesRegex(ValueError, "not Hermitian"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.array([[1.0, 1.0j], [0.0, 1.0]])
+            )
+
+    def test_positive_metric_bounds_fail_closed_on_scale_separation(self):
+        direct = {
+            "scale_separation_loss": True,
+            "singular_values": [1.0, 0.0],
+        }
+        result = stability.positive_metric_spectral_bounds(
+            direct, np.eye(2)
+        )
+        self.assertEqual(result["status"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertIsNone(result["master_eigenvalue_lower_bounds"])
+        self.assertIsNone(result["kernel_equivalence_applicable"])
+
     def test_direct_svd_hides_rank_when_scale_separation_is_inconclusive(self):
         fake = SimpleNamespace(
             rank=2,
