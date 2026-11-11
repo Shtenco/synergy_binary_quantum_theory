@@ -14,6 +14,7 @@ on:
       - "scripts/test_k5_hit_adjoint.py"
       - "scripts/test_k5_primitive_dense_adjoint.py"
       - "scripts/test_k5_assembled_node_hermiticity.py"
+      - "scripts/test_k5_rectangular_node_h_adjointness.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -59,3 +60,5 @@ jobs:
         run: python scripts/test_k5_primitive_dense_adjoint.py
       - name: Run finite-sector assembled production K5 node-H Hermiticity oracle
         run: python scripts/test_k5_assembled_node_hermiticity.py
+      - name: Run rectangular projected finite-sector production K5 node-H adjointness oracle
+        run: python scripts/test_k5_rectangular_node_h_adjointness.py
