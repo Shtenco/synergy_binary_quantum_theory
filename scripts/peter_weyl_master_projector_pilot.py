@@ -364,9 +364,13 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         for j in range(i + 1, len(projectors)):
             ni, Pi, ri = projectors[i]
             nj, Pj, rj = projectors[j]
-            err = float(np.linalg.norm(Pi - Pj)) if ri == rj else float("inf")
-            pair_errors.append({"a": ni, "b": nj, "rank_a": ri, "rank_b": rj, "projector_difference": err})
-            all_ok &= ri == rj and err < 2e-6
+            err = float(np.linalg.norm(Pi - Pj)) if ri == rj else None
+            pair_errors.append({
+                "a": ni, "b": nj, "rank_a": ri, "rank_b": rj,
+                "projector_difference": err,
+                "rank_mismatch": bool(ri != rj),
+            })
+            all_ok &= (ri == rj and err is not None and err < 2e-6)
 
     zero_ranks = [r["zero_sector_rank"] for r in rows]
     found = bool(zero_ranks and min(zero_ranks) > 0)
