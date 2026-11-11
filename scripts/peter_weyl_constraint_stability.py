@@ -222,8 +222,10 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     delta_norm = delta_direct["singular_values"][0]
     stable = bool(
         legacy_direct["rank"] == dim
+        and no_prune_direct["rank"] == dim
         and delta_norm < sigma_min
         and not legacy_direct["scale_separation_loss"]
+        and not no_prune_direct["scale_separation_loss"]
         and not delta_direct["scale_separation_loss"]
     )
     return {
@@ -252,6 +254,7 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
             "legacy_minimum_singular_value": sigma_min,
             "strict_inequality_holds": bool(delta_norm < sigma_min),
             "legacy_full_column_rank_at_declared_tolerance": bool(legacy_direct["rank"] == dim),
+            "no_prune_full_column_rank_at_declared_tolerance": bool(no_prune_direct["rank"] == dim),
             "rank_source": "direct streaming SVD of C",
             "sufficient_rank_stability_for_computed_float_maps": stable,
             "exact_operator_rank_certified": False,
