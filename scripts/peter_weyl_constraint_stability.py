@@ -68,7 +68,7 @@ def spectrum_of_gram(G, rank_rtol):
     H = 0.5 * (G + G.conj().T)
     evals = np.linalg.eigvalsh(H)
     scale = max(1.0, float(np.max(np.abs(evals))))
-    psd_tol = 1e-10 * scale
+    psd_tol = 100.0 * np.finfo(float).eps * scale
     if float(np.min(evals)) < -psd_tol:
         raise ValueError(f"Gram matrix is not PSD: min eigenvalue {float(np.min(evals))}")
     threshold = rank_rtol * scale
@@ -80,12 +80,15 @@ def spectrum_of_gram(G, rank_rtol):
         "gram_min_eigenvalue": float(np.min(evals)),
         "gram_max_eigenvalue": float(np.max(evals)),
         "rank_threshold_on_gram_eigenvalues": threshold,
+        "rank_threshold_resolves_roundoff": bool(threshold > psd_tol),
         "estimated_rank": int(np.count_nonzero(evals > threshold)),
         "minimum_singular_value_including_nullity": float(singular[0]),
         "smallest_positive_singular_value": float(np.min(positive)) if len(positive) else None,
         "largest_singular_value": float(singular[-1]),
         "singular_values": [float(x) for x in singular],
         "psd_tolerance": psd_tol,
+        "singular_value_method": "sqrt(eigvalsh(C^dagger C)); Gram formation squares condition number",
+        "gram_spectral_resolution_floor": float(psd_tol),
     }
 
 
@@ -138,6 +141,7 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10):
     delta_norm = delta_spec["largest_singular_value"]
     stable = bool(
         legacy_spec["estimated_rank"] == dim
+        and legacy_spec["rank_threshold_resolves_roundoff"]
         and delta_norm < sigma_min
     )
     return {
