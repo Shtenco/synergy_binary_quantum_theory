@@ -987,6 +987,11 @@ def cutoff_operator_sweep(domain="low", jmax2_values=(1, 3),
         raise ValueError("cutoffs must be nonempty doubled-spin integers >= 1")
     if cutoffs != sorted(set(cutoffs)):
         raise ValueError("cutoffs must be strictly increasing")
+    if not isinstance(block_rows, int) or isinstance(block_rows, bool) or block_rows <= 0:
+        raise ValueError("block_rows must be a positive integer")
+    if (not isinstance(dense_max_entries, int) or isinstance(dense_max_entries, bool)
+            or dense_max_entries <= 0):
+        raise ValueError("dense_max_entries must be a positive integer")
     nodes = tuple(PILOT.PW.VERT)
     basis = PILOT.carrier_basis(domain)
     dim = len(basis)
@@ -1243,11 +1248,30 @@ def main():
     ap.add_argument("--block-rows", type=int, default=4096)
     ap.add_argument(
         "--jmax2-sweep",
-        help="optional comma-separated increasing doubled-spin cutoffs, e.g. 1,3,5",
+        help="comma-separated increasing cutoffs for rank/kernel sensitivity, e.g. 1,2,3,4,5",
     )
+    ap.add_argument(
+        "--cutoff-operator-sweep",
+        help="comma-separated cutoffs for TSQR plus guarded dense-oracle operator comparison",
+    )
+    ap.add_argument("--dense-max-entries", type=int, default=200000)
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
-    if args.jmax2_sweep:
+    if args.jmax2_sweep and args.cutoff_operator_sweep:
+        ap.error("choose only one of --jmax2-sweep or --cutoff-operator-sweep")
+    if args.cutoff_operator_sweep:
+        try:
+            cutoffs = [int(value.strip()) for value in args.cutoff_operator_sweep.split(",")]
+        except ValueError as exc:
+            ap.error(f"invalid --cutoff-operator-sweep: {exc}")
+        result = cutoff_operator_sweep(
+            args.domain, cutoffs, args.block_rows, args.dense_max_entries
+        )
+        default_output = (
+            f"verification_results/PETER_WEYL_CUTOFF_OPERATOR_"
+            f"{args.domain}_J_SWEEP.json"
+        )
+    elif args.jmax2_sweep:
         try:
             cutoffs = [int(value.strip()) for value in args.jmax2_sweep.split(",")]
         except ValueError as exc:
