@@ -473,3 +473,12 @@ The new independent helper separates coherent aggregation from pruning:
 Eight committed unit tests cover permutation invariance, cancellation before thresholding, constructive accumulation, a dense-vector oracle, ledger identity, no-prune retention, telescoping-bound verification, and rejection of pre-aggregation pruning.
 
 **Verification boundary:** both source files were fetched back from GitHub and inspected. A separate local Python harness passed core checks for deterministic aggregation, cancellation/constructive accumulation, ledger norms, dense-vector comparison, and the telescoping bound. The committed unittest file itself has not yet been executed against a local checkout. Crucially, the K5 producer is not yet wired to this helper; existing HH outputs remain legacy-thresholded and are not promoted to pruning-certified status. The integration requirements and acceptance gate are recorded in the new design document.
+
+
+## 13. K5 no-prune integration contract — 2026-11-11
+
+A new source-grounded integration contract is preserved in [K5_NO_PRUNE_INTEGRATION_CONTRACT_AND_TEST_PLAN_2026-11-11.md](K5_NO_PRUNE_INTEGRATION_CONTRACT_AND_TEST_PLAN_2026-11-11.md). It enumerates every threshold in the inspected K5 producer, requires policy identity in all dependent caches, separates legacy/no-prune/aggregate-then-prune semantics, and defines five acceptance gates: primitive coherent aggregation, actual K5 tiny dense oracle, bilinear adjointness, raw volume integrity, and threshold-ladder/error propagation. It also connects the no-prune prerequisite to the full coherent graph-shell leakage Gram.
+
+**Newly explicit source boundary:** the K5 safe-column producer is not automatically the active V10 KKV production path discussed in the two commits currently on `main`. The V10 L1/L2/L3 linearity audit is methodologically relevant, but its call-site findings are not attributed to the K5 file without a confirmed caller. At this snapshot, `main` contains two commits absent from this research branch (`8d55ff4` and `254f19f`); this branch remains isolated and no merge or history rewrite was performed.
+
+**Verification status:** this update adds a source-audit/design contract only. It does not claim policy integration, direct execution of the committed unit tests, a K5 dense-oracle PASS, adjoint certification, raw-volume integrity, a no-prune HH run, or physical HDA closure. The existing HH result remains a legacy-thresholded finite regression.
