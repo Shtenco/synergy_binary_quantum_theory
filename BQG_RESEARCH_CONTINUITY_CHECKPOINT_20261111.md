@@ -106,3 +106,24 @@ Queued means no conclusion yet; it is not a PASS and not a FAIL. The cancelled j
 9. Continue physical normalization, physical-kernel and causal-cone work as separate gates.
 
 **Current scientific priority:** prove that the finite-sector production KKV map is linear on its declared domain before interpreting its basis-column matrix as the operator whose adjoint, spectrum or kernel is physically meaningful.
+
+
+## 8. L2 source audit extension — 11 November 2026, 00:32 UTC
+
+A second source inspection was completed after the original checkpoint. The new document [BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md](BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md) records the exact map-by-map L2 test matrix and L3 reconstruction contract.
+
+Additional source-confirmed boundaries:
+
+- `peter_weyl_covariant_K_composition_gate.py:43-51`: `apply_HE_complete_state_custom` multiplies a unit-key result by an arbitrary input coefficient and passes it through thresholded `COMP.add`. This is a direct arbitrary-superposition nonlinearity risk.
+- The same module's `apply_K_complete_custom` combines `V H_E) and `H_E V` components through further thresholded accumulation.
+- `peter_weyl_covariant_K_leg_gate.py`: `add_state` thresholds branch sums; `apply_HE_complete_key` uses it while assembling oriented/adjoint branches; `apply_volume_complete_state` applies a final (10^{-11}) output filter; `apply_HE_complete_state` applies a final (10^{-10}) output filter.
+- `peter_weyl_covariant_K_composition_gate.py` therefore contains distinct loss boundaries at primitive branch assembly, arbitrary coefficient composition, volume action, and commutator combination. They must be measured independently.
+- V10's outer `amp_tol) pruning occurs after coherent node-map summation, but the removed forward/adjoint amplitudes are not currently counted. This external loss must not be merged with internal primitive losses or scalar-projection rejection.
+
+The new L2 test plan prioritizes real production maps: `CK.apply_volume_complete_state`, `CK.apply_HE_complete_state`, `COMP.apply_HE_complete_state_custom`, `COMP.apply_K_complete_custom`, `COMP.C_K_component`, and `COMP.C_volume_component`. It requires additivity, complex homogeneity, permutation/cancellation tests, direct-superposition versus frozen basis-matrix reconstruction, and stage-specific loss ledgers.
+
+**New commit:** `4f888c8658299af441097674fa08a6949a837be9` — add L2 production-primitive linearity audit.
+
+**CI status remains unchanged:** runs `42930769907` and `42929934053` were observed queued, with no artifacts. The existing L1 workflow does not execute the new L2 test matrix. No L1/L2/L3 PASS is claimed.
+
+**Next gate:** implement and execute the three highest-priority L2 tests before changing production semantics. Do not wire the reference accumulator into V10 until the exact insertion boundary and regression behavior are established.
