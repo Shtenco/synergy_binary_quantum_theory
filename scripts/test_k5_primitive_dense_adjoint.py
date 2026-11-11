@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Independent finite-sector matrix adjoint oracle for a production K5 primitive.
 
-The oracle materializes the complete one-link-hit primitive and its reversed
+The oracle materializes the complete closed-loop three-hit primitive and its reversed
 production primitive on explicit orthonormal recoupling bases.  The finite
 spin wall is part of the test definition; this is not a claim about an
 unrestricted operator on the full Hilbert space.
@@ -44,10 +44,10 @@ def materialize_primitive(domain_in, domain_out, sequence, spin_wall):
 
 
 class K5PrimitiveDenseAdjointTests(unittest.TestCase):
-    def test_one_link_hit_primitive_matches_independent_reverse_matrix(self):
-        # All ten links start at doubled spin 1 (j=1/2).  Only edge (0,1)
-        # may transition to doubled spin 0 or 2; Jmax2=2 excludes spin 3
-        # in the reverse action, making this an explicitly finite-wall test.
+    def test_closed_triangle_primitive_matches_independent_reverse_matrix(self):
+        # All ten links start at doubled spin 1 (j=1/2). The three edges of
+        # the closed triangle may transition to doubled spin 0 or 2; Jmax2=2
+        # excludes spin 3 in the reverse action.
         spin_wall = 2
         spins_in = (1,) * len(k5.EDGES)
         domain_in = basis_for_spins(spins_in)
