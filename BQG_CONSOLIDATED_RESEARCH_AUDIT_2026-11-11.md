@@ -512,3 +512,10 @@ Evidence boundary: source files and workflow were fetched back from GitHub after
 Latest producer blob: a87cc00c3be07b4a66c249c16ec840cb8cb5629d. Source inspection finds all previously catalogued amplitude thresholds either inside the explicit legacy branch or after a no-prune early return. The no-prune mode now coherently aggregates at primitive, T-sequence, input-state, node-H, HH-composition, commutator and V5-superposition boundaries; cache identity includes mode; MemoryError returns resource_limit with no fallback. The raw pre-symmetrization volume defect is recorded by spin triple.
 
 The committed verification suite consists of 12 sparse-pruning helper tests and 6 K5 wiring tests. Latest test blobs: a1c2cbbb772b814355a520194e4bb32b19aa2383 and 476255880c123289b7f35d13b4bc81d03f1a4f50. Workflow blob: ffd43126b2d6003a7e551a5f51e2d5d59bde60de. The current GitHub status query contains no status entries, so CI execution remains unverified. No full no-prune HH calculation or K5 dense-oracle / adjoint certification is claimed.
+
+
+## 18. Expanded K5 policy-path tests
+
+The K5 producer wiring test suite has grown from six to nine tests. New controlled tests verify retention of a 1e-13 local primitive coefficient under no_prune (and its removal under legacy), coherent aggregation of two HH input-state contributions before the legacy 1e-8 state cutoff, and distinct T_cached outputs for identical operator arguments under different policy modes. Together with the twelve standalone helper tests, the committed suite now contains 21 tests.
+
+These are focused software-wiring tests, not full K5 numerical certification. Latest K5 test blob: b83733713aca6bcfa03fdf9212ec7b7f97613e5c. The latest combined commit status returned no status entries; CI PASS is not asserted. Attempting a local clone to run the tests failed because the environment could not resolve github.com. Therefore the new tests have been committed and reviewed from GitHub, but not executed in this session.
