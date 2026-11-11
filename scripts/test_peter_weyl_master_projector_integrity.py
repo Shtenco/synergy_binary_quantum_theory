@@ -197,19 +197,28 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
             pilot.volume_raw_hermiticity_diagnostics({}, rtol=1e-10)["passed"]
         )
         good = {(1, 1, 1): {
-            "relative_antihermitian_defect": 1e-14, "raw_norm": 2.0
+            "relative_antihermitian_defect": 1e-14, "raw_norm": 2.0,
+            "symmetrization_delta_frobenius_norm": 1e-14,
+            "symmetrization_delta_spectral_norm_upper_bound": 1e-14,
+            "symmetrization_relative_frobenius_bound": 5e-15,
         }}
         self.assertTrue(
             pilot.volume_raw_hermiticity_diagnostics(good, rtol=1e-10)["passed"]
         )
         bad = {(1, 1, 1): {
-            "relative_antihermitian_defect": 1e-4, "raw_norm": 2.0
+            "relative_antihermitian_defect": 1e-4, "raw_norm": 2.0,
+            "symmetrization_delta_frobenius_norm": 1e-4,
+            "symmetrization_delta_spectral_norm_upper_bound": 1e-4,
+            "symmetrization_relative_frobenius_bound": 5e-5,
         }}
         self.assertFalse(
             pilot.volume_raw_hermiticity_diagnostics(bad, rtol=1e-10)["passed"]
         )
         nonfinite = {(1, 1, 1): {
-            "relative_antihermitian_defect": float("nan"), "raw_norm": 2.0
+            "relative_antihermitian_defect": float("nan"), "raw_norm": 2.0,
+            "symmetrization_delta_frobenius_norm": 0.0,
+            "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+            "symmetrization_relative_frobenius_bound": 0.0,
         }}
         result = pilot.volume_raw_hermiticity_diagnostics(nonfinite, rtol=1e-10)
         self.assertFalse(result["passed"])
@@ -218,7 +227,10 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
 
     def test_volume_registry_detects_incomplete_unique_call_coverage(self):
         good = {(1, 1, 1): {
-            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
+            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0,
+            "symmetrization_delta_frobenius_norm": 0.0,
+            "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+            "symmetrization_relative_frobenius_bound": 0.0,
         }}
         result = pilot.volume_raw_hermiticity_diagnostics(
             good, rtol=1e-10, expected_unique_calls=2
@@ -229,8 +241,18 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
 
     def test_volume_registry_accepts_exact_unique_call_coverage(self):
         good = {
-            (1, 1, 1): {"relative_antihermitian_defect": 0.0, "raw_norm": 1.0},
-            (1, 1, 2): {"relative_antihermitian_defect": 1e-15, "raw_norm": 2.0},
+            (1, 1, 1): {
+                "relative_antihermitian_defect": 0.0, "raw_norm": 1.0,
+                "symmetrization_delta_frobenius_norm": 0.0,
+                "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+                "symmetrization_relative_frobenius_bound": 0.0,
+            },
+            (1, 1, 2): {
+                "relative_antihermitian_defect": 1e-15, "raw_norm": 2.0,
+                "symmetrization_delta_frobenius_norm": 1e-15,
+                "symmetrization_delta_spectral_norm_upper_bound": 1e-15,
+                "symmetrization_relative_frobenius_bound": 5e-16,
+            },
         }
         result = pilot.volume_raw_hermiticity_diagnostics(
             good, rtol=1e-10, expected_unique_calls=2
@@ -259,7 +281,10 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
 
     def test_volume_registry_rejects_spin_triple_above_declared_cutoff(self):
         registry = {(1, 1, 6): {
-            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
+            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0,
+            "symmetrization_delta_frobenius_norm": 0.0,
+            "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+            "symmetrization_relative_frobenius_bound": 0.0,
         }}
         result = pilot.volume_raw_hermiticity_diagnostics(
             registry, max_spin2=5
