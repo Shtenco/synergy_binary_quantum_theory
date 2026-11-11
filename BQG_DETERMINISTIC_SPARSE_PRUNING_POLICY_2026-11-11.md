@@ -101,3 +101,10 @@ Until the producer-specific dense oracle, bilinear adjoint tests, raw volume int
 ## 9. Input-integrity hardening — 2026-11-11
 
 The helper now rejects non-finite amplitudes supplied directly to `apply_pruning`, rejects non-finite scales even when the corresponding sparse mapping is empty, validates that ledger-verification `atol` is finite and nonnegative, and rejects overflow in the computed full-minus-pruned difference. Four dedicated negative-path tests were added across these cases (including overflow), bringing the committed regression suite to twelve tests. This is reference-helper hardening only; K5 producer integration remains open.
+
+
+## 10. K5 producer wiring update
+
+The K5 producer now exposes --mode legacy|no_prune. The strict path bypasses the previously identified thresholds, coherently aggregates at major composition boundaries, includes the mode in the T cache key, and fails explicitly with a resource_limit status on MemoryError. Six producer wiring tests were added and included in the CI workflow. The default remains legacy for reproducibility.
+
+This is an initial integration milestone only. The actual no-prune HH computation, dense K5 oracle, production adjoint tests, threshold-ladder stability, and raw-volume acceptance gate remain open. Do not describe the operator as pruning-certified until those checks pass.
