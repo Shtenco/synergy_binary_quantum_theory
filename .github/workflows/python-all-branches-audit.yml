@@ -49,10 +49,22 @@ jobs:
         run: |
           python -m py_compile scripts/audit_python_all_branch_heads.py
           python scripts/audit_python_all_branch_heads.py --out verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
-      - name: Upload complete branch-wide audit
+      - name: Build deduplicated LZMA snapshot of all branch-head Git blobs
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python -m py_compile scripts/bqg_branch_snapshot_lzma.py
+          python scripts/test_bqg_branch_snapshot_lzma.py
+          python scripts/bqg_branch_snapshot_lzma.py \
+            --out verification_results/BQG_BRANCH_SNAPSHOT_2026-11-11.tar.xz \
+            --manifest-out verification_results/BQG_BRANCH_SNAPSHOT_2026-11-11.manifest.json
+      - name: Upload complete branch-wide audit and LZMA source snapshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: python-all-branches-audit
-          path: verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
+          name: python-all-branches-audit-and-lzma-snapshot
+          path: |
+            verification_results/PYTHON_ALL_BRANCHES_AUDIT.json
+            verification_results/BQG_BRANCH_SNAPSHOT_2026-11-11.tar.xz
+            verification_results/BQG_BRANCH_SNAPSHOT_2026-11-11.manifest.json
           if-no-files-found: error
