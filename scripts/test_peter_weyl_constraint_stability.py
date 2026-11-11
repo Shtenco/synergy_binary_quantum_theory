@@ -122,5 +122,57 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertEqual(stability.column_digest(a), stability.column_digest(b))
 
 
+    def test_kernel_projector_distance_matches_analytic_principal_angle(self):
+        theta = 0.173
+        legacy = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        no_prune = stability.direct_svd_from_columns(
+            {0: {(0, "r"): np.sin(theta)},
+             1: {(0, "r"): -np.cos(theta)}}, 2
+        )
+        result = stability.compare_kernel_projectors(legacy, no_prune, 2)
+        self.assertEqual(result["status"], "SAME_DIMENSION_SUBSPACE_DISTANCE")
+        self.assertTrue(result["same_nullity"])
+        self.assertAlmostEqual(
+            result["max_principal_angle_sine"], abs(np.sin(theta)), places=12
+        )
+        self.assertLess(result["legacy_projector_idempotence_defect_frobenius"], 1e-12)
+        self.assertLess(result["no_prune_projector_idempotence_defect_frobenius"], 1e-12)
+
+    def test_kernel_projector_identical_subspaces_have_zero_distance(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        result = stability.compare_kernel_projectors(direct, direct, 2)
+        self.assertEqual(result["status"], "SAME_DIMENSION_SUBSPACE_DISTANCE")
+        self.assertAlmostEqual(result["projector_difference_spectral_norm"], 0.0, places=14)
+
+    def test_kernel_nullity_mismatch_is_not_reported_as_principal_angle(self):
+        legacy = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        no_prune = stability.direct_svd_from_columns(
+            {0: {(0, "r0"): 1.0, (1, "r1"): 0.0},
+             1: {(0, "r0"): 0.0, (1, "r1"): 1.0}}, 2
+        )
+        result = stability.compare_kernel_projectors(legacy, no_prune, 2)
+        self.assertEqual(result["status"], "NULLITY_MISMATCH")
+        self.assertFalse(result["same_nullity"])
+        self.assertIsNone(result["max_principal_angle_sine"])
+        self.assertEqual(result["legacy_nullity"], 1)
+        self.assertEqual(result["no_prune_nullity"], 0)
+
+    def test_kernel_comparison_blocks_scale_separation_warning(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        warned = dict(direct)
+        warned["scale_separation_loss"] = True
+        result = stability.compare_kernel_projectors(direct, warned, 2)
+        self.assertEqual(result["status"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertIsNone(result["max_principal_angle_sine"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
