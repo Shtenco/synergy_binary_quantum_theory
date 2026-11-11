@@ -1251,3 +1251,77 @@ The post-HDA sequence must now be:
 5. only after a nontrivial physical inner product is established, construct relational metric sources and connected inter-block cumulants.
 
 Classification: exact finite master-kernel theorem; exact synthetic positive control; actual finite gravitational 32D carrier has empty common kernel; route-factorization HDA no-go exact; route-normal principal symbol finite/semiclassical PASS; full physical projector, full quantum HDA and continuum/rigging limit remain open.
+
+
+## 29. Depth-6 S4-sign / mixed-irrep proof: exact selector progress, but global rank closure is not yet certified
+
+Inspected branch `research/depth6-s4sign-proof`, HEAD `f6bfcd775b8c3cd33c6c235d48293e40657baf9d` (tree contains 323 blobs). This is a separate large-scale finite-rank proof programme; its exact representation reductions are meaningful, but the global rank certificate must not be inferred from shard success or selector PASS.
+
+### 29.1. Exact representation-theoretic reduction already verified
+
+The generic Jucys-selector verification JSON (blob `ab5b66b4092f23577c0f11cd2ee014a6031cb367`) reports:
+- [3,2]: multiplicity sum 130903 over 2755 active S5 orbits;
+- [3,1,1]: 153455 over 2719;
+- [2,2,1]: 130503 over 2749;
+- [2,1,1,1]: 103318 over 2712;
+- maximum character-rounding error (4.547473508864641\times10^{-13}).
+
+The method is exact stabilizer-character multiplicity plus polynomial Jucys projectors, deterministic probes and explicit rank/projector/orthonormality residual checks. This validates the generic branch selectors and multiplicity accounting, not the numerical Hamiltonian rank of every branch-sum sector.
+
+The generic master-row verification (blob `b945bd0270e976faa1466a9f7229be3290a4fa51`) records the covariance identity
+[
+M|_\lambda=B_\lambda\otimes I,
+\qquad
+B_\lambda=A_0+A_1+3A_2,
+\qquad
+A_v=(H_v e_\lambda)^\dagger(H_v e_\lambda),
+]
+for a normalized one-dimensional (S_3) Jucys row. Raw five-vertex regression residuals are (2.55\times10^{-16}), (1.58\times10^{-16}), and (1.56\times10^{-16}) for the reported [3,2], [3,1,1], [2,2,1] examples. Reduced-coordinate vs direct five-vertex errors are about (1.56\times10^{-9}) and (1.60\times10^{-9}), at the declared ultrafast Hamiltonian numerical tolerance.
+
+The distributed engine smoke JSON (blob `50d9ad97fbe70b772dd4135b0cb019295dd9a7b0`) verifies one [3,2] orbit (orbit 10, multiplicity 2): 211 master-map row blocks, 372 rows, 352 conservative support blocks, rank 2, (sigma_{min}=4.7455484624). This is a smoke regression for engine wiring, not the global [3,2] certificate.
+
+### 29.2. The 128-shard S4-sign proof is not closed in the checked-out evidence
+
+The distributed checkpoint (blob `1f0effdf8cf3dcba5f74181ce3bd3ba9ea79ed7c`) is explicitly `DISTRIBUTED_PROOF_RUNNING`. Its target is 264962 shell states, 11956 blocks, dimension 130112, with the [2,1,1,1] sector dimension 103318. It lists [1^5], [5], [4,1] as previously closed and [3,2], [3,1,1], [2,2,1] as remaining at that checkpoint.
+
+The v2 shard workflow runs 128 independent shards and uploads each tarball with only three-day retention. The aggregate-existing workflow requires exactly 128 unexpired artifacts, hashes/preserves them, and only then runs exact-capacity pruning plus global numerical peeling. The branch tree at the inspected HEAD contains the workflow and proof bundle but no committed final global rank certificate. The source run referenced by the aggregator is `36527314863`; its shard artifacts are no longer available through the artifact listing (zero live artifacts). A log for one shard confirms a completed local shard computation, but that is not proof of all 128 shards or of global rank. The earlier checkpoint run `36525453073` had failing shard jobs. Therefore the full S4-sign rank certificate remains **unverified/open** at this checkpoint.
+
+The correct next action is to rerun the frozen 128-shard producer from the committed proof bundle, preserve all shard tarballs and SHA-256 manifests for long retention, then run the aggregate and retain both final and partial certificates. A successful shard matrix alone is insufficient: the global proof needs exact coverage, no duplicate/missing blocks, exact total columns, and the fail-closed numerical full-column-rank/peeling certificate.
+
+### 29.3. Independent audit of the [3,2] actual-q key metadata: only 15/112 shards recovered
+
+The branch's keymeta inventory workflow lists source runs `36911807083`, `36916785787`, and `36921419558`, and expects 112 shards, 2755 blocks and 130903 columns for irrep [3,2]. I downloaded the canonical per-shard artifacts, selected the newest artifact for each duplicate shard by `created_at`, verified all 15 ZIP SHA-256 digests against GitHub artifact metadata, decompressed the gzip payloads, and independently executed the exact coverage-gate logic from `mixed_parallel/build_master_key_peeling_schedule.py`.
+
+Recovered shard IDs:
+[
+\{0,6,8,11,12,13,14,17,18,19,20,21,22,23,24\}.
+]
+Missing shard count: 97 of 112. Recovered 15 of 2755 orbit blocks and 7749 of 130903 columns. The gate returns:
+[
+\boxed{\texttt{INCOMPLETE\_KEYMETA\_COVERAGE}},
+\qquad
+\boxed{\texttt{schedule\_allowed=false}}.
+]
+The 15 artifacts all carry irrep `32`, schema version 1, declared shard count 112 and the same proof-engine blob `cbbaa80f6b6b61d353458db1fa1f03f824730532`. Their raw source run ID is `36899125190`. All downloaded ZIP hashes matched the published artifact digests.
+
+This is an actual-q **metadata inventory only**. It does not authorize a candidate uniqueness schedule, SVD, rank claim or kernel conclusion. The expected remaining 97 shards must be recovered before schedule construction.
+
+### 29.4. Concrete inventory-code inconsistency: salvage artifacts are accepted by one helper but ignored by the collector
+
+In `scripts/inventory_depth6_32_keymeta.py` (blob `a0e6e92e96b4d8a74a06b4ca4301b697f6ecdede`), `is_candidate_keymeta_artifact_name()` accepts both the canonical `NAME_RE` and `SALVAGE_RE` names, and ZIP loading supports multiple `.pkl.gz` payloads. However, `choose_latest_keymeta()` itself matches only `NAME_RE` and never calls `is_candidate_keymeta_artifact_name()`. Thus salvage artifacts named by `SALVAGE_RE` are silently excluded from inventory selection. This should be fixed by explicitly iterating salvage payloads, validating each payload's shard ID/schema/provenance, and applying the same newest-per-shard rule; add a regression test that feeds a salvage archive through `choose_latest_keymeta`, not merely through the filename helper.
+
+### 29.5. Mathematical interpretation and stopping rule
+
+The exact per-row covariance identity is a genuine compression theorem. It reduces a large operator to multiplicity-space blocks without discarding the S3 representation factor. The Jucys selectors correctly identify which multiplicity blocks must be considered. But neither fact proves that the assembled map is injective.
+
+For each orbit block (i), the proposed Gram witness must be built from output keys unique among the **currently numerically accepted remaining blocks**:
+[
+G_i(Q)=\sum_{q\in Q}C_{i,q}^\dagger C_{i,q}.
+]
+A block can be removed only if
+[
+\lambda_{min}(G_i(Q))>\max(\text{floating-point tolerance},\sigma_{floor}^2).
+]
+After every accepted removal, uniqueness must be recomputed. A failed block remains in the residual set; it is not a kernel vector. A residual set requires a coupled cross-block Gram on shared output keys before any nullity conclusion.
+
+Classification: exact representation/multiplicity and per-row covariance reductions; one-orbit distributed smoke PASS; 15/112 actual-q keymeta coverage independently recovered; global S4-sign rank proof and [3,2] schedule remain incomplete; inventory salvage-selection bug identified.
