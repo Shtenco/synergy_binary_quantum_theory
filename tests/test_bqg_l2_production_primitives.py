@@ -85,6 +85,35 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             "Frozen Peter-Weyl fixture has no custom H_E output; L2 cannot be inferred.",
         )
 
+    def test_volume_map_additivity_on_independent_basis_states(self):
+        # Use two distinct genuine Peter-Weyl basis keys, not two rescalings
+        # of the same vector.  The larger common scale keeps the comparison
+        # away from the declared 1e-11 output-amplitude cutoff.
+        basis = PW.basis_full_jhalf()
+        second_covariant = CV.gauss_to_covariant({basis[16]: 1.0 + 0j}, 0)
+        second_complete = COMP.covariant_to_complete(second_covariant, 0)
+        self.assertEqual(len(second_complete), 1)
+
+        x = state_scale(self.complete_state, 1e6)
+        y = state_scale(second_complete, 1e6)
+        fx = CK.apply_volume_complete_state(x, 0)
+        fy = CK.apply_volume_complete_state(y, 0)
+        combined = dict(x)
+        for key, value in y.items():
+            combined[key] = combined.get(key, 0j) + value
+        fxy = CK.apply_volume_complete_state(combined, 0)
+
+        rhs = dict(fx)
+        for key, value in fy.items():
+            rhs[key] = rhs.get(key, 0j) + value
+        residual = difference_norm(fxy, rhs)
+        relative = residual / max(norm(fxy), norm(rhs), 1e-300)
+        self.assertLessEqual(
+            relative, 5e-12,
+            f"CK.apply_volume_complete_state independent-superposition "
+            f"additivity residual={relative:.6e}",
+        )
+
     def _assert_safe_domain_homogeneity(self, map_fn, label):
         alpha = 1.25 + 1.5j
         base_scale = 1e6
