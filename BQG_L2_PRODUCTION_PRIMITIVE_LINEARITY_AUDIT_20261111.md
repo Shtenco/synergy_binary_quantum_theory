@@ -173,3 +173,19 @@ The scoped L2 workflow was triggered as run `42936669007` (job `130248321716`), 
 
 
 The independent-support test was further hardened in commit `ec82224564516d9b902ac52de37b3e540bce4c22`: it asserts that the two complete basis keys are distinct and that both basis states individually produce nonempty volume outputs. The corresponding run `42936684504` (job `130248370659`) was queued with no artifacts at 01:08 UTC. No result is available.
+
+
+
+## 10. Independent-support additivity for the cached complete H_E map
+
+The canonical L2 suite now includes a second independent-support superposition check for `CK.apply_HE_complete_state`. It uses the same two distinct Peter–Weyl basis inputs as the volume test (basis indices 0 and 16), converts each through the production covariant/complete adapters, asserts distinct complete-state keys and nonzero individual H_E responses, and compares the direct action on their sum with the sum of the two separate actions.
+
+The common input scale is (10^6), and the relative L2 residual bound is (5\times10^{-12}). This keeps the test away from the final (10^{-10}) output-amplitude filter in `CK.apply_HE_complete_state`. Source inspection distinguishes this map from `KCOMP.apply_HE_complete_state_custom`: the former obtains cached unit-key columns and combines their arbitrary input coefficients before its final output filter, whereas the latter routes each scaled column through `COMP.add` and therefore exposes a more direct coefficient-dependent threshold boundary.
+
+Interpretation is deliberately narrow:
+- a pass supports additivity of the cached-column extension on this frozen two-vector fixture and at this safe scale;
+- it does not establish additivity at the threshold boundary, across the full covariant (C(K)) / (C(V)) maps, or for the complete K commutator;
+- the threshold-boundary expected failures remain separate and must still be inspected in CI;
+- this is not a physical-operator or continuum-limit result.
+
+The new check was committed to the canonical test file and triggers the scoped L2 workflow. The previously observed run `42936684504` remains queued with no artifacts at the 01:10 UTC poll; the new push-triggered run must be separately identified and its log inspected before reporting a verdict.
