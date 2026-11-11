@@ -84,8 +84,29 @@ class K5RectangularNodeHAdjointnessTests(unittest.TestCase):
                 key,
             ),
         )
-        outputs = tuple(ranked[:TOP_K])
+        # Seed one nonzero selected output per input column before filling
+        # the remaining slots globally. This prevents a nominal 4x2 block
+        # from silently containing an all-zero input column.
+        outputs_list = []
+        for column in forward_columns:
+            best_for_column = min(
+                (key for key in reachable if column.get(key, 0j) != 0j),
+                key=lambda key: (-abs(column[key]), key),
+            )
+            if best_for_column not in outputs_list:
+                outputs_list.append(best_for_column)
+        for key in ranked:
+            if key not in outputs_list:
+                outputs_list.append(key)
+            if len(outputs_list) == TOP_K:
+                break
+        outputs = tuple(outputs_list)
         self.assertEqual(len(set(outputs)), TOP_K)
+        self.assertTrue(
+            all(any(column.get(key, 0j) != 0j for key in outputs)
+                for column in forward_columns),
+            "each input column must contribute a nonzero selected matrix element",
+        )
 
         # A[y,x] is taken directly from complete no-prune forward columns.
         A = np.zeros((len(outputs), len(inputs)), dtype=complex)
