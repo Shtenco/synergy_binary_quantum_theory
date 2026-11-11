@@ -989,3 +989,21 @@ The six S3 transfer functions of the shared-face pair can constrain the tensor f
 6. Test the constraint algebra through the same derivative order as the physical TT/scalar kernel; only then identify the physical pole and observables.
 
 Classification: exact finite representation/quotient identities; conditional EFT theorem; finite numerical carrier evidence at fixed threshold; unexecuted downstream physicalization. No complete analytic proof of the full BQG theory is claimed.
+
+
+## 26. Independent symbolic verification and checkpoint after this tranche
+
+The six-observable TT extraction matrix printed in section 25 was reconstructed independently in exact rational arithmetic (SymPy, not floating-point linear algebra). The independent calculation returns
+[
+\det A=\frac1{699840000}
+]
+and reproduces the exact rational inverse printed in `S4_TT_QUARTIC_COMPLETE_BASIS.md`. Thus the six-direction reconstruction is algebraically nonsingular; this verifies the extraction map, not the physical existence or measured values of the six Wilson coefficients.
+
+Checkpoint:
+- consolidated research branch after this report update: `7c00e711a3730150d85d6e9bd22f71787ac3988a`;
+- inventory refresh commit: `9d5512336439a5d4fb54982dd79d850efed9bb96`;
+- main HEAD remains `254f19fdab41d32b920bf454f987aa7c0fdba34d`;
+- current compare main -> consolidated research: **146 ahead / 2 behind**, diverged;
+- main was not modified or merged.
+
+The branch manifest remains 168 refs / 157 unique HEADs. This tranche deep-inspected selected physical TT, scalar-history, HDA and operator-micro-dynamics branches; it is not a completed semantic audit or fresh AST scan of all 157 unique heads. The next pass must continue by deduplicating the remaining unique commit trees and blobs, then extract each candidate theorem together with its executable source, test fixture, cutoff policy, workflow dependency closure and actual run/artifact status.
