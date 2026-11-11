@@ -989,3 +989,26 @@ The change modifies an existing test method, so the static method inventory
 is unchanged: 31 constraint-stability methods and 89 methods across the
 four focused suites. The updated test has not been executed in this
 environment. GitHub Actions remains queued; no CI PASS is claimed.
+
+
+## Follow-up: distinguish full row union from nonzero difference support (2026-11-11)
+
+The adjacent-cutoff comparison now reports three separate row counts:
+the full union of labels appearing in either cutoff map, the intersection
+of labels appearing in both maps, and the nonzero row support remaining
+after coefficient-wise subtraction. This distinction matters because rows
+whose coefficients are unchanged belong to the common embedding but cancel
+exactly from the sparse difference operator. The synthetic fixture now
+asserts union count 3, common count 2, and nonzero difference support 2.
+
+For that fixture the represented difference is equivalent, up to row
+ordering, to diag(0.5, 0.25). An independent local NumPy calculation gives
+singular values (0.5, 0.25) and spectral norm 0.5. This checks the analytic
+fixture only; it is not execution of the repository test or production
+Peter-Weyl calculation.
+
+The static inventory remains 31 constraint-stability methods and 89 methods
+across the four focused suites. The test is committed but has not been run.
+At this update the research branch is 345 commits ahead and two behind main;
+main remains untouched. The latest observed Actions runs are queued with no
+conclusion. No CI PASS or production execution is claimed.
