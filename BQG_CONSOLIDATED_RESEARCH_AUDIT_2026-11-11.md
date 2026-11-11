@@ -428,3 +428,29 @@ The strongest current achievements are precise finite-dimensional results: L1 q4
 The most important newly clarified blocker is equally precise: **the K5 compressed master currently omits the coherent positive leakage Gram**. Until that is included and the underlying node operators are verified self-adjoint in the actual graph-changing Hilbert space, its compressed kernel cannot be treated as the physical master kernel.
 
 This is a productive research position: the finite algebraic structures are becoming clearer, while the remaining work is now stated as concrete operator, convergence, and reproducibility obligations rather than vague requests for “more testing”.
+
+
+## 11. K5 pruning and numerical-integrity audit — 2026-11-11
+
+New source-level audit:
+- [K5_PRUNING_AND_NUMERICAL_INTEGRITY_AUDIT_2026-11-11.md](K5_PRUNING_AND_NUMERICAL_INTEGRITY_AUDIT_2026-11-11.md)
+- Inspected implementation: `scripts/k5_peter_weyl_safe_hda_column.py`, blob SHA `e7e1e0705c4b833dcee167a2036ef5f8929a4388`.
+
+The exact source inspection identified a multi-stage hard-coded pruning cascade: (10^{-13}) in dictionary accumulation, (10^{-12}) in local channel/path coefficients, (10^{-11}) at primitive output, (10^{-10}) in cached T outputs, and (10^{-8}) in state/HH composition and top-level H regression. The graph-shell wrapper adds another (10^{-10}) threshold. These are distinct truncation layers; the current HH result must therefore be described as a legacy-thresholded finite regression, not a pruning-certified complete operator action.
+
+The audit derives the valid telescoping error bound
+[
+\|x_n-\widetilde x_n\|_2
+\leq\sum_s\|A_{n-1}\cdots A_{s+1}\|_2\,\|\delta_s\|_2,
+]
+where each (delta_s) is the coherently aggregated discarded vector at that stage. It explicitly rejects a naive sum of thresholds or dropped-key counts as a global error bound.
+
+Additional code-level findings:
+- `volume123_matrix` symmetrizes raw (Q) before measuring its anti-Hermitian defect, concealing a needed diagnostic.
+- The reverse-sequence adjoint construction is structurally plausible but lacks independent bilinear action tests in the inspected file.
+- Hard-coded regression constants test regression stability, not pruning completeness, adjointness, volume integrity, or HDA closure.
+- Scalar outside-shell norms cannot replace the coherent off-diagonal leakage Gram (L_v^\dagger L_v).
+
+The prescribed next milestone is a policy threaded through every operator layer (`legacy`, `no_prune`, `aggregate_then_prune`), deterministic coherent aggregation, a tiny dense oracle, bilinear adjoint tests, raw volume integrity checks, and only then a recomputed shell with full leakage Gram.
+
+**Execution status:** this is a source audit and mathematical design record. No fresh execution of the expensive K5 HH calculation is claimed.
