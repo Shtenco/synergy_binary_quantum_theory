@@ -791,3 +791,24 @@ A second gate should assemble the actual signed 12-spec node operator `H_v=(T_v+
 Only after these gates should the programme advance to spin-wall stability, full no-prune HH composition, and the complete leakage Gram `Σ_v L_v†L_v` with off-diagonal interference. No threshold relaxation, forced symmetrization of the raw production matrix, or legacy fallback is acceptable as a way to make a gate pass.
 
 **Evidence classification:** the achievements above are source-committed finite identities/tests, exact finite algebraic results, or implementation audits as individually described. They are not collectively a proof of unrestricted adjointness, full HDA closure, continuum BQG, or empirical physics.
+
+
+## 27. Two-input/two-output coherent T adjoint block and explicit projection leakage — 2026-11-11
+
+Added `test_full_32_term_T_two_by_two_matrix_block_matches_reverse` to `scripts/test_k5_primitive_dense_adjoint.py`. It uses two distinct orthonormal recoupling basis kets in the all-link doubled-spin-1 sector (all K=0, and K=(0,0,0,0,2)), applies all 32 signed production T monomials to each input, and coherently accumulates amplitudes with separate real/imaginary `math.fsum`.
+
+From the union of the two forward supports, it deterministically selects the two largest-supported output basis rows (stable repr tie-break), forms a 2×2 forward block, independently applies all 32 reversed production sequences to each selected output ket, and forms the corresponding reverse block. The acceptance identity is
+\[
+(T^\dagger)_{C,D}=(T_{D,C})^\dagger.
+\]
+The comparison uses `rtol=1e-10`, `atol=1e-11`; tolerances are not adapted to observed errors.
+
+The test separately computes and prints a projected-block leakage ledger for forward support outside the selected two output rows and reverse support outside the selected two input kets (counts, L2 norm, and maximum absolute amplitude). This is **projection leakage**, not a measurement of transitions clipped by the finite spin wall. The latter still requires a wall-ladder/unbounded-reference experiment.
+
+**Scope boundary:** this is a genuine 2×2 submatrix check of the complete coherent 32-term production T and independently reversed action. It is not the full finite-sector matrix identity, does not establish that either selected subspace is invariant, and does not prove unrestricted adjointness. The selected output rows are chosen deterministically from forward support, so the leakage ledger is essential to interpret the projected comparison.
+
+The production primitive/orientation file now contains **6 methods**. The six workflow-invoked files therefore contain **43 test methods by source inventory** (12 + 11 + 4 + 7 + 3 + 6). The workflow already invokes this file; no workflow command change was required.
+
+The new test source was committed in `3bb5e42bc946791ae96ecc6f57d041a4c1fd7554`, then its CI-visible leakage print was added in `92ab5397876aabfbe509b179d8efaa56ec64ad59`. The latest test file was fetched back from GitHub and the method was confirmed present. A local execution was attempted but could not start because the runtime could not resolve `github.com`; no local PASS is claimed. The Actions run lookup available here did not return a run for this push commit, so CI execution remains unconfirmed.
+
+**Next:** enlarge the tested input/output block only after observing this test's runtime and numerical result. Then build a declared finite codomain/domain and compare the full rectangular T and reverse matrices, with explicit finite-wall clipping accounting; subsequently assemble all 12 signed oriented specifications into H_v.
