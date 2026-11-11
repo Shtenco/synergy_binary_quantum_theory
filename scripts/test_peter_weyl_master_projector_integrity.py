@@ -84,7 +84,7 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         a = {"large_pos": 1e16 + 1e16j, "small": 1.0 + 2.0j,
              "large_neg": -1e16 - 1e16j}
         b = {key: 1.0 + 0.0j for key in a}
-        self.assertEqual(pilot.inner_sparse(a, b), 1.0 + 2.0j)
+        self.assertEqual(pilot.inner_sparse(a, b), 1.0 - 2.0j)
 
     def test_cross_gram_master_matches_independent_dense_column_assembly(self):
         nodes = (0, 1)
