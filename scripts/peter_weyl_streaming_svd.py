@@ -132,7 +132,13 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         _, s_scaled, vh = np.linalg.svd(compact_r, full_matrices=True)
         singular = np.zeros(n_columns, dtype=np.float64)
         singular[:len(s_scaled)] = s_scaled
+        scaled_singular = singular.copy()
         singular *= scale
+        if np.any((scaled_singular != 0.0) & (singular == 0.0)):
+            # The normalized SVD retained a nonzero value, but conversion back
+            # to the input's physical scale erased it. Any downstream absolute
+            # spectral comparison (notably the Weyl delta bound) is inconclusive.
+            scale_separation_loss = True
         vectors = vh.conj().T
         sigma_max = float(s_scaled[0]) if len(s_scaled) else 0.0
         rank = (int(np.count_nonzero(s_scaled > rank_rtol * sigma_max))
