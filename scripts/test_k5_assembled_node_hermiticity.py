@@ -98,6 +98,11 @@ class K5AssembledNodeHermiticityTests(unittest.TestCase):
             for edge, sin, sout in zip(k5.EDGES, output_key[0], input_key[0])
             if sin != sout
         }
+        self.assertIn(
+            len(changed_edges),
+            (3, 4),
+            "a five-hit monomial must change its three single-hit edges and may change the double-hit edge",
+        )
         reverse_terms = []
         candidate_specs = []
         omitted_specs = []
