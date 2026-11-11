@@ -208,3 +208,18 @@ Both independent basis responses are hard assertions, so an empty second vector 
 Follow-up hardening of the independent-support fixture was committed as `ec82224564516d9b902ac52de37b3e540bce4c22`: the test now explicitly asserts that the two converted complete-state keys are distinct and that **both** individual volume responses are nonempty before evaluating additivity. This prevents a zero-response second basis vector from making the comparison vacuous.
 
 The corresponding L2 run `42936684504`, HEAD `ec82224564516d9b902ac52de37b3e540bce4c22`, job `130248370659`, is queued without artifacts. Run `42936669007` (the immediately preceding version) is also queued. The later documentation-only commits do not change the test or workflow contents.
+
+
+
+## 13. Independent-support additivity for cached complete H_E — 11 November 2026, 01:10 UTC
+
+Added a hard L2 test to `tests/test_bqg_l2_production_primitives.py` for `CK.apply_HE_complete_state` on two independent Peter–Weyl basis inputs, using basis indices 0 and 16. The test:
+- converts both inputs through `CV.gauss_to_covariant` and `COMP.covariant_to_complete`;
+- asserts the complete-state keys are distinct;
+- requires each basis input to have a nonzero H_E response;
+- compares direct production action on the combined state with the sum of the two individual responses;
+- uses a common input scale of (10^6) and relative residual bound (5\times10^{-12}).
+
+Source-level distinction: `CK.apply_HE_complete_state` applies cached unit-key columns, combines their arbitrary input coefficients, and then applies its final (10^{-10}) output filter. This test probes the cached-column extension on a safe-scale two-vector fixture. It does not test threshold-boundary behavior or the full (C(K)), (C(V)), or K-commutator maps. The custom composition map `KCOMP.apply_HE_complete_state_custom` remains a separate and more direct coefficient-dependent threshold risk because it sends each scaled column through `COMP.add`.
+
+The new test, its L2 audit interpretation, and README status were committed on the research branch. The scoped push workflow should run on this test change; its run identifier and outcome must be captured separately. At 01:10 UTC, all previously tracked L1/L2 jobs were still queued and had no artifacts. No PASS/FAIL is claimed. `main` remains untouched; no merge is performed.
