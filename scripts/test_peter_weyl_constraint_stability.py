@@ -2,6 +2,7 @@
 """Synthetic dense-oracle tests for legacy/no-prune constraint stability."""
 from __future__ import annotations
 
+import json
 import unittest
 import numpy as np
 
@@ -51,6 +52,20 @@ class ConstraintStabilityTests(unittest.TestCase):
             [columns[a].get(key, 0j) for a in range(2)] for key in keys
         ])
         np.testing.assert_allclose(observed, expected, rtol=0.0, atol=0.0)
+
+    def test_direct_svd_certificate_is_strict_json_serializable(self):
+        columns = {
+            0: {(0, "x"): 1.0 + 1.0j},
+            1: {(0, "x"): 0.5 - 0.25j},
+        }
+        result = stability.direct_svd_from_columns(columns, 2, block_rows=1)
+        encoded = json.dumps(result, allow_nan=False)
+        self.assertTrue(encoded)
+        self.assertEqual(
+            len(result["right_singular_vectors_real"]),
+            len(result["right_singular_vectors_imag"]),
+        )
+        self.assertEqual(result["exact_rank_certified"], False)
 
     def test_empty_sparse_support_is_explicit_zero_operator(self):
         blocks = list(stability.iter_operator_row_blocks({0: {}, 1: {}}, 2))
