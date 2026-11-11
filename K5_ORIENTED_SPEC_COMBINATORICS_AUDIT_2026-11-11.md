@@ -63,3 +63,12 @@ This expands the volume test file to seven methods and the six-script source inv
 The latest production audit now records 42 source-inventoried test methods across six workflow scripts. The 32-term T check is one selected matrix element only. The next required gate is a rectangular matrix comparison over multiple orthonormal input columns, with coherent no-prune accumulation of all 32 signed terms and independently generated reverse sequences. Forward outputs outside the declared codomain and reverse outputs outside the declared domain must be counted and reported; no silent projection or thresholding is permitted.
 
 The assembled node operator `H_v=(T_v+T_v†)/2` is a separate subsequent gate over all 12 signed orientation specifications. A successful H test cannot substitute for checking the constituent T/T† relation. Actions runs #26–#29 were all observed queued with no job conclusion; no CI PASS is claimed. The branch is 109 commits ahead and 2 behind `main`, with no merge/rebase performed.
+
+
+## Two-input/two-output coherent T block gate — 2026-11-11
+
+The production primitive/orientation suite now includes `test_full_32_term_T_two_by_two_matrix_block_matches_reverse`. It tests two orthonormal input kets and two deterministically selected output rows for the complete signed 32-term T sum, comparing an independently computed reverse block with the conjugate transpose of the forward block. All coherent sums use no-prune production maps and `math.fsum`.
+
+The test prints forward and reverse projected-support leakage (count, L2, max amplitude) outside the selected 2D subspaces. This is not spin-wall clipping. The test is a 2×2 projected block check, not a complete finite-sector matrix identity or unrestricted adjointness proof. The method is committed and fetched back; local execution could not start because the runtime could not resolve github.com, and CI run discovery returned no run for the push commit. No PASS is claimed.
+
+The primitive/orientation script now has six methods and the six workflow scripts contain 43 methods by source inspection.
