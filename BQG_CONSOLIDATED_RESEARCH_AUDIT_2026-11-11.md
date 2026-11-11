@@ -622,3 +622,14 @@ V(Q_\pi)=U_\pi V(Q)U_\pi^\dagger.
 This is distinct from the raw alternating-tensor test: odd permutations reverse the sign of (Q), while the absolute-value spectral map must remove that sign and remain covariant. The test therefore exercises the production eigendecomposition/reconstruction, not merely the raw Kronecker assembly.
 
 The volume test file now contains **5 methods**. Across the six workflow-invoked scripts, the committed source inventory is **37 test methods**. The workflow already invokes this file, so no workflow edit was needed. Source was committed and fetched through GitHub; test execution and CI PASS remain unconfirmed. This is a finite mixed-spin covariance check, not a proof of the full oriented four-valent volume operator or its physical interpretation.
+
+
+## 19. Volume square-root spectral reconstruction identity — 2026-11-11
+
+Added a sixth method to scripts/test_k5_volume_raw_operator.py. For every declared spin triple in CASES, it independently diagonalizes the Hermitian part of the raw production Q, constructs the reference |Q| = U diag(|lambda|) U†, and checks
+\[
+V(Q)^2=|Q|.
+\]
+This is stronger than checking only that V is Hermitian and positive semidefinite: a positive Hermitian matrix can still be the wrong spectral function. The test covers all four existing finite spin triples (1,1,1), (1,1,2), (1,2,2), (2,2,2).
+
+The volume test file now has **6 methods**; the six workflow-invoked scripts have **38 committed test methods** by source inventory. This is a finite-sector numerical reconstruction identity, not a proof of the full four-valent volume operator or a continuum result. The source is committed; execution and CI PASS remain unconfirmed.
