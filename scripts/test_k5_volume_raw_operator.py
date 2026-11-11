@@ -118,6 +118,38 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                 )
 
 
+    def test_oriented_volume_tensor_is_self_adjoint_at_every_vertex(self):
+        # The vertex-dependent epsilon_j conjugations must preserve
+        # self-adjointness of the local sqrt(|Q|) action. Test the actual
+        # production tensor routine in the Frobenius inner product.
+        rng = np.random.default_rng(20261111)
+        for vertex in k5.VERT:
+            for triple in self.CASES:
+                spins_local = tuple(triple) + (1,)
+                shape = tuple(s + 1 for s in spins_local)
+                left = (
+                    rng.normal(size=shape) + 1j * rng.normal(size=shape)
+                )
+                right = (
+                    rng.normal(size=shape) + 1j * rng.normal(size=shape)
+                )
+                v_left = k5.apply_volume_tensor_oriented(
+                    left, spins_local, vertex
+                )
+                v_right = k5.apply_volume_tensor_oriented(
+                    right, spins_local, vertex
+                )
+                lhs = np.vdot(left, v_right)
+                rhs = np.vdot(v_left, right)
+                with self.subTest(vertex=vertex, spins=spins_local):
+                    np.testing.assert_allclose(
+                        lhs, rhs, rtol=3e-12, atol=3e-12,
+                        err_msg=(
+                            "oriented production volume tensor is not "
+                            "self-adjoint in the local tensor inner product"
+                        ),
+                    )
+
     def test_volume_square_reconstructs_absolute_raw_spectrum(self):
         # Check V^2 = |Q| from an independently assembled eigenspectral
         # reference. Positivity and Hermiticity alone do not establish that
