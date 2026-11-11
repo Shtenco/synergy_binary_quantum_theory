@@ -485,5 +485,56 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
 
 
 
+    def test_all_k5_T_and_H_monomials_have_edge_hit_multiplicity_at_most_two(self):
+        # A path hit changes one edge's doubled spin by exactly +/-1.
+        # Every T monomial has two one-hit paths on (c,v) plus one
+        # three-hit closed path (v,a,b,v). Verify this combinatorially for
+        # every vertex, all 12 oriented specs, and all 32 signed monomials.
+        # Reversal preserves undirected edge multiplicities, so the same
+        # bound applies to T^dagger and to each summand of H_v.
+        from collections import Counter
+
+        checked = 0
+        multiplicity_histogram = Counter()
+        for vertex in k5.VERT:
+            specs = k5.oriented_specs(vertex)
+            self.assertEqual(len(specs), 12)
+            for sign, (v, a, b, c) in specs:
+                self.assertEqual(v, vertex)
+                self.assertEqual(len({v, a, b, c}), 4)
+                terms = k5.T_sequences(v, a, b, c)
+                self.assertEqual(len(terms), 32)
+                for coefficient, sequence in terms:
+                    self.assertIn(coefficient, (-1, 1))
+                    edge_hits = Counter()
+                    total_hits = 0
+                    for operation in sequence:
+                        if operation[0] != "P":
+                            self.assertEqual(operation[0], "V")
+                            continue
+                        path = operation[1]
+                        for x, y in zip(path[:-1], path[1:]):
+                            edge_hits[tuple(sorted((x, y)))] += 1
+                            total_hits += 1
+                    self.assertEqual(total_hits, 5)
+                    self.assertEqual(len(edge_hits), 4)
+                    self.assertEqual(sorted(edge_hits.values()), [1, 1, 1, 2])
+                    self.assertLessEqual(max(edge_hits.values()), 2)
+                    multiplicity_histogram[tuple(sorted(edge_hits.values()))] += 1
+                    # Reversing a path/sequence preserves the undirected
+                    # edge-hit multiset, so this same bound covers T^dagger.
+                    reversed_sequence = k5.adjoint_sequence(sequence)
+                    reverse_hits = Counter()
+                    for operation in reversed_sequence:
+                        if operation[0] == "P":
+                            for x, y in zip(operation[1][:-1], operation[1][1:]):
+                                reverse_hits[tuple(sorted((x, y)))] += 1
+                    self.assertEqual(reverse_hits, edge_hits)
+                    checked += 1
+
+        self.assertEqual(checked, 5 * 12 * 32)
+        self.assertEqual(multiplicity_histogram[(1, 1, 1, 2)], checked)
+
+
 if __name__ == "__main__":
     unittest.main()
