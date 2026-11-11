@@ -93,11 +93,14 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
         second_covariant = CV.gauss_to_covariant({basis[16]: 1.0 + 0j}, 0)
         second_complete = COMP.covariant_to_complete(second_covariant, 0)
         self.assertEqual(len(second_complete), 1)
+        self.assertNotEqual(next(iter(second_complete)), next(iter(self.complete_state)))
 
         x = state_scale(self.complete_state, 1e6)
         y = state_scale(second_complete, 1e6)
         fx = CK.apply_volume_complete_state(x, 0)
         fy = CK.apply_volume_complete_state(y, 0)
+        self.assertTrue(fx, "First independent basis vector has no volume response.")
+        self.assertTrue(fy, "Second independent basis vector has no volume response.")
         combined = dict(x)
         for key, value in y.items():
             combined[key] = combined.get(key, 0j) + value
