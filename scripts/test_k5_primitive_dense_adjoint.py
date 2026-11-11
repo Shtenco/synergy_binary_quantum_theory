@@ -123,6 +123,45 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
                 )
 
 
+    def test_all_twelve_oriented_specs_have_exact_combinatorics(self):
+        # Four choices of omitted neighbor, each with three cyclic orders.
+        # The sign is fixed by the omitted-neighbor position, not by the
+        # cyclic rotation. Compare the generator to an independently written
+        # expected list and also enforce uniqueness/completeness.
+        expected = []
+        for omitted in range(4):
+            triple = tuple(w for w in k5.NEIG[0] if w != k5.NEIG[0][omitted])
+            a, b, c = triple
+            sign = (-1) ** omitted
+            expected.extend([
+                (sign, (0, a, b, c)),
+                (sign, (0, b, c, a)),
+                (sign, (0, c, a, b)),
+            ])
+
+        actual = k5.oriented_specs(0)
+        self.assertEqual(len(actual), 12)
+        self.assertEqual(actual, tuple(expected))
+        self.assertEqual(len(set(actual)), 12)
+
+        # The same combinatorial rule must hold at every K5 vertex.
+        for vertex in k5.VERT:
+            specs = k5.oriented_specs(vertex)
+            self.assertEqual(len(specs), 12)
+            self.assertEqual(len(set(specs)), 12)
+            neigh = k5.NEIG[vertex]
+            independently_expected = []
+            for omitted in range(4):
+                triple = tuple(w for w in neigh if w != neigh[omitted])
+                a, b, c = triple
+                sign = (-1) ** omitted
+                independently_expected.extend([
+                    (sign, (vertex, a, b, c)),
+                    (sign, (vertex, b, c, a)),
+                    (sign, (vertex, c, a, b)),
+                ])
+            self.assertEqual(specs, tuple(independently_expected))
+
     def test_full_five_hit_T_monomial_matches_reverse_matrix_elements(self):
         # One complete production monomial from T_sequences contains the
         # volume insertion and all three holonomy paths (five link hits).
