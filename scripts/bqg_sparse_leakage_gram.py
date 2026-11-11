@@ -6,9 +6,9 @@ map H e_j -> {canonical_basis_key: complex_amplitude}. No pruning is performed
 here. Any upstream pruning must be accounted for separately and prevents an
 'exact' label unless its residual is certified.
 
-This module is deliberately independent of the K5 operator implementation.
-It provides a small, testable algebraic kernel that can later be wired into the
-real graph-changing operator once its amplitude pipeline is made auditable.
+This module is a reusable algebraic kernel called by the K5 graph-shell
+wrapper. Its output is exact only relative to complete, coherently aggregated
+columns supplied by the upstream producer.
 """
 from __future__ import annotations
 
@@ -55,8 +55,13 @@ def assemble_leakage_gram(
                 raise ValueError(f"non-finite amplitude in column {j}, key {key!r}")
             if amp == 0:
                 continue
-            input_l1 += abs(amp)
-            input_l2_sq += abs(amp) ** 2
+            amp_abs = float(np.hypot(amp.real, amp.imag))
+            input_l1 += amp_abs
+            input_l2_sq += amp_abs * amp_abs
+            if not (np.isfinite(input_l1) and np.isfinite(input_l2_sq)):
+                raise FloatingPointError(
+                    "input amplitude norm diagnostics exceed float64 range"
+                )
             i = shell_index.get(key)
             if i is not None:
                 C[i, j] += amp
@@ -64,13 +69,25 @@ def assemble_leakage_gram(
                 row = outside_rows.setdefault(key, {})
                 row[j] = row.get(j, 0j) + amp
 
+    if not (np.all(np.isfinite(C.real)) and np.all(np.isfinite(C.imag))):
+        raise FloatingPointError("shell action overflowed during coherent assembly")
+
     G_leak = np.zeros((n, n), dtype=np.complex128)
     for row in outside_rows.values():
         cols = sorted(row)
         vals = np.asarray([row[j] for j in cols], dtype=np.complex128)
         G_leak[np.ix_(cols, cols)] += np.outer(vals.conj(), vals)
+    if not (np.all(np.isfinite(G_leak.real)) and np.all(np.isfinite(G_leak.imag))):
+        raise FloatingPointError(
+            "coherent leakage Gram is not representable in float64"
+        )
 
-    pullback = C.conj().T @ C + G_leak
+    shell_gram = C.conj().T @ C
+    if not (np.all(np.isfinite(shell_gram.real)) and np.all(np.isfinite(shell_gram.imag))):
+        raise FloatingPointError("shell Gram is not representable in float64")
+    pullback = shell_gram + G_leak
+    if not (np.all(np.isfinite(pullback.real)) and np.all(np.isfinite(pullback.imag))):
+        raise FloatingPointError("full pullback Gram is not representable in float64")
     leak_herm = float(np.linalg.norm(G_leak - G_leak.conj().T))
     pull_herm = float(np.linalg.norm(pullback - pullback.conj().T))
     leak_ev = np.linalg.eigvalsh((G_leak + G_leak.conj().T) / 2) if n else np.array([])
@@ -109,23 +126,40 @@ def classify_psd_spectrum(
     identically zero matrix is treated as entirely null. Significant negative
     eigenvalues are reported as a PSD failure, not silently classified as zero.
     """
+    for name, value in (("rel_tol", rel_tol), ("eps_factor", eps_factor)):
+        if (isinstance(value, (bool, np.bool_))
+                or not isinstance(value, (int, float, np.integer, np.floating))
+                or not np.isfinite(value) or value < 0.0):
+            raise ValueError(f"{name} must be finite and nonnegative")
     A = np.asarray(matrix, dtype=np.complex128)
     if A.ndim != 2 or A.shape[0] != A.shape[1]:
         raise ValueError("matrix must be square")
     if not (np.all(np.isfinite(A.real)) and np.all(np.isfinite(A.imag))):
         raise ValueError("matrix contains non-finite entries")
     herm_def = float(np.linalg.norm(A - A.conj().T))
-    H = (A + A.conj().T) / 2
+    # Halve before addition to avoid overflow for finite near-maximal entries.
+    H = 0.5 * A + 0.5 * A.conj().T
+    if not (np.all(np.isfinite(H.real)) and np.all(np.isfinite(H.imag))):
+        raise FloatingPointError("Hermitian representative is not representable")
     ev, U = np.linalg.eigh(H)
+    if not (np.all(np.isfinite(ev)) and np.all(np.isfinite(U.real))
+            and np.all(np.isfinite(U.imag))):
+        raise FloatingPointError("PSD eigensolver returned non-finite values")
     scale = float(np.max(np.abs(ev))) if len(ev) else 0.0
-    roundoff_rel = eps_factor * np.finfo(float).eps * max(1, A.shape[0])
-    threshold = max(rel_tol, roundoff_rel) * scale
+    roundoff_rel = float(eps_factor) * np.finfo(float).eps * max(1, A.shape[0])
+    threshold = max(float(rel_tol), roundoff_rel) * scale
+    if not np.isfinite(threshold):
+        raise FloatingPointError("relative PSD threshold exceeds float64 range")
     if scale == 0.0:
         zero = np.ones(len(ev), dtype=bool)
         significant_negative = False
     else:
         zero = np.abs(ev) <= threshold
         significant_negative = bool(np.min(ev) < -threshold)
+    zero_projector = U[:, zero] @ U[:, zero].conj().T
+    if not (np.all(np.isfinite(zero_projector.real))
+            and np.all(np.isfinite(zero_projector.imag))):
+        raise FloatingPointError("zero projector contains non-finite entries")
     return {
         "eigenvalues": ev,
         "eigenvectors": U,
@@ -139,7 +173,7 @@ def classify_psd_spectrum(
             not significant_negative
             and herm_def <= 1e-10 * max(scale, np.finfo(float).tiny)
         ),
-        "zero_projector": U[:, zero] @ U[:, zero].conj().T,
+        "zero_projector": zero_projector,
     }
 
 
