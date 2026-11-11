@@ -131,3 +131,21 @@ The tests have two roles:
 The fixture is a real finite-sector key, but the tests are still finite-sector numerical characterization, not a proof of full operator linearity, convergence, or physical correctness. The L2 workflow has just been added; no run result is claimed until its job and artifact are inspected. The tests do not yet exercise `COMP.C_K_component` or `COMP.C_volume_component`; those remain subsequent integration-level tests.
 
 **Next gate:** inspect the first L2 workflow execution. If safe-domain homogeneity fails, investigate cache/patch contamination or a genuine fixed-domain mismatch before relaxing tolerances. Confirm that each expected failure occurs for the intended threshold reason rather than a fixture/import exception.
+
+
+## 7. Executable L2 characterization now present
+
+The canonical executable suite is `tests/test_bqg_l2_production_primitives.py`; its runner is `.github/workflows/bqg-production-linearity-l2.yml`. It uses a real finite Peter–Weyl basis vector, maps it through the covariant/complete representation adapters, applies the same zero-aware volume convention used by the V10 composition experiment, and clears dependent caches.
+
+Three production maps are exercised:
+- `CK.apply_volume_complete_state`;
+- `CK.apply_HE_complete_state`;
+- `KCOMP.apply_HE_complete_state_custom`.
+
+For each map, a safe-domain complex-homogeneity check is a hard assertion. A separate expected-failure test calibrates the input scale from the actual unit-column output so that each of two separate contributions falls below the output cutoff while their coherent sum crosses it. These are explicit characterizations of the current state-dependent thresholds, not acceptable operator behavior.
+
+The suite also checks the fixture is a single valid complete covariant basis key. Empty map outputs cause the safe-domain test to skip and are not to be interpreted as a pass; the CI log must be inspected for skips and fixture checks. The workflow preserves the complete unittest log as an artifact with `if: always()`.
+
+At the 01:05 UTC poll, L2 runs `42935840345` and `42935968925` were both queued and had no artifacts. The two L1 runs `42929934053` and `42930769907` were also queued without artifacts. No execution outcome is claimed. The L2 workflow is a first primitive gate only: it does not yet exercise `COMP.apply_K_complete_custom`, `COMP.C_K_component`, `COMP.C_volume_component`, or the L3 arbitrary-superposition matrix reconstruction.
+
+One temporary duplicate L2 test file was removed in commit `37dec6c0f5f282c7d893f9b45b8c427b7030e121`; the canonical suite and workflow above remain the single source of truth.
