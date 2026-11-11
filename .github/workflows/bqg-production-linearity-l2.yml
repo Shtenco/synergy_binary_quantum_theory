@@ -9,6 +9,7 @@ on:
       - 'tests/test_bqg_l2_production_primitives.py'
       - 'scripts/peter_weyl_covariant_K_leg_gate.py'
       - 'scripts/peter_weyl_covariant_K_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_composition_gate.py'
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
       - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
       - '.github/workflows/bqg-production-linearity-l2.yml'
@@ -34,6 +35,7 @@ jobs:
           python -m py_compile tests/test_bqg_l2_production_primitives.py
           python -m py_compile scripts/peter_weyl_covariant_K_leg_gate.py
           python -m py_compile scripts/peter_weyl_covariant_K_composition_gate.py
+          python -m py_compile scripts/peter_weyl_covariant_composition_gate.py
           python -m py_compile scripts/peter_weyl_covariant_volume_leg_gate.py
           python -m py_compile scripts/peter_weyl_zeroaware_volume_migration_experiment.py
       - name: Run L2 production primitive tests
