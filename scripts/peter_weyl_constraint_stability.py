@@ -630,6 +630,14 @@ def adjacent_cutoff_operator_difference(previous_columns, current_columns,
         raise ValueError("block_rows must be a positive integer")
     if set(previous_columns) != set(range(dim)) or set(current_columns) != set(range(dim)):
         raise ValueError("both cutoff maps must contain every input column")
+    previous_row_keys = {
+        key for column in previous_columns.values() for key in column
+    }
+    current_row_keys = {
+        key for column in current_columns.values() for key in column
+    }
+    row_key_union_count = len(previous_row_keys | current_row_keys)
+    common_row_key_count = len(previous_row_keys & current_row_keys)
     delta = subtract_stacked(previous_columns, current_columns, dim)
     digest = column_digest(delta)
     direct = direct_svd_from_columns(delta, dim, singular_rtol, block_rows)
@@ -648,7 +656,9 @@ def adjacent_cutoff_operator_difference(previous_columns, current_columns,
             None if direct["scale_separation_loss"] else int(direct["rank"])
         ),
         "singular_value_rtol": float(singular_rtol),
-        "row_count_union": int(direct["row_count"]),
+        "row_count_union": row_key_union_count,
+        "common_row_count": common_row_key_count,
+        "difference_nonzero_row_count": int(direct["row_count"]),
         "block_count": int(direct["block_count"]),
         "difference_column_sha256": digest,
         "embedding": (
