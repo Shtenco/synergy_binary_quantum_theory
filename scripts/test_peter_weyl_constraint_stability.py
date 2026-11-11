@@ -100,6 +100,14 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertEqual(result["estimated_rank"], 0)
         self.assertEqual(result["rank_threshold_on_gram_eigenvalues"], 0.0)
 
+    def test_subnormal_gram_rank_survives_threshold_underflow(self):
+        gram = np.diag([0.0, 1.0]).astype(complex) * 1e-320
+        result = stability.spectrum_of_gram(gram, 1e-10)
+        self.assertEqual(result["rank_threshold_on_gram_eigenvalues"], 0.0)
+        self.assertEqual(result["normalized_gram_eigenvalues"], [0.0, 1.0])
+        self.assertEqual(result["estimated_rank"], 1)
+        self.assertTrue(result["rank_threshold_resolves_roundoff"])
+
     def test_subnormal_gram_rank_uses_normalized_threshold(self):
         gram = np.diag([0.0, 1e-320]).astype(complex)
         result = stability.spectrum_of_gram(gram, 1e-10)
