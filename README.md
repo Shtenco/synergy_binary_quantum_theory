@@ -1276,3 +1276,6 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 
 
 **Дополнительная инфраструктурная диагностика:** полный список из 72 branch-scoped Actions runs показывает 54 `queued`, 17 `cancelled`, 1 `success`. Распределение очереди: L2 — 10, L1 — 2, W5 adjoint closure — 7, W5 adapter — 25, V11 common carrier — 10. Единственный success — отдельный finite causal-cone reference gate (`42879669156`), не относящийся к доказательству L1/L2 или W5 operator acceptance. Это указывает на общий Actions backlog/availability issue, но точная причина не установлена. Дополнительные дублирующие push-запуски пока не создаём; ждём перехода queued jobs в in_progress/completed. Подробная классификация внесена в source audit, section 8.5, и continuity checkpoint, section 22.
+
+
+Текущая контрольная точка ветки после документальных фиксаций: `64ba147757c70ccb4bfa4e24c20e1892c8090bbc`, **67 commits ahead / 0 behind** checkpoint base. Ветка остаётся изолированной; `main` не изменялась.
