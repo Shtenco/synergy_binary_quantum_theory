@@ -52,23 +52,18 @@ Run against the real implementations, not synthetic stand-ins. Freeze the source
 | `COMP.C_K_component` | direct action on (x+y) vs sum of actions; coefficient scaling; edge-index permutations | complete covariant K-leg map |
 | `COMP.C_volume_component` | same checks with the exact V10 zero-aware environment | complete covariant volume-leg map |
 
-For each map (F), report both absolute and relative residuals:
+For each map F, report both absolute and relative residuals:
 
-[
-r_{add}^{abs}=|F(x+y)-F(x)-F(y)|_2,
-qquad
-r_{hom}^{abs}=|F(alpha x)-alpha F(x)|_2,
-]
+```text
+r_add_abs = ||F(x+y) - F(x) - F(y)||_2
+r_hom_abs = ||F(alpha*x) - alpha*F(x)||_2
 
-[
-r_{add}^{rel}=
-rac{r_{add}^{abs}}
-{max(|F(x+y)|_2,|F(x)|_2+|F(y)|_2,epsilon)},
-quad
-r_{hom}^{rel}=
-rac{r_{hom}^{abs}}
-{max(|F(alpha x)|_2,|alpha||F(x)|_2,epsilon)}.
-]
+r_add_rel = r_add_abs /
+  max(||F(x+y)||_2, ||F(x)||_2 + ||F(y)||_2, epsilon)
+
+r_hom_rel = r_hom_abs /
+  max(||F(alpha*x)||_2, |alpha|*||F(x)||_2, epsilon)
+```
 
 Use deterministic complex vectors with (a) amplitudes well above all thresholds, (b) amplitudes straddling each threshold, (c) coherent sums of individually subthreshold terms, and (d) cancellation followed by re-entry. Include several non-real (alpha), not just positive real scalars. Preregister numerical tolerances from precision and conditioning before inspecting the results.
 
