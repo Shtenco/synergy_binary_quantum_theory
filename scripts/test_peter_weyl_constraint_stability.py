@@ -37,6 +37,30 @@ class ConstraintStabilityTests(unittest.TestCase):
         expected = float(np.linalg.svd(dense, compute_uv=False)[0])
         self.assertAlmostEqual(observed, expected, places=12)
 
+    def test_streaming_row_blocks_match_dense_operator_rows(self):
+        columns = {
+            0: {(0, "x"): 1.0 + 2.0j, (0, "y"): 0.5},
+            1: {(0, "x"): -0.25j, (1, "z"): 2.0},
+        }
+        blocks = list(stability.iter_operator_row_blocks(columns, 2, block_rows=2))
+        observed = np.vstack(blocks)
+        keys = sorted(
+            {key for column in columns.values() for key in column}, key=repr
+        )
+        expected = np.array([
+            [columns[a].get(key, 0j) for a in range(2)] for key in keys
+        ])
+        np.testing.assert_allclose(observed, expected, rtol=0.0, atol=0.0)
+
+    def test_empty_sparse_support_is_explicit_zero_operator(self):
+        blocks = list(stability.iter_operator_row_blocks({0: {}, 1: {}}, 2))
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0].shape, (1, 2))
+        np.testing.assert_array_equal(blocks[0], np.zeros((1, 2), dtype=complex))
+        result = stability.direct_svd_from_columns({0: {}, 1: {}}, 2)
+        self.assertEqual(result["rank"], 0)
+        np.testing.assert_array_equal(result["singular_values"], [0.0, 0.0])
+
     def test_subtraction_preserves_tiny_nonzero_difference(self):
         left = {0: {(0, "x"): 1.0 + 0j}}
         right = {0: {(0, "x"): 1.0 + 1e-15j}}
