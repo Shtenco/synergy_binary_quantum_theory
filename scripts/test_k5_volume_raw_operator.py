@@ -173,7 +173,7 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
             [2] * 5,
         )
         gaps = [item["normalized_gap_to_zero"] for item in observed]
-        np.testing.assert_allclose(gaps, np.ones(5), rtol=2e-15)
+        np.testing.assert_allclose(gaps, np.full(5, 2.0 / 3.0), rtol=2e-15)
 
     def test_volume_spectrum_resolution_handles_zero_operator(self):
         result = k5.volume_spectrum_resolution(np.zeros(4))
