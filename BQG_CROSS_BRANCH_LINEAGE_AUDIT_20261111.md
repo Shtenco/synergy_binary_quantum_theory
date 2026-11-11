@@ -301,3 +301,26 @@ The script's internal assertions verify rank, kernel multiplication, unimodulari
 No Actions run was found for this branch in the inspected run inventory. The branch's `core-regression.yml` is restricted to pushes and pull requests targeting `main`, so it does not automatically validate this branch's script.
 
 **Disposition:** quarantine the current `audit_integer_kernel_full_matrices.py` result. Restore the six exact values above in a separate corrective change, rerun the full 69×6 and 70×6 SNF/LLL calculation, compare every matrix row against the frozen source blobs, and regenerate `FINDINGS_019.md` and its JSON artifacts. Do not silently overwrite the prior result; preserve both source versions and record the corrected output as a new finding.
+
+
+## 11. Exact recomputation of the Habr matrix variants
+
+To quantify the transcription damage, the 69×6 and 70×6 matrices were reconstructed from the parent-version values and from the current committed values, using exact SymPy rationals. The same calculation was applied to `A=2M^T), Smith normal decomposition, saturated integer kernels, row-wise primitive kernels and LLL (`delta=3/4`). SymPy 1.14.0 was used; this was a local exact computation, not a GitHub Actions run.
+
+| Matrix/version | Rank | SNF diagonal of 2Mᵀ | Primitive-row index in saturated kernel | Power of 2 | Max coefficient: saturated LLL / primitive LLL |
+|---|---:|---|---:|---:|---:|
+| M69, parent values | 6 | (1,2,2,2,2,2) | 2^179 | 179 | 2 / 16 |
+| M69, current committed values | 6 | (1,2,2,2,2,2) | 2^179 | 179 | 2 / 16 |
+| M70, parent values | 6 | (1,2,2,2,2,2) | 2^180 | 180 | 2 / 16 |
+| M70, current committed values | 6 | (1,2,2,2,2,2) | 2^181 | 181 | 2 / 16 |
+
+The unchanged SNF diagonal and unchanged maximum LLL coefficient do **not** rescue the transcription:
+- For M69, the saturated kernels are different despite the same rank, SNF diagonal, index and max-coefficient summary. Five of 63 basis vectors from each version fail the other version's exact kernel equation.
+- For M70, the primitive-row index doubles from 2^180 to 2^181. Six of 64 basis vectors from each version fail the other version's exact kernel equation.
+- Thus the summary statistics in `FINDINGS_019.md` happen to remain the same for M69, but the actual kernel basis/subspace is not the same; the M70 index is explicitly stale.
+
+This independently confirms that the current script and the frozen result document are inconsistent. The exact matrix entries, not just rank and a few summary invariants, must be treated as part of the certificate.
+
+A further fail-open issue: `audit_integer_kernel_full_matrices.py` uses Python `assert` for its rank, exact-kernel, unimodularity and basis checks, then prints literal `PASS` labels. Running it with `python -O` removes those assertions while leaving the PASS output. It has no `__debug__` refusal or explicit runtime `require` helper. This script must not be used as a certification gate under optimized Python until that is corrected.
+
+**Revised disposition:** the parent-version computation reproduces the recorded 2^179/2^180 indices. The current committed M70 script reproduces 2^181, and both current matrices use different kernels. Correct the rational entries, add exact row-fixture checks, replace optimization-sensitive assertions, rerun both complete matrices, and only then publish a new result revision.
