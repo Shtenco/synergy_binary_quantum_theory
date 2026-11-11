@@ -127,6 +127,10 @@ def iter_operator_row_blocks(columns, dim, block_rows=4096):
             used = 0
     if used:
         yield block[:used].copy()
+    elif not have_previous:
+        # An empty sparse support is the zero operator. Represent it by one
+        # explicit zero row so the SVD routine can return its full nullspace.
+        yield np.zeros((1, dim), dtype=np.complex128)
 
 
 def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
