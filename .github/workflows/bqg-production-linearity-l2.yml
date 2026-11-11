@@ -12,6 +12,13 @@ on:
       - 'scripts/peter_weyl_covariant_composition_gate.py'
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
       - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
+      - 'scripts/peter_weyl_covariant_composition_gate.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/charged_intertwiner_recoupling_gate.py'
+      - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
+      - 'scripts/peter_weyl_covariant_K_projection_audit_gate.py'
+      - 'scripts/peter_weyl_volume_cross_rep_audit.py'
+      - 'scripts/peter_weyl_q_block_gauge_audit.py'
       - '.github/workflows/bqg-production-linearity-l2.yml'
 
 permissions:
@@ -38,6 +45,13 @@ jobs:
           python -m py_compile scripts/peter_weyl_covariant_composition_gate.py
           python -m py_compile scripts/peter_weyl_covariant_volume_leg_gate.py
           python -m py_compile scripts/peter_weyl_zeroaware_volume_migration_experiment.py
+          python -m py_compile scripts/peter_weyl_covariant_composition_gate.py
+          python -m py_compile scripts/k5_peter_weyl_safe_hda_column.py
+          python -m py_compile scripts/charged_intertwiner_recoupling_gate.py
+          python -m py_compile scripts/peter_weyl_lorentzian_K_block_gate.py
+          python -m py_compile scripts/peter_weyl_covariant_K_projection_audit_gate.py
+          python -m py_compile scripts/peter_weyl_volume_cross_rep_audit.py
+          python -m py_compile scripts/peter_weyl_q_block_gauge_audit.py
       - name: Run L2 production primitive tests
         shell: bash
         run: |
