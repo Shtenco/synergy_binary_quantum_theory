@@ -80,6 +80,20 @@ class SparsePruningTests(unittest.TestCase):
         )
         self.assertLessEqual(np.linalg.norm(exact_minus_approx), bound + 1e-15)
 
+    def test_reject_nonfinite_aggregated_input(self):
+        with self.assertRaises(ValueError):
+            apply_pruning({"x": complex(float("nan"), 0.0)}, PruningPolicy())
+
+    def test_reject_nonfinite_scale_for_empty_mapping(self):
+        with self.assertRaises(ValueError):
+            aggregate_mappings([{}], [complex(float("inf"), 0.0)])
+
+    def test_reject_invalid_ledger_tolerance(self):
+        full = {"x": 1.0 + 0.0j}
+        kept, entry = apply_pruning(full, PruningPolicy())
+        with self.assertRaises(ValueError):
+            verify_ledger_identity(full, kept, entry, atol=-1.0)
+
     def test_cannot_prune_before_coherent_aggregation(self):
         with self.assertRaises(ValueError):
             apply_pruning(
