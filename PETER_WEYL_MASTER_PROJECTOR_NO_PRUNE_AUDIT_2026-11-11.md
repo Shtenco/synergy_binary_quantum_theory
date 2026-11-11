@@ -33,6 +33,24 @@ behind a threshold). This correction removes the last explicit amplitude
 threshold in the zero-sector residual reconstruction; it does not establish
 exact arithmetic.
 
+## Producer-path audit after the verifier correction
+
+The no-prune path was traced through the production K5 column producer,
+including `apply_primitive_oriented`, `apply_T_oriented_basis`,
+`apply_T_cached_state`, `apply_H_cached_state`, and
+`prune_state`. In no-prune mode these layers route through
+`coherent_aggregate` / `aggregate_mappings`, which use
+deterministic real/imaginary `math.fsum` accumulation and do not apply
+magnitude thresholds. The local channel/output guards are exact comparisons
+against `0j`, not epsilon cutoffs. The declared finite spin regulator
+`Jmax2` remains active by design.
+
+The audit therefore distinguishes three things: (1) legacy amplitude pruning,
+(2) no-prune coherent float64 aggregation with exact-zero elimination, and
+(3) the finite spin cutoff. “No-prune” means no amplitude-threshold pruning;
+it does not mean infinite spin, exact symbolic arithmetic, or absence of
+floating-point cancellation/roundoff.
+
 ## Local algebraic control
 
 An independent synthetic two-node/two-column calculation compared the sparse cross-Gram contraction
