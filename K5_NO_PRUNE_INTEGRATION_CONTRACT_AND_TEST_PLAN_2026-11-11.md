@@ -517,7 +517,7 @@ The one-action upper wall is `Jmax2=3`, justified by the universal per-edge hit 
 
 The initial fixed-spin two-ket projection was vacuous. All 32 T monomials for every oriented specification have edge-hit multiplicities (1,1,1,2), so three edges are hit exactly once and must change doubled spin by ±1. No output can therefore have the same ten-link spin vector as the input. Any block restricted to multiple K-channel states sharing that same spin vector is exactly zero. Do not use the original test's zero block as evidence for Hermiticity.
 
-Commit 779d0a6d89c915ad152f74b9c202a2f8f22c0cc7 replaces that design with a non-vacuous adaptive pair: compute H on the all-spin-1/K=0 input, select the deterministic largest nonzero output amplitude, compute H on that output independently, and assemble the full projected 2×2 matrix. The test asserts a nonzero off-diagonal transition and nonzero matrix norm before the Hermiticity comparison. Each action uses its own analytically sufficient upper wall S+2. The same two-column leakage ledger remains.
+Commit 779d0a6d89c915ad152f74b9c202a2f8f22c0cc7 replaces that design with a non-vacuous adaptive pair: compute H on the all-spin-1/K=0 input, select the deterministic largest nonzero output amplitude, compute the reverse matrix element independently from the production T/T† maps of every specification whose hit support can contain all changed edges, and assemble the full projected 2×2 matrix. The test asserts a nonzero off-diagonal transition and nonzero matrix norm before the Hermiticity comparison. Each action uses its own analytically sufficient upper wall S+2. The same two-column leakage ledger remains.
 
 A local independent combinatorial reconstruction was run over all 1920 sequences and returned zero counterexamples to the (1,1,1,2) multiplicity invariant. Full production Python execution is still not available locally because GitHub DNS resolution fails; CI for the corrective commit remains unconfirmed. Keep these evidence categories separate.
 
@@ -527,3 +527,10 @@ A local independent combinatorial reconstruction was run over all 1920 sequences
 Corrected test syntax compilation passed locally under Python 3.13.5. Independent local sequence-generator reconstruction: 1,920/1,920 monomials have multiplicity `(1,1,1,2)` and exactly three single-hit edges. This proves the old same-spin projected block was structurally zero under the current hit rule. It does not execute production amplitudes.
 
 GitHub Actions run #40 (`42951643306`, commit `779d0a6d89c915ad152f74b9c202a2f8f22c0cc7`) and its job (`130297065127`) were still queued with no steps started when inspected. A full query returned all 40 runs on this branch; all 40 were queued with null conclusion. A local clone also failed because `github.com` did not resolve. Consequently the corrected production H test has neither local numerical execution nor a CI result yet. No PASS claim.
+
+
+### 36.3 Reverse matrix-element support filter
+
+Commit `9fa78b944a737951cc9b93da6308a45a6931ca58` optimizes the reverse entry: rather than computing a second full H column, it evaluates only signed specifications whose exact hit support contains every edge on which the pair's link-spin labels differ. The omitted specifications cannot contribute to that selected matrix element. Both production T and T† no-prune maps are still computed for every retained spec. The two diagonal entries are zero by the exhaustive three-single-hit-edge rule. Commit `582992b338d86eb4f453ee0deba20ff27e7c532f` fixes canonical edge tuple comparison in the filter.
+
+A separate local check exercised 120 support-filter cases and found no false negatives; candidate-spec counts were one or two. The test source passed Python 3.13 syntax compilation. This is not a second full H column: it is an exact filtered computation of the reverse matrix element, and the test remains a 2×2 projected check rather than a full-sector adjoint certificate.
