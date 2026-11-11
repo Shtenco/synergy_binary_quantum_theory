@@ -26,6 +26,7 @@ class StreamingSVDResult:
     max_abs_component: float
     rank: int
     rank_rtol: float
+    scale_separation_loss: bool = False
     method: str = "binary-tree Householder TSQR followed by SVD(R)"
     exact_rank_certified: bool = False
 
@@ -70,6 +71,7 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
     block_count = 0
     max_abs = 0.0
     complex_input = False
+    scale_separation_loss = False
 
     for raw in row_blocks:
         block = _checked_block(raw, n_columns)
@@ -90,10 +92,16 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
             factor = 0.0 if scale == 0.0 else scale / local_scale
             for i, old in enumerate(levels):
                 if old is not None:
-                    levels[i] = old * factor
+                    scaled_old = old * factor
+                    if factor == 0.0 or np.any((old != 0.0) & (scaled_old == 0.0)):
+                        scale_separation_loss = True
+                    levels[i] = scaled_old
             scale = local_scale
 
-        r = _qr_r(block / scale)
+        normalized = block / scale
+        if np.any((block != 0.0) & (normalized == 0.0)):
+            scale_separation_loss = True
+        r = _qr_r(normalized)
         level = 0
         while True:
             if level == len(levels):
@@ -142,6 +150,7 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         max_abs_component=max_abs,
         rank=rank,
         rank_rtol=float(rank_rtol),
+        scale_separation_loss=scale_separation_loss,
     )
 
 
