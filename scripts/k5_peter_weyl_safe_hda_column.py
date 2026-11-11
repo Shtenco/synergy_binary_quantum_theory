@@ -356,6 +356,27 @@ def compose_on_sparse(state,target_v,Jmax2,mode="legacy"):
             for ko,c in mapping.items(): out[ko]=out.get(ko,0j)+amp*c
     return prune_state(out,1e-8,mode)
 
+def apply_acceptance_gate(result,mode):
+    """Apply legacy regression only to the legacy numerical convention."""
+    if mode=="legacy":
+        targets={'commutator_norm':1.681559985798016,'fixed_fraction':0.29790166313739946,'H0V5_norm':1.4002194669856702}
+        result['regression_errors']={
+          'commutator_norm':abs(result['commutator_norm']-targets['commutator_norm']),
+          'fixed_fraction':abs(result['fixed_all_jhalf_norm_squared_fraction']-targets['fixed_fraction']),
+          'H0V5_norm':abs(result['safe_H0_on_old_V5_norm']-targets['H0V5_norm'])}
+        result['passed_regression']=(max(result['regression_errors'].values())<5e-8 and result['safe_H0_on_old_V5_fixed_all_jhalf_support']==0)
+        result['calculation_completed']=True
+        result['acceptance_scope']='legacy_regression'
+    elif mode=="no_prune":
+        result['regression_errors']=None
+        result['passed_regression']=None
+        result['calculation_completed']=True
+        result['acceptance_scope']='unpruned_calculation_completed_not_physically_certified'
+    else:
+        raise ValueError(f"unsupported pruning mode: {mode}")
+    return result
+
+
 def run(mode="legacy"):
     JMAX2=5
     initial=basis_full_jhalf()[0]
@@ -408,21 +429,7 @@ def run(mode="legacy"):
       'safe_H0_on_old_V5_max_spin_reached':h0v_max_spin2/2,
       'scope_note':'One safe HH column only; no discrete D(k,l), simplicity or Lorentzian correction yet.'
     }
-    if mode=="legacy":
-        targets={'commutator_norm':1.681559985798016,'fixed_fraction':0.29790166313739946,'H0V5_norm':1.4002194669856702}
-        result['regression_errors']={
-          'commutator_norm':abs(result['commutator_norm']-targets['commutator_norm']),
-          'fixed_fraction':abs(result['fixed_all_jhalf_norm_squared_fraction']-targets['fixed_fraction']),
-          'H0V5_norm':abs(result['safe_H0_on_old_V5_norm']-targets['H0V5_norm'])}
-        result['passed_regression']=(max(result['regression_errors'].values())<5e-8 and result['safe_H0_on_old_V5_fixed_all_jhalf_support']==0)
-        result['calculation_completed']=True
-        result['acceptance_scope']='legacy_regression'
-    else:
-        result['regression_errors']=None
-        result['passed_regression']=None
-        result['calculation_completed']=True
-        result['acceptance_scope']='unpruned_calculation_completed_not_physically_certified'
-    return result
+    return apply_acceptance_gate(result,mode)
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
