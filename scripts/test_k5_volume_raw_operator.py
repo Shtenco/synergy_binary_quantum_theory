@@ -8,6 +8,7 @@ K5 HDA column or establish a continuum/physical volume theorem.
 """
 from __future__ import annotations
 
+import itertools
 import unittest
 
 import numpy as np
@@ -49,6 +50,40 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                     record["relative_antihermitian_defect"], expected, places=14
                 )
                 self.assertAlmostEqual(record["raw_norm"], np.linalg.norm(q), places=12)
+
+
+    def test_raw_volume_is_covariant_under_all_leg_permutations(self):
+        spins = (1, 2, 2)
+        dims = tuple(s + 1 for s in spins)
+        q = k5.volume123_raw_operator(*spins)
+        old_indices = list(itertools.product(*(range(d) for d in dims)))
+        old_flat = {index: n for n, index in enumerate(old_indices)}
+
+        for permutation in itertools.permutations(range(3)):
+            with self.subTest(permutation=permutation):
+                new_spins = tuple(spins[i] for i in permutation)
+                new_dims = tuple(dims[i] for i in permutation)
+                new_indices = list(
+                    itertools.product(*(range(d) for d in new_dims))
+                )
+                new_flat = {index: n for n, index in enumerate(new_indices)}
+                unitary = np.zeros((len(new_indices), len(old_indices)), dtype=complex)
+                for old_index in old_indices:
+                    new_index = tuple(old_index[i] for i in permutation)
+                    unitary[new_flat[new_index], old_flat[old_index]] = 1.0
+
+                inversions = sum(
+                    permutation[i] > permutation[j]
+                    for i in range(3) for j in range(i + 1, 3)
+                )
+                parity = -1.0 if inversions % 2 else 1.0
+                q_permuted = k5.volume123_raw_operator(*new_spins)
+                np.testing.assert_allclose(
+                    q_permuted,
+                    parity * unitary @ q @ unitary.conj().T,
+                    rtol=3e-13,
+                    atol=3e-13,
+                )
 
 
 if __name__ == "__main__":
