@@ -257,6 +257,27 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertFalse(result["coverage_complete"])
         self.assertEqual(result["coverage_shortfall"], 1)
 
+    def test_volume_registry_rejects_inconsistent_spectral_sensitivity(self):
+        registry = {(1, 1, 1): {
+            "relative_antihermitian_defect": 0.0,
+            "raw_norm": 2.0,
+            "symmetrization_delta_frobenius_norm": 0.0,
+            "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+            "symmetrization_relative_frobenius_bound": 0.0,
+            "hermitian_spectrum_resolution": {
+                "spectral_scale": 4.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 4e-13,
+                "resolved_numerical_nullity": 0,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 0.25,
+                # Incorrect: exact scalar derivative should be 0.5.
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.25,
+            },
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(registry)
+        self.assertFalse(result["passed"])
+
     def test_volume_registry_rejects_inconsistent_symmetrization_bound(self):
         registry = {(1, 1, 1): {
             "relative_antihermitian_defect": 1e-4,
@@ -306,6 +327,10 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         )
         self.assertTrue(result["passed"])
         self.assertTrue(result["coverage_complete"])
+        self.assertEqual(result["max_symmetrization_delta_frobenius_norm"], 1e-15)
+        self.assertEqual(result["max_symmetrization_relative_frobenius_bound"], 5e-16)
+        self.assertEqual(result["max_hermitian_spectral_scale"], 1.0)
+        self.assertEqual(result["max_resolved_scalar_sqrt_abs_sensitivity"], 0.5)
 
     def test_volume_registry_rejects_malformed_spin_key(self):
         malformed = {"not-a-spin-triple": {
