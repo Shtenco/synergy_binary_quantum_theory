@@ -123,5 +123,43 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
                 )
 
 
+    def test_full_five_hit_T_monomial_matches_reverse_matrix_elements(self):
+        # One complete production monomial from T_sequences contains the
+        # volume insertion and all three holonomy paths (five link hits).
+        # Rather than infer its adjoint from sequence reversal alone, compare
+        # every nonzero forward matrix element from a fixed basis ket with
+        # the independently evaluated reversed production action.
+        vertex, a, b, c = 0, 1, 2, 3
+        spin_wall = 2
+        input_key = ((1,) * len(k5.EDGES), (0,) * len(k5.VERT))
+        terms = k5.T_sequences(vertex, a, b, c)
+        self.assertEqual(len(terms), 32)
+        coefficient, sequence = terms[0]
+        self.assertEqual(coefficient, 1)
+
+        forward = k5.apply_primitive_oriented(
+            input_key, sequence, spin_wall, mode="no_prune"
+        )
+        self.assertTrue(forward, "selected complete T monomial unexpectedly vanished")
+        reverse_sequence = k5.adjoint_sequence(sequence)
+
+        for output_key, amplitude in forward.items():
+            reverse = k5.apply_primitive_oriented(
+                output_key, reverse_sequence, spin_wall, mode="no_prune"
+            )
+            reverse_matrix_element = reverse.get(input_key, 0j)
+            with self.subTest(output_key=output_key):
+                np.testing.assert_allclose(
+                    reverse_matrix_element,
+                    np.conjugate(amplitude),
+                    rtol=8e-11,
+                    atol=8e-12,
+                    err_msg=(
+                        "complete five-hit T monomial disagrees with its "
+                        "reversed production matrix element"
+                    ),
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
