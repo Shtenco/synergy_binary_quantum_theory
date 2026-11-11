@@ -111,6 +111,17 @@ def hermitian_diagnostics(M: np.ndarray):
     return defect, defect / scale
 
 
+def spectral_thresholds(evals: np.ndarray, zero_rtol: float, psd_rtol: float):
+    """Return scale-relative thresholds; no unit-sized floor is introduced."""
+    if (not np.isfinite(zero_rtol) or not np.isfinite(psd_rtol)
+            or zero_rtol < 0.0 or psd_rtol < 0.0):
+        raise ValueError("spectral relative tolerances must be finite and nonnegative")
+    if not np.all(np.isfinite(evals)):
+        raise ValueError("master spectrum contains non-finite eigenvalues")
+    scale = float(np.max(np.abs(evals))) if len(evals) else 0.0
+    return scale, zero_rtol * scale, psd_rtol * scale
+
+
 def classify_spectrum(evals: np.ndarray, zero_threshold: float, psd_tolerance: float):
     if not np.all(np.isfinite(evals)):
         raise ValueError("master spectrum contains non-finite eigenvalues")
@@ -136,45 +147,139 @@ def projector_from_eigh(evals: np.ndarray, U: np.ndarray, threshold: float):
     return Q @ Q.conj().T, mask
 
 
-def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
-    """Evaluate max_v ||H_v sum_a coeff[a]|a>|| without amplitude cutoffs.
+def stable_complex_norm(values) -> float:
+    """Scaled sum-of-squares norm for complex values; avoids naive squaring."""
+    scale = 0.0
+    ssq = 1.0
+    for value in values:
+        z = complex(value)
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise FloatingPointError("non-finite value in stable complex norm")
+        for component in (abs(z.real), abs(z.imag)):
+            if component == 0.0:
+                continue
+            if scale < component:
+                ssq = 1.0 + ssq * (scale / component) ** 2
+                scale = component
+            else:
+                ssq += (component / scale) ** 2
+    return 0.0 if scale == 0.0 else scale * math.sqrt(ssq)
 
-    Contributions are accumulated with separate compensated real/imaginary
-    sums. Only an exactly zero coefficient is skipped.
-    """
-    maximum = 0.0
+
+def constraint_annihilation_metrics(columns, coeff: np.ndarray, nodes):
+    """Return absolute and Frobenius-relative residuals for every constraint."""
+    coeff = np.asarray(coeff, dtype=np.complex128)
+    if coeff.ndim != 1 or not np.all(np.isfinite(coeff)):
+        raise ValueError("constraint coefficients must be a finite vector")
+    psi_norm = stable_complex_norm(coeff)
+    if psi_norm == 0.0:
+        raise ValueError("zero input vector cannot certify constraint annihilation")
+
+    per_node = {}
     for v in nodes:
         terms = {}
+        operator_entries = []
         for a, amp in enumerate(coeff):
+            column = columns[(v, a)]
+            operator_entries.extend(column.values())
             if amp == 0j:
                 continue
-            for key, value in columns[(v, a)].items():
+            for key, value in column.items():
                 terms.setdefault(key, []).append(amp * value)
-        norm_sq = math.fsum(
-            math.fsum(z.real for z in values) ** 2
-            + math.fsum(z.imag for z in values) ** 2
+        residual_values = [
+            complex(math.fsum(z.real for z in values),
+                    math.fsum(z.imag for z in values))
             for values in terms.values()
-        )
-        maximum = max(maximum, math.sqrt(norm_sq))
-    return maximum
+        ]
+        residual_norm = stable_complex_norm(residual_values)
+        operator_frobenius = stable_complex_norm(operator_entries)
+        if operator_frobenius == 0.0:
+            relative = 0.0 if residual_norm == 0.0 else float("inf")
+        else:
+            # Divide sequentially to avoid overflowing the product
+            # ||H_v||_F * ||psi||_2.
+            relative = (residual_norm / operator_frobenius) / psi_norm
+        per_node[str(v)] = {
+            "absolute_residual": residual_norm,
+            "operator_frobenius_norm": operator_frobenius,
+            "relative_residual": relative,
+        }
+
+    return {
+        "max_absolute_residual": max(
+            (item["absolute_residual"] for item in per_node.values()), default=0.0
+        ),
+        "max_relative_residual": max(
+            (item["relative_residual"] for item in per_node.values()), default=0.0
+        ),
+        "input_vector_norm": psi_norm,
+        "per_node": per_node,
+    }
+
+
+def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
+    """Backward-compatible absolute residual wrapper with stable norming."""
+    return constraint_annihilation_metrics(columns, coeff, nodes)["max_absolute_residual"]
+
+
+def volume_raw_hermiticity_diagnostics(registry=None, rtol=1e-10):
+    """Fail-closed audit of every raw volume-operator defect in the producer registry."""
+    if not np.isfinite(rtol) or rtol < 0.0:
+        raise ValueError("volume hermiticity tolerance must be finite and nonnegative")
+    if registry is None:
+        registry = getattr(PW, "VOLUME_RAW_DEFECTS", {})
+    records = []
+    failures = []
+    for key, raw in sorted(registry.items(), key=lambda item: repr(item[0])):
+        defect = float(raw.get("relative_antihermitian_defect", float("nan")))
+        raw_norm = float(raw.get("raw_norm", float("nan")))
+        record = {
+            "spin_triple": list(key),
+            "relative_antihermitian_defect": defect,
+            "raw_norm": raw_norm,
+        }
+        records.append(record)
+        if (not math.isfinite(defect) or not math.isfinite(raw_norm)
+                or defect > rtol):
+            failures.append(record)
+    passed = bool(records) and not failures
+    return {
+        "passed": passed,
+        "rtol": float(rtol),
+        "triples_checked": len(records),
+        "max_relative_defect": max(
+            (item["relative_antihermitian_defect"] for item in records
+             if math.isfinite(item["relative_antihermitian_defect"])),
+            default=float("inf") if not records else 0.0,
+        ),
+        "failures": failures,
+        "records": records,
+        "fail_closed_if_registry_empty": True,
+    }
 
 
 def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
-        mode="legacy", hermitian_rtol=1e-10, psd_rtol=1e-10):
+        mode="legacy", hermitian_rtol=1e-10, psd_rtol=1e-10,
+        annihilation_rtol=2e-7, volume_hermitian_rtol=1e-10):
     if mode not in ("legacy", "no_prune"):
         raise ValueError(f"unsupported pruning mode: {mode}")
-    tolerances = (zero_rtol, hermitian_rtol, psd_rtol)
+    tolerances = (zero_rtol, hermitian_rtol, psd_rtol,
+                  annihilation_rtol, volume_hermitian_rtol)
     if not all(np.isfinite(value) and value >= 0 for value in tolerances):
         raise ValueError("all tolerances must be finite and nonnegative")
     nodes = tuple(PW.VERT)
     basis = carrier_basis(domain)
     columns, supports = constraint_columns(basis, nodes, jmax2, mode)
+    volume_diagnostics = volume_raw_hermiticity_diagnostics(
+        rtol=volume_hermitian_rtol
+    )
+    volume_ok = volume_diagnostics["passed"]
     B = cross_gram(columns, nodes, len(basis))
 
     metrics = positive_metrics(len(nodes), seed)
     rows = []
     projectors = []
-    all_ok = True
+    all_ok = volume_ok
     for name, G in metrics.items():
         M_raw = master_from_gram(B, G)
         herm_abs, herm_rel = hermitian_diagnostics(M_raw)
@@ -182,9 +287,9 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         # and checking the raw assembly defect above.
         M = 0.5 * (M_raw + M_raw.conj().T)
         evals, U = np.linalg.eigh(M)
-        scale = max(1.0, float(np.max(np.abs(evals))))
-        threshold = zero_rtol * scale
-        psd_tolerance = psd_rtol * scale
+        scale, threshold, psd_tolerance = spectral_thresholds(
+            evals, zero_rtol, psd_rtol
+        )
         mask = classify_spectrum(evals, threshold, psd_tolerance)
         P0, _ = projector_from_eigh(evals, U, threshold)
         rank0 = int(np.count_nonzero(mask))
@@ -195,15 +300,31 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         min_G = float(np.min(np.linalg.eigvalsh(G)))
         # Every selected zero vector must be annihilated by each actual H_v.
         annihilation = 0.0
+        annihilation_relative = 0.0
+        annihilation_by_node = {}
         if rank0:
             Q0 = U[:, mask]
             for q in range(Q0.shape[1]):
-                annihilation = max(
-                    annihilation,
-                    constraint_annihilation_norm(columns, Q0[:, q], nodes),
+                residuals = constraint_annihilation_metrics(columns, Q0[:, q], nodes)
+                annihilation = max(annihilation, residuals["max_absolute_residual"])
+                annihilation_relative = max(
+                    annihilation_relative, residuals["max_relative_residual"]
                 )
-        good = (herm_rel <= hermitian_rtol and min_G > 0.0
-                and min_eval >= -psd_tolerance and annihilation < 2e-7)
+                for vertex, item in residuals["per_node"].items():
+                    previous = annihilation_by_node.get(vertex, {
+                        "absolute_residual": 0.0, "relative_residual": 0.0
+                    })
+                    annihilation_by_node[vertex] = {
+                        "absolute_residual": max(
+                            previous["absolute_residual"], item["absolute_residual"]
+                        ),
+                        "relative_residual": max(
+                            previous["relative_residual"], item["relative_residual"]
+                        ),
+                    }
+        good = (volume_ok and herm_rel <= hermitian_rtol and min_G > 0.0
+                and min_eval >= -psd_tolerance
+                and annihilation_relative <= annihilation_rtol)
         all_ok &= good
         projectors.append((name, P0, rank0))
         rows.append({
@@ -217,6 +338,10 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
             "negative_nonzero_eigenvalues": [float(x) for x in negative_nonzero],
             "negative_nonzero_count": int(len(negative_nonzero)),
             "zero_sector_constraint_annihilation_max_norm": annihilation,
+            "zero_sector_constraint_annihilation_max_relative_residual": annihilation_relative,
+            "zero_sector_constraint_annihilation_by_node": annihilation_by_node,
+            "annihilation_relative_tolerance": annihilation_rtol,
+            "volume_raw_hermiticity_passed": volume_ok,
             "raw_master_hermiticity_defect_frobenius": herm_abs,
             "raw_master_hermiticity_relative_defect": herm_rel,
             "psd_tolerance": psd_tolerance,
@@ -241,7 +366,14 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         "scientific_result_is_not_forced_to_pass": True,
         "domain": domain,
         "pruning_mode": mode,
-        "tolerances": {"zero_rtol": zero_rtol, "hermitian_rtol": hermitian_rtol, "psd_rtol": psd_rtol},
+        "tolerances": {
+            "zero_rtol": zero_rtol,
+            "hermitian_rtol": hermitian_rtol,
+            "psd_rtol": psd_rtol,
+            "annihilation_relative_rtol": annihilation_rtol,
+            "volume_hermitian_rtol": volume_hermitian_rtol,
+        },
+        "volume_raw_hermiticity": volume_diagnostics,
         "domain_dimension": len(basis),
         "domain_definition": "all-K=0 plus five single K=2 node excitations" if domain == "low" else "all 32 all-j=1/2 K=0/2 intertwiner states",
         "included_constraint_nodes": list(nodes),
@@ -265,11 +397,14 @@ def main():
     ap.add_argument("--zero-rtol", type=float, default=1e-10)
     ap.add_argument("--hermitian-rtol", type=float, default=1e-10)
     ap.add_argument("--psd-rtol", type=float, default=1e-10)
+    ap.add_argument("--annihilation-rtol", type=float, default=2e-7)
+    ap.add_argument("--volume-hermitian-rtol", type=float, default=1e-10)
     ap.add_argument("--mode", choices=("legacy", "no_prune"), default="legacy")
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
     out = run(args.domain, args.jmax2, args.seed, args.zero_rtol,
-              args.mode, args.hermitian_rtol, args.psd_rtol)
+              args.mode, args.hermitian_rtol, args.psd_rtol,
+              args.annihilation_rtol, args.volume_hermitian_rtol)
     if args.output is None:
         suffix = "NO_PRUNE" if args.mode == "no_prune" else "LEGACY"
         args.output = Path(f"verification_results/PETER_WEYL_MASTER_PROJECTOR_{suffix}.json")
