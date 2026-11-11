@@ -7,7 +7,7 @@
   "default_branch": "main",
   "default_branch_head": "254f19fdab41d32b920bf454f987aa7c0fdba34d",
   "audit_branch_heads": {
-    "research/consolidated-bqg-audit-20261111": "a0b08a67e635eb9b0698aff45f6feeb450a3698c",
+    "research/consolidated-bqg-audit-20261111": "32fc865ea6921f9c7303ca688bba1f4734faf93b",
     "research/lemaitre-bqg-causal-cone-20261110": "78a0d58085bbc69ed310d348348ce6695b1dff70"
   },
   "branches": [
