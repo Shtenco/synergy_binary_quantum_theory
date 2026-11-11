@@ -504,3 +504,40 @@ The ablation design is thoughtful: it compares projection and accumulator tolera
 However, its workflow `.github/workflows/w5-scalar-tolerance-ablation.yml` is configured with `push.branches: [main]`, and the inspected Actions inventory contains no run named W5 scalar tolerance ablation. The audited branch is 3 commits ahead and 5 behind main, so its version of the workflow/script has not been demonstrated by a branch-specific CI execution. The workflow invokes the one-pass script, not the older multi-pass script with the similar name.
 
 **Disposition:** W5 remains a genuine scalar-covariance blocker. The ablation is a well-designed diagnostic, not a result. Run it against the exact audited branch HEAD (manual dispatch or a temporary branch-aware trigger), preserve the frozen production guard, and inspect all eight full-map comparisons before attributing the residual to numerical noise or changing any physical operator. No five-seed W5 covariance, five-node closure, physical Gram, or joint physical kernel is certified by the evidence reviewed here.
+
+
+## 19. Active-habitat master: recovered successful artifact contains a strong finite leakage result
+
+The v1 workflow did run successfully:
+- run `33304603146`, branch `audit/active-habitat-master-v1`, HEAD `43f8d00ea237e2123ec07d88c1aa2d3d91f683e2`;
+- job `active-habitat-master`: success;
+- artifact `active-habitat-master-evidence`, ID `9730364258`, downloaded and inspected.
+
+The artifact reports:
+- active one-hit dimension: 4 (seed plus three independent one-hit states);
+- orthonormality defect: `6.6651e-16`;
+- node leakage/full-action operator-norm ratios: node 0 `0.7894673138`, node 1 `0.7894673138`, node 2 `0.7745482093`;
+- full master eigenvalues: `[7.0797521, 11.2566282, 11.8042842, 11.8719658]`;
+- projected-shortcut eigenvalues: `[1.9892391, 2.3751064, 2.7154066, 7.0797521]`;
+- leakage Gram eigenvalues: `[0, 8.9665323, 9.1565593, 9.7300345]`;
+- full-versus-projected spectral distortion: `0.6783828012`;
+- extra projected zero modes at relative thresholds 1e-8, 1e-10, 1e-12: `[0,0,0]`;
+- master/leakage decomposition relative error: `4.7827e-16`.
+
+This is a substantive finite result: the one-hit active habitat is very far from invariant under the three-node Euclidean graph-changing constraints. The projected shortcut substantially changes the master spectrum, but in this particular four-dimensional diagnostic it does **not** create extra apparent zero modes at the three tested relative thresholds. The result is therefore stronger and more precise than a generic statement that projection creates spurious physical states: it demonstrates large positive leakage and a 67.8% spectral distortion, without observing an extra zero mode in this specific sample.
+
+The artifact's `passed=true` is correctly an implementation/decomposition pass; the scientific status is `LEAKAGE_PRESENT_PROJECTED_MASTER_NOT_EQUIVALENT`. It is not a physical-kernel result.
+
+### Numerical/operator boundary
+
+The source implementation applies `PW.prune_state(..., 1e-8)` after every `H_v) action and its sparse helper routines also discard amplitudes below `1e-13`. Thus the reported matrices are built from a thresholded finite action. The identity `M_full-M_proj=M_leak` is checked to high precision for those generated columns, but that identity does not independently prove that the thresholded action equals the unpruned linear Hamiltonian on arbitrary superpositions. Add a no-prune reference and a complex-superposition linearity test before promoting the result to an operator-domain statement.
+
+### V2 preregistration status
+
+`ACTIVE_HABITAT_MASTER_GAP_FLOW_V2_PREREGISTRATION.md` freezes a deeper P0/P1/P2 nested-cone experiment before reading v1's result. That is good experimental discipline. But in the audited v2-preregistered branch:
+- no `active_habitat_master_gap_flow_v2_gate.py` exists;
+- no depth-two implementation exists;
+- no branch-specific Actions run exists;
+- the inherited workflow push trigger is restricted to `audit/active-habitat-master-v1`, not the v2-preregistered branch.
+
+Therefore v2 is a genuine preregistration, not an executed experiment. Its next step is implementation against the frozen P2 definition, without changing its 1e-11 dependence rule or the five preregistered zero-mode thresholds after seeing the v1 spectrum.
