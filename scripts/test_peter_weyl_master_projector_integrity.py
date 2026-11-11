@@ -216,6 +216,36 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertIsNone(result["records"][0]["relative_antihermitian_defect"])
         self.assertIsNone(result["max_relative_defect"])
 
+    def test_volume_registry_detects_incomplete_unique_call_coverage(self):
+        good = {(1, 1, 1): {
+            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(
+            good, rtol=1e-10, expected_unique_calls=2
+        )
+        self.assertFalse(result["passed"])
+        self.assertFalse(result["coverage_complete"])
+        self.assertEqual(result["coverage_shortfall"], 1)
+
+    def test_volume_registry_accepts_exact_unique_call_coverage(self):
+        good = {
+            (1, 1, 1): {"relative_antihermitian_defect": 0.0, "raw_norm": 1.0},
+            (1, 1, 2): {"relative_antihermitian_defect": 1e-15, "raw_norm": 2.0},
+        }
+        result = pilot.volume_raw_hermiticity_diagnostics(
+            good, rtol=1e-10, expected_unique_calls=2
+        )
+        self.assertTrue(result["passed"])
+        self.assertTrue(result["coverage_complete"])
+
+    def test_volume_registry_rejects_malformed_spin_key(self):
+        malformed = {"not-a-spin-triple": {
+            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(malformed)
+        self.assertFalse(result["passed"])
+        self.assertIsNone(result["records"][0]["spin_triple"])
+
     def test_absolute_annihilation_wrapper_keeps_zero_vector_compatibility(self):
         columns = {(0, 0): {"x": 1.0 + 0j}}
         self.assertEqual(
