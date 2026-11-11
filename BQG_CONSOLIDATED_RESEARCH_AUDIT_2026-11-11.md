@@ -873,3 +873,16 @@ This is a combinatorial reachability bound, not a statement that all transitions
 The earlier selected-input result (S=1Rightarrow J_{max}^{(2)}=3) is now seen as a special case of this universal bound. The wall-4/6 equality test is a redundant finite saturation check for that selected input; the combinatorial argument itself proves the wall-4 upper bound without needing numerical equality.
 
 The primitive/orientation file now has **8 methods**. The six workflow-invoked scripts contain **45 methods by source inspection**. The new test is committed but not yet execution-confirmed; no CI PASS is claimed.
+
+
+## 30. Complete projected matrix check for the assembled node-H operator
+
+Added `scripts/test_k5_assembled_node_hermiticity.py` in commit `975f953fdaad5018fd7315f5298e84f912861d76`, registered in the CI workflow by commits `23b712c8cef52179e201673cdfcc4b623ab60d35` and `12761afa7874df429776e116f435812764e756b8`, then bounded to a two-column complete projected block in commit `68a8dbf01dbb755e473498479aec1b01848fb4c0` (docstring clarification follows separately).
+
+The test applies the production `apply_H_cached_state` in `no_prune` mode at vertex 0 to two distinct orthonormal recoupling kets with all ten doubled link spins equal to 1 and channels `(0,0,0,0,0)` and `(0,0,0,0,2)). It assembles every entry of the complete projected 2×2 matrix (P H_0 P) from both independently computed columns and compares the matrix with its conjugate transpose. It also emits per-column leakage outside the selected two-ket subspace (count, L2, maximum amplitude), and checks all returned amplitudes for finiteness.
+
+The wall is `Jmax2=3). The exhaustive 1920-monomial hit-multiplicity test establishes at most two hits per edge, so this wall is sufficient to avoid artificial upper-wall clipping for one H action from this input support (maximum input doubled spin S=1). The projection is not invariant by assumption: nonzero leakage is retained and reported. This is a complete matrix check only on the declared 2D projected subspace, not a full finite-sector H matrix, not an unrestricted adjoint theorem, and not a continuum/physical certification.
+
+The new test adds one method and one workflow-invoked test file. The workflow now has seven test commands. The test has been fetched back from GitHub and source-inspected; GitHub Actions execution has not yet been observed, and local execution was blocked because the container cannot resolve github.com. No numerical PASS is claimed.
+
+Next gates: observe the new test's runtime and measured projected defect/leakage; if stable, expand the declared input subspace and then assemble a larger rectangular finite-sector matrix with explicit domain/codomain and wall planning. Only after the one-action H gate should HH and the full leakage Gram be attempted.
