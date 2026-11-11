@@ -203,6 +203,20 @@ class ConstraintStabilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "positive integer"):
             stability.kernel_projector_from_direct_svd(direct, True)
 
+    def test_run_rejects_invalid_regulator_and_tolerance_arguments_before_work(self):
+        with self.assertRaisesRegex(ValueError, "jmax2"):
+            stability.run(jmax2=0)
+        with self.assertRaisesRegex(ValueError, "jmax2"):
+            stability.run(jmax2=True)
+        with self.assertRaisesRegex(ValueError, "jmax2"):
+            stability.run(jmax2=1.0)
+        with self.assertRaisesRegex(ValueError, "rank_rtol"):
+            stability.run(jmax2=1, rank_rtol=True)
+        with self.assertRaisesRegex(ValueError, "singular_rtol"):
+            stability.run(jmax2=1, singular_rtol=True)
+        with self.assertRaisesRegex(ValueError, "block_rows"):
+            stability.run(jmax2=1, block_rows=0)
+
     def test_singular_threshold_sweep_detects_rank_plateaus_and_transitions(self):
         columns = {
             0: {(0, "r0"): 1.0},
