@@ -1124,3 +1124,5 @@ A further review found that testing only \(\lambda_{\min}(G)>0\) can accept a nu
 This is scale-free: it rejects a metric such as \(\operatorname{diag}(1,10^{-16})\) at float64 precision, but does not reject a well-conditioned metric merely because its absolute scale is subnormal (for example \(10^{-320}I\)). The implementation separately reports when the *absolute* diagnostic threshold underflows, while retaining the relative gap test.
 
 Two additional regression methods cover near-singular rejection and tiny-scale positive-metric acceptance. The current static method count is **40**. No test suite execution or CI PASS is claimed.
+
+A final arithmetic fixture separates the two underflow mechanisms: a nonzero \(\sigma_i^2\) can still underflow when multiplied by a small but well-conditioned positive metric eigenvalue. A regression now asserts this is reported independently from underflow in \(\sigma_i^2\) itself. The current source-level method count is **41**; execution remains pending.
