@@ -280,11 +280,19 @@ def volume_raw_hermiticity_diagnostics(
             delta_frob / raw_norm if raw_norm > 0.0
             else (0.0 if delta_frob == 0.0 else float("inf"))
         )
-        consistency_tol = 100.0 * np.finfo(float).eps * max(1.0, abs(expected_relative))
+        consistency_tol = 100.0 * np.finfo(float).eps * max(
+            1.0, abs(expected_relative) if math.isfinite(expected_relative) else 1.0
+        )
+        defect_consistent = (
+            math.isfinite(expected_relative)
+            and abs(defect - 2.0 * relative_bound) <= consistency_tol
+        )
         bounds_consistent = (
             finite and delta_frob >= 0.0 and delta_2_bound >= delta_frob
             and relative_bound >= 0.0
+            and relative_bound <= 1.0 + consistency_tol
             and abs(relative_bound - expected_relative) <= consistency_tol
+            and defect_consistent
         )
         if (not key_valid or not finite or defect < 0.0 or raw_norm < 0.0
                 or delta_frob < 0.0 or delta_2_bound < 0.0
