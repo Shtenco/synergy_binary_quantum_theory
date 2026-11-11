@@ -411,6 +411,53 @@ class ConstraintStabilityTests(unittest.TestCase):
                 direct, np.array([[1.0, 1.0j], [0.0, 1.0]])
             )
 
+    def test_positive_metric_bounds_pad_wide_map_null_singular_values(self):
+        # One output row and three input columns: TSQR must retain the two
+        # exact right-null directions in its dim-length singular spectrum.
+        columns = {
+            0: {(0, "row"): 2.0},
+            1: {},
+            2: {},
+        }
+        direct = stability.direct_svd_from_columns(
+            columns, 3, singular_rtol=1e-12, block_rows=1
+        )
+        self.assertEqual(len(direct["singular_values"]), 3)
+        np.testing.assert_allclose(direct["singular_values"], [2.0, 0.0, 0.0])
+        bounds = stability.positive_metric_spectral_bounds(
+            direct, np.array([[3.0]]), expected_metric_dim=1
+        )
+        self.assertEqual(len(bounds["master_eigenvalue_lower_bounds"]), 3)
+        weighted = np.array([[2.0]]) .conj().T @ np.array([[3.0]]) @ np.array([[2.0]])
+        self.assertAlmostEqual(bounds["master_eigenvalue_lower_bounds"][0], 12.0)
+        self.assertAlmostEqual(bounds["master_eigenvalue_upper_bounds"][0], 12.0)
+        self.assertEqual(bounds["master_eigenvalue_lower_bounds"][1:], [0.0, 0.0])
+
+    def test_positive_metric_bounds_detect_sigma_square_underflow(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [1.0, 1e-200],
+        }
+        result = stability.positive_metric_spectral_bounds(direct, np.eye(2))
+        self.assertTrue(result["singular_value_square_underflow_detected"])
+        self.assertTrue(result["lower_bound_underflow_detected"])
+        self.assertTrue(result["upper_bound_underflow_detected"])
+        self.assertFalse(result["spectral_bounds_numerically_resolved"])
+
+    def test_positive_metric_bounds_validate_node_metric_dimension(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [1.0, 0.5],
+        }
+        with self.assertRaisesRegex(ValueError, "does not match expected node count"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.eye(2), expected_metric_dim=5
+            )
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.eye(2), expected_metric_dim=True
+            )
+
     def test_positive_metric_bounds_fail_closed_on_scale_separation(self):
         direct = {
             "scale_separation_loss": True,
