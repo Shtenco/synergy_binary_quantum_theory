@@ -10,6 +10,7 @@ on:
       - "scripts/k5_peter_weyl_safe_hda_column.py"
       - "scripts/test_k5_sparse_policy_wiring.py"
       - "scripts/test_bqg_sparse_dense_oracle.py"
+      - "scripts/test_k5_volume_raw_operator.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -42,3 +43,5 @@ jobs:
         run: python scripts/test_k5_sparse_policy_wiring.py
       - name: Run independent synthetic dense-oracle and adjoint tests
         run: python scripts/test_bqg_sparse_dense_oracle.py
+      - name: Run production K5 raw volume operator tests
+        run: python scripts/test_k5_volume_raw_operator.py
