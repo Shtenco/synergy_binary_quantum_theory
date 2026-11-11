@@ -443,6 +443,20 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertTrue(result["upper_bound_underflow_detected"])
         self.assertFalse(result["spectral_bounds_numerically_resolved"])
 
+    def test_positive_metric_bounds_validate_input_spectrum_dimension(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [1.0, 0.5],
+        }
+        with self.assertRaisesRegex(ValueError, "does not match expected input dimension"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.eye(1), expected_input_dim=3
+            )
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.eye(1), expected_input_dim=True
+            )
+
     def test_positive_metric_bounds_validate_node_metric_dimension(self):
         direct = {
             "scale_separation_loss": False,
