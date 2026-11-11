@@ -558,3 +558,138 @@ No run of `bqg-two-step-channel-composition` was found in the inspected Actions 
 This means the five-step maximum-product path remains a **local ancestry statistic**, not yet a demonstrated global microscopic refinement lineage. The missing comparison is not cosmetic: scalar multiplication `F_j F_{j+1}` is equivalent to an intermediate channel measure-and-prepare map and can discard coherence. The direct `G_direct` computation is precisely the experiment needed to test whether that information matters.
 
 **Disposition:** preserve all five one-step matrices and their historical successful run. Do not promote their product to a global refinement fidelity or physical transition probability. Execute both source pairs `s2=3` and `s2=4` at the audited branch HEAD, retain all artifacts and compare direct composition defects before making any multi-scale physical interpretation.
+
+
+## 21. Cross-branch analytical bridge: exact finite identities and conditional continuum chain
+
+This section joins the independently audited Q2, active-habitat, K5-volume, K5-HDA, representation-RG and binary-dimension branches. It is an analytical dependency map, not a declaration that the complete physical theory is closed.
+
+### 21.1 Binary selector and the causal-volume fixed point
+
+The frozen local selector is
+[
+q+2=2^q,qquad qinmathbb N, qge1.
+]
+Its unique integer solution is (q=2): (q=1) fails, (q=2) satisfies it, and for (qge2) the increment (2^q-(q+2)) is strictly increasing after its zero at 2.
+
+The frozen route rewrite sets (B=2^q=4). With (E_0=1), active-edge growth and graph-distance growth are
+[
+E_g=(2B)^g=8^g,qquad L_g=2^g.
+]
+The exact vertex count is
+[
+N_g=2+Bsum_{r=0}^{g-1}(2B)^r
+=2+4rac{8^g-1}{7}
+=rac{4,8^g+10}{7}.
+]
+Hence
+[
+d_g=rac{log(N_g/N_{g-1})}{log 2}
+=3+log_2!left(1-rac{35}{16,8^{g-1}+40}ight).
+]
+For (gge2), the correction is negative and increases monotonically to zero, so (d_g\nearrow3). This is an exact asymptotic exponent for the frozen route rewrite. It does not prove that every dynamically generated graph or quantum ensemble obeys that rewrite.
+
+### 21.2 Independent rotation/HDA dimension estimator
+
+For a q-level local Hilbert space, the traceless Hermitian observable space has real dimension (D_q=q^2-1), and (dim PSU(q)=D_q). If the physical interpretation requires the available local frame action to cover all of (SO(D_q)), dimension counting requires
+[
+D_q=rac{D_q(D_q-1)}2.
+]
+For (D_q>0), this gives (D_q=3), hence (q=2). For q=2, the adjoint map (SU(2)/\mathbb Z_2\to SO(3)) is indeed onto. For q>2, dimension equality fails.
+
+This is a conditional isotropy selector, not a derivation that the microscopic dynamics realizes full isotropy. Under standard D-dimensional HDA/ADM assumptions, the inverse DeWitt trace coefficient is (c_D=1/(D-1)), so
+[
+D_{HDA}=1+c_{eff}^{-1}.
+]
+Agreement with the binary rotation selector requires (c_{eff}\to1/2). This is an independent cross-check only if (c_{eff}) is extracted from the microscopic kinetic form without fitting it to D=3.
+
+### 21.3 Exact K5 local volume algebra
+
+On three distinct link factors, let
+[
+Q_{123}=\epsilon_{ijk}J_1^i\otimes J_2^j\otimes J_3^k.
+]
+With Hermitian (J_r^i) and distinct tensor factors commuting,
+[
+Q_{123}^\dagger
+=\epsilon_{ijk}J_1^i\otimes J_2^j\otimes J_3^k
+=Q_{123}.
+]
+For a leg permutation \(\pi\), with permutation unitary (U_\pi),
+[
+Q_{\pi(1)\pi(2)\pi(3)}
+=\operatorname{sgn}(\pi)U_\pi Q_{123}U_\pi^\dagger.
+]
+Define (V_{123}=\sqrt{|Q_{123}|}) by spectral calculus. Then
+[
+V_{123}^\dagger=V_{123}\succeq0,\qquad
+V_{123}^2=|Q_{123}|,\qquad
+V_{\pi}=U_\pi V_{123}U_\pi^\dagger.
+]
+The last identity follows because (|-A|=|A|) for Hermitian A and functional calculus is unitary covariant. Thus orientation-odd Q and orientation-even derived volume are compatible exactly. The production code's pre-eigensolver symmetrization is only defensible as roundoff cleanup after the raw anti-Hermitian defect is independently shown negligible; the finite tests now record this defect before symmetrization.
+
+At a K5 vertex, the oriented combinatorics has four choices of omitted neighbour and three cyclic orders, hence 12 distinct signed specifications, with sign ((-1)^r) for omitted-neighbour position r. This proves the finite orientation-list combinatorics; it does not prove adjointness of the complete graph-changing T sum.
+
+### 21.4 Exact adjoint law for the graph-changing monomials
+
+For a primitive sequence (T=A_1A_2\cdots A_n) on a common finite inner-product space,
+[
+T^\dagger=A_n^\dagger\cdots A_2^\dagger A_1^\dagger.
+]
+The K5 production reverse sequence must therefore reverse path order, exchange input/output magnetic labels, and retain the self-adjoint volume insertions. For the complete signed 32-term sum (T=\sum_{\alpha=1}^{32}s_\alpha T_\alpha),
+[
+T^\dagger=\sum_{\alpha=1}^{32}s_\alpha T_\alpha^\dagger
+]
+because the signs are real. This identity is exact; a single matrix element or selected 2×2 block does not establish it on the entire finite sector. The present source has a selected 2×2 coherent block, projection-leakage ledger and a spin-wall 2/4/6 experiment. The fixed-input ceiling argument gives maximum doubled spin 3 for that specific T input, so walls 4 and 6 should agree for that input. It is not a universal wall theorem for arbitrary inputs or HH.
+
+### 21.5 Full-versus-projected master: exact leakage identity
+
+Let P be an orthogonal projector, (H_v) node constraints, and (L_v=(I-P)H_vP). Then
+[
+M_{full}=\sum_v(PH_v^\dagger H_vP),\qquad
+M_{proj}=\sum_v(PH_vP)^\dagger(PH_vP)
+]
+satisfy the exact identity
+[
+M_{full}-M_{proj}
+=\sum_vPH_v^\dagger(I-P)H_vP
+=\sum_vL_v^\dagger L_v\succeq0.
+]
+This is the correct operator-level reason that premature compression can change the master spectrum. The v1 active-habitat artifact gives a finite example with large leakage and 67.8% spectral distortion; it does not establish the unrestricted physical kernel. The identity should be evaluated with unpruned coherent columns and off-diagonal interference retained.
+
+### 21.6 K5 fixed-sector SO(5) skeleton is a projection, not full HDA closure
+
+The oriented vector-5 (J_{max}=1/2) diagnostic reports for all ten node pairs:
+[
+\|[H_i,H_j]P_{full}\|=3906.6220702801,
+\qquad
+\epsilon_{graph}=\sqrt{37/69},
+\]
+and fixed-sector norm fractions (32/69) and graph-changing fraction (37/69). The projected generators (Q_{ij}=-iP_{full}[H_i,H_j]P_{full}) span a ten-dimensional Frobenius-orthogonal space. Their projected overlapping brackets reproduce the \(so(5)\) structure constants with normalization 32, but only (1/297) of the full bracket norm lies in that projected span; the orthogonal fraction is (296/297).
+
+Therefore the SO(5) skeleton is a real exact/finite projected algebraic pattern, but it is not the full graph-changing constraint algebra. A physical HDA claim requires the full commutator to match the diffeomorphism/structure-function target plus Gauss terms, including graph-changing channels, in a regulator-safe common domain.
+
+### 21.7 The conditional binary-HDA chain and its unproved hypotheses
+
+If (i) q=2 is the full local spatial frame carrier, (ii) the microscopic dynamics restores full SO(3) isotropy, (iii) a local two-derivative metric Hamiltonian emerges, and (iv) the standard first-class HDA is recovered, then
+[
+D_{rot}=3,quad c_{eff}=1/2,quad A_{eff}B_{eff}=1,quad z=1,
+quad N_{TT}=2.
+]
+The TT equation is (ddot h_{TT}=A_{eff}B_{eff}\nabla^2h_{TT}), so (A_{eff}B_{eff}=1) gives a unit relativistic tensor cone in the chosen lapse/time normalization. In D spatial dimensions, first-class spatial diffeomorphism plus Hamiltonian constraints leave ((D+1)(D-2)/2) configuration degrees of freedom; at D=3 this is two.
+
+The chain is conditional because the repo has not yet established the microscopic hypotheses (i)-(iv) together. In particular, the finite K5 HDA diagnostic has substantial graph leakage and the regulator-safe full HH/commutator comparison remains outstanding.
+
+### 21.8 What must be proved before calling this a complete analytic theory
+
+The remaining proof obligations are logically distinct:
+1. **Microscopic operator definition:** one frozen no-prune action, common dense domain, inner product and exact adjoint convention for every primitive.
+2. **Full constraint algebra:** complete graph-changing ([H(N),H(M)]), not only fixed-sector projections, equals the discrete diffeomorphism generator with the derived structure function plus Gauss terms.
+3. **Regulator control:** a proven per-history reachability bound or a controlled increasing-wall limit; finite wall equality for one input is not enough.
+4. **Physical projector:** the full leakage Gram and kernel must be computed without replacing (M_{full}) by a compressed shortcut.
+5. **RG composition:** direct microscopic refinement overlaps (G) must be compared to scalar (F_1F_2); the latter is an intermediate measure-and-prepare channel unless a factorization theorem is proved.
+6. **Lorentzian completion:** KKV adjoints must be reversed in operator order; partial auxiliary trace cyclicity is unavailable for operator-valued entries. Physical ordering and normalization must be independently fixed.
+7. **Continuum/IR theorem:** establish convergence of embedded operators, projectors, structure functions and observables, not only convergence of one finite exponent or one spectral gap.
+8. **Empirical map:** derive dimensionful predictions with fixed constants and uncertainty bounds, then test against independent observations.
+
+**Status:** exact finite identities have been connected into one dependency graph. The full analytical/physical closure is not yet proved. No theorem above is promoted beyond its stated hypotheses.
