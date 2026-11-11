@@ -150,7 +150,13 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
         iter_operator_row_blocks(columns, dim, block_rows), dim, singular_rtol
     )
     return {
-        "rank": result.rank,
+        # A scale-separation warning makes the numerical rank inconclusive.
+        # Preserve the normalized-SVD count only as an explicitly untrusted
+        # diagnostic; downstream consumers must not treat it as the map rank.
+        "rank": None if result.scale_separation_loss else result.rank,
+        "untrusted_normalized_scale_rank": (
+            int(result.rank) if result.scale_separation_loss else None
+        ),
         "singular_value_rtol": result.rank_rtol,
         "singular_values": [float(x) for x in result.singular_values],
         "right_singular_vectors_real": result.right_singular_vectors.real.tolist(),
