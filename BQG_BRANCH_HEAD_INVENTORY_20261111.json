@@ -7,7 +7,7 @@
   "default_branch": "main",
   "default_branch_head": "254f19fdab41d32b920bf454f987aa7c0fdba34d",
   "audit_branch_heads": {
-    "research/consolidated-bqg-audit-20261111": "32fc865ea6921f9c7303ca688bba1f4734faf93b",
+    "research/consolidated-bqg-audit-20261111": "d491331625d638feacc80cde67a1b16d8079f58e",
     "research/lemaitre-bqg-causal-cone-20261110": "78a0d58085bbc69ed310d348348ce6695b1dff70"
   },
   "branches": [
@@ -541,7 +541,7 @@
     },
     {
       "name": "research/consolidated-bqg-audit-20261111",
-      "head_sha": "5350eadf30bc3865392db0f5fcf1ab2ff7e8fe2a"
+      "head_sha": "d491331625d638feacc80cde67a1b16d8079f58e"
     },
     {
       "name": "research/depth6-s4sign-proof",
@@ -822,129 +822,27 @@
   ],
   "unique_heads": [
     {
-      "head_sha": "43f8d00ea237e2123ec07d88c1aa2d3d91f683e2",
+      "head_sha": "00a26b849aab60e39844879af06001a82fd6383c",
       "branch_names": [
-        "audit/active-habitat-master-v1"
+        "fix/v21-c1-fail-closed-20261108"
       ]
     },
     {
-      "head_sha": "9ae7c06d4660061a62bfde4fd5136010dcff9fd5",
+      "head_sha": "042baa6e87b2a0340511cf083c974042c89b848b",
       "branch_names": [
-        "audit/active-habitat-master-v2-preregistered"
+        "research/zeroaware-volume-migration"
       ]
     },
     {
-      "head_sha": "4f3c9ccc67c14e892744b30a9f2736f2fc4576aa",
+      "head_sha": "0559c1122070a8eb72885fa8214bf2ba7f1be320",
       "branch_names": [
-        "audit/active-habitat-master-v2"
+        "research/pw-lorentzian-lowcut-scout"
       ]
     },
     {
-      "head_sha": "de0b56710f3892f566ece0e6ea31030a50c2dfaf",
+      "head_sha": "085e7b8aa152191a2323803fceecb8565a353880",
       "branch_names": [
-        "audit/bell-chsh-gate"
-      ]
-    },
-    {
-      "head_sha": "56830f687ae8b45353025e71b2b128ae9f153a2b",
-      "branch_names": [
-        "audit/bqg-evidence-map-2026-11-07"
-      ]
-    },
-    {
-      "head_sha": "fddd49427c636e92dfe79b96034862aeba629927",
-      "branch_names": [
-        "audit/bqg-independent-proof-20261108"
-      ]
-    },
-    {
-      "head_sha": "ac1a07a27c2acc9231d2d42ffcbbed9799afb426",
-      "branch_names": [
-        "audit/current-status-2026-10-10"
-      ]
-    },
-    {
-      "head_sha": "56fa40e4efae47fd600487200f11cf0b0bb80555",
-      "branch_names": [
-        "audit/depth6-stageb-ledger-reconcile-20261110"
-      ]
-    },
-    {
-      "head_sha": "553c2936a2c53352dfd12e4645255124422584a5",
-      "branch_names": [
-        "audit/habr-emergent-graph-independent-control-20261111"
-      ]
-    },
-    {
-      "head_sha": "5a4685d2f73453790f554cf3f5cd75275c6458bb",
-      "branch_names": [
-        "audit/k5-s5-carrier-symmetry"
-      ]
-    },
-    {
-      "head_sha": "f683df8f9d80c6654dab8e99c3c8946c586c7401",
-      "branch_names": [
-        "audit/k5-s5-hamiltonian-covariance-v1"
-      ]
-    },
-    {
-      "head_sha": "c20b5b6e8c616c79d5c66fa846730b9276bde41e",
-      "branch_names": [
-        "audit/l1-amplitude-package-20261110"
-      ]
-    },
-    {
-      "head_sha": "4fc5634ebed3b5e29318bef90f23e5006a50bb31",
-      "branch_names": [
-        "audit/loc-2026-09-15"
-      ]
-    },
-    {
-      "head_sha": "8f710d7c641565f2fbf5c0497190872cff3d1757",
-      "branch_names": [
-        "audit/peter-weyl-sixth-cutoff-20261110"
-      ]
-    },
-    {
-      "head_sha": "e5ae681bbaed3bdb53d82a7f9d6b51cf3707da9b",
-      "branch_names": [
-        "audit/physicalization-truth-v3"
-      ]
-    },
-    {
-      "head_sha": "9a2880518b091b578f4e1004fd036e2b4eb6db34",
-      "branch_names": [
-        "audit/pl48-spectral-complete-20261110"
-      ]
-    },
-    {
-      "head_sha": "b26ae55f64e3f9646c91735f005a35b30b4bb34b",
-      "branch_names": [
-        "audit/pl48-volume-failclosed-20261110"
-      ]
-    },
-    {
-      "head_sha": "d9683ce796b3e05dc9c1c83d16790db7ec6f946c",
-      "branch_names": [
-        "audit/q4-k5-local-carrier-bridge"
-      ]
-    },
-    {
-      "head_sha": "14d9088c5674d320801979f24af72e45375c5851",
-      "branch_names": [
-        "audit/q4-s4-background-obstruction"
-      ]
-    },
-    {
-      "head_sha": "f03fb73391d0ac06aa5652db4bc31684dce121a8",
-      "branch_names": [
-        "audit/rg-refinement-strict-20261110"
-      ]
-    },
-    {
-      "head_sha": "c19de5df420e84ae7125b67cea4bef5a9dc37536",
-      "branch_names": [
-        "audit/spectral-history-closure-2026-09-06"
+        "research/v21-first-shell-checkpoints-20261015"
       ]
     },
     {
@@ -954,57 +852,9 @@
       ]
     },
     {
-      "head_sha": "36b652fa493a1ea623ff8f9b3e80671a3b7c5428",
+      "head_sha": "101be6105e1bee9c3e6d662b451d72af2350e827",
       "branch_names": [
-        "bqg/depth6-32-canonical-recovery"
-      ]
-    },
-    {
-      "head_sha": "1ddda1e7a42af6792a2e7270a8e4da3b615ab0b3",
-      "branch_names": [
-        "bqg/depth6-32-resumable-keymeta"
-      ]
-    },
-    {
-      "head_sha": "4a6bdf75b1403333b27600d4af9bc510b7bbadd0",
-      "branch_names": [
-        "ci-sinergy-messenger-v02-native-build"
-      ]
-    },
-    {
-      "head_sha": "6c4fd254530fea3b70d2c7fec15711ccb1caedc3",
-      "branch_names": [
-        "ci-sinergy-messenger-v030"
-      ]
-    },
-    {
-      "head_sha": "931faff5906ea13ce2b2ada9b269f2c10ca18a94",
-      "branch_names": [
-        "ci-sinergy-messenger-v033-diagnostic"
-      ]
-    },
-    {
-      "head_sha": "412517dc6a6fecf2b58ba6203972df2c62d5f007",
-      "branch_names": [
-        "ci-sinergy-messenger-v033-functional-final"
-      ]
-    },
-    {
-      "head_sha": "91f4dbf7cd61d851426198db4d38afc743db4c98",
-      "branch_names": [
-        "cleanup/gr-qm-bit-continuum"
-      ]
-    },
-    {
-      "head_sha": "486036ab8fdaa0901c5461ec8bda8418df34ab09",
-      "branch_names": [
-        "codex"
-      ]
-    },
-    {
-      "head_sha": "344659a4976b77c9cd85d84e8fa1f10f03769cfc",
-      "branch_names": [
-        "codex-3g4lb0"
+        "federation-v3-domain-expansion"
       ]
     },
     {
@@ -1014,81 +864,46 @@
       ]
     },
     {
-      "head_sha": "ba7e6cedc3bd7b356e3f353227fef5795c336027",
+      "head_sha": "115d308433254b3b32440e3497df259533930b9d",
       "branch_names": [
-        "codex-4ni6ut"
+        "research/q2-orientation-intrinsic-metric-nogo"
       ]
     },
     {
-      "head_sha": "de7d0be18ebc49349738b8191e8976b05809edc3",
+      "head_sha": "11a0775ce11fddc5cf28680bb24d1f4cc609774d",
       "branch_names": [
-        "codex-5uocfq"
+        "research/mirror-anisotropy-audit-v2"
       ]
     },
     {
-      "head_sha": "fd4f13017d698b5ac92517c6c08b9f5726cfe34e",
+      "head_sha": "120f596f652fb5a70e28a10605f0884af59134f2",
       "branch_names": [
-        "codex-89btph"
+        "exp/plain-llama-portable"
       ]
     },
     {
-      "head_sha": "2b861a419623dd46c91b06b4a58eb104c4fd5366",
+      "head_sha": "14d9088c5674d320801979f24af72e45375c5851",
       "branch_names": [
-        "codex-bwhfkc"
+        "audit/q4-s4-background-obstruction"
       ]
     },
     {
-      "head_sha": "6c0badce8a9d407d9f3244351866913ec5486dfc",
+      "head_sha": "185bee58de27b053497e2a28eaf45c66b1470540",
       "branch_names": [
-        "codex-e0ee6e"
+        "research/physical-cosmology-interference-lensing"
       ]
     },
     {
-      "head_sha": "be5d5fba10868e4e1b613813494e19943354059c",
+      "head_sha": "1a580b434391da0c884d640930ed1b67971c4613",
       "branch_names": [
-        "codex-hobdxi"
+        "research/q2-history-fourier-complex-structure"
       ]
     },
     {
-      "head_sha": "770d156d5985a1c5d355ae62708fb231c24318a0",
+      "head_sha": "1a715e22d10bb27b2d7c7b6529ac53c59092a851",
       "branch_names": [
-        "codex-kpnzg2"
-      ]
-    },
-    {
-      "head_sha": "b46883f229c5870135720a485c161bf30ae87e9c",
-      "branch_names": [
-        "codex-lppw5h"
-      ]
-    },
-    {
-      "head_sha": "a0b2b9b7b9a961a92abeea9e90868ef13737fa30",
-      "branch_names": [
-        "codex-qgjhgi"
-      ]
-    },
-    {
-      "head_sha": "f6155c3abe030a2564e0402306baad1f5b9f253a",
-      "branch_names": [
-        "codex-ro2602"
-      ]
-    },
-    {
-      "head_sha": "a29288ede4363534124c9ef1630b5b06648c912d",
-      "branch_names": [
-        "codex-sjothi"
-      ]
-    },
-    {
-      "head_sha": "616d4e7f240b8cc184041ac7497852f03ae4c683",
-      "branch_names": [
-        "codex-va54l6"
-      ]
-    },
-    {
-      "head_sha": "2bece049421c96e5e4e1aefef6a45b57ea5a190d",
-      "branch_names": [
-        "codex-vbnn2h"
+        "research/v19-canonical-k5-replay-20261015",
+        "research/v20-160-canonical-k5-20261015"
       ]
     },
     {
@@ -1098,21 +913,81 @@
       ]
     },
     {
-      "head_sha": "49629275314883213b71cc3a799defe7a03ace7d",
+      "head_sha": "1ddda1e7a42af6792a2e7270a8e4da3b615ab0b3",
       "branch_names": [
-        "docs/bqg-comprehensive-readme-20261109"
+        "bqg/depth6-32-resumable-keymeta"
       ]
     },
     {
-      "head_sha": "9cf8369b453c2642a47efd6b0c18d87c324cf7d6",
+      "head_sha": "1f754a7060653746e13da05cc8c76261665379f9",
       "branch_names": [
-        "docs/bqg-holography-from-bit-20261109"
+        "research/canonical-ledger-2026-08-15"
       ]
     },
     {
-      "head_sha": "f4d27c390b2f6a436b8c1108ef837414a340cb31",
+      "head_sha": "213c7a6e6443625f57cb8c727500aaaeddbdd4a5",
       "branch_names": [
-        "docs/bqg-scientific-fairytale-20261109"
+        "exp/qwen-activation-calibration"
+      ]
+    },
+    {
+      "head_sha": "254f19fdab41d32b920bf454f987aa7c0fdba34d",
+      "branch_names": [
+        "main"
+      ]
+    },
+    {
+      "head_sha": "299e3d896a7845688ca6f3e7cb6c4b379c6a73f1",
+      "branch_names": [
+        "research/hl-sine-dag"
+      ]
+    },
+    {
+      "head_sha": "2b2c9f623544f5d38f7ffd7f37617f91f4dae306",
+      "branch_names": [
+        "research/bcqg-core-candidate-v1"
+      ]
+    },
+    {
+      "head_sha": "2b861a419623dd46c91b06b4a58eb104c4fd5366",
+      "branch_names": [
+        "codex-bwhfkc"
+      ]
+    },
+    {
+      "head_sha": "2bece049421c96e5e4e1aefef6a45b57ea5a190d",
+      "branch_names": [
+        "codex-vbnn2h"
+      ]
+    },
+    {
+      "head_sha": "2c28123720db59306890daa0dfba1ad21c2e7eb1",
+      "branch_names": [
+        "research/bqg-v21-c1-checkpoint-repair-20261107"
+      ]
+    },
+    {
+      "head_sha": "2c59b1e03fd7404685db29547fd6b9da3ede575a",
+      "branch_names": [
+        "research/v18-k5-parity-feshbach-20261015"
+      ]
+    },
+    {
+      "head_sha": "2cd4813005356302d8d66f8767b264b908b99d4e",
+      "branch_names": [
+        "research/v13-k5-leakage-safe-master-20261015"
+      ]
+    },
+    {
+      "head_sha": "2d05ca59f920d78d926a7f78020a69f6c1326e81",
+      "branch_names": [
+        "research/pw-lorentzian-mitm"
+      ]
+    },
+    {
+      "head_sha": "306eaccf4f6416438271eb69eeb72ff2ea6959ae",
+      "branch_names": [
+        "spectral-history-closure"
       ]
     },
     {
@@ -1129,93 +1004,33 @@
       ]
     },
     {
-      "head_sha": "120f596f652fb5a70e28a10605f0884af59134f2",
+      "head_sha": "330236f88c9e5734d67b123330190088c4dfecdd",
       "branch_names": [
-        "exp/plain-llama-portable"
+        "research/v17-k5-parity-shell-selection-20261015"
       ]
     },
     {
-      "head_sha": "42c71612967fdaf3409ac5ddfd390ec7b0189589",
+      "head_sha": "344659a4976b77c9cd85d84e8fa1f10f03769cfc",
       "branch_names": [
-        "exp/qwen15-local-courier"
+        "codex-3g4lb0"
       ]
     },
     {
-      "head_sha": "ecd0b20ca7affc5e424e7f113a5b273ba73c6c3a",
+      "head_sha": "3462cb5ee7c802b45d83577ef875877bc5964231",
       "branch_names": [
-        "exp/qwen15b-q8-courier"
+        "research/pw-spin-parity-master"
       ]
     },
     {
-      "head_sha": "213c7a6e6443625f57cb8c727500aaaeddbdd4a5",
+      "head_sha": "35056f1b7eebc89840606529164dfd083e1e5f1e",
       "branch_names": [
-        "exp/qwen-activation-calibration"
+        "research/v22-k5-kernel-ritz-cutoff-20261016"
       ]
     },
     {
-      "head_sha": "952b6524633773d6c4dfd674036c044f3d0f2d8b",
+      "head_sha": "36b652fa493a1ea623ff8f9b3e80671a3b7c5428",
       "branch_names": [
-        "exp/qwen-chunks"
-      ]
-    },
-    {
-      "head_sha": "ae1025b29150293d0b98ce9d970346883bfede52",
-      "branch_names": [
-        "exp/qwen-f16-courier"
-      ]
-    },
-    {
-      "head_sha": "b59f4bb4031338f9f6d7d5c97c5123deb77da984",
-      "branch_names": [
-        "exp/qwen-local-courier"
-      ]
-    },
-    {
-      "head_sha": "101be6105e1bee9c3e6d662b451d72af2350e827",
-      "branch_names": [
-        "federation-v3-domain-expansion"
-      ]
-    },
-    {
-      "head_sha": "c40b091513cd3c73b14bbcaaa80bc12d861da7f3",
-      "branch_names": [
-        "final-squash-base"
-      ]
-    },
-    {
-      "head_sha": "00a26b849aab60e39844879af06001a82fd6383c",
-      "branch_names": [
-        "fix/v21-c1-fail-closed-20261108"
-      ]
-    },
-    {
-      "head_sha": "7f01e41120f001b51a933d4d6aae27010e908e05",
-      "branch_names": [
-        "hodge-spectral-dimension-notation-fix"
-      ]
-    },
-    {
-      "head_sha": "254f19fdab41d32b920bf454f987aa7c0fdba34d",
-      "branch_names": [
-        "main"
-      ]
-    },
-    {
-      "head_sha": "63ee28fb16dc303344928b5a75fcae2a068055be",
-      "branch_names": [
-        "migration/synergy-723-2026-09"
-      ]
-    },
-    {
-      "head_sha": "cfe01691b8541b3963fe220cea254fef5cae4a32",
-      "branch_names": [
-        "nexus-r74-phi-fix-run"
-      ]
-    },
-    {
-      "head_sha": "9e660e61d55d316d09508f900adce0807936b34c",
-      "branch_names": [
-        "nexus-r74-public-run-20260818"
+        "bqg/depth6-32-canonical-recovery"
       ]
     },
     {
@@ -1225,15 +1040,75 @@
       ]
     },
     {
-      "head_sha": "52ec9e5161024119f276f79c96162012f796ba8d",
+      "head_sha": "412517dc6a6fecf2b58ba6203972df2c62d5f007",
       "branch_names": [
-        "nexus-r74-structured-five-run"
+        "ci-sinergy-messenger-v033-functional-final"
       ]
     },
     {
-      "head_sha": "e3118e1a710b83d23622af57d9c41ed66d7da2c4",
+      "head_sha": "42c71612967fdaf3409ac5ddfd390ec7b0189589",
       "branch_names": [
-        "physical-tt-kernel-leading-ir"
+        "exp/qwen15-local-courier"
+      ]
+    },
+    {
+      "head_sha": "43f8d00ea237e2123ec07d88c1aa2d3d91f683e2",
+      "branch_names": [
+        "audit/active-habitat-master-v1"
+      ]
+    },
+    {
+      "head_sha": "456aa7c477c022b87ba1a09d1d0397c67506645c",
+      "branch_names": [
+        "research/v26-graph-sector-output-obstruction-20261016"
+      ]
+    },
+    {
+      "head_sha": "45d7ba89facf7c0ad17ddb2359c26bb00f6e6eb5",
+      "branch_names": [
+        "research/v25-ancilla-crossscale-k5-20261016"
+      ]
+    },
+    {
+      "head_sha": "4833af3f878a18c2179cdb560fa9b22d9ad941c8",
+      "branch_names": [
+        "research/scalar-adm-physical-response"
+      ]
+    },
+    {
+      "head_sha": "486036ab8fdaa0901c5461ec8bda8418df34ab09",
+      "branch_names": [
+        "codex"
+      ]
+    },
+    {
+      "head_sha": "494fd514d2d46ee89b487e9b3d506579a9539831",
+      "branch_names": [
+        "research/q2-gravity-gyc-sign-twirl"
+      ]
+    },
+    {
+      "head_sha": "49629275314883213b71cc3a799defe7a03ace7d",
+      "branch_names": [
+        "docs/bqg-comprehensive-readme-20261109"
+      ]
+    },
+    {
+      "head_sha": "4a6bdf75b1403333b27600d4af9bc510b7bbadd0",
+      "branch_names": [
+        "ci-sinergy-messenger-v02-native-build"
+      ]
+    },
+    {
+      "head_sha": "4c5053a002d4acd380a5911413cc4a76697fa87c",
+      "branch_names": [
+        "research/q2-relational-metric-source"
+      ]
+    },
+    {
+      "head_sha": "4c51657a7cdc2a758b67a44f0b5c641a10350d50",
+      "branch_names": [
+        "research/canonical-lorentzian-frontier"
       ]
     },
     {
@@ -1243,15 +1118,339 @@
       ]
     },
     {
+      "head_sha": "4d72abf7fd0f88c3d9113138eca0b06d264ef2c3",
+      "branch_names": [
+        "research/pw-lorentzian-24-mitm"
+      ]
+    },
+    {
+      "head_sha": "4d7676a0e153145d34e35b215356528eb8629f04",
+      "branch_names": [
+        "research/pw-lorentzian-component-fast"
+      ]
+    },
+    {
+      "head_sha": "4f3c9ccc67c14e892744b30a9f2736f2fc4576aa",
+      "branch_names": [
+        "audit/active-habitat-master-v2"
+      ]
+    },
+    {
+      "head_sha": "4fc5634ebed3b5e29318bef90f23e5006a50bb31",
+      "branch_names": [
+        "audit/loc-2026-09-15"
+      ]
+    },
+    {
+      "head_sha": "524240db085485ac31678e82778f585ffd38d199",
+      "branch_names": [
+        "research/bqg-v24-finite-index-constraint-gates-20261108"
+      ]
+    },
+    {
+      "head_sha": "52ec9e5161024119f276f79c96162012f796ba8d",
+      "branch_names": [
+        "nexus-r74-structured-five-run"
+      ]
+    },
+    {
+      "head_sha": "553c2936a2c53352dfd12e4645255124422584a5",
+      "branch_names": [
+        "audit/habr-emergent-graph-independent-control-20261111"
+      ]
+    },
+    {
+      "head_sha": "56830f687ae8b45353025e71b2b128ae9f153a2b",
+      "branch_names": [
+        "audit/bqg-evidence-map-2026-11-07"
+      ]
+    },
+    {
+      "head_sha": "56fa40e4efae47fd600487200f11cf0b0bb80555",
+      "branch_names": [
+        "audit/depth6-stageb-ledger-reconcile-20261110"
+      ]
+    },
+    {
+      "head_sha": "5a4685d2f73453790f554cf3f5cd75275c6458bb",
+      "branch_names": [
+        "audit/k5-s5-carrier-symmetry"
+      ]
+    },
+    {
+      "head_sha": "5ba4bc24230c3d0a1e47bf309453a692601ee49d",
+      "branch_names": [
+        "research/q2-history-gravity-orientation-current"
+      ]
+    },
+    {
+      "head_sha": "5cdf421c8f662db620b762328bec6d9228c7d7b4",
+      "branch_names": [
+        "research/lorentzian-ordered-triple-fast"
+      ]
+    },
+    {
+      "head_sha": "616d4e7f240b8cc184041ac7497852f03ae4c683",
+      "branch_names": [
+        "codex-va54l6"
+      ]
+    },
+    {
+      "head_sha": "63ee28fb16dc303344928b5a75fcae2a068055be",
+      "branch_names": [
+        "migration/synergy-723-2026-09"
+      ]
+    },
+    {
+      "head_sha": "651dd9003cb15b8fd57d4b7c31f7c3a70d9bb49b",
+      "branch_names": [
+        "research/pw-lorentzian-logical-projection"
+      ]
+    },
+    {
+      "head_sha": "69d30ce243b79e89151a48888d02342f8897f0b9",
+      "branch_names": [
+        "research/q2-history-directed-laplacian-factorization"
+      ]
+    },
+    {
+      "head_sha": "6a32a784dfbdc47ffa20248232713a92fd9b90ee",
+      "branch_names": [
+        "research/q2-face-incidence-bridge"
+      ]
+    },
+    {
+      "head_sha": "6c0badce8a9d407d9f3244351866913ec5486dfc",
+      "branch_names": [
+        "codex-e0ee6e"
+      ]
+    },
+    {
+      "head_sha": "6c4fd254530fea3b70d2c7fec15711ccb1caedc3",
+      "branch_names": [
+        "ci-sinergy-messenger-v030"
+      ]
+    },
+    {
+      "head_sha": "6c63f0d8734d7bc67d1ca6e462e1ba05956b8db5",
+      "branch_names": [
+        "research/first-q2-scalar-effective-action"
+      ]
+    },
+    {
+      "head_sha": "6d3f23860fc134ec0f10259fa17adb2c32588739",
+      "branch_names": [
+        "research/post-hda-physicalization-v2"
+      ]
+    },
+    {
+      "head_sha": "6dad7a4fb05ed8b80540fa610c884d05e1af5563",
+      "branch_names": [
+        "research/modular-complex-arithmetic-bridge"
+      ]
+    },
+    {
+      "head_sha": "71e807cfedcd38085ebd1801293428ba5701f098",
+      "branch_names": [
+        "research/pw-lorentzian-single-mitm"
+      ]
+    },
+    {
+      "head_sha": "73287ef611096c01c1673ac894ff44ffb1a38066",
+      "branch_names": [
+        "research/canonical-frontier-v2"
+      ]
+    },
+    {
+      "head_sha": "770d156d5985a1c5d355ae62708fb231c24318a0",
+      "branch_names": [
+        "codex-kpnzg2"
+      ]
+    },
+    {
+      "head_sha": "7710fc5f2b2b93eebfc2ff72552ff853398a88f4",
+      "branch_names": [
+        "research/mirror-orientation-eta"
+      ]
+    },
+    {
+      "head_sha": "78a0d58085bbc69ed310d348348ce6695b1dff70",
+      "branch_names": [
+        "research/lemaitre-bqg-causal-cone-20261110"
+      ]
+    },
+    {
+      "head_sha": "7a44506a3b17a341381a720ac27eae78b81e27b0",
+      "branch_names": [
+        "research/pw-lorentzian-envtrace"
+      ]
+    },
+    {
+      "head_sha": "7abcaba66567fd09ec533c0c2a170b7d560e2b9a",
+      "branch_names": [
+        "research/lorentzian-composition-fast"
+      ]
+    },
+    {
+      "head_sha": "7f01e41120f001b51a933d4d6aae27010e908e05",
+      "branch_names": [
+        "hodge-spectral-dimension-notation-fix"
+      ]
+    },
+    {
+      "head_sha": "80d519240f9f4e68df77a7a28742e1a943b37f15",
+      "branch_names": [
+        "research/bqg-bell-volume-20261012"
+      ]
+    },
+    {
+      "head_sha": "83f45dfc19cdef884e5290f111bf46dc0e10d1e7",
+      "branch_names": [
+        "research/q2-unified-complex-structure"
+      ]
+    },
+    {
+      "head_sha": "87aee1e6005fa33d1aa2a1361207218088ed0d1c",
+      "branch_names": [
+        "research/pw-master-32"
+      ]
+    },
+    {
+      "head_sha": "8d4d697d613a05334f2f346dedd68771e0460318",
+      "branch_names": [
+        "research/pw-lorentzian-single-probe"
+      ]
+    },
+    {
+      "head_sha": "8d8d3ae533a9a47704263463c76c3a2288635173",
+      "branch_names": [
+        "research/bqg-v20-local-c1-gates-20261107"
+      ]
+    },
+    {
+      "head_sha": "8f710d7c641565f2fbf5c0497190872cff3d1757",
+      "branch_names": [
+        "audit/peter-weyl-sixth-cutoff-20261110"
+      ]
+    },
+    {
+      "head_sha": "9066d572b456f139939d180b7e3cbc2a5a64b514",
+      "branch_names": [
+        "research/sine-kkv-next"
+      ]
+    },
+    {
+      "head_sha": "91f4dbf7cd61d851426198db4d38afc743db4c98",
+      "branch_names": [
+        "cleanup/gr-qm-bit-continuum"
+      ]
+    },
+    {
+      "head_sha": "931faff5906ea13ce2b2ada9b269f2c10ca18a94",
+      "branch_names": [
+        "ci-sinergy-messenger-v033-diagnostic"
+      ]
+    },
+    {
       "head_sha": "934ead3ebdcdc93b4adbc11bca08ca46f6325570",
       "branch_names": [
         "release/canonical-theory-package-v1"
       ]
     },
     {
-      "head_sha": "2b2c9f623544f5d38f7ffd7f37617f91f4dae306",
+      "head_sha": "952b6524633773d6c4dfd674036c044f3d0f2d8b",
       "branch_names": [
-        "research/bcqg-core-candidate-v1"
+        "exp/qwen-chunks"
+      ]
+    },
+    {
+      "head_sha": "95fa4040df6ac71566f111adf89eebb3ab5b74e5",
+      "branch_names": [
+        "research/v16-full-initial-k5-and-first-shell-20261015"
+      ]
+    },
+    {
+      "head_sha": "9a2880518b091b578f4e1004fd036e2b4eb6db34",
+      "branch_names": [
+        "audit/pl48-spectral-complete-20261110"
+      ]
+    },
+    {
+      "head_sha": "9ae7c06d4660061a62bfde4fd5136010dcff9fd5",
+      "branch_names": [
+        "audit/active-habitat-master-v2-preregistered"
+      ]
+    },
+    {
+      "head_sha": "9cf8369b453c2642a47efd6b0c18d87c324cf7d6",
+      "branch_names": [
+        "docs/bqg-holography-from-bit-20261109"
+      ]
+    },
+    {
+      "head_sha": "9e660e61d55d316d09508f900adce0807936b34c",
+      "branch_names": [
+        "nexus-r74-public-run-20260818"
+      ]
+    },
+    {
+      "head_sha": "a0b2b9b7b9a961a92abeea9e90868ef13737fa30",
+      "branch_names": [
+        "codex-qgjhgi"
+      ]
+    },
+    {
+      "head_sha": "a29288ede4363534124c9ef1630b5b06648c912d",
+      "branch_names": [
+        "codex-sjothi"
+      ]
+    },
+    {
+      "head_sha": "a4d41b343e7ce04895abb655e16a500da290ee23",
+      "branch_names": [
+        "research/bqg-node1-lorentzian-columns-20261031"
+      ]
+    },
+    {
+      "head_sha": "ab24171a4bb327d190551bdf68957bd10a819c1d",
+      "branch_names": [
+        "research/physical-scalar-kernel-dynamics"
+      ]
+    },
+    {
+      "head_sha": "ac1a07a27c2acc9231d2d42ffcbbed9799afb426",
+      "branch_names": [
+        "audit/current-status-2026-10-10"
+      ]
+    },
+    {
+      "head_sha": "ad37059d0f478ff9bfda57a157d538399f39318a",
+      "branch_names": [
+        "research/operator-micro-dynamics"
+      ]
+    },
+    {
+      "head_sha": "ae1025b29150293d0b98ce9d970346883bfede52",
+      "branch_names": [
+        "exp/qwen-f16-courier"
+      ]
+    },
+    {
+      "head_sha": "ae748aa16c3569d0fe16351150ee33de6bb63ab4",
+      "branch_names": [
+        "research/q2-gravity-gyc-amplitude"
+      ]
+    },
+    {
+      "head_sha": "ae74e72035fd97c01b1f3399365bfd865ce95617",
+      "branch_names": [
+        "research/bqg-hda-minimal-no-go-20261012"
+      ]
+    },
+    {
+      "head_sha": "af16606ecb1358a246574ba3a1406e15f9b5c8fa",
+      "branch_names": [
+        "research/k5-covariance-hda"
       ]
     },
     {
@@ -1270,201 +1469,15 @@
       ]
     },
     {
-      "head_sha": "80d519240f9f4e68df77a7a28742e1a943b37f15",
+      "head_sha": "b26ae55f64e3f9646c91735f005a35b30b4bb34b",
       "branch_names": [
-        "research/bqg-bell-volume-20261012"
+        "audit/pl48-volume-failclosed-20261110"
       ]
     },
     {
-      "head_sha": "ae74e72035fd97c01b1f3399365bfd865ce95617",
+      "head_sha": "b46883f229c5870135720a485c161bf30ae87e9c",
       "branch_names": [
-        "research/bqg-hda-minimal-no-go-20261012"
-      ]
-    },
-    {
-      "head_sha": "fa8c487226465cd9beb2cf8997e8226f2142f3f6",
-      "branch_names": [
-        "research/bqg-micro-carry-rank-20261031"
-      ]
-    },
-    {
-      "head_sha": "a4d41b343e7ce04895abb655e16a500da290ee23",
-      "branch_names": [
-        "research/bqg-node1-lorentzian-columns-20261031"
-      ]
-    },
-    {
-      "head_sha": "ec8d9bdc3594f6304787f592ed6c4adedc878f40",
-      "branch_names": [
-        "research/bqg-v04-actual-constraint-kernel-20261106"
-      ]
-    },
-    {
-      "head_sha": "e0431080b283e3a920d9715a63e7318021bd4eb8",
-      "branch_names": [
-        "research/bqg-v16-first-leg-20261107"
-      ]
-    },
-    {
-      "head_sha": "8d8d3ae533a9a47704263463c76c3a2288635173",
-      "branch_names": [
-        "research/bqg-v20-local-c1-gates-20261107"
-      ]
-    },
-    {
-      "head_sha": "2c28123720db59306890daa0dfba1ad21c2e7eb1",
-      "branch_names": [
-        "research/bqg-v21-c1-checkpoint-repair-20261107"
-      ]
-    },
-    {
-      "head_sha": "f65b8ea83eba8d4cd136bdebc8fe1d65de582776",
-      "branch_names": [
-        "research/bqg-v22-local-c1-e2e-20261107"
-      ]
-    },
-    {
-      "head_sha": "d712a74e8e09408815e0f78483e9c249e139d317",
-      "branch_names": [
-        "research/bqg-v23-exact-finite-certificates-20261108"
-      ]
-    },
-    {
-      "head_sha": "524240db085485ac31678e82778f585ffd38d199",
-      "branch_names": [
-        "research/bqg-v24-finite-index-constraint-gates-20261108"
-      ]
-    },
-    {
-      "head_sha": "b58872dcb23404fd509421e14b975a98d2214a3e",
-      "branch_names": [
-        "research/bqg-v25-local-HDA-charge-20261108"
-      ]
-    },
-    {
-      "head_sha": "e07fa944301e1bf393de6f8b19e351a7b15627f7",
-      "branch_names": [
-        "research/bqg-v26-multiprecision-charge-20261109"
-      ]
-    },
-    {
-      "head_sha": "73287ef611096c01c1673ac894ff44ffb1a38066",
-      "branch_names": [
-        "research/canonical-frontier-v2"
-      ]
-    },
-    {
-      "head_sha": "1f754a7060653746e13da05cc8c76261665379f9",
-      "branch_names": [
-        "research/canonical-ledger-2026-08-15"
-      ]
-    },
-    {
-      "head_sha": "4c51657a7cdc2a758b67a44f0b5c641a10350d50",
-      "branch_names": [
-        "research/canonical-lorentzian-frontier"
-      ]
-    },
-    {
-      "head_sha": "e68a226bfa4638d82e169e4b2a7dbb4645dda349",
-      "branch_names": [
-        "research/canonical-prefactor-audit"
-      ]
-    },
-    {
-      "head_sha": "5350eadf30bc3865392db0f5fcf1ab2ff7e8fe2a",
-      "branch_names": [
-        "research/consolidated-bqg-audit-20261111"
-      ]
-    },
-    {
-      "head_sha": "f6bfcd775b8c3cd33c6c235d48293e40657baf9d",
-      "branch_names": [
-        "research/depth6-s4sign-proof"
-      ]
-    },
-    {
-      "head_sha": "6c63f0d8734d7bc67d1ca6e462e1ba05956b8db5",
-      "branch_names": [
-        "research/first-q2-scalar-effective-action"
-      ]
-    },
-    {
-      "head_sha": "299e3d896a7845688ca6f3e7cb6c4b379c6a73f1",
-      "branch_names": [
-        "research/hl-sine-dag"
-      ]
-    },
-    {
-      "head_sha": "af16606ecb1358a246574ba3a1406e15f9b5c8fa",
-      "branch_names": [
-        "research/k5-covariance-hda"
-      ]
-    },
-    {
-      "head_sha": "ec6980fb53677780d6a68a41f5d97b248b4e4d0d",
-      "branch_names": [
-        "research/l1-amplitude-package-20261110"
-      ]
-    },
-    {
-      "head_sha": "78a0d58085bbc69ed310d348348ce6695b1dff70",
-      "branch_names": [
-        "research/lemaitre-bqg-causal-cone-20261110"
-      ]
-    },
-    {
-      "head_sha": "e40011f66d9779eda82bca2584229128ab3a76f2",
-      "branch_names": [
-        "research/logical-s4-sign-twirl"
-      ]
-    },
-    {
-      "head_sha": "7abcaba66567fd09ec533c0c2a170b7d560e2b9a",
-      "branch_names": [
-        "research/lorentzian-composition-fast"
-      ]
-    },
-    {
-      "head_sha": "5cdf421c8f662db620b762328bec6d9228c7d7b4",
-      "branch_names": [
-        "research/lorentzian-ordered-triple-fast"
-      ]
-    },
-    {
-      "head_sha": "c5aade6763fdd1bd41717f93037231fcba2de99c",
-      "branch_names": [
-        "research/micro-hda-joint-prediction"
-      ]
-    },
-    {
-      "head_sha": "11a0775ce11fddc5cf28680bb24d1f4cc609774d",
-      "branch_names": [
-        "research/mirror-anisotropy-audit-v2"
-      ]
-    },
-    {
-      "head_sha": "7710fc5f2b2b93eebfc2ff72552ff853398a88f4",
-      "branch_names": [
-        "research/mirror-orientation-eta"
-      ]
-    },
-    {
-      "head_sha": "6dad7a4fb05ed8b80540fa610c884d05e1af5563",
-      "branch_names": [
-        "research/modular-complex-arithmetic-bridge"
-      ]
-    },
-    {
-      "head_sha": "ad37059d0f478ff9bfda57a157d538399f39318a",
-      "branch_names": [
-        "research/operator-micro-dynamics"
-      ]
-    },
-    {
-      "head_sha": "185bee58de27b053497e2a28eaf45c66b1470540",
-      "branch_names": [
-        "research/physical-cosmology-interference-lensing"
+        "codex-lppw5h"
       ]
     },
     {
@@ -1474,219 +1487,21 @@
       ]
     },
     {
-      "head_sha": "ab24171a4bb327d190551bdf68957bd10a819c1d",
+      "head_sha": "b58872dcb23404fd509421e14b975a98d2214a3e",
       "branch_names": [
-        "research/physical-scalar-kernel-dynamics"
+        "research/bqg-v25-local-HDA-charge-20261108"
       ]
     },
     {
-      "head_sha": "f06b18f3a9af995d0e7987b323359631945a9394",
+      "head_sha": "b59f4bb4031338f9f6d7d5c97c5123deb77da984",
       "branch_names": [
-        "research/physicalization-l1-depth2-metric"
+        "exp/qwen-local-courier"
       ]
     },
     {
-      "head_sha": "c2a3ee8e30ab449ef23b0cd60fac3db1a0285631",
+      "head_sha": "ba7e6cedc3bd7b356e3f353227fef5795c336027",
       "branch_names": [
-        "research/physicalization-scale-observable-prediction"
-      ]
-    },
-    {
-      "head_sha": "6d3f23860fc134ec0f10259fa17adb2c32588739",
-      "branch_names": [
-        "research/post-hda-physicalization-v2"
-      ]
-    },
-    {
-      "head_sha": "f7f28882d02339b9ed3703c02634ad526c2d1f1b",
-      "branch_names": [
-        "research/pw-lorentzian-24-collector"
-      ]
-    },
-    {
-      "head_sha": "4d72abf7fd0f88c3d9113138eca0b06d264ef2c3",
-      "branch_names": [
-        "research/pw-lorentzian-24-mitm"
-      ]
-    },
-    {
-      "head_sha": "4d7676a0e153145d34e35b215356528eb8629f04",
-      "branch_names": [
-        "research/pw-lorentzian-component-fast"
-      ]
-    },
-    {
-      "head_sha": "fe117390f4b3b567241084ed945fcb7d3166751e",
-      "branch_names": [
-        "research/pw-lorentzian-component-mitm"
-      ]
-    },
-    {
-      "head_sha": "7a44506a3b17a341381a720ac27eae78b81e27b0",
-      "branch_names": [
-        "research/pw-lorentzian-envtrace"
-      ]
-    },
-    {
-      "head_sha": "ed0949bee6f7e21658f3ef054b9f23d6f167c611",
-      "branch_names": [
-        "research/pw-lorentzian-envtrace-orbit"
-      ]
-    },
-    {
-      "head_sha": "651dd9003cb15b8fd57d4b7c31f7c3a70d9bb49b",
-      "branch_names": [
-        "research/pw-lorentzian-logical-projection"
-      ]
-    },
-    {
-      "head_sha": "0559c1122070a8eb72885fa8214bf2ba7f1be320",
-      "branch_names": [
-        "research/pw-lorentzian-lowcut-scout"
-      ]
-    },
-    {
-      "head_sha": "2d05ca59f920d78d926a7f78020a69f6c1326e81",
-      "branch_names": [
-        "research/pw-lorentzian-mitm"
-      ]
-    },
-    {
-      "head_sha": "cf968d788c2b7aac93d468516cd81695a2feff1b",
-      "branch_names": [
-        "research/pw-lorentzian-parity"
-      ]
-    },
-    {
-      "head_sha": "71e807cfedcd38085ebd1801293428ba5701f098",
-      "branch_names": [
-        "research/pw-lorentzian-single-mitm"
-      ]
-    },
-    {
-      "head_sha": "8d4d697d613a05334f2f346dedd68771e0460318",
-      "branch_names": [
-        "research/pw-lorentzian-single-probe"
-      ]
-    },
-    {
-      "head_sha": "e0322ee01558510b0aaf922936a93520488b5360",
-      "branch_names": [
-        "research/pw-lorentzian-ultralow-scout"
-      ]
-    },
-    {
-      "head_sha": "87aee1e6005fa33d1aa2a1361207218088ed0d1c",
-      "branch_names": [
-        "research/pw-master-32"
-      ]
-    },
-    {
-      "head_sha": "3462cb5ee7c802b45d83577ef875877bc5964231",
-      "branch_names": [
-        "research/pw-spin-parity-master"
-      ]
-    },
-    {
-      "head_sha": "6a32a784dfbdc47ffa20248232713a92fd9b90ee",
-      "branch_names": [
-        "research/q2-face-incidence-bridge"
-      ]
-    },
-    {
-      "head_sha": "ae748aa16c3569d0fe16351150ee33de6bb63ab4",
-      "branch_names": [
-        "research/q2-gravity-gyc-amplitude"
-      ]
-    },
-    {
-      "head_sha": "494fd514d2d46ee89b487e9b3d506579a9539831",
-      "branch_names": [
-        "research/q2-gravity-gyc-sign-twirl"
-      ]
-    },
-    {
-      "head_sha": "69d30ce243b79e89151a48888d02342f8897f0b9",
-      "branch_names": [
-        "research/q2-history-directed-laplacian-factorization"
-      ]
-    },
-    {
-      "head_sha": "1a580b434391da0c884d640930ed1b67971c4613",
-      "branch_names": [
-        "research/q2-history-fourier-complex-structure"
-      ]
-    },
-    {
-      "head_sha": "5ba4bc24230c3d0a1e47bf309453a692601ee49d",
-      "branch_names": [
-        "research/q2-history-gravity-orientation-current"
-      ]
-    },
-    {
-      "head_sha": "d52496c73c76b8fec0e7b4021ef9a852503bc690",
-      "branch_names": [
-        "research/q2-history-phase-refinement-winding"
-      ]
-    },
-    {
-      "head_sha": "115d308433254b3b32440e3497df259533930b9d",
-      "branch_names": [
-        "research/q2-orientation-intrinsic-metric-nogo"
-      ]
-    },
-    {
-      "head_sha": "ce33520f0c1bdd9985661bb9be086a463de87e9f",
-      "branch_names": [
-        "research/q2-oriented-flux-history-observable"
-      ]
-    },
-    {
-      "head_sha": "fbdf2ef66d3f28be9ee9c03c0cd479af4459e5c3",
-      "branch_names": [
-        "research/q2-relational-history-projector"
-      ]
-    },
-    {
-      "head_sha": "4c5053a002d4acd380a5911413cc4a76697fa87c",
-      "branch_names": [
-        "research/q2-relational-metric-source"
-      ]
-    },
-    {
-      "head_sha": "83f45dfc19cdef884e5290f111bf46dc0e10d1e7",
-      "branch_names": [
-        "research/q2-unified-complex-structure"
-      ]
-    },
-    {
-      "head_sha": "4833af3f878a18c2179cdb560fa9b22d9ad941c8",
-      "branch_names": [
-        "research/scalar-adm-physical-response"
-      ]
-    },
-    {
-      "head_sha": "9066d572b456f139939d180b7e3cbc2a5a64b514",
-      "branch_names": [
-        "research/sine-kkv-next"
-      ]
-    },
-    {
-      "head_sha": "d1a4648187d063c464d8fd51558b45afbfff39dc",
-      "branch_names": [
-        "research/v12-gauge-dressed-nucleation-20261015"
-      ]
-    },
-    {
-      "head_sha": "2cd4813005356302d8d66f8767b264b908b99d4e",
-      "branch_names": [
-        "research/v13-k5-leakage-safe-master-20261015"
-      ]
-    },
-    {
-      "head_sha": "ce43cabf260d3bb937f4de0bf03d685247c83d41",
-      "branch_names": [
-        "research/v14-k5-first-real-columns-20261015"
+        "codex-4ni6ut"
       ]
     },
     {
@@ -1696,46 +1511,9 @@
       ]
     },
     {
-      "head_sha": "95fa4040df6ac71566f111adf89eebb3ab5b74e5",
+      "head_sha": "be5d5fba10868e4e1b613813494e19943354059c",
       "branch_names": [
-        "research/v16-full-initial-k5-and-first-shell-20261015"
-      ]
-    },
-    {
-      "head_sha": "330236f88c9e5734d67b123330190088c4dfecdd",
-      "branch_names": [
-        "research/v17-k5-parity-shell-selection-20261015"
-      ]
-    },
-    {
-      "head_sha": "2c59b1e03fd7404685db29547fd6b9da3ede575a",
-      "branch_names": [
-        "research/v18-k5-parity-feshbach-20261015"
-      ]
-    },
-    {
-      "head_sha": "1a715e22d10bb27b2d7c7b6529ac53c59092a851",
-      "branch_names": [
-        "research/v19-canonical-k5-replay-20261015",
-        "research/v20-160-canonical-k5-20261015"
-      ]
-    },
-    {
-      "head_sha": "f3ce62cfd9199201dd3ff1025846600cfb75c72d",
-      "branch_names": [
-        "research/v20-complete-160-canonical-20261015"
-      ]
-    },
-    {
-      "head_sha": "085e7b8aa152191a2323803fceecb8565a353880",
-      "branch_names": [
-        "research/v21-first-shell-checkpoints-20261015"
-      ]
-    },
-    {
-      "head_sha": "35056f1b7eebc89840606529164dfd083e1e5f1e",
-      "branch_names": [
-        "research/v22-k5-kernel-ritz-cutoff-20261016"
+        "codex-hobdxi"
       ]
     },
     {
@@ -1745,35 +1523,257 @@
       ]
     },
     {
+      "head_sha": "c19de5df420e84ae7125b67cea4bef5a9dc37536",
+      "branch_names": [
+        "audit/spectral-history-closure-2026-09-06"
+      ]
+    },
+    {
+      "head_sha": "c20b5b6e8c616c79d5c66fa846730b9276bde41e",
+      "branch_names": [
+        "audit/l1-amplitude-package-20261110"
+      ]
+    },
+    {
+      "head_sha": "c2a3ee8e30ab449ef23b0cd60fac3db1a0285631",
+      "branch_names": [
+        "research/physicalization-scale-observable-prediction"
+      ]
+    },
+    {
+      "head_sha": "c40b091513cd3c73b14bbcaaa80bc12d861da7f3",
+      "branch_names": [
+        "final-squash-base"
+      ]
+    },
+    {
+      "head_sha": "c5aade6763fdd1bd41717f93037231fcba2de99c",
+      "branch_names": [
+        "research/micro-hda-joint-prediction"
+      ]
+    },
+    {
+      "head_sha": "ce33520f0c1bdd9985661bb9be086a463de87e9f",
+      "branch_names": [
+        "research/q2-oriented-flux-history-observable"
+      ]
+    },
+    {
+      "head_sha": "ce43cabf260d3bb937f4de0bf03d685247c83d41",
+      "branch_names": [
+        "research/v14-k5-first-real-columns-20261015"
+      ]
+    },
+    {
+      "head_sha": "cf968d788c2b7aac93d468516cd81695a2feff1b",
+      "branch_names": [
+        "research/pw-lorentzian-parity"
+      ]
+    },
+    {
+      "head_sha": "cfe01691b8541b3963fe220cea254fef5cae4a32",
+      "branch_names": [
+        "nexus-r74-phi-fix-run"
+      ]
+    },
+    {
+      "head_sha": "d1a4648187d063c464d8fd51558b45afbfff39dc",
+      "branch_names": [
+        "research/v12-gauge-dressed-nucleation-20261015"
+      ]
+    },
+    {
+      "head_sha": "d491331625d638feacc80cde67a1b16d8079f58e",
+      "branch_names": [
+        "research/consolidated-bqg-audit-20261111"
+      ]
+    },
+    {
+      "head_sha": "d52496c73c76b8fec0e7b4021ef9a852503bc690",
+      "branch_names": [
+        "research/q2-history-phase-refinement-winding"
+      ]
+    },
+    {
+      "head_sha": "d712a74e8e09408815e0f78483e9c249e139d317",
+      "branch_names": [
+        "research/bqg-v23-exact-finite-certificates-20261108"
+      ]
+    },
+    {
+      "head_sha": "d9683ce796b3e05dc9c1c83d16790db7ec6f946c",
+      "branch_names": [
+        "audit/q4-k5-local-carrier-bridge"
+      ]
+    },
+    {
+      "head_sha": "de0b56710f3892f566ece0e6ea31030a50c2dfaf",
+      "branch_names": [
+        "audit/bell-chsh-gate"
+      ]
+    },
+    {
+      "head_sha": "de7d0be18ebc49349738b8191e8976b05809edc3",
+      "branch_names": [
+        "codex-5uocfq"
+      ]
+    },
+    {
+      "head_sha": "e0322ee01558510b0aaf922936a93520488b5360",
+      "branch_names": [
+        "research/pw-lorentzian-ultralow-scout"
+      ]
+    },
+    {
+      "head_sha": "e0431080b283e3a920d9715a63e7318021bd4eb8",
+      "branch_names": [
+        "research/bqg-v16-first-leg-20261107"
+      ]
+    },
+    {
+      "head_sha": "e07fa944301e1bf393de6f8b19e351a7b15627f7",
+      "branch_names": [
+        "research/bqg-v26-multiprecision-charge-20261109"
+      ]
+    },
+    {
+      "head_sha": "e3118e1a710b83d23622af57d9c41ed66d7da2c4",
+      "branch_names": [
+        "physical-tt-kernel-leading-ir"
+      ]
+    },
+    {
       "head_sha": "e3eb71e898f4b638d32cdc19b2c3e5ba2f97db52",
       "branch_names": [
         "research/v24-crossscale-multiplicity-obstruction-20261016"
       ]
     },
     {
-      "head_sha": "45d7ba89facf7c0ad17ddb2359c26bb00f6e6eb5",
+      "head_sha": "e40011f66d9779eda82bca2584229128ab3a76f2",
       "branch_names": [
-        "research/v25-ancilla-crossscale-k5-20261016"
+        "research/logical-s4-sign-twirl"
       ]
     },
     {
-      "head_sha": "456aa7c477c022b87ba1a09d1d0397c67506645c",
+      "head_sha": "e5ae681bbaed3bdb53d82a7f9d6b51cf3707da9b",
       "branch_names": [
-        "research/v26-graph-sector-output-obstruction-20261016"
+        "audit/physicalization-truth-v3"
       ]
     },
     {
-      "head_sha": "042baa6e87b2a0340511cf083c974042c89b848b",
+      "head_sha": "e68a226bfa4638d82e169e4b2a7dbb4645dda349",
       "branch_names": [
-        "research/zeroaware-volume-migration"
+        "research/canonical-prefactor-audit"
       ]
     },
     {
-      "head_sha": "306eaccf4f6416438271eb69eeb72ff2ea6959ae",
+      "head_sha": "ec6980fb53677780d6a68a41f5d97b248b4e4d0d",
       "branch_names": [
-        "spectral-history-closure"
+        "research/l1-amplitude-package-20261110"
+      ]
+    },
+    {
+      "head_sha": "ec8d9bdc3594f6304787f592ed6c4adedc878f40",
+      "branch_names": [
+        "research/bqg-v04-actual-constraint-kernel-20261106"
+      ]
+    },
+    {
+      "head_sha": "ecd0b20ca7affc5e424e7f113a5b273ba73c6c3a",
+      "branch_names": [
+        "exp/qwen15b-q8-courier"
+      ]
+    },
+    {
+      "head_sha": "ed0949bee6f7e21658f3ef054b9f23d6f167c611",
+      "branch_names": [
+        "research/pw-lorentzian-envtrace-orbit"
+      ]
+    },
+    {
+      "head_sha": "f03fb73391d0ac06aa5652db4bc31684dce121a8",
+      "branch_names": [
+        "audit/rg-refinement-strict-20261110"
+      ]
+    },
+    {
+      "head_sha": "f06b18f3a9af995d0e7987b323359631945a9394",
+      "branch_names": [
+        "research/physicalization-l1-depth2-metric"
+      ]
+    },
+    {
+      "head_sha": "f3ce62cfd9199201dd3ff1025846600cfb75c72d",
+      "branch_names": [
+        "research/v20-complete-160-canonical-20261015"
+      ]
+    },
+    {
+      "head_sha": "f4d27c390b2f6a436b8c1108ef837414a340cb31",
+      "branch_names": [
+        "docs/bqg-scientific-fairytale-20261109"
+      ]
+    },
+    {
+      "head_sha": "f6155c3abe030a2564e0402306baad1f5b9f253a",
+      "branch_names": [
+        "codex-ro2602"
+      ]
+    },
+    {
+      "head_sha": "f65b8ea83eba8d4cd136bdebc8fe1d65de582776",
+      "branch_names": [
+        "research/bqg-v22-local-c1-e2e-20261107"
+      ]
+    },
+    {
+      "head_sha": "f683df8f9d80c6654dab8e99c3c8946c586c7401",
+      "branch_names": [
+        "audit/k5-s5-hamiltonian-covariance-v1"
+      ]
+    },
+    {
+      "head_sha": "f6bfcd775b8c3cd33c6c235d48293e40657baf9d",
+      "branch_names": [
+        "research/depth6-s4sign-proof"
+      ]
+    },
+    {
+      "head_sha": "f7f28882d02339b9ed3703c02634ad526c2d1f1b",
+      "branch_names": [
+        "research/pw-lorentzian-24-collector"
+      ]
+    },
+    {
+      "head_sha": "fa8c487226465cd9beb2cf8997e8226f2142f3f6",
+      "branch_names": [
+        "research/bqg-micro-carry-rank-20261031"
+      ]
+    },
+    {
+      "head_sha": "fbdf2ef66d3f28be9ee9c03c0cd479af4459e5c3",
+      "branch_names": [
+        "research/q2-relational-history-projector"
+      ]
+    },
+    {
+      "head_sha": "fd4f13017d698b5ac92517c6c08b9f5726cfe34e",
+      "branch_names": [
+        "codex-89btph"
+      ]
+    },
+    {
+      "head_sha": "fddd49427c636e92dfe79b96034862aeba629927",
+      "branch_names": [
+        "audit/bqg-independent-proof-20261108"
+      ]
+    },
+    {
+      "head_sha": "fe117390f4b3b567241084ed945fcb7d3166751e",
+      "branch_names": [
+        "research/pw-lorentzian-component-mitm"
       ]
     }
   ],
-  "audit_branch_heads_note": "The consolidated research SHA is recorded immediately before this inventory refresh commit; the manifest cannot include its own resulting commit SHA."
+  "audit_branch_heads_note": "Consolidated research SHA is recorded immediately before this inventory-refresh commit; the manifest cannot include its own resulting commit SHA."
 }
