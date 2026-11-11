@@ -447,3 +447,12 @@ The helper still uses ordinary float64 outer products and accumulation rather th
 - A full physical projector/rigging map, cutoff-independent graph embedding, refinement intertwining estimate and continuum limit remain unimplemented.
 - The K5 no-prune label means removal of amplitude-threshold pruning on the reviewed path; it does not mean exact arithmetic, infinite spin, or a completed physical HDA.
 
+## 13. Positive-metric bound implementation: dimension and underflow contract
+
+The finite Loewner theorem in §4 is now reflected in the constraint-stability implementation with explicit dimensions:
+- the node metric dimension is checked against the number of node constraints;
+- the singular-spectrum length is checked against the input carrier dimension;
+- TSQR's full right-nullspace convention pads the singular spectrum with exact zeros when the output row count is smaller than the input dimension;
+- underflow in \(\sigma_i^2\), \(\lambda_{\min}(G)\sigma_i^2\), and \(\lambda_{\max}(G)\sigma_i^2\) is reported separately and makes the numerical bound set unresolved.
+
+This is a correctness/diagnostic hardening of the finite theorem implementation. It does not turn the singular values into exact symbolic values, nor does it supply the missing upstream construction-error bound \(\eta\) required for an exact-operator Weyl certificate. The regression file currently contains 38 test methods by static source count; no fresh CI PASS is claimed.
