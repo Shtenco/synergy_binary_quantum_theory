@@ -542,3 +542,10 @@ This is a meaningful independent algebraic control, but it is deliberately not r
 Exposed the unsymmetrized raw triple-product operator as volume123_raw_operator and refactored volume123_matrix to consume it, preserving the prior symmetrization and sqrt(abs(Q)) behavior. Added three small-sector tests on four doubled-spin triples: raw Hermiticity before symmetrization, Hermiticity/positive semidefiniteness of the derived volume matrix, and consistency of the pre-symmetrization diagnostic ledger. This directly tests the production spin/volume implementation in finite sectors, but not the full HH column or continuum physics.
 
 The workflow now runs the new volume test file. Total committed test methods: 30 across four scripts. Execution remains unconfirmed; no PASS claim.
+
+
+## 22. Local production link-hit adjoint gate
+
+Added a finite-sector test of actual production CG link-hit matrices. For all four binary endpoint channels in the doubled-spin transition 1 -> 2, reversing edge orientation and swapping endpoint labels reproduces the conjugate-transpose matrices and preserves the real normalization. Path and sequence adjunction are also tested as involutions.
+
+This verifies the local link-hit convention only. It does not yet prove full primitive/T/H adjointness in the coupled K5 state space. The committed suite now contains 33 test methods across five scripts; CI execution is not confirmed.
