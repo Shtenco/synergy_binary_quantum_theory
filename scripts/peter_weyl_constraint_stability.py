@@ -482,7 +482,7 @@ def column_digest(columns):
 
 
 def run(domain="low", jmax2=5, rank_rtol=1e-10,
-        singular_rtol=1e-10, block_rows=4096):
+        singular_rtol=1e-10, block_rows=4096, retain_operator_maps=False):
     if not isinstance(jmax2, int) or isinstance(jmax2, bool) or jmax2 < 1:
         raise ValueError("jmax2 must be a positive doubled-spin cutoff covering the j=1/2 carrier")
     if (isinstance(rank_rtol, (bool, np.bool_))
@@ -599,10 +599,215 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
             "note": "Weyl sufficient condition on the represented maps only; failure to satisfy it does not prove rank loss.",
         },
         "claim_boundary": "Finite carrier and finite Jmax only; float64 numerical result, not exact arithmetic or a continuum theorem.",
+        **({
+            "_operator_maps": {"legacy": legacy, "no_prune": no_prune}
+        } if retain_operator_maps else {}),
+    }
+
+
+def adjacent_cutoff_operator_difference(previous_columns, current_columns,
+                                             dim, singular_rtol=1e-10,
+                                             block_rows=4096):
+    """Compute ||C_current-C_previous||_2 in the common labelled row embedding.
+
+    Missing row labels are zero-extended. This is valid only because each
+    output-state key denotes the same canonical Peter-Weyl basis vector at
+    every cutoff; the key includes its spin/intertwiner labels.
+    """
+    if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
+        raise ValueError("dim must be a positive integer")
+    delta = subtract_stacked(previous_columns, current_columns, dim)
+    digest = column_digest(delta)
+    direct = direct_svd_from_columns(delta, dim, singular_rtol, block_rows)
+    if direct["scale_separation_loss"]:
+        norm = None
+        classification = "INCONCLUSIVE_SCALE_SEPARATION"
+    else:
+        values = np.asarray(direct["singular_values"], dtype=float)
+        norm = float(values[0]) if values.size else 0.0
+        classification = "FINITE_FLOAT64_COMMON_ROW_EMBEDDING"
+    return {
+        "operator_difference_norm_2": norm,
+        "classification": classification,
+        "scale_separation_warning": bool(direct["scale_separation_loss"]),
+        "difference_rank_at_declared_tolerance": (
+            None if direct["scale_separation_loss"] else int(direct["rank"])
+        ),
+        "singular_value_rtol": float(singular_rtol),
+        "row_count_union": int(direct["row_count"]),
+        "block_count": int(direct["block_count"]),
+        "difference_column_sha256": digest,
+        "embedding": (
+            "direct-sum row keys (node, canonical Peter-Weyl output-state); "
+            "missing labels are zero-extended into the common union"
+        ),
+        "exact_operator_norm_certified": False,
+        "error_scope": (
+            "SVD of represented float64 sparse-map difference; excludes "
+            "upstream recoupling, truncation, and arithmetic error bounds"
+        ),
     }
 
 
 def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
+                               rank_rtol=1e-10, singular_rtol=1e-10,
+                               block_rows=4096):
+    """Compare finite-cutoff kernel geometry and normalized spectra.
+
+    This is a regulator-sensitivity diagnostic. It does not estimate the
+    operator-norm difference between C_J and C_{J+1}, because this runner
+    retains spectra/projectors rather than the complete sparse maps.
+    """
+    try:
+        cutoffs = list(jmax2_values)
+    except TypeError as exc:
+        raise ValueError("jmax2_values must be an iterable of increasing integers") from exc
+    if (not cutoffs or any(
+            not isinstance(x, int) or isinstance(x, bool) or x < 1
+            for x in cutoffs)):
+        raise ValueError("every doubled-spin cutoff must be an integer >= 1")
+    if cutoffs != sorted(set(cutoffs)):
+        raise ValueError("doubled-spin cutoffs must be strictly increasing")
+
+    summaries = []
+    adjacent = []
+    previous_maps = None
+    for cutoff in cutoffs:
+        result = run(
+            domain, cutoff, rank_rtol, singular_rtol, block_rows,
+            retain_operator_maps=True
+        )
+        current_maps = result.pop("_operator_maps")
+        if previous_maps is not None:
+            pair = {
+                "from_jmax2": previous_maps["jmax2"],
+                "to_jmax2": cutoff,
+                "no_prune": adjacent_cutoff_operator_difference(
+                    previous_maps["no_prune"], current_maps["no_prune"],
+                    result["domain_dimension"], singular_rtol, block_rows
+                ),
+                "legacy": adjacent_cutoff_operator_difference(
+                    previous_maps["legacy"], current_maps["legacy"],
+                    result["domain_dimension"], singular_rtol, block_rows
+                ),
+            }
+            adjacent.append(pair)
+        previous_maps = {
+            "jmax2": cutoff,
+            "legacy": current_maps["legacy"],
+            "no_prune": current_maps["no_prune"],
+        }
+        np_direct = result["no_prune"]["direct_svd"]
+        leg_direct = result["legacy"]["direct_svd"]
+
+        def spectrum_summary(direct):
+            if direct["scale_separation_loss"]:
+                return {
+                    "rank": None, "nullity": None, "sigma_max": None,
+                    "sigma_min_including_numerical_kernel": None,
+                    "smallest_retained_sigma": None,
+                    "normalized_singular_values": None,
+                    "scale_separation_warning": True,
+                    "stacked_column_sha256": None,
+                    "classification": "INCONCLUSIVE_SCALE_SEPARATION",
+                }
+            singular = np.asarray(direct["singular_values"], dtype=float)
+            scale = float(singular[0]) if singular.size else 0.0
+            normalized = singular / scale if scale > 0.0 else np.zeros_like(singular)
+            rank = int(direct["rank"])
+            positive = singular[:rank]
+            return {
+                "rank": rank,
+                "nullity": int(len(singular) - rank),
+                "sigma_max": scale,
+                "sigma_min_including_numerical_kernel": (
+                    float(singular[-1]) if singular.size else 0.0
+                ),
+                "smallest_retained_sigma": (
+                    float(positive[-1]) if positive.size else None
+                ),
+                "normalized_singular_values": normalized.tolist(),
+                "scale_separation_warning": bool(direct["scale_separation_loss"]),
+                "stacked_column_sha256": None,
+            }
+
+        no_prune_summary = spectrum_summary(np_direct)
+        legacy_summary = spectrum_summary(leg_direct)
+        no_prune_summary["stacked_column_sha256"] = result["no_prune"]["stacked_column_sha256"]
+        legacy_summary["stacked_column_sha256"] = result["legacy"]["stacked_column_sha256"]
+        summaries.append({
+            "jmax2": cutoff,
+            "Jmax": cutoff / 2.0,
+            "domain_dimension": result["domain_dimension"],
+            "legacy": legacy_summary,
+            "no_prune": no_prune_summary,
+        })
+
+        if hasattr(PILOT.PW.T_cached, "cache_clear"):
+            PILOT.PW.T_cached.cache_clear()
+        gc.collect()
+
+    return {
+        "status": "finite Peter-Weyl regulator sensitivity sweep",
+        "domain": domain,
+        "domain_dimension": summaries[0]["domain_dimension"],
+        "doubled_spin_cutoffs": cutoffs,
+        "points": summaries,
+        "adjacent_cutoff_comparisons": adjacent,
+        "claim_boundary": (
+            "Compares finite-cutoff numerical ranks, normalized singular spectra, "
+            "and right-kernel projectors only. It does not compute ||C_J-C_Jnext||, "
+            "prove nested-operator convergence, establish regulator independence, "
+            "or imply a continuum theorem."
+        ),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--domain", choices=("low", "full"), default="low")
+    ap.add_argument("--jmax2", type=int, default=5)
+    ap.add_argument("--rank-rtol", type=float, default=1e-10,
+                    help="relative Gram-eigenvalue tolerance (not singular-value tolerance)")
+    ap.add_argument("--singular-rtol", type=float, default=1e-10,
+                    help="relative singular-value tolerance for direct TSQR/SVD")
+    ap.add_argument("--block-rows", type=int, default=4096)
+    ap.add_argument(
+        "--jmax2-sweep",
+        help="optional comma-separated increasing doubled-spin cutoffs, e.g. 1,3,5",
+    )
+    ap.add_argument("--output", type=Path)
+    args = ap.parse_args()
+    if args.jmax2_sweep:
+        try:
+            cutoffs = [int(value.strip()) for value in args.jmax2_sweep.split(",")]
+        except ValueError as exc:
+            ap.error(f"invalid --jmax2-sweep: {exc}")
+        result = cutoff_convergence_sweep(
+            args.domain, cutoffs, args.rank_rtol,
+            args.singular_rtol, args.block_rows
+        )
+        default_output = (
+            f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_"
+            f"{args.domain}_J_SWEEP.json"
+        )
+    else:
+        result = run(args.domain, args.jmax2, args.rank_rtol,
+                     args.singular_rtol, args.block_rows)
+        default_output = (
+            f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_"
+            f"{args.domain}_J{args.jmax2}.json"
+        )
+    output = args.output or Path(default_output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+domain="low", jmax2_values=(1, 3, 5),
                                rank_rtol=1e-10, singular_rtol=1e-10,
                                block_rows=4096):
     """Compare finite-cutoff kernel geometry and normalized spectra.
