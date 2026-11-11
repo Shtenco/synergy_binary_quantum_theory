@@ -57,6 +57,10 @@ class BranchSnapshotLzmaTests(unittest.TestCase):
             self.assertEqual(result["unique_head_commit_count"], 2)
             self.assertEqual(manifest["unique_blob_count"], 3)
             self.assertEqual(
+                manifest["commit_graph"][manifest["branch_heads"]["feature"]]["parents"],
+                [manifest["branch_heads"]["main"]],
+            )
+            self.assertEqual(
                 manifest["branch_heads"]["main"],
                 manifest["branch_heads"]["alias"],
             )
