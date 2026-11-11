@@ -72,3 +72,10 @@ The production primitive/orientation suite now includes `test_full_32_term_T_two
 The test prints forward and reverse projected-support leakage (count, L2, max amplitude) outside the selected 2D subspaces. This is not spin-wall clipping. The test is a 2×2 projected block check, not a complete finite-sector matrix identity or unrestricted adjointness proof. The method is committed and fetched back; local execution could not start because the runtime could not resolve github.com, and CI run discovery returned no run for the push commit. No PASS is claimed.
 
 The primitive/orientation script now has six methods and the six workflow scripts contain 43 methods by source inspection.
+
+
+## Finite spin-wall sensitivity ledger — 2026-11-11
+
+A further production test now compares the complete coherent 32-term T column for one declared input at doubled-spin walls 2 and 4. It records output support at both walls, common/exclusive support, high-spin output norm at wall 4, and the amplitude change on common low-final-spin outputs. This last quantity detects paths clipped at an intermediate hit by wall 2 that can nevertheless return to low final spin later in the sequence.
+
+The comparison is only a finite wall-sensitivity diagnostic; it is neither an unbounded reference nor a convergence proof. The new test is source-committed in `bdb4fb1105dfc7b36c81c3bcfaffbdb9e595e6ba`, emits `T_SPIN_WALL_SENSITIVITY` in CI, and has not yet been execution-confirmed. The primitive/orientation file now has seven methods and the six workflow scripts contain 44 methods by source inventory.
