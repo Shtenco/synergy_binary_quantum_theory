@@ -417,3 +417,50 @@ The production volume suite now tests self-adjointness of `apply_volume_tensor_o
 This isolates the epsilon-conjugation convention used to orient the local volume action.
 
 The volume test file now has seven methods. Total workflow source inventory is 42 methods. This remains finite local tensor-space coverage and is not a full primitive/H adjoint certificate. Test commit: `50c807d03c8616dce639487afc83704ec19c5b36`; execution and CI PASS are not claimed.
+
+
+## 32. Matrix-wide T/T† and assembled H acceptance protocol — 2026-11-11 02:18 UTC
+
+### Current source and CI checkpoint
+
+The current six workflow-invoked scripts contain 42 test methods by source inspection (12 + 11 + 4 + 7 + 3 + 5). The latest observed branch head before this documentation update was `3e4b45e944ecbe92e731b2d0e7cd497d9665afd2`; comparison against `main` was diverged, 109 ahead and 2 behind. The branch remains isolated; no merge/rebase/main write was performed.
+
+Actions runs #26–#29 (`42942768669`, `42944352617`, `42944740425`, `42944880600`) were checked through their jobs. All four jobs remained queued, with no conclusion or steps. No local test execution and no CI PASS are confirmed. The latest code test commit is `50c807d03c8616dce639487afc83704ec19c5b36`.
+
+### Achievements to preserve as separate evidence classes
+
+- deterministic coherent sparse aggregation and no-prune execution contract;
+- raw volume defect capture before historical Hermitian completion;
+- raw alternating-tensor covariance under all six leg permutations;
+- derived `sqrt(|Q|)` covariance under all six permutations;
+- independent spectral reconstruction `V²=|Q|` on four finite spin triples;
+- local oriented-volume tensor self-adjointness at all five vertices and four triples;
+- local link-hit adjoint tests and local recoupling-basis orthonormality;
+- production closed-loop primitive dense-adjoint matrix oracle;
+- exact 12-spec orientation combinatorics at all five vertices;
+- one complete five-hit T monomial adjoint matrix-element check;
+- full coherent 32-term T/T† check for one selected matrix element.
+
+These do not yet establish a matrix-wide T adjoint, assembled node-H Hermiticity, unrestricted operator adjointness, full HH, HDA closure, or continuum physics.
+
+### Required matrix-wide T/T† protocol
+
+The current 32-term gate uses one input ket and one selected output matrix element. Its next extension must declare domain and codomain bases explicitly and compare rectangular matrices, not only a chosen element. The finite test should use multiple orthonormal input columns, coherent no-prune aggregation of all 32 signed monomials, and an independently evaluated reverse action from all 32 adjoint sequences.
+
+For every column, record the full set of output keys. For the reverse action, record outputs outside the declared input domain. Do not silently project away or drop escaped keys: report forward and reverse boundary leakage separately, and require zero leakage only when the chosen subspaces are intended to be closed. If the subspaces are intentionally rectangular/non-invariant, state that the equality is only the projected finite-subspace identity and do not promote it to unrestricted adjointness.
+
+Keep the test small enough for the existing five-minute workflow timeout. Before increasing the number of columns, estimate the number of production primitive applications (32 per forward column and 32 per reverse column per tested output ket) and use a deterministic, mathematically justified basis selection. Do not weaken tolerances to accommodate a mismatch.
+
+### Assembled node-H gate
+
+After the constituent T gate, independently materialize the signed 12-spec sum for `H_v=(T_v+T_v†)/2`. Compare its matrix with its conjugate transpose on the declared finite sector. Preserve the per-specification sign and ordering; do not replace the production assembly with an already-symmetrized matrix. Report boundary leakage and raw anti-Hermitian defect before any diagnostic symmetrization.
+
+### Subsequent sequence
+
+1. matrix-wide coherent T/T† with boundary accounting;
+2. assembled 12-spec node-H finite-sector Hermiticity;
+3. spin-wall ladder and clipped-transition ledger;
+4. full no-prune HH composition with resource-limit manifest;
+5. complete leakage Gram `Σ_v L_v†L_v), including off-diagonal interference and the correct graph-changing inner product.
+
+No-prune completion remains a computation status, not a physical acceptance result. Preserve the legacy path and never use fallback to legacy to conceal a resource limit.
