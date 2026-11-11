@@ -751,3 +751,42 @@ Commits:
 The research branch remains isolated from main. GitHub Actions continues to
 queue push-triggered runs; no CI result is inferred from queued jobs. No
 production low-domain or 32-state calculation is claimed.
+
+
+## Follow-up: finite spin-cutoff sensitivity sweep (2026-11-11 14:52 UTC)
+
+A first regulator-sensitivity driver is now available in
+`scripts/peter_weyl_constraint_stability.py`:
+
+```bash
+python scripts/peter_weyl_constraint_stability.py --domain low --jmax2-sweep 1,3,5
+```
+
+For each requested doubled-spin cutoff it records the legacy and no-prune
+numerical ranks/nullities, largest and smallest singular values, smallest
+retained singular value, normalized singular spectrum, and sparse-column
+digest. Between adjacent cutoffs it compares the no-prune right-kernel
+projectors and the normalized singular-spectrum shapes. The driver clears
+the T-column cache and runs garbage collection between cutoff points so
+transient cached constraint columns do not accumulate across the sweep.
+
+Two synthetic regression tests were added:
+- adjacent-cutoff kernel comparison reproduces the analytic
+  `sin(theta)` projector distance for a rotated one-dimensional kernel;
+- unordered, duplicate, boolean, and sub-1 cutoff entries are rejected
+  before the expensive calculation is invoked.
+
+Important scope boundary: the driver does **not** retain the full sparse
+constraint maps across cutoffs, and therefore does not calculate
+`||C_J-C_(J+1)||_2`. Normalized spectrum differences are shape diagnostics,
+not operator-norm convergence bounds. Even a stable kernel projector across
+the sampled cutoffs would be evidence only for the finite sampled regulators,
+not regulator independence or a continuum theorem. The next stronger step
+must preserve a common row-key embedding and directly estimate the
+inter-cutoff operator difference, with a separate error ledger for floating
+point and truncation.
+
+The constraint-stability suite now has 26 test methods; the four-suite
+static source inventory is **84 methods** (31 + 26 + 13 + 14). These are
+source counts only. The new cutoff sweep and its tests have not been run
+against the production Peter-Weyl columns in this environment.
