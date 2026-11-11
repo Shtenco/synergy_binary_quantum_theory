@@ -85,5 +85,43 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
                 )
 
 
+    def test_local_recoupling_bases_are_orthonormal_on_all_test_sectors(self):
+        # The dense adjoint comparison is meaningful only in orthonormal
+        # domain/codomain bases. Check every local channel basis used by the
+        # input sector and all eight output spin assignments explicitly.
+        spin_configs = {(1,) * len(k5.EDGES)}
+        triangle_edges = tuple(
+            k5.EIDX[e] for e in ((0, 1), (1, 2), (0, 2))
+        )
+        for edge_spins in itertools.product((0, 2), repeat=3):
+            spins = [1] * len(k5.EDGES)
+            for edge_index, edge_spin in zip(triangle_edges, edge_spins):
+                spins[edge_index] = edge_spin
+            spin_configs.add(tuple(spins))
+
+        for spins in sorted(spin_configs):
+            for vertex in k5.VERT:
+                local = k5.local_spins(spins, vertex)
+                channels = k5.allowed_k2_t(*local)
+                tensors = [
+                    k5.oriented_intertwiner(vertex, local, channel)
+                    for channel in channels
+                ]
+                gram = np.array([
+                    [np.vdot(left, right) for right in tensors]
+                    for left in tensors
+                ], dtype=complex)
+                np.testing.assert_allclose(
+                    gram,
+                    np.eye(len(channels)),
+                    rtol=2e-13,
+                    atol=2e-13,
+                    err_msg=(
+                        f"non-orthonormal local recoupling basis at "
+                        f"vertex={vertex}, spins={local}"
+                    ),
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
