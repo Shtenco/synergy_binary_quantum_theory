@@ -549,3 +549,6 @@ The workflow now runs the new volume test file. Total committed test methods: 30
 Added a finite-sector test of actual production CG link-hit matrices. For all four binary endpoint channels in the doubled-spin transition 1 -> 2, reversing edge orientation and swapping endpoint labels reproduces the conjugate-transpose matrices and preserves the real normalization. Path and sequence adjunction are also tested as involutions.
 
 This verifies the local link-hit convention only. It does not yet prove full primitive/T/H adjointness in the coupled K5 state space. The committed suite now contains 33 test methods across five scripts; CI execution is not confirmed.
+
+
+A final workflow configuration audit found and corrected incomplete pull_request path filters. All five test scripts are now covered by both push and pull_request filters and each has an explicit execution step. Workflow blob SHA: 7caec171b996b3c662b4445681764ff24f1d2a1f. No workflow result is claimed.
