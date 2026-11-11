@@ -71,6 +71,20 @@ class ConstraintStabilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not PSD"):
             stability.spectrum_of_gram(np.diag([-1.0, 2.0]), 1e-10)
 
+    def test_gram_rank_classification_is_scale_invariant(self):
+        base = np.diag([0.0, 1e-12]).astype(complex)
+        ranks = [
+            stability.spectrum_of_gram(base * scale, 1e-10)["estimated_rank"]
+            for scale in (1e-12, 1e-6, 1.0, 1e6, 1e12)
+        ]
+        self.assertEqual(ranks, [1, 1, 1, 1, 1])
+
+    def test_zero_gram_has_zero_scale_and_zero_rank(self):
+        result = stability.spectrum_of_gram(np.zeros((3, 3), dtype=complex), 1e-10)
+        self.assertEqual(result["gram_eigenvalue_scale"], 0.0)
+        self.assertEqual(result["estimated_rank"], 0)
+        self.assertEqual(result["rank_threshold_on_gram_eigenvalues"], 0.0)
+
     def test_column_digest_is_order_independent(self):
         a = {0: {(0, "x"): 1.0 + 2.0j, (1, "y"): 3.0}}
         b = {0: {(1, "y"): 3.0, (0, "x"): 1.0 + 2.0j}}
