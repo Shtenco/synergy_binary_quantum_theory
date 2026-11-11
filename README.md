@@ -1279,3 +1279,6 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 
 
 На 01:57 UTC queue-diagnosis checkpoint, до финальной документальной сверки, ветка имела tip `64ba147757c70ccb4bfa4e24c20e1892c8090bbc`, **67 commits ahead / 0 behind** checkpoint base. Последующие изменения только синхронизировали документацию; актуальный tip указан в текущем отчёте сессии. Ветка остаётся изолированной; `main` не изменялась.
+
+
+**Точный commit ledger документальной серии 01:57 UTC:** все 15 последовательных SHA и назначение каждого коммита записаны в [continuity checkpoint, section 22 and its commit ledger](BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md). Это позволяет восстановить порядок изменений; production code, tests, workflows и thresholds в этой серии не менялись.
