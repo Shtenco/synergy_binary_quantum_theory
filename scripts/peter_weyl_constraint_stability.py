@@ -952,7 +952,7 @@ def compare_cutoff_operator_columns(lower, upper, dim, block_rows=4096,
                             - dense_singular[:singular_count])))
         if singular_count else 0.0
     )
-    oracle_tolerance = 5e-11 * max(1.0, norm_scale)
+    oracle_tolerance = 5e-11 * norm_scale
     return {
         "status": (
             "DENSE_ORACLE_AGREEMENT"
