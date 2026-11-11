@@ -93,7 +93,13 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
             for i, old in enumerate(levels):
                 if old is not None:
                     scaled_old = old * factor
-                    if factor == 0.0 or np.any((old != 0.0) & (scaled_old == 0.0)):
+                    if (factor == 0.0
+                            or np.any((old != 0.0) & (scaled_old == 0.0))
+                            or (0.0 < factor < np.finfo(float).eps)):
+                        # A retained nonzero old block can still be below
+                        # working precision relative to the newly enlarged
+                        # global scale. Treat this as inconclusive even when
+                        # the represented values do not underflow to zero.
                         scale_separation_loss = True
                     levels[i] = scaled_old
             scale = local_scale
