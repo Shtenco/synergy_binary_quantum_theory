@@ -16,6 +16,23 @@ This change integrates the previously separate finite Peter-Weyl master-projecto
 - Added 12 focused tests in `scripts/test_peter_weyl_master_projector_integrity.py`.
 - Added both scripts to push and pull-request path filters and added the test command to `.github/workflows/bqg-sparse-pruning.yml`.
 
+## Follow-up integrity correction (2026-11-11 09:27 UTC)
+
+A second-pass audit found a hidden coefficient cutoff in the zero-sector
+annihilation verifier: coefficients with magnitude below `1e-14` were
+skipped while reconstructing `H_v|psi>`. This could under-report the
+constraint residual for a zero eigenvector with small but nonzero components.
+The verifier has been factored into `constraint_annihilation_norm` and
+now skips only coefficients that are exactly `0j`. Contributions are
+accumulated with `math.fsum` separately for real and imaginary parts
+before the Euclidean norm is formed.
+
+Two regression tests exercise a `1e-15` coefficient multiplying a
+`1e15` column amplitude (the residual must remain 1, not disappear
+behind a threshold). This correction removes the last explicit amplitude
+threshold in the zero-sector residual reconstruction; it does not establish
+exact arithmetic.
+
 ## Local algebraic control
 
 An independent synthetic two-node/two-column calculation compared the sparse cross-Gram contraction
