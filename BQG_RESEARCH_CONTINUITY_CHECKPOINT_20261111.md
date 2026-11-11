@@ -260,3 +260,11 @@ Added an L2 test of the full production `COMP.C_volume_component` map on two ind
 The common scale is (10^6), with relative L2 residual bound (5\times10^{-12}). This exercises both the direct volume contribution and the inverse-holonomy / volume / forward-holonomy branch of the full covariant leg. It is a focused integration-level gate, not a complete four-component matrix proof and not a (C(K)), H_L, HDA, physical-kernel, or causal-cone result. The internal threshold behavior of `COMP.add` remains inside the map under test.
 
 The test and audit entry are committed on the research branch. The L2 suite has not yet produced an execution log; no PASS/FAIL is claimed. Next dependency: run and diagnose this full (C(V)) test, then extend the same independent-support and matrix-reconstruction discipline to (C(K)) and L3.
+
+
+
+## 16. Latest branch tip after full C(V) gate — 11 November 2026
+
+The latest verified branch tip is `bb2fe589fbf3b62557dca7daece90c2e36f15c99` (commit: include full covariant C(V) L2 gate in README). Comparing the research branch with `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` reports **39 commits ahead and 0 behind**. The test, audit, continuity checkpoint and README all contain the new full-(C(V)) independent-support gate. The latest tracked L1/L2 jobs remain queued with no artifacts at the latest poll described in section 14; the new push-triggered test run has not yet been assigned a run ID in the available run response. No test verdict is available.
+
+The new C(V) integration test is intentionally scoped to one matrix component, edge and two-vector fixture. Its success or failure will be diagnostic evidence for that declared finite test, not a statement about all of (C(V)), the Lorentzian triple, or physical dynamics. Next gate remains execution and diagnosis; only then proceed to the remaining C(V) components and the corresponding (C(K)) composition.
