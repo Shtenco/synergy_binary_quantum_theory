@@ -130,3 +130,8 @@ The source is a substantive finite Peter–Weyl K5 implementation, but its curre
 ## 8. Raw volume operator inspection
 
 The K5 producer now exposes its raw unsymmetrized triple-product Q through volume123_raw_operator. The existing volume routine uses this shared raw object, records its relative anti-Hermitian defect, and then performs the historical Hermitian completion. A dedicated test file checks four low-spin triples before symmetrization, verifies the derived sqrt(abs(Q)) matrix is Hermitian/positive semidefinite, and checks diagnostic consistency. This tests finite-sector implementation details only; full production HH and continuum claims remain open.
+
+
+## 9. Local link-hit adjoint convention
+
+A dedicated test now checks the actual production Clebsch-Gordan link-hit matrices for the doubled-spin transition 1 -> 2 across all four endpoint channel pairs. Orientation reversal with endpoint-channel swap must equal the conjugate transpose and preserve normalization. Path and operator-sequence adjunction are tested as involutions. This is a local convention check, not full primitive/T/H adjoint certification.
