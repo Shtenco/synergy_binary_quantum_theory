@@ -202,3 +202,55 @@ not GitHub Actions results. The new direct-SVD comparison has **not** yet been
 run on the full 32-dimensional no-prune carrier. No upstream operator-construction
 error bound has been established, so the result remains numerical for the
 represented float64 maps and cannot certify exact rank of the symbolic operator.
+
+## Follow-up re-audit: direct TSQR/SVD and current test inventory (2026-11-11 10:09 UTC)
+
+The current branch version supersedes earlier test-count statements in this
+report. Counting test methods in the checked-in files at the current branch
+head gives:
+
+- `test_peter_weyl_master_projector_integrity.py`: 22 tests;
+- `test_peter_weyl_constraint_stability.py`: 10 tests;
+- `test_peter_weyl_streaming_svd.py`: 11 tests;
+- total across these three focused suites: **43 tests**.
+
+The workflow runs all three suites. This count is a static inventory of test
+methods, not a statement that CI has passed.
+
+### Independent implementation review
+
+The streaming solver uses binary-tree Householder TSQR and a final SVD of the
+compact R factor. The implementation avoids forming the Gram matrix for the
+direct singular-value path. The row-block adapter deterministically merges
+the sparse output supports and inserts an explicit zero row for an empty
+operator, allowing the zero-map nullspace to be represented.
+
+The TSQR implementation's current `scale_separation_loss` flag detects
+components that underflow to exact zero during common rescaling/normalization.
+It does not estimate general QR backward error or flag every sub-ulp loss of
+relative information. Consequently the solver remains a floating-point
+numerical diagnostic; its own output explicitly does not certify exact rank
+or bound upstream operator-construction error. A future hardening pass should
+add a conservative near-machine-precision scale-separation warning and a
+regression fixture where a nonzero block is below machine epsilon relative to
+the dominant block.
+
+### Current repository and CI snapshot
+
+At this audit point the research branch head is
+`2ba2c8e87b85de99012d1905835d7a9d7f8207d1`. Comparison with `main`
+reports 259 commits ahead and 2 behind, with merge base
+`23669209c83fe0aa2741612e5b2b119562ee6d7d`. The `main` head remains
+`254f19fdab41d32b920bf454f987aa7c0fdba34d`; no merge or main-branch write
+was performed.
+
+The latest observed workflow run is
+`42999838772` for commit
+`2ba2c8e87b85de99012d1905835d7a9d7f8207d1`. At the time of this check it
+was still `queued`, and its `sparse-pruning-tests` job was also `queued`.
+No CI PASS is claimed. Several earlier pushes also created queued runs; the
+latest run is the relevant branch-head check.
+
+The full 32-state production legacy/no-prune comparison has still not been
+executed. No physical-kernel conclusion is upgraded by the presence of the
+new TSQR implementation or by synthetic dense-oracle tests.
