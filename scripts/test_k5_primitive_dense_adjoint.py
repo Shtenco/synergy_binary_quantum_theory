@@ -395,5 +395,85 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
             self.assertGreaterEqual(item["max_abs"], 0.0)
 
 
+    def test_full_32_term_T_spin_wall_2_vs_4_sensitivity_ledger(self):
+        # The primitive hit rule changes an edge spin by +/-1 (doubled-spin
+        # units) at every hit. Compare two finite walls on the same coherent
+        # T column to expose paths that are clipped at Jmax2=2 but survive at
+        # Jmax2=4. This is a wall-sensitivity diagnostic, not an unbounded
+        # reference and not a proof that Jmax2=4 is sufficient.
+        import math
+        from collections import defaultdict
+
+        vertex, a, b, c = 0, 1, 2, 3
+        input_key = ((1,) * len(k5.EDGES), (0,) * len(k5.VERT))
+        terms = k5.T_sequences(vertex, a, b, c)
+        self.assertEqual(len(terms), 32)
+
+        def coherent_at_wall(wall):
+            contributions = defaultdict(list)
+            for coefficient, sequence in terms:
+                mapping = k5.apply_primitive_oriented(
+                    input_key, sequence, wall, mode="no_prune"
+                )
+                for output_key, amplitude in mapping.items():
+                    contributions[output_key].append(coefficient * amplitude)
+            result = {}
+            for output_key, values in contributions.items():
+                amplitude = complex(
+                    math.fsum(value.real for value in values),
+                    math.fsum(value.imag for value in values),
+                )
+                if amplitude != 0j:
+                    result[output_key] = amplitude
+            return result
+
+        wall2 = coherent_at_wall(2)
+        wall4 = coherent_at_wall(4)
+        self.assertTrue(wall2, "T column vanished at Jmax2=2")
+        self.assertTrue(wall4, "T column vanished at Jmax2=4")
+        for label, mapping in (("wall2", wall2), ("wall4", wall4)):
+            for key, value in mapping.items():
+                self.assertTrue(
+                    np.isfinite(value.real) and np.isfinite(value.imag),
+                    msg=f"non-finite amplitude in {label} at {key}",
+                )
+
+        common = set(wall2) & set(wall4)
+        only_wall2 = set(wall2) - set(wall4)
+        only_wall4 = set(wall4) - set(wall2)
+        low_wall_delta = [
+            wall4[key] - wall2[key]
+            for key in common
+            if max(key[0]) <= 2
+        ]
+        low_l2 = math.sqrt(math.fsum(abs(value) ** 2 for value in low_wall_delta))
+        low_max = max((abs(value) for value in low_wall_delta), default=0.0)
+        high_wall_keys = [
+            key for key in wall4 if max(key[0]) > 2
+        ]
+        high_wall_l2 = math.sqrt(math.fsum(
+            abs(wall4[key]) ** 2 for key in high_wall_keys
+        ))
+        print(
+            "T_SPIN_WALL_SENSITIVITY",
+            {
+                "input": input_key,
+                "walls": (2, 4),
+                "support_wall2": len(wall2),
+                "support_wall4": len(wall4),
+                "common_support": len(common),
+                "only_wall2": len(only_wall2),
+                "only_wall4": len(only_wall4),
+                "wall4_outputs_above_wall2": len(high_wall_keys),
+                "wall4_high_spin_l2": high_wall_l2,
+                "common_low_spin_delta_l2": low_l2,
+                "common_low_spin_delta_max": low_max,
+            },
+        )
+        self.assertGreaterEqual(low_l2, 0.0)
+        self.assertGreaterEqual(high_wall_l2, 0.0)
+
+
+
 if __name__ == "__main__":
     unittest.main()
