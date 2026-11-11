@@ -486,3 +486,12 @@ The CI log record `T_SPIN_WALL_SENSITIVITY` includes support counts, common and 
 This is a finite two-wall sensitivity comparison, not a convergence theorem and not an unbounded reference. It uses the same production implementation at both walls. It makes no assertion about the numerical size of the wall effect until CI actually executes. The primitive/orientation suite now has 7 methods; six workflow scripts have 44 methods by source inspection. Execution and PASS remain unconfirmed.
 
 Next: inspect the measured wall sensitivity, trace clipped intermediate paths if nonzero, optionally extend to a 2/4/6 ladder, then proceed to full finite-sector T/reverse matrices and assembled signed 12-spec H_v.
+
+
+### 34.1 Exact reachable-spin ceiling for the selected T column
+
+The wall test now evaluates walls 2, 4, and 6 and requires exact equality of the no-prune coherent output dictionaries at walls 4 and 6 (commit `088c4ccf5dcde17e982c0a625e67ba71df4fd561`).
+
+For this fixed all-link doubled-spin-1 input, each T monomial hits edge ((c,v)) twice and every other edge at most once. Since a hit changes doubled spin by exactly ±1, the maximum reachable doubled spin is 3. Therefore wall 4 is analytically above the reachable ceiling for this one input/T sum; wall 6 is a redundant exact saturation check. This finite combinatorial bound is not transferable to arbitrary input spins or later HH compositions.
+
+The CI output still compares wall 2 to the saturated wall 4/6 result and records support and low-final-spin amplitude deltas. No numerical output is claimed until execution.
