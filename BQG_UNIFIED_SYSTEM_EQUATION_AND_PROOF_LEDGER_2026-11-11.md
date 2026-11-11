@@ -396,9 +396,9 @@ The existence, path independence, normalization and physical interpretation of t
 **Scientific rule:** no finite numerical gate, successful workflow, representation identity, or conditional EFT theorem may be promoted into a claim of complete physical BQG closure without the missing maps and limits above.
 
 
-## 12. Graph-shell integration, cutoff completeness, and numerical hardening
+## 12. Graph-shell integration, cutoff completeness, and numerical hardening — source recheck
 
-The later graph-shell wrapper now computes the complete finite pullback for each node from the supplied K5 columns:
+The graph-shell wrapper now assembles the finite pullback from complete supplied K5 node columns:
 
 \[
 M_{\mathrm{projected}}=\sum_v C_v^\dagger C_v,
@@ -408,29 +408,42 @@ M_{\mathrm{leak}}=\sum_v L_v^\dagger L_v,
 M_{\mathrm{full}}=M_{\mathrm{projected}}+M_{\mathrm{leak}}.
 \]
 
-The wrapper is included in the sparse-pruning workflow and has seven synthetic tests. Those tests establish the wrapper's algebra on controlled columns; they do not yet execute the production K5 action over a generated shell.
+Here \(C_v=P H_v P\) and \(L_v=(I-P)H_vP\). The leakage Gram is assembled coherently across columns sharing the same outside-shell key, so its off-diagonal interference terms are retained. The workflow runs the graph-shell wrapper's 12-method synthetic test suite; this is source configuration, not proof of a fresh Actions PASS.
 
-### Spin-wall requirement
+### Spin-wall enforcement — repaired in source
 
-The exhaustive current T-monomial combinatorics gives edge-hit multiplicities \((1,1,1,2)\). Therefore one node-H action can raise a doubled edge spin by at most 2. The graph shell starts from all-link doubled spin 1. A depth-\(d\) shell generation performs \(d\) H actions, and the pullback master then applies one additional H to every shell basis vector. A conservative complete wall is therefore
+The earlier audit text said that the wrapper accepted depth and cutoff independently. That statement is stale. The current source defines
 
 \[
-J_{\max}^{(2)}\ge 1+2(d+1)=2d+3.
+J_{\max}^{(2)}\ge 1+2(d+1)=2d+3
 \]
 
-The current graph-shell run accepts depth and jmax2 independently and does not enforce this relation. The default depth 1 / jmax2 5 meets the bound. A depth 2 run with jmax2 5 does not; it can silently omit reachable intermediate paths and therefore cannot be called a full pullback. Add a fail-closed validation or a derived wall before accepting non-default depths.
+and enforces it at the start of `run()`, before shell generation. The bound follows from the T-monomial edge-hit multiplicities \((1,1,1,2)\): one node-H can raise doubled spin by at most two, and the pullback applies one additional H after the generated depth. The default depth 1 / jmax2 5 meets the bound; depth 2 / jmax2 5 is rejected, while depth 2 requires jmax2 at least 7.
 
-### Basis metric prerequisite
+The regression `test_depth_two_requires_complete_pullback_spin_wall` checks that the invalid depth/cutoff pair fails before `generate_shell` is called. This closes the specific fail-open regulator-wall issue for the current shell-generation rule. It does not prove the hit-count model for arbitrary future operator words; changes to T-monomial combinatorics must update the bound and its independent reachability oracle together.
 
-The leakage identity assumes that the shell keys are an orthonormal basis, or that the corresponding basis Gram is explicitly included. The graph-shell wrapper currently describes its result as relative to orthonormal Peter–Weyl keys but does not compute or assert the Gram matrix of every local recoupling sector appearing in its generated shell. Existing local orthonormality tests cover selected sectors, not every sector in every generated shell. The structural-check flag does not currently include this basis-metric prerequisite. Either prove the normalization for every generated sector from the construction or add an exhaustive local-sector Gram gate.
+### Basis metric prerequisite — finite shell check now present
 
-### Overflow and PSD diagnostics
+The earlier statement that the wrapper did not check shell-basis normalization is also stale. The current source calls `validate_shell_basis_orthonormality(basis)` on the generated basis. It groups every local \((v,\text{spins})\) sector actually used, constructs the corresponding oriented intertwiner tensors, measures each local Gram defect, and fails closed if the declared tolerance is exceeded. The result is included in `structural_ok`. A dedicated test checks the initial Peter–Weyl carrier.
 
-The leakage helper accumulates squared amplitudes and outer products without scaling. A finite amplitude can therefore overflow during the Gram construction. Its PSD classifier also forms the Hermitian part as \((A+A^\dagger)/2\); this can overflow for a finite Hermitian matrix near float64 maximum even though the safer expression \(A/2+A^\dagger/2\) remains finite. A local independent arithmetic check with \(A=[10^{308}]\) confirmed that the former produces non-finite values while the latter remains finite. Required hardening:
-- use scaled sum-of-squares and scaled outer-product accumulation;
-- detect when the true Gram is outside float64 representability and fail explicitly;
-- use half-before-addition Hermitianization;
-- validate rel_tol and eps_factor as finite, nonnegative, non-boolean numeric controls;
-- verify all assembled Gram/master outputs are finite before eigensolvers.
+This is a finite numerical check over all local sectors represented in the particular generated shell. It is not a general proof for all possible graph bases, all spin cutoffs, or alternate normalization conventions. The exact global product-basis interpretation still relies on the declared Peter–Weyl orthogonality and tensor-product conventions.
 
-These are source-level findings and independent arithmetic demonstrations, not execution results from the committed module.
+### Overflow and PSD diagnostics — partial hardening present
+
+The current leakage helper validates finite input amplitudes and checks the assembled shell action, leakage Gram, shell Gram and pullback for non-finite values. It raises `FloatingPointError` if the Gram cannot be represented in float64; a regression deliberately supplies an amplitude whose square overflows. The PSD classifier now uses half-before-addition Hermitianization,
+
+\[
+A_H=\tfrac12 A+\tfrac12 A^\dagger,
+\]
+
+and validates finite, nonnegative, non-boolean tolerance controls. A near-maximal finite Hermitian one-by-one matrix is covered by a regression.
+
+The helper still uses ordinary float64 outer products and accumulation rather than a scaled/compensated Gram algorithm. Its present safety property is **fail-closed on detected non-finite results**, not scale-free representability for every possible finite input. Any future attempt to support more extreme dynamic range should add scaled accumulation and compare against an independent dense/high-precision oracle.
+
+### What remains open
+
+- No production-generated multi-state shell run has been freshly confirmed in this audit turn; the current workflow's tests are synthetic dense-oracle fixtures plus selected finite-sector production primitive tests.
+- The shell pullback is exact only relative to the supplied finite float64 columns and the checked basis conventions. Upstream CG/coefficient, volume square-root, aggregation, cutoff and solver errors still lack one propagated global bound.
+- A full physical projector/rigging map, cutoff-independent graph embedding, refinement intertwining estimate and continuum limit remain unimplemented.
+- The K5 no-prune label means removal of amplitude-threshold pruning on the reviewed path; it does not mean exact arithmetic, infinite spin, or a completed physical HDA.
+
