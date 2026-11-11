@@ -79,3 +79,10 @@ The primitive/orientation script now has six methods and the six workflow script
 A further production test now compares the complete coherent 32-term T column for one declared input at doubled-spin walls 2 and 4. It records output support at both walls, common/exclusive support, high-spin output norm at wall 4, and the amplitude change on common low-final-spin outputs. This last quantity detects paths clipped at an intermediate hit by wall 2 that can nevertheless return to low final spin later in the sequence.
 
 The comparison is only a finite wall-sensitivity diagnostic; it is neither an unbounded reference nor a convergence proof. The new test is source-committed in `bdb4fb1105dfc7b36c81c3bcfaffbdb9e595e6ba`, emits `T_SPIN_WALL_SENSITIVITY` in CI, and has not yet been execution-confirmed. The primitive/orientation file now has seven methods and the six workflow scripts contain 44 methods by source inventory.
+
+
+### Analytical spin ceiling and wall saturation — 2026-11-11
+
+For the selected all-link doubled-spin-1 input and one complete T sum, each monomial hits edge ((c,v)) twice and each of the other path edges at most once. Every hit changes doubled spin by ±1, so no reachable edge spin can exceed doubled spin 3. The test was extended to walls 2, 4, and 6 and now asserts exact equality of the complete wall-4 and wall-6 coherent output maps. Thus wall 4 is analytically sufficient for this narrowly defined input/operator experiment; this does not establish sufficiency for other spin sectors or HH.
+
+Commit: `088c4ccf5dcde17e982c0a625e67ba71df4fd561`. The result is a source-level combinatorial ceiling and an unexecuted test assertion, not yet an observed numerical saturation result.
