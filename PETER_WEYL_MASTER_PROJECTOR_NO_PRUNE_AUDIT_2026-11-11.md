@@ -536,3 +536,43 @@ commits ahead of main and two commits behind it, with merge base
 merge was performed. The full 32-state production legacy/no-prune run and
 the low-domain pilot execution remain unperformed; source changes alone do
 not establish a physical kernel or a continuum result.
+
+## Follow-up: independent volume oracle and CI queue inspection (2026-11-11 14:25 UTC)
+
+A second independent oracle is now committed in
+scripts/test_k5_volume_raw_operator.py. It constructs |Q_H| and sqrt(|Q_H|)
+from the left singular vectors and singular values of an SVD of Q_H, then
+compares both the squared production volume and the production volume itself.
+A zero-spin (0,0,0) case checks that the raw operator, volume, and ledger are
+all exactly zero and that the spectral nullity equals the one-dimensional
+carrier size.
+
+The integrity gate now also rejects boolean spin indices and boolean
+coverage/cutoff arguments. This is intentional: Python treats bool as a
+subclass of int, but True is not a valid doubled spin or call count.
+
+### Current focused test inventory (static source count)
+
+- master-projector integrity: 31 test methods;
+- legacy/no-prune constraint stability: 16 test methods;
+- streaming TSQR/direct-SVD: 13 test methods;
+- production K5 raw-volume operator: 14 test methods;
+- total: **74 test methods**.
+
+### CI state: queue saturation observed
+
+A direct Actions API read for this branch returned 122 workflow runs total;
+the latest 100 returned runs were all still in status queued. The latest
+runs include:
+- run 122, ID 43037988475, head 370f36562a078583fe48261ed65f3feb2157fa2d;
+- run 121, ID 43037980024, head ed066c8d0b57d26db5369a3a220d0e6dff4c23e4.
+
+Their jobs are also queued and have no steps yet. This confirms a queue
+backlog rather than a test failure. To avoid worsening that backlog, no
+manual workflow dispatch or rerun is initiated. No test execution or CI PASS
+is claimed.
+
+The current branch head before this documentation update is
+370f36562a078583fe48261ed65f3feb2157fa2d; comparison reports 304 commits
+ahead of main and two behind. Main is unchanged and unmerged. The low-domain
+and 32-state production calculations remain pending actual execution.
