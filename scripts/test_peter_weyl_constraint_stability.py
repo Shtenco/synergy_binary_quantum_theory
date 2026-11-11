@@ -438,5 +438,71 @@ class ConstraintStabilityTests(unittest.TestCase):
             abs(np.sin(0.1)), places=12
         )
 
+
+    def test_common_row_cutoff_embedding_matches_dense_oracle(self):
+        r1 = (0, ((1, 1, 1), (0, 2)))
+        r2 = (1, ((1, 1, 1), (2, 0)))
+        r3 = (2, ((1, 1, 1), (0, 0)))
+        lower = {
+            0: {r1: 1.0 + 0j},
+            1: {r1: 0.5 + 0j, r2: 2.0 + 0j},
+        }
+        upper = {
+            0: {r1: 1.25 + 0j},
+            1: {r1: 0.5 + 0j, r3: 3.0 + 0j},
+        }
+        delta, embedding = stability.cutoff_difference_from_columns(
+            lower, upper, 2
+        )
+        self.assertEqual(embedding["common_row_count"], 1)
+        self.assertEqual(embedding["lower_only_row_count"], 1)
+        self.assertEqual(embedding["upper_only_row_count"], 1)
+        self.assertEqual(embedding["changed_common_coefficients"], 1)
+        self.assertAlmostEqual(
+            embedding["max_abs_common_coefficient_change"], 0.25
+        )
+        self.assertEqual(delta[1][r2], -2.0 + 0j)
+        self.assertEqual(delta[1][r3], 3.0 + 0j)
+        comparison = stability.compare_cutoff_operator_columns(
+            lower, upper, 2, block_rows=1
+        )
+        self.assertEqual(comparison["status"], "DENSE_ORACLE_AGREEMENT")
+        self.assertAlmostEqual(
+            comparison["difference_operator_norm_tsqr"], 3.0, places=12
+        )
+        self.assertAlmostEqual(
+            comparison["difference_operator_norm_dense"], 3.0, places=12
+        )
+        self.assertLess(
+            comparison["tsqr_dense_operator_norm_abs_error"], 1e-12
+        )
+
+    def test_cutoff_row_key_encoding_is_type_tagged(self):
+        self.assertNotEqual(
+            stability._row_key_order((0, (1,))),
+            stability._row_key_order((0, ("1",))),
+        )
+
+    def test_cutoff_dense_oracle_enforces_union_memory_limit(self):
+        lower = {0: {(0, "a"): 1.0}, 1: {(1, "b"): 1.0}}
+        upper = {0: {(2, "c"): 1.0}, 1: {(3, "d"): 1.0}}
+        with self.assertRaisesRegex(ValueError, "dense oracle requires"):
+            stability.compare_cutoff_operator_columns(
+                lower, upper, 2, dense_max_entries=2
+            )
+
+    def test_cutoff_dense_oracle_pads_singular_values_to_domain_dimension(self):
+        lower = {0: {}, 1: {}, 2: {}}
+        upper = {0: {(0, "row"): 1.0}, 1: {}, 2: {}}
+        comparison = stability.compare_cutoff_operator_columns(
+            lower, upper, 3
+        )
+        self.assertEqual(comparison["status"], "DENSE_ORACLE_AGREEMENT")
+        self.assertEqual(len(comparison["dense_oracle_singular_values"]), 3)
+        np.testing.assert_allclose(
+            comparison["dense_oracle_singular_values"], [1.0, 0.0, 0.0]
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
