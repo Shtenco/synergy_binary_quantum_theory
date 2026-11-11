@@ -280,6 +280,11 @@ class ConstraintStabilityTests(unittest.TestCase):
         kernel = stability.compare_kernel_projectors(direct, warned, 2)
         self.assertEqual(kernel["status"], "INCONCLUSIVE_SCALE_SEPARATION")
         self.assertIsNone(kernel["no_prune_rank"])
+        standalone = stability.singular_threshold_sweep(
+            warned, 2, [1e-12, 1e-8]
+        )
+        self.assertEqual(standalone["status"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertEqual(standalone["threshold_results"], [])
         sweep = stability.compare_threshold_sweeps(
             direct, warned, 2, [1e-12, 1e-8]
         )

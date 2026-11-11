@@ -333,6 +333,20 @@ def singular_threshold_sweep(direct, dim, rtol_values):
         raise ValueError("threshold grid must be nonempty, finite, and nonnegative")
     if values != sorted(set(values)):
         raise ValueError("threshold grid must be strictly increasing")
+    scale_flag = direct.get("scale_separation_loss", True)
+    if not isinstance(scale_flag, (bool, np.bool_)):
+        raise ValueError("scale_separation_loss metadata must be boolean")
+    if scale_flag:
+        return {
+            "spectral_scale": None,
+            "right_singular_vector_unitarity_defect_frobenius": None,
+            "right_singular_vector_unitarity_tolerance": None,
+            "scale_separation_warning": True,
+            "status": "INCONCLUSIVE_SCALE_SEPARATION",
+            "rank_plateaus_on_declared_grid": [],
+            "threshold_results": [],
+            "thresholds_not_evaluated": values,
+        }
     singular = np.asarray(direct.get("singular_values"), dtype=float)
     if singular.shape != (dim,) or not np.all(np.isfinite(singular)) or np.any(singular < 0.0):
         raise ValueError("direct singular values must be a finite nonnegative dim-vector")
