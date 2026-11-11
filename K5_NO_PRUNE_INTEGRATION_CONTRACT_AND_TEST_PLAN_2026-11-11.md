@@ -207,3 +207,17 @@ The K5 producer requires its own corresponding gates above. This branch is inten
 - No-prune HH run, threshold ladder, or pruning-certified leakage Gram.
 
 **Release rule:** do not describe the current K5 HH output as unpruned, pruning-certified, adjoint-certified, or physically HDA-closed. It remains a legacy-thresholded finite regression until the corresponding gates above pass with reproducible run manifests.
+
+
+## 10. Producer integration update — 2026-11-11
+
+The K5 producer now has an explicit CLI mode switch:
+
+- --mode legacy (default): retains the historical threshold path and regression comparison;
+- --mode no_prune: bypasses local intertwiner, primitive-output, cached T, state, HH-composition, top-level H/commutator, and V5-input amplitude cutoffs. It coherently aggregates primitive path contributions, T-sequence maps, state superpositions, node-H contributions, HH compositions, the commutator, and the V5 superposition using the shared deterministic sparse aggregator.
+
+The T_cached cache signature includes mode, so legacy and no-prune values occupy distinct cache keys. A MemoryError in no-prune mode emits an explicit resource_limit JSON status and exits nonzero; it does not fall back to legacy. The volume routine now records the raw pre-symmetrization relative anti-Hermitian defect for each encountered spin triple before retaining the prior Hermitian symmetrization used by the historical calculation.
+
+Added scripts/test_k5_sparse_policy_wiring.py with six focused checks: tiny-amplitude retention in no-prune accumulation, legacy cutoff preservation, no-prune state retention, legacy state pruning, policy-bearing cache signature, and raw volume defect recording. CI installs NumPy and SymPy and runs both pruning and K5 wiring test scripts on push and pull-request path changes.
+
+Not yet certified: the full no-prune K5 HH run has not been executed; the new focused test scripts have not yet returned a confirmed CI PASS; no actual K5 dense-matrix oracle or production bilinear adjoint test has been completed. The V5 input coefficient selection is now threshold-free in no-prune mode, but the no-prune result still needs a real run manifest and independent comparison. The raw volume defect is exposed diagnostically, not yet gated against a declared tolerance or independently derived exact value.
