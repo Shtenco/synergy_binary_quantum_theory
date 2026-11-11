@@ -94,7 +94,52 @@ The workflow has now been corrected and the correction itself reviewed for dupli
 - `peter_weyl_lorentzian_K_block_gate.py`;
 - `peter_weyl_covariant_K_projection_audit_gate.py`;
 - `peter_weyl_volume_cross_rep_audit.py`;
-- `peter_weyl_q_block_gauge_audit.py);
+- `peter_weyl_q_block_gauge_audit.py`;
 alongside the already tracked L2 test, CK, KCOMP, CV and zero-aware volume migration modules.
 
 This is a CI coverage correction, not a production-operator change and not a test result. The push should create a new workflow execution; its actual run identifier and status must be obtained and inspected. No PASS is inferred from the workflow file being updated. The earlier run `42937467628` remains separately identified as the test-bearing run for the C(V) gate and must still be inspected. Do not confuse a later workflow-configuration run with execution of a different test revision.
+
+
+## 8. Re-audit of the actual CI queue and C(K) coefficient path — 11 November 2026, 01:57 UTC
+
+### 8.1 Direct CI re-poll
+
+The eight previously identified L1/L2 runs were queried again through both the job and artifact endpoints:
+
+| Family | Run | Job | Job status | Conclusion | Artifacts |
+|---|---:|---:|---|---|---|
+| L2 | 42937467628 | 130250982584 | queued | none | none |
+| L2 | 42936684504 | 130248370659 | queued | none | none |
+| L2 | 42936669007 | 130248321716 | queued | none | none |
+| L2 | 42936480504 | 130247689781 | queued | none | none |
+| L2 | 42935968925 | 130246013044 | queued | none | none |
+| L2 | 42935840345 | 130245591568 | queued | none | none |
+| L1 | 42930769907 | 130228642399 | queued | none | none |
+| L1 | 42929934053 | 130225807106 | queued | none | none |
+
+This repeated observation establishes a queue/observability blockage for these tracked runs, not a numerical result. In particular, run 42937467628 still has no execution log or artifact. No PASS, FAIL, skip count, XFAIL cause, or numerical residual can be inferred. The connector still does not expose an all-push-run listing or workflow-dispatch operation, so the run created by the later workflow correction cannot be identified from the available interface. No run ID is guessed.
+
+### 8.2 Additional C(K) source-level precision
+
+The current `peter_weyl_covariant_K_composition_gate.py` source confirms three distinct coefficient-sensitive layers:
+
+1. **Column construction:** `apply_HE_complete_state_custom` obtains a unit-key response from `CK.apply_HE_complete_key`, then passes that response and the actual arbitrary input coefficient `amp` to `COMP.add`. Since `COMP.add` thresholds the running destination after scaling, the retained support can depend on the magnitude and ordering of coefficients in a superposition.
+2. **Commutator assembly:** `apply_K_complete_custom` forms `VH=V(HE(state))` and `HV=HE(V(state))` separately, then combines them with opposite signs using the same thresholded accumulator. Cancellation between these two terms is therefore also exposed to intermediate pruning.
+3. **Outer covariant leg:** `C_K_component` sums the two auxiliary-index branches, closes the target endpoint, and combines the hKh term with the direct diagonal term through further thresholded `COMP.add` calls.
+
+This distinguishes the custom state action from the cached-column `CK.apply_HE_complete_state`: the latter assembles cached unit-key columns by ordinary coefficient multiplication before its final output filter, whereas the custom map explicitly inserts each scaled column into the thresholded accumulator. Neither implementation should be presumed linear solely because its unit-key columns can be serialized as a matrix.
+
+### 8.3 L2 acceptance contract sharpened
+
+When Actions becomes observable, the report must retain separate outcomes for:
+- syntax/compile closure;
+- hard fixture reachability;
+- hard safe-domain complex homogeneity;
+- expected threshold-boundary failures, including their exact assertion messages;
+- each independent-support additivity residual and output support size.
+
+A red suite caused by an expected threshold-boundary characterization is not equivalent to a broken fixture; a green suite with XFAILs is not proof of linearity. Any unexpected success of an `expectedFailure` is a test-contract change requiring review, not something to ignore.
+
+### 8.4 Scientific boundary
+
+No production operator or test was changed in this re-audit. No local execution was performed. The active C(V) test still covers only one matrix component, and no C(K) additivity or L3 matrix-reconstruction result exists. The next mathematical gate remains the actual execution/diagnosis of the current C(V) fixture; the next software gate is to restore CI observability before expanding claims. `main` remains untouched.
