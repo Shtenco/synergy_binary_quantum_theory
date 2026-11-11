@@ -98,6 +98,8 @@ def master_from_gram(B: np.ndarray, G: np.ndarray) -> np.ndarray:
 
 
 def hermitian_diagnostics(M: np.ndarray):
+    if not np.all(np.isfinite(M)):
+        raise ValueError("raw master matrix contains non-finite entries")
     defect = float(np.linalg.norm(M - M.conj().T, ord="fro"))
     scale = max(float(np.linalg.norm(M, ord="fro")), np.finfo(float).tiny)
     return defect, defect / scale
@@ -106,8 +108,9 @@ def hermitian_diagnostics(M: np.ndarray):
 def classify_spectrum(evals: np.ndarray, zero_threshold: float, psd_tolerance: float):
     if not np.all(np.isfinite(evals)):
         raise ValueError("master spectrum contains non-finite eigenvalues")
-    if zero_threshold < 0 or psd_tolerance < 0:
-        raise ValueError("spectral tolerances must be nonnegative")
+    if (not np.isfinite(zero_threshold) or not np.isfinite(psd_tolerance)
+            or zero_threshold < 0 or psd_tolerance < 0):
+        raise ValueError("spectral tolerances must be finite and nonnegative")
     minimum = float(np.min(evals)) if len(evals) else 0.0
     if minimum < -psd_tolerance:
         raise ValueError(
@@ -130,8 +133,9 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         mode="legacy", hermitian_rtol=1e-10, psd_rtol=1e-10):
     if mode not in ("legacy", "no_prune"):
         raise ValueError(f"unsupported pruning mode: {mode}")
-    if min(zero_rtol, hermitian_rtol, psd_rtol) < 0:
-        raise ValueError("all tolerances must be nonnegative")
+    tolerances = (zero_rtol, hermitian_rtol, psd_rtol)
+    if not all(np.isfinite(value) and value >= 0 for value in tolerances):
+        raise ValueError("all tolerances must be finite and nonnegative")
     nodes = tuple(PW.VERT)
     basis = carrier_basis(domain)
     columns, supports = constraint_columns(basis, nodes, jmax2, mode)
@@ -154,7 +158,8 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         mask = classify_spectrum(evals, threshold, psd_tolerance)
         P0, _ = projector_from_eigh(evals, U, threshold)
         rank0 = int(np.count_nonzero(mask))
-        positive = evals[~mask]
+        positive = evals[evals > threshold]
+        negative_nonzero = evals[evals < -threshold]
         gap = float(np.min(positive)) if len(positive) else 0.0
         min_eval = float(np.min(evals))
         min_G = float(np.min(np.linalg.eigvalsh(G)))
@@ -184,6 +189,8 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
             "zero_threshold": threshold,
             "zero_sector_rank": rank0,
             "first_positive_master_gap": gap,
+            "negative_nonzero_eigenvalues": [float(x) for x in negative_nonzero],
+            "negative_nonzero_count": int(len(negative_nonzero)),
             "zero_sector_constraint_annihilation_max_norm": annihilation,
             "raw_master_hermiticity_defect_frobenius": herm_abs,
             "raw_master_hermiticity_relative_defect": herm_rel,
