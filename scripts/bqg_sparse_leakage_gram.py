@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Hashable, Mapping, Sequence
+import math
 import numpy as np
 
 
@@ -46,8 +47,7 @@ def assemble_leakage_gram(
     shell_index = {key: i for i, key in enumerate(keys)}
     C = np.zeros((n, n), dtype=np.complex128)
     outside_rows: dict[Hashable, dict[int, complex]] = {}
-    input_l1 = 0.0
-    input_l2_sq = 0.0
+    amplitude_magnitudes = []
     for j, out in enumerate(output_columns):
         for key, raw_amp in out.items():
             amp = complex(raw_amp)
@@ -55,13 +55,10 @@ def assemble_leakage_gram(
                 raise ValueError(f"non-finite amplitude in column {j}, key {key!r}")
             if amp == 0:
                 continue
-            amp_abs = float(np.hypot(amp.real, amp.imag))
-            input_l1 += amp_abs
-            input_l2_sq += amp_abs * amp_abs
-            if not (np.isfinite(input_l1) and np.isfinite(input_l2_sq)):
-                raise FloatingPointError(
-                    "input amplitude norm diagnostics exceed float64 range"
-                )
+            amp_abs = float(math.hypot(amp.real, amp.imag))
+            if not math.isfinite(amp_abs):
+                raise FloatingPointError("amplitude magnitude exceeds float64 range")
+            amplitude_magnitudes.append(amp_abs)
             i = shell_index.get(key)
             if i is not None:
                 C[i, j] += amp
@@ -90,8 +87,21 @@ def assemble_leakage_gram(
         raise FloatingPointError("full pullback Gram is not representable in float64")
     leak_herm = float(np.linalg.norm(G_leak - G_leak.conj().T))
     pull_herm = float(np.linalg.norm(pullback - pullback.conj().T))
-    leak_ev = np.linalg.eigvalsh((G_leak + G_leak.conj().T) / 2) if n else np.array([])
+    leak_ev = np.linalg.eigvalsh(0.5 * G_leak + 0.5 * G_leak.conj().T) if n else np.array([])
     scale = float(np.linalg.norm(pullback, ord=2)) if n else 0.0
+    if not all(np.isfinite(x) for x in (leak_herm, pull_herm, scale)):
+        raise FloatingPointError("leakage/pullback diagnostics exceed float64 range")
+    input_l1 = math.fsum(amplitude_magnitudes)
+    squared_magnitudes = [x * x for x in amplitude_magnitudes]
+    input_l2_sq = (
+        math.fsum(squared_magnitudes)
+        if all(math.isfinite(x) for x in squared_magnitudes)
+        else None
+    )
+    if not math.isfinite(input_l1):
+        input_l1 = None
+    if input_l2_sq is not None and not math.isfinite(input_l2_sq):
+        input_l2_sq = None
     diagnostics = {
         "shell_dimension": n,
         "distinct_outside_keys": len(outside_rows),
