@@ -261,8 +261,51 @@ def volume_raw_hermiticity_diagnostics(
             delta_frob = float(raw.get("symmetrization_delta_frobenius_norm", float("nan")))
             delta_2_bound = float(raw.get("symmetrization_delta_spectral_norm_upper_bound", float("nan")))
             relative_bound = float(raw.get("symmetrization_relative_frobenius_bound", float("nan")))
+            spectrum = raw.get("hermitian_spectrum_resolution")
         except (AttributeError, TypeError, ValueError, OverflowError):
             defect = raw_norm = delta_frob = delta_2_bound = relative_bound = float("nan")
+            spectrum = None
+        spectrum_valid = isinstance(spectrum, dict)
+        spectrum_record = None
+        if spectrum_valid:
+            try:
+                spectral_scale = float(spectrum["spectral_scale"])
+                spectral_rtol = float(spectrum["eigenvalue_resolution_rtol"])
+                spectral_threshold = float(spectrum["eigenvalue_resolution_threshold"])
+                nullity = spectrum["resolved_numerical_nullity"]
+                min_resolved = spectrum["min_resolved_abs_eigenvalue"]
+                normalized_gap = spectrum["normalized_gap_to_zero"]
+                derivative = spectrum["max_scalar_sqrt_abs_derivative_on_resolved_modes"]
+                spectrum_valid = (
+                    math.isfinite(spectral_scale) and spectral_scale >= 0.0
+                    and math.isfinite(spectral_rtol) and spectral_rtol > 0.0
+                    and math.isfinite(spectral_threshold) and spectral_threshold >= 0.0
+                    and isinstance(nullity, int) and nullity >= 0
+                    and (
+                        (min_resolved is None and normalized_gap is None and derivative is None)
+                        or (
+                            min_resolved is not None and normalized_gap is not None
+                            and derivative is not None
+                            and math.isfinite(float(min_resolved)) and float(min_resolved) > 0.0
+                            and math.isfinite(float(normalized_gap)) and 0.0 < float(normalized_gap) <= 1.0
+                            and math.isfinite(float(derivative)) and float(derivative) > 0.0
+                        )
+                    )
+                )
+                spectrum_record = {
+                    "spectral_scale": spectral_scale,
+                    "eigenvalue_resolution_rtol": spectral_rtol,
+                    "eigenvalue_resolution_threshold": spectral_threshold,
+                    "resolved_numerical_nullity": nullity,
+                    "min_resolved_abs_eigenvalue": min_resolved,
+                    "normalized_gap_to_zero": normalized_gap,
+                    "max_scalar_sqrt_abs_derivative_on_resolved_modes": derivative,
+                    "sensitivity_scope": "scalar eigenvalue map only; not an operator-norm perturbation bound",
+                    "resolution_scope": "floating-point diagnostic; not a certified eigensolver error bound",
+                }
+            except (KeyError, TypeError, ValueError, OverflowError):
+                spectrum_valid = False
+                spectrum_record = None
         finite = all(math.isfinite(x) for x in (
             defect, raw_norm, delta_frob, delta_2_bound, relative_bound
         ))
@@ -274,6 +317,7 @@ def volume_raw_hermiticity_diagnostics(
             "symmetrization_delta_frobenius_norm": delta_frob if math.isfinite(delta_frob) else None,
             "symmetrization_delta_spectral_norm_upper_bound": delta_2_bound if math.isfinite(delta_2_bound) else None,
             "symmetrization_relative_frobenius_bound": relative_bound if math.isfinite(relative_bound) else None,
+            "hermitian_spectrum_resolution": spectrum_record,
         }
         records.append(record)
         expected_relative = (
@@ -294,7 +338,8 @@ def volume_raw_hermiticity_diagnostics(
             and abs(relative_bound - expected_relative) <= consistency_tol
             and defect_consistent
         )
-        if (not key_valid or not finite or defect < 0.0 or raw_norm < 0.0
+        if (not key_valid or not finite or not spectrum_valid
+                or defect < 0.0 or raw_norm < 0.0
                 or delta_frob < 0.0 or delta_2_bound < 0.0
                 or relative_bound < 0.0 or defect > rtol
                 or not bounds_consistent):
