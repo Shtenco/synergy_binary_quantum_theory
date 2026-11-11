@@ -161,7 +161,8 @@ def apply_path_branch(branch,path,iout,iin,Jmax2):
     return outs
 
 @functools.lru_cache(None)
-def volume123_matrix(s1,s2,s3):
+def volume123_raw_operator(s1,s2,s3):
+    """Return the unsymmetrized oriented triple-product operator."""
     mats=[spin_mats_cached(s) for s in (s1,s2,s3)]
     d=(s1+1)*(s2+1)*(s3+1)
     Q=np.zeros((d,d),complex)
@@ -169,6 +170,11 @@ def volume123_matrix(s1,s2,s3):
         e=EPS3[a,b,c]
         if e:
             Q += e*np.kron(np.kron(mats[0][a],mats[1][b]),mats[2][c])
+    return Q
+
+@functools.lru_cache(None)
+def volume123_matrix(s1,s2,s3):
+    Q=volume123_raw_operator(s1,s2,s3)
     qnorm=float(np.linalg.norm(Q))
     defect=float(np.linalg.norm(Q-Q.conj().T)/max(qnorm,np.finfo(float).tiny))
     VOLUME_RAW_DEFECTS[(s1,s2,s3)]={"relative_antihermitian_defect":defect,"raw_norm":qnorm}
