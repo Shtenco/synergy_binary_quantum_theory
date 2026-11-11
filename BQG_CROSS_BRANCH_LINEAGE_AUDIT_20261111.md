@@ -228,11 +228,13 @@ Embedded/inline coverage:
 
 ### Run #73 syntax findings
 
-The run found exactly two source syntax errors:
-1. Inline Python heredoc `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2`, line 86, blob `a0869d6eb4474206015c0d4efaff8e01ed0aff23`, present on branch heads `4cb8ae20b72768d556973361820edb1e3137ae05` and `ab24171a4bb327d190551bdf68957bd10a819c1d`.
-2. `scripts/pl_lorentzian_group_worker_v2.py`, line 49, blob `6eb7ba71ddfec1051eb4874399b224768c680372`, present on branch heads `524240db085485ac31678e82778f585ffd38d199`, `b58872dcb23404fd509421e14b975a98d2214a3e`, and `fddd49427c636e92dfe79b96034862aeba629927`.
+The scanner flagged two parse errors, but manual source inspection classifies them differently:
+1. `scripts/pl_lorentzian_group_worker_v2.py`, line 49, blob `6eb7ba71ddfec1051eb4874399b224768c680372`, is a **confirmed Python IndentationError**. The metadata assignments after `d=json.loads(...)` are indented one level too far. The blob is present on branch heads `524240db085485ac31678e82778f585ffd38d199`, `b58872dcb23404fd509421e14b975a98d2214a3e`, and `fddd49427c636e92dfe79b96034862aeba629927`.
+2. Inline Python heredoc `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2`, line 86, blob `a0869d6eb4474206015c0d4efaff8e01ed0aff23`, is a **template-dependent parser false positive**, not a confirmed workflow syntax failure. The snippet contains assignments such as `idx=${{ matrix.idx }}`; GitHub Actions substitutes these expressions before the shell executes the heredoc. The raw pre-expansion block is not valid Python, but the rendered block can be valid. The same blob occurs on branch heads `4cb8ae20b72768d556973361820edb1e3137ae05` and `ab24171a4bb327d190551bdf68957bd10a819c1d`.
 
-The previously reported `tests/test_v21_c1_checkpoint_repair.py:455` syntax error is not present in this later scan; the `fix/v21-c1-fail-closed-20261108` branch had advanced to a corrected head before run #73. The historical report's two-error list must not be copied forward unchanged.
+The scanner's `iter_inline_python_blocks` currently parses the raw heredoc without first accounting for GitHub Actions `${{ ... }}` interpolation. Its tests cover Markdown fences and plain Python heredocs, but not templated heredocs. The inline finding should therefore be classified as template-dependent until a template-aware parser or a rendered-workflow test is added.
+
+The previously reported `tests/test_v21_c1_checkpoint_repair.py:455` syntax error is not present in run #73; the `fix/v21-c1-fail-closed-20261108` branch had advanced to a corrected head. Thus run #73 contains one confirmed Python syntax defect plus one scanner false positive, not two confirmed source defects.
 
 ### Main snapshot in run #73
 
@@ -255,3 +257,21 @@ Run #73 predates the current branch census:
 - current main HEAD is `254f19fdab41d32b920bf454f987aa7c0fdba34d`, later than run #73's main HEAD.
 
 Thus run #73 is the latest confirmed complete static baseline, including inline/archive coverage, but it is not a scan of the current 168-ref snapshot. The next branch-wide run must be tied to the current branch-head manifest and current main SHA. Do not claim current 168/157 coverage until that artifact exists.
+
+
+## 9. Audit-scanner precision issue found during manual syntax triage
+
+The manual check of the run #73 inline syntax finding found a limitation in the scanner itself:
+- `iter_inline_python_blocks` extracts raw Python heredoc content from YAML/shell files;
+- it does not normalize GitHub Actions template expressions such as `${{ matrix.idx }}`;
+- the AST parser then reports a syntax error on an unrendered template expression.
+
+The exact flagged workflow assigns `idx`, `b`, and `c` from `${{ matrix.* }}` values. GitHub Actions substitutes those values before the shell launches Python. This is therefore a false positive for runtime syntax, although it is correct that the unrendered template text is not standalone Python.
+
+The existing inline-audit tests cover ordinary Python fences/heredocs, indentation and multiple fences, but not GitHub Actions interpolation. A future scanner improvement should:
+1. distinguish ordinary Python blocks from GitHub-templated blocks;
+2. substitute syntactically safe typed placeholders or run a rendered-workflow fixture before AST parsing;
+3. retain the original source line map;
+4. report unresolved template syntax separately from confirmed Python syntax errors.
+
+The other run #73 finding, `pl_lorentzian_group_worker_v2.py:49`, remains a genuine syntax error. No historical source was modified as part of this audit.
