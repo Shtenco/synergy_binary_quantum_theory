@@ -693,3 +693,117 @@ The remaining proof obligations are logically distinct:
 8. **Empirical map:** derive dimensionful predictions with fixed constants and uncertainty bounds, then test against independent observations.
 
 **Status:** exact finite identities have been connected into one dependency graph. The full analytical/physical closure is not yet proved. No theorem above is promoted beyond its stated hypotheses.
+
+
+## 22. Q2 orientation/history/metric/scalar source: exact identities and carrier obstructions
+
+Audited source branches:
+- `research/q2-orientation-intrinsic-metric-nogo`;
+- `research/q2-history-directed-laplacian-factorization`;
+- `research/q2-oriented-flux-history-observable`;
+- `research/q2-relational-metric-source`;
+- `research/first-q2-scalar-effective-action`.
+
+### 22.1 Orientation is a genuine gauge-scalar flux observable, but not a linear intrinsic-metric coordinate
+
+For four spin-1/2 face fluxes, the oriented triple product
+[
+Q_{or}=\epsilon_{abc}J_1^aJ_2^bJ_3^c
+]
+restricted to the two-dimensional four-valent singlet carrier obeys the exact identity
+[
+Q_{or}^{logical}=\frac{\sqrt3}{4}Y_L,
+\qquad
+Y_L=\frac4{\sqrt3}Q_{or}.
+]
+It commutes with all total SU(2) generators and changes sign under odd face permutations. Thus (Y_L) is not merely a label in this frozen carrier.
+
+At the same time, the exact logical-to-intrinsic-metric Jacobian has columns
+[
+B_{XYZ}=(\mathrm{vec}M_X,0,\mathrm{vec}M_Z),
+qquad
+B_{XYZ}^TB_{XYZ}=\operatorname{diag}(9/2,0,9/2).
+]
+Consequently (\partial g/\partial Y=0), and for any source covariance (\Sigma),
+[
+C_{metric}=B_{XYZ}\Sigma B_{XYZ}^T
+]
+has rank at most two. Even (Sigma=I_3) cannot restore the missing orientation direction. There is no contradiction: the flux pseudoscalar is orientation-sensitive, while the intrinsic metric is orientation-even. A nonzero orientation-odd Lorentzian response must be sought in flux/triad, connection, extrinsic-curvature or history-current observables, not forced into a linear parity-even metric source.
+
+### 22.2 Complete directed history difference exactly factors the undirected C8 Laplacian
+
+For the eight-state reversible history shift (U_8) and (P_\pm=(I\pm Y_L)/2), define
+[
+W=P_+\otimes U_8+P_-\otimes U_8^{-1}.
+]
+Then (W) is unitary and
+[
+W+W^\dagger=I_{geom}\otimes(U_8+U_8^\dagger).
+]
+For the full directed difference (\Delta_W=W-I),
+[
+\Delta_W^\dagger\Delta_W
+=2I-W-W^\dagger
+=I_{geom}\otimes L_h,
+quad
+L_h=2I-U_8-U_8^\dagger.
+]
+Since W is normal, (\Delta_W\Delta_W^\dagger) gives the same operator. On (U_8|\theta\rangle=e^{i\theta}|\theta\rangle),
+[
+\Delta(\theta)=(\cos\theta-1)I-\sin\theta J,
+\quad J^2=-I,
+]
+and
+[
+\Delta(\theta)^\dagger\Delta(\theta)
+=4\sin^2(\theta/2)I=2-2\cos\theta.
+]
+The odd Hermitian current alone has square (\sin^2\theta=L_h-L_h^2/4) and therefore has the extra finite-lattice zero at (\theta=\pi). The complete forward difference has only the trivial C8 zero. This is an exact finite graph identity, not yet a physical Dirac operator, physical time evolution or fermion construction.
+
+### 22.3 The relational projector/source construction is exact as a positive control
+
+For the C8 control step (R=J), define
+[
+V|\psi\rangle=\frac1{\sqrt8}\sum_{t=0}^7|t\rangle\otimes R^t|\psi\rangle.
+]
+Then (V^\dagger V=I) and (VV^\dagger=P_{rel}). For any geometry operator O,
+[
+O_{rel}=\sum_t|t\rangle\langle t|\otimes R^tOR^{-t},
+\quad O_{rel}V=VO,
+\quad V^\dagger O_{rel}V=O.
+]
+For the two shape sources (K=j_XX+j_ZZ), with (K^2=r^2I), (r^2=j_X^2+j_Z^2),
+[
+Z(j)=\tfrac12\operatorname{Tr}(e^K)=\cosh r,
+\qquad W(j)=\log\cosh r.
+]
+The mean-field magnitude is (s=\tanh r). The exact radial Legendre transform is
+[
+\Gamma_{shape}(s)=s\operatorname{artanh}s+\tfrac12\log(1-s^2),
+\quad 0\le s<1,
+]
+with
+[
+\Gamma'(s)=\operatorname{artanh}s,
+\quad
+\Gamma''(s)=\frac1{1-s^2}>0.
+]
+Its small-s expansion is (s^2/2+s^4/12+s^6/30+s^8/56+O(s^{10})), and the limit at (s\to1^-) is \(\log2\). This is an exact local nonlinear 1PI functional of the registered finite control.
+
+However (R=J) is the declared positive-control step, not the actual graph-changing gravitational history amplitude. Therefore this \(\Gamma\) is not a physical cosmological scalar action or graviton effective action.
+
+### 22.4 Exact scalar-carrier obstruction
+
+The local q=2 metric tangents (M_X,M_Z) are tracefree with respect to the regular background (g_0):
+[
+\operatorname{Tr}(g_0^{-1}M_X)
+=\operatorname{Tr}(g_0^{-1}M_Z)=0.
+]
+The conformal direction is orthogonal to this rank-two tangent. The present source has no independent lapse response and no nonfactorizing inter-block history amplitude. If its only justified multi-block extension is (Z_N=\prod_b Z_b), then
+[
+\partial^2 W_N/(\partial j_{A,b}\partial j_{B,c})=0
+\quad(b\ne c).
+]
+Thus no momentum-dependent scalar Poisson kernel or cosmological potentials follow from the local control. The next structurally motivated carrier is the collective radial/volume channel: fixed (j=1/2) freezes the absolute four-valent volume, while the equal-spin (j=1) sector is the first where it is non-scalar. The symmetric-block (2\to j=1) result is conditional on symmetric blocking; the microscopic dynamics has not yet been shown to select it.
+
+**Disposition:** the q=2 chain now has a precise split: orientation flux and directed history algebra are exact finite observables; the intrinsic metric deliberately forgets orientation; the source Legendre transform is exact but belongs to a positive control; physical Lorentzian history, conformal/lapse response and connected inter-block scalar dynamics remain open.
