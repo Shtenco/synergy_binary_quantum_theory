@@ -268,3 +268,9 @@ The test and audit entry are committed on the research branch. The L2 suite has 
 The latest verified branch tip is `bb2fe589fbf3b62557dca7daece90c2e36f15c99` (commit: include full covariant C(V) L2 gate in README). Comparing the research branch with `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` reports **39 commits ahead and 0 behind**. The test, audit, continuity checkpoint and README all contain the new full-(C(V)) independent-support gate. The latest tracked L1/L2 jobs remain queued with no artifacts at the latest poll described in section 14; the new push-triggered test run has not yet been assigned a run ID in the available run response. No test verdict is available.
 
 The new C(V) integration test is intentionally scoped to one matrix component, edge and two-vector fixture. Its success or failure will be diagnostic evidence for that declared finite test, not a statement about all of (C(V)), the Lorentzian triple, or physical dynamics. Next gate remains execution and diagnosis; only then proceed to the remaining C(V) components and the corresponding (C(K)) composition.
+
+
+
+## 17. README gate-scope clarification — 11 November 2026
+
+After the C(V) integration test was added, README wording was narrowed so that the remaining open work is explicit: the full (C(K)) leg, the remaining matrix components of (C(V)), and L3 matrix reconstruction are still open. This documentation-only clarification is commit `6e402553253033568e7581a413e67e5d9b024b2b). Immediately before this continuity update, the branch compared with `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` was 41 commits ahead and 0 behind. This update changes only the continuity ledger; it does not modify production code or tests.
