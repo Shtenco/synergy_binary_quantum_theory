@@ -467,6 +467,19 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertAlmostEqual(result["metric_positive_gap_relative"], 1.0)
         self.assertTrue(result["metric_spd_threshold_underflow_detected"])
 
+    def test_positive_metric_bounds_detect_metric_multiplication_underflow(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [1e-150, 1e-160],
+        }
+        result = stability.positive_metric_spectral_bounds(
+            direct, np.diag([1e-100, 2e-100])
+        )
+        self.assertFalse(result["singular_value_square_underflow_detected"])
+        self.assertTrue(result["lower_bound_underflow_detected"])
+        self.assertTrue(result["upper_bound_underflow_detected"])
+        self.assertFalse(result["spectral_bounds_numerically_resolved"])
+
     def test_positive_metric_bounds_validate_input_spectrum_dimension(self):
         direct = {
             "scale_separation_loss": False,
