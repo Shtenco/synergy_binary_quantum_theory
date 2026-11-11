@@ -338,3 +338,15 @@ The workflow `.github/workflows/bqg-production-linearity-l2.yml` was corrected. 
 as well as the L2 test, CK, KCOMP, CV and zero-aware volume migration modules. Duplicate entries introduced during the sequential edit were removed and the final workflow text was re-read.
 
 The correction is committed in the research branch. It changes CI coverage only; no operator implementation, test assertion, tolerance or scientific interpretation changed. The new push is expected to create a workflow run, but its ID and result must be confirmed from GitHub. The earlier C(V)-test run `42937467628` remains unexecuted/queued at the latest direct poll. No PASS/FAIL is claimed. `main` remains untouched.
+
+
+### Exact workflow-hardening commit ledger
+
+- `aed2d7c5e3ee633a7c8cf56cc2891567b1816f25` — first add C(V) production module to L2 watch/compile scope.
+- `530fe47cdd4407a5fe7527508466e06ff3cbd75c` — extend watch/compile scope to the transitive Peter–Weyl, charge, volume and projection dependencies.
+- `4669811975459c0259c132330d6e1e800675d830` — remove duplicate workflow entries and verify the final YAML.
+- `afa017b7f3575323925116db787af34b70026187` — document the dependency-closure correction in the C(V)/C(K) audit.
+- `d7f4caf791c59b3a29f76a810003826ff6f5e3f3` — record the correction in this continuity checkpoint.
+- `bdb1f5ef297615c75f78ee8a2d05bcf44a9deeee` — record it in README.
+
+At the time of this ledger update, the README commit above is the latest known branch commit. The L2 workflow's final blob SHA is `7a8398a40f7efce21587958782f0e81843a9cb83`. The old C(V) run `42937467628` is still queued and has no artifacts. The available GitHub Actions connector does not expose a workflow-dispatch operation or an all-push-run listing; no new run ID is fabricated. Commit status for the workflow correction returned no status entries. This is an observability limitation, not evidence that the workflow did or did not start.
