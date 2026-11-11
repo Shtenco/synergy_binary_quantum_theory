@@ -101,6 +101,19 @@ def streaming_svd(row_blocks: Iterable[np.ndarray], n_columns: int,
         normalized = block / scale
         if np.any((block != 0.0) & (normalized == 0.0)):
             scale_separation_loss = True
+        # A nonzero component below machine epsilon relative to the common
+        # scale may survive elementwise normalization yet be numerically
+        # invisible to subsequent QR updates. Flag this conservatively:
+        # orthogonal tiny components can in fact survive, but this solver
+        # does not prove that they did for arbitrary row geometry.
+        normalized_component_scale = np.maximum(
+            np.abs(normalized.real),
+            np.abs(normalized.imag) if np.iscomplexobj(normalized) else 0.0,
+        )
+        nonzero_components = normalized_component_scale[normalized_component_scale > 0.0]
+        if (nonzero_components.size
+                and float(np.min(nonzero_components)) < np.finfo(float).eps):
+            scale_separation_loss = True
         r = _qr_r(normalized)
         level = 0
         while True:
