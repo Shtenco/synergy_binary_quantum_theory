@@ -324,3 +324,14 @@ For the all-doubled-spin-1 input sector and each of the eight output assignments
 The added check does not itself certify the global tensor-product basis or physical graph-changing inner product; it verifies the local recoupling factors used to form that basis. The production primitive matrix comparison remains a separate test and is not weakened or symmetrized.
 
 The production primitive test file now contains two test methods. Total committed inventory: **35 test methods** across six scripts. The workflow already invokes the file, so no workflow command change is needed. Neither the expanded test nor CI has been executed/confirmed; no PASS is claimed.
+
+
+## 25. Derived-volume spectral covariance gate — 2026-11-11
+
+Added a direct test of the production spectral map (V=\sqrt{|Q|}), separate from raw-(Q) Hermiticity and alternating-tensor covariance. For mixed spins `(1,2,2)), all six tensor-factor permutations are represented by explicit permutation unitaries. The test requires
+\[
+V_\pi=U_\pi VU_\pi^\dagger.
+\]
+The parity sign in the raw (Q) transformation disappears under the absolute-value spectral map. This catches a mismatch in the derived volume reconstruction that a raw-Q-only test would not detect.
+
+**Inventory update:** `scripts/test_k5_volume_raw_operator.py` now has five test methods; the six workflow scripts contain **37 committed test methods** by source inventory. The existing workflow already invokes the volume test file. This gate is committed but not yet execution-verified. It checks one mixed-spin finite sector and does not certify all spin triples, epsilon-orientation conjugations, the four-valent intertwiner restriction, or the full HH calculation.
