@@ -596,3 +596,14 @@ from the production `oriented_intertwiner` tensors and requires (G^{(v)}=I) to a
 This is an important logical prerequisite, not cosmetic extra coverage: the matrix identity (B=A^\dagger) is meaningful only relative to the stated orthonormal bases. A failure here must be resolved at the basis/normalization layer before interpreting a primitive adjoint mismatch.
 
 The primitive dense-adjoint script now has two methods: local recoupling orthonormality and closed-loop production primitive matrix adjointness. Total committed inventory is 35 test methods across six scripts. The workflow already executes this script. All changes are committed and source-fetched; execution and CI status remain unconfirmed.
+
+
+## 17. Raw volume alternating-tensor covariance gate — 2026-11-11
+
+Added a production-level covariance test to `scripts/test_k5_volume_raw_operator.py`. For the mixed-spin triple `(1,2,2)), the test explicitly constructs all six tensor-factor permutation unitaries and checks the unsymmetrized operator transformation
+[
+Q_\pi=\operatorname{sgn}(\pi)U_\pi Q U_\pi^\dagger.
+]
+The parity factor is essential: the volume triple product uses the alternating (epsilon_{abc}) tensor. This test can detect an axis-order or orientation-sign defect even when the raw matrix remains Hermitian and the derived (sqrt{|Q|}) remains positive.
+
+The production raw-volume script now has four methods: raw Hermiticity, derived volume Hermiticity/PSD, raw-defect ledger integrity, and all-leg permutation covariance. Combined with the local recoupling orthonormality prerequisite, the committed inventory is now **36 test methods across six scripts**. The existing workflow already invokes both expanded test files; no new workflow command was required. Execution and CI remain unconfirmed.
