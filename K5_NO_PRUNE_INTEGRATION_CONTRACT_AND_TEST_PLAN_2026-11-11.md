@@ -399,3 +399,10 @@ Added `test_full_32_term_T_sum_matches_reverse_matrix_element`. It evaluates all
 This closes an important gap between a single-monomial check and the coherent T sum. It does not yet establish matrix-wide adjointness: only one selected element, one input ket, one orientation triple and one spin wall are covered.
 
 Source inventory is now 41 methods across six workflow scripts. This is not a test execution result. CI status must be verified from the actual Actions job; no PASS is implied by commit presence.
+
+
+## 30. Clarification of full T-sum test scope and CI state
+
+The 32-monomial test now checks one selected matrix element of the complete coherent T sum. It is not yet a matrix-wide T/T† adjoint test. The next gate must expand to multiple input columns and a declared finite domain/codomain basis, with explicit handling of basis states clipped by the spin wall.
+
+At the latest check, Actions runs #26 (`42942768669`), #27 (`42944352617`) and #28 (`42944740425`) were all queued; no test PASS is claimed. Run #28 is attached to code commit `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`. Later commits only update audit documentation.
