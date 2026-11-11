@@ -433,10 +433,18 @@ def column_digest(columns):
 
 def run(domain="low", jmax2=5, rank_rtol=1e-10,
         singular_rtol=1e-10, block_rows=4096):
-    if not math.isfinite(rank_rtol) or rank_rtol < 0:
+    if not isinstance(jmax2, int) or isinstance(jmax2, bool) or jmax2 < 1:
+        raise ValueError("jmax2 must be a positive doubled-spin cutoff covering the j=1/2 carrier")
+    if (isinstance(rank_rtol, (bool, np.bool_))
+            or not isinstance(rank_rtol, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(rank_rtol)) or float(rank_rtol) < 0.0):
         raise ValueError("rank_rtol must be finite and nonnegative")
-    if not math.isfinite(singular_rtol) or singular_rtol < 0:
+    if (isinstance(singular_rtol, (bool, np.bool_))
+            or not isinstance(singular_rtol, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(singular_rtol)) or float(singular_rtol) < 0.0):
         raise ValueError("singular_rtol must be finite and nonnegative")
+    if not isinstance(block_rows, int) or isinstance(block_rows, bool) or block_rows <= 0:
+        raise ValueError("block_rows must be a positive integer")
     nodes = tuple(PILOT.PW.VERT)
     basis = PILOT.carrier_basis(domain)
     dim = len(basis)
