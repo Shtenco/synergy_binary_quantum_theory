@@ -23,6 +23,7 @@ on:
       - "scripts/test_bqg_sparse_dense_oracle.py"
       - "scripts/test_k5_volume_raw_operator.py"
       - "scripts/test_k5_hit_adjoint.py"
+      - "scripts/test_k5_primitive_dense_adjoint.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   workflow_dispatch:
 
