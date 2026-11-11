@@ -4,7 +4,7 @@
 The test materializes a complete projected matrix P H_v P on two explicit
 orthonormal recoupling kets. It independently obtains every matrix column
 from the production no-prune H action and checks the full 2x2 matrix against
-its conjugate transpose. Leakage outside the selected four-ket subspace is
+its conjugate transpose. Leakage outside the selected two-ket subspace is
 reported, not silently treated as zero. This is a projected finite-sector
 check, not a full-Hilbert-space or continuum theorem.
 """
