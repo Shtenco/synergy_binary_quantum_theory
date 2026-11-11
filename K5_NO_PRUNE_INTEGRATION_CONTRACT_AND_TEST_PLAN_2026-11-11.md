@@ -495,3 +495,12 @@ The wall test now evaluates walls 2, 4, and 6 and requires exact equality of the
 For this fixed all-link doubled-spin-1 input, each T monomial hits edge ((c,v)) twice and every other edge at most once. Since a hit changes doubled spin by exactly ±1, the maximum reachable doubled spin is 3. Therefore wall 4 is analytically above the reachable ceiling for this one input/T sum; wall 6 is a redundant exact saturation check. This finite combinatorial bound is not transferable to arbitrary input spins or later HH compositions.
 
 The CI output still compares wall 2 to the saturated wall 4/6 result and records support and low-final-spin amplitude deltas. No numerical output is claimed until execution.
+
+
+## 35. Universal upper-wall planning theorem for the current K5 T/H monomials
+
+Commit `4fc916a5e2e85650d5a6ca7dea1c7f72bd3a456a` adds an exhaustive combinatorial test over all 5 vertices × 12 oriented specifications × 32 signed T monomials. Each monomial has five hits on exactly four undirected edges, with multiplicities ((1,1,1,2)); the reversed sequence has the identical undirected edge-hit multiset.
+
+Thus, for a basis-state support with maximum input doubled spin (S), one T, T†, or node-H action cannot increase any edge above (S+2). A conservative no-upper-clipping wall for one action is `Jmax2 >= S+2`; for a composition of (n) node-H actions it is `Jmax2 >= S+2*n`. This is a finite combinatorial reachability bound for the current operator definition, not an amplitude estimate and not a continuum theorem. It does not address changes to the path/hit definition, nor the physical SU(2) lower boundary.
+
+The earlier all-spin-1 selected-input wall result is a special case. The new test adds 1 method; primitive/orientation now has 8 methods and the six workflow scripts contain 45 by source inventory. Execution and CI PASS remain unconfirmed.
