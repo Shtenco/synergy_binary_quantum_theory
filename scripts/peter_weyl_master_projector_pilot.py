@@ -228,29 +228,43 @@ def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
     return constraint_annihilation_metrics(columns, coeff, nodes)["max_absolute_residual"]
 
 
-def volume_raw_hermiticity_diagnostics(registry=None, rtol=1e-10):
-    """Fail-closed audit of every raw volume-operator defect in the producer registry."""
+def volume_raw_hermiticity_diagnostics(
+    registry=None, rtol=1e-10, expected_unique_calls=None
+):
+    """Fail-closed audit of raw volume defects and registry call coverage."""
     if not np.isfinite(rtol) or rtol < 0.0:
         raise ValueError("volume hermiticity tolerance must be finite and nonnegative")
+    if expected_unique_calls is not None and (
+        not isinstance(expected_unique_calls, int) or expected_unique_calls < 0
+    ):
+        raise ValueError("expected_unique_calls must be a nonnegative integer")
     if registry is None:
         registry = getattr(PW, "VOLUME_RAW_DEFECTS", {})
     records = []
     failures = []
     for key, raw in sorted(registry.items(), key=lambda item: repr(item[0])):
+        key_valid = (
+            isinstance(key, tuple) and len(key) == 3
+            and all(isinstance(x, (int, np.integer)) and x >= 0 for x in key)
+        )
         defect = float(raw.get("relative_antihermitian_defect", float("nan")))
         raw_norm = float(raw.get("raw_norm", float("nan")))
         defect_finite = math.isfinite(defect)
         norm_finite = math.isfinite(raw_norm)
         record = {
-            "spin_triple": list(key),
+            "spin_triple": list(key) if key_valid else None,
+            "invalid_key_repr": None if key_valid else repr(key),
             "relative_antihermitian_defect": defect if defect_finite else None,
             "raw_norm": raw_norm if norm_finite else None,
         }
         records.append(record)
-        if (not defect_finite or not norm_finite or defect < 0.0
-                or raw_norm < 0.0 or defect > rtol):
+        if (not key_valid or not defect_finite or not norm_finite
+                or defect < 0.0 or raw_norm < 0.0 or defect > rtol):
             failures.append(record)
-    passed = bool(records) and not failures
+    coverage_complete = (
+        expected_unique_calls is None or len(records) == expected_unique_calls
+    )
+    passed = bool(records) and not failures and coverage_complete
     finite_defects = [
         float(raw["relative_antihermitian_defect"])
         for raw in registry.values()
@@ -260,10 +274,17 @@ def volume_raw_hermiticity_diagnostics(registry=None, rtol=1e-10):
         "passed": passed,
         "rtol": float(rtol),
         "triples_checked": len(records),
+        "expected_unique_calls": expected_unique_calls,
+        "coverage_complete": coverage_complete,
+        "coverage_shortfall": (
+            None if expected_unique_calls is None
+            else expected_unique_calls - len(records)
+        ),
         "max_relative_defect": max(finite_defects) if finite_defects else None,
         "failures": failures,
         "records": records,
         "fail_closed_if_registry_empty": True,
+        "fail_closed_if_coverage_incomplete": True,
     }
 
 
@@ -278,10 +299,17 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         raise ValueError("all tolerances must be finite and nonnegative")
     nodes = tuple(PW.VERT)
     basis = carrier_basis(domain)
+    # Isolate this run's volume ledger. Every unique cache miss must execute
+    # the producer body and create exactly one raw-defect record.
+    PW.volume123_matrix.cache_clear()
+    PW.VOLUME_RAW_DEFECTS.clear()
     columns, supports = constraint_columns(basis, nodes, jmax2, mode)
+    volume_cache_misses = PW.volume123_matrix.cache_info().misses
     volume_diagnostics = volume_raw_hermiticity_diagnostics(
-        rtol=volume_hermitian_rtol
+        rtol=volume_hermitian_rtol,
+        expected_unique_calls=volume_cache_misses,
     )
+    volume_diagnostics["volume_cache_misses"] = volume_cache_misses
     volume_ok = volume_diagnostics["passed"]
     B = cross_gram(columns, nodes, len(basis))
 
