@@ -250,3 +250,13 @@ At 01:12 UTC, the available job and artifact endpoints still reported:
 The new test commit `4cc8638` changes a path watched by the L2 push workflow. The push-triggered run identifier was not returned by the available commit-associated run listing, which is limited to pull-request-triggered runs; do not infer a run ID or a test outcome. Its job must be identified and inspected through the Actions run listing when available.
 
 No L1/L2/V10/V11 PASS or FAIL is claimed from queued or cancelled jobs. No artifacts are available. The added independent H_E test has not been executed in this environment. `main` remains untouched and no merge was performed.
+
+
+
+## 15. Full covariant C(V) independent-support test — 11 November 2026
+
+Added an L2 test of the full production `COMP.C_volume_component` map on two independent Peter–Weyl Gauss inputs (basis indices 0 and 16). Each is mapped through `CV.gauss_to_covariant`; the test hard-checks distinct covariant keys and nonzero individual responses, then compares the direct map on their sum against the sum of separate map outputs for edge ((0,1)), component ((i,j)=(0,0)).
+
+The common scale is (10^6), with relative L2 residual bound (5\times10^{-12}). This exercises both the direct volume contribution and the inverse-holonomy / volume / forward-holonomy branch of the full covariant leg. It is a focused integration-level gate, not a complete four-component matrix proof and not a (C(K)), H_L, HDA, physical-kernel, or causal-cone result. The internal threshold behavior of `COMP.add` remains inside the map under test.
+
+The test and audit entry are committed on the research branch. The L2 suite has not yet produced an execution log; no PASS/FAIL is claimed. Next dependency: run and diagnose this full (C(V)) test, then extend the same independent-support and matrix-reconstruction discipline to (C(K)) and L3.
