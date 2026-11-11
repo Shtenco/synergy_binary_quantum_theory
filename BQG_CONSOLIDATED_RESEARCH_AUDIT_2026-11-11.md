@@ -812,3 +812,29 @@ The production primitive/orientation file now contains **6 methods**. The six wo
 The new test source was committed in `3bb5e42bc946791ae96ecc6f57d041a4c1fd7554`, then its CI-visible leakage print was added in `92ab5397876aabfbe509b179d8efaa56ec64ad59`. The latest test file was fetched back from GitHub and the method was confirmed present. A local execution was attempted but could not start because the runtime could not resolve `github.com`; no local PASS is claimed. The Actions run lookup available here did not return a run for this push commit, so CI execution remains unconfirmed.
 
 **Next:** enlarge the tested input/output block only after observing this test's runtime and numerical result. Then build a declared finite codomain/domain and compare the full rectangular T and reverse matrices, with explicit finite-wall clipping accounting; subsequently assemble all 12 signed oriented specifications into H_v.
+
+
+## 28. Coherent T spin-wall sensitivity experiment — 2026-11-11
+
+Added `test_full_32_term_T_spin_wall_2_vs_4_sensitivity_ledger` to the production primitive/orientation suite. For the same all-link doubled-spin-1, all-K=0 input ket and the complete 32 signed T monomials, it independently computes coherently aggregated no-prune columns at doubled-spin walls `Jmax2=2` and `Jmax2=4`.
+
+The test reports:
+- support sizes at both walls and their intersection;
+- keys present only at one wall;
+- the number and L2 norm of wall-4 outputs containing any link spin above 2;
+- the L2 and maximum-amplitude change on common outputs whose final link spins are all at most 2.
+
+This distinguishes two effects that must not be conflated: (i) newly admitted high-spin output support at the larger wall and (ii) changes to low-spin amplitudes caused by paths that were clipped at an intermediate hit under the smaller wall but later return to low final spin. The latter is why simply discarding final high-spin rows is not a sufficient wall-stability check.
+
+The comparison `Jmax2=2` versus `Jmax2=4` is a finite wall-sensitivity diagnostic only. It does **not** establish convergence as the wall tends to infinity, and `Jmax2=4` is not asserted to be an unbounded reference. The test uses the same production action at both walls; it is not an independent derivation of the recoupling coefficients.
+
+The test emits a structured `T_SPIN_WALL_SENSITIVITY` record into CI logs and checks that all reported amplitudes are finite. It intentionally does not assert that the wall difference is zero or nonzero before the test is executed. The code is committed in `bdb4fb1105dfc7b36c81c3bcfaffbdb9e595e6ba` and the source must still be run in CI before any numerical outcome is reported.
+
+The primitive/orientation test file now contains **7 methods**. The six workflow-invoked test scripts therefore contain **44 methods by source inventory**. No test execution or CI PASS is claimed by this source commit alone.
+
+### Updated next gate
+
+1. Run and inspect the 2×2 coherent T/T† block and its projected leakage ledger.
+2. Run and inspect the Jmax2=2 versus 4 wall-sensitivity ledger; if low-spin amplitudes change, identify the contributing clipped intermediate paths before increasing the wall.
+3. Extend to a three-wall ladder (for example 2/4/6) only if resource/runtime permits, with explicit support and amplitude convergence metrics.
+4. Then build the complete declared finite-sector T/reverse matrices and the assembled signed 12-spec H_v test.
