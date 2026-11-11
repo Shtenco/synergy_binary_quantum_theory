@@ -235,11 +235,12 @@ def volume_raw_hermiticity_diagnostics(
     if not np.isfinite(rtol) or rtol < 0.0:
         raise ValueError("volume hermiticity tolerance must be finite and nonnegative")
     if expected_unique_calls is not None and (
-        not isinstance(expected_unique_calls, int) or expected_unique_calls < 0
+        not isinstance(expected_unique_calls, int) or isinstance(expected_unique_calls, bool)
+        or expected_unique_calls < 0
     ):
         raise ValueError("expected_unique_calls must be a nonnegative integer")
     if max_spin2 is not None and (
-        not isinstance(max_spin2, int) or max_spin2 < 0
+        not isinstance(max_spin2, int) or isinstance(max_spin2, bool) or max_spin2 < 0
     ):
         raise ValueError("max_spin2 must be a nonnegative integer")
     if registry is None:
@@ -250,8 +251,8 @@ def volume_raw_hermiticity_diagnostics(
         key_valid = (
             isinstance(key, tuple) and len(key) == 3
             and all(
-                isinstance(x, (int, np.integer)) and x >= 0
-                and (max_spin2 is None or x <= max_spin2)
+                isinstance(x, (int, np.integer)) and not isinstance(x, (bool, np.bool_))
+                and x >= 0 and (max_spin2 is None or x <= max_spin2)
                 for x in key
             )
         )
