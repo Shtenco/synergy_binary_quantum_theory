@@ -535,3 +535,10 @@ K5 wiring tests: 11. Standalone sparse-pruning tests: 12. Combined committed tes
 Added a deterministic 5-dimensional synthetic complex sparse operator test in scripts/test_bqg_sparse_dense_oracle.py. The dense reference is assembled independently of the sparse helper. The four tests cover sparse/dense matrix equality, sparse/dense matrix-vector action, the complex adjoint inner-product identity, and tiny-amplitude retention versus exact coherent cancellation.
 
 This is a meaningful independent algebraic control, but it is deliberately not represented as a production K5 dense oracle or as verification of the actual volume/primitive adjoints. Those production checks remain outstanding. The workflow now invokes the new test file. Committed suite inventory: 12 sparse-helper tests + 11 K5 policy-wiring tests + 4 synthetic dense-oracle/adjoint tests = 27 test methods. No local or CI execution has been confirmed; no PASS is claimed.
+
+
+## 21. Production raw K5 volume operator gate
+
+Exposed the unsymmetrized raw triple-product operator as volume123_raw_operator and refactored volume123_matrix to consume it, preserving the prior symmetrization and sqrt(abs(Q)) behavior. Added three small-sector tests on four doubled-spin triples: raw Hermiticity before symmetrization, Hermiticity/positive semidefiniteness of the derived volume matrix, and consistency of the pre-symmetrization diagnostic ledger. This directly tests the production spin/volume implementation in finite sectors, but not the full HH column or continuum physics.
+
+The workflow now runs the new volume test file. Total committed test methods: 30 across four scripts. Execution remains unconfirmed; no PASS claim.
