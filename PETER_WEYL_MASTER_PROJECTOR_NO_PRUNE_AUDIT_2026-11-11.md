@@ -414,3 +414,69 @@ had no reported combined-status checks and no associated workflow runs in
 the connector response. Earlier queued runs remain non-successful,
 non-failing pending work. The 32-state production comparison remains
 unexecuted. Main was not changed or merged.
+
+## Follow-up: physical-kernel subspace geometry (2026-11-11 14:23 UTC)
+
+The legacy/no-prune comparator now goes beyond rank stability. It extracts the
+right-kernel basis from the full right-singular-vector matrix returned by the
+streaming direct SVD, forms
+
+\[
+P_L=Z_LZ_L^\dagger,\qquad P_N=Z_NZ_N^\dagger,
+\]
+
+and records
+
+\[
+d_{\rm ker}=\|P_L-P_N\|_2.
+\]
+
+For equal nonzero nullities, this is the sine of the largest principal angle
+between the two finite-dimensional numerical kernels. The report also checks
+kernel-basis orthonormality and projector Hermiticity/idempotence. If nullities
+differ, it explicitly returns `NULLITY_MISMATCH` and suppresses the
+principal-angle field. If either direct SVD carries the conservative
+TSQR scale-separation warning, the geometric comparison is marked
+`INCONCLUSIVE_SCALE_SEPARATION`; a computed projector distance is retained
+only as a diagnostic, not a certificate.
+
+Four regression methods were added:
+- analytically rotated one-dimensional kernels, with the projector distance
+  compared against \(|\sin\theta|\);
+- identical kernels, requiring zero projector distance;
+- unequal nullities, requiring no principal-angle claim;
+- scale-separation warning, requiring an inconclusive status.
+
+An independent local NumPy reproduction of the analytic geometry gave
+\(0.17213833761259534\) against the expected
+\(\sin(0.173)=0.17213833761259542\); identical subspaces gave zero, and
+the nullity-mismatch projector distance was one. This is a synthetic
+mathematical sanity check, not execution of the checked-in test suite or a
+production Peter-Weyl calculation.
+
+### Current focused test inventory (static source count)
+
+- master-projector integrity: 29 methods;
+- legacy/no-prune constraint stability: 16 methods;
+- streaming TSQR/direct-SVD: 13 methods;
+- production K5 raw-volume operator: 14 methods;
+- total: **72 test methods**.
+
+All four suites are included in the workflow definition. These counts are
+source inventory only; the latest Actions runs remain queued and no CI PASS
+is claimed.
+
+### Current repository and scientific boundary
+
+At this update, the research branch head is
+`0de647f4cfc80cb9b85e87361d8a33b748c1c46e`; comparison with main reports
+297 commits ahead and two behind, with merge base
+`23669209c83fe0aa2741612e5b2b119562ee6d7d`. Main remains
+`254f19fdab41d32b920bf454f987aa7c0fdba34d` and was not changed or merged.
+
+The latest observed Actions run is `43037834137` for the current branch
+head; its workflow job is queued and has no conclusion. Runs for the two
+kernel-geometry commits are also queued. No full 32-state production
+legacy/no-prune comparison has been executed. No exact operator rank,
+physical-kernel equivalence, continuum limit, or physical prediction is
+established by these changes.
