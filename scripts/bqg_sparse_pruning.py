@@ -90,6 +90,8 @@ def aggregate_mappings(
     contributions = []
     for mapping, scale in zip(mappings, scales):
         s = complex(scale)
+        if not (math.isfinite(s.real) and math.isfinite(s.imag)):
+            raise ValueError("scales must be finite")
         for key, value in mapping.items():
             contributions.append((key, s * complex(value)))
     return coherent_aggregate(contributions)
@@ -113,7 +115,13 @@ def apply_pruning(
     """Apply pruning only to an already aggregated canonical-key mapping."""
     if not coherent_aggregation_complete:
         raise ValueError("pruning is forbidden before coherent key aggregation")
-    source = {k: complex(v) for k, v in aggregated.items() if complex(v) != 0j}
+    source: dict[Hashable, complex] = {}
+    for key, raw in aggregated.items():
+        value = complex(raw)
+        if not (math.isfinite(value.real) and math.isfinite(value.imag)):
+            raise ValueError(f"non-finite aggregated amplitude for key {key!r}")
+        if value != 0j:
+            source[key] = value
     if policy.mode == "no_prune":
         kept, discarded = dict(source), {}
     elif policy.mode == "aggregate_then_prune":
@@ -151,9 +159,18 @@ def verify_ledger_identity(
     The digest is a compact identity check; this function additionally checks
     the norm/count invariants available from the two supplied maps.
     """
+    if not math.isfinite(atol) or atol < 0:
+        raise ValueError("atol must be finite and nonnegative")
     keys = set(unpruned) | set(pruned)
-    delta = {k: complex(unpruned.get(k, 0j)) - complex(pruned.get(k, 0j))
-             for k in keys}
+    delta = {}
+    for key in keys:
+        full_value = complex(unpruned.get(key, 0j))
+        pruned_value = complex(pruned.get(key, 0j))
+        if not all(math.isfinite(x) for x in
+                   (full_value.real, full_value.imag,
+                    pruned_value.real, pruned_value.imag)):
+            raise ValueError(f"non-finite amplitude in ledger verification for key {key!r}")
+        delta[key] = full_value - pruned_value
     delta = {k: v for k, v in delta.items() if abs(v) > atol}
     return (
         len(delta) == entry.discarded_keys
