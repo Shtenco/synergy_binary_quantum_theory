@@ -934,3 +934,36 @@ behind main. Main remains unchanged; no merge was performed. CI has not
 completed, and no PASS is claimed. The operator norm is a finite float64
 comparison under the stated common-row embedding; it does not yet bound
 recoupling, truncation, or continuum-limit errors.
+
+
+## Follow-up: independent dense SVD oracle for the adjacent-cutoff norm (2026-11-11 15:00 UTC)
+
+The synthetic adjacent-cutoff operator-norm regression now includes a second,
+independently assembled dense oracle. It explicitly constructs the union of
+row labels, forms the dense matrix for `C_current-C_previous`, computes its
+singular values with NumPy's dense SVD, and compares the complete available
+singular spectrum and leading operator norm against the streaming TSQR/SVD
+path. The regression uses one-row streaming blocks to exercise the TSQR
+merge path rather than a single dense block.
+
+The independent oracle is intentionally a test-only small-matrix check; it
+does not materialize production cutoff matrices. It verifies the sparse
+row-union assembly and streaming norm on a controlled case, but it is not a
+production calculation and does not bound upstream recoupling or truncation
+errors.
+
+The constraint-stability suite remains at 31 test methods (the oracle was
+added within an existing method). The static total across the four focused
+suites remains **89 methods**. Source inspection only; no suite execution is
+claimed.
+
+Latest test commit:
+`09fea78072ebf7d09d3d4e773ebc22277fba1b6e` — add independent dense SVD
+oracle to the adjacent-cutoff comparison regression.
+
+At this update the research branch head is
+`09fea78072ebf7d09d3d4e773ebc22277fba1b6e`, 341 commits ahead and two
+behind main. Main remains `254f19fdab41d32b920bf454f987aa7c0fdba34d`;
+merge base remains `23669209c83fe0aa2741612e5b2b119562ee6d7d`. No merge
+was performed. Latest observed workflow runs remain queued with no
+conclusion; no CI PASS or local execution is claimed.
