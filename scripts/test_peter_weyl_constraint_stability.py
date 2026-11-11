@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 import numpy as np
 
@@ -332,6 +333,27 @@ class ConstraintStabilityTests(unittest.TestCase):
             stability.run(jmax2=1, singular_rtol=True)
         with self.assertRaisesRegex(ValueError, "block_rows"):
             stability.run(jmax2=1, block_rows=0)
+
+    def test_direct_svd_hides_rank_when_scale_separation_is_inconclusive(self):
+        fake = SimpleNamespace(
+            rank=2,
+            rank_rtol=1e-10,
+            singular_values=np.array([1.0, 0.0]),
+            right_singular_vectors=np.eye(2),
+            row_count=2,
+            block_count=1,
+            input_scale=1.0,
+            max_abs_component=1.0,
+            scale_separation_loss=True,
+            method="synthetic TSQR",
+        )
+        with patch.object(stability.STREAM_SVD, "streaming_svd", return_value=fake):
+            direct = stability.direct_svd_from_columns({0: {}, 1: {}}, 2)
+        self.assertIsNone(direct["rank"])
+        self.assertEqual(direct["untrusted_normalized_scale_rank"], 2)
+        self.assertEqual(
+            direct["classification"], "INCONCLUSIVE_SCALE_SEPARATION_UNDERFLOW"
+        )
 
     def test_scale_separation_blocks_kernel_and_threshold_rank_claims(self):
         direct = stability.direct_svd_from_columns(
