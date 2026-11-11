@@ -1039,13 +1039,31 @@ def main():
     ap.add_argument("--singular-rtol", type=float, default=1e-10,
                     help="relative singular-value tolerance for direct TSQR/SVD")
     ap.add_argument("--block-rows", type=int, default=4096)
+    ap.add_argument("--dense-max-entries", type=int, default=200000,
+                    help="maximum entries allowed in the independent dense cutoff oracle")
+    ap.add_argument("--operator-cutoff-sweep",
+                    help="compare adjacent no-prune maps directly, e.g. 1,3")
     ap.add_argument(
         "--jmax2-sweep",
         help="optional comma-separated increasing doubled-spin cutoffs, e.g. 1,3,5",
     )
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
-    if args.jmax2_sweep:
+    if args.jmax2_sweep and args.operator_cutoff_sweep:
+        ap.error("--jmax2-sweep and --operator-cutoff-sweep are mutually exclusive")
+    if args.operator_cutoff_sweep:
+        try:
+            cutoffs = [int(value.strip()) for value in args.operator_cutoff_sweep.split(",")]
+        except ValueError as exc:
+            ap.error(f"invalid --operator-cutoff-sweep: {exc}")
+        result = cutoff_operator_sweep(
+            args.domain, cutoffs, args.block_rows, args.dense_max_entries
+        )
+        default_output = (
+            f"verification_results/PETER_WEYL_CUTOFF_OPERATOR_"
+            f"{args.domain}_J_SWEEP.json"
+        )
+    elif args.jmax2_sweep:
         try:
             cutoffs = [int(value.strip()) for value in args.jmax2_sweep.split(",")]
         except ValueError as exc:
