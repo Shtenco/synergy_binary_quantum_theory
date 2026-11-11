@@ -374,6 +374,18 @@ Compare nullity, positive gap, projectors, mode-resolved leakage, shell-depth co
 
 The physical projector is not yet established by a finite shell calculation. It requires shell/cutoff/pruning convergence, stable kernel and gap, graph transitions, and the correct physical inner product.
 
+## 11A. Coherent leakage-Gram implementation kernel
+
+New utility:
+- [BQG_SPARSE_LEAKAGE_GRAM_DESIGN_AND_TESTS_2026-11-11.md](BQG_SPARSE_LEAKAGE_GRAM_DESIGN_AND_TESTS_2026-11-11.md)
+- [scripts/bqg_sparse_leakage_gram.py](scripts/bqg_sparse_leakage_gram.py)
+
+The helper assembles the full coherent outside-shell Gram by matching canonical output keys across input columns and adding complex outer products. It also provides a scale-relative PSD/nullspace classifier without a unit absolute scale floor. Its input contract requires complete, coherently aggregated sparse columns; it performs no pruning itself.
+
+The embedded tests cover a shared outside key with a nonzero imaginary off-diagonal, agreement with a dense full-output Gram on a toy problem, positive-rescaling invariance, and rejection of significant negative eigenvalues.
+
+**Execution status:** the committed repository script was not run in this turn. A local scratch prototype of the same core algebra passed, but the committed file still requires direct execution in the target repository environment. The helper is not yet integrated into the K5 producer, whose current nested thresholds remain a blocker.
+
 ## 12. Ordered next research programme
 
 Priority 0 — establish trustworthy operator numerics:
