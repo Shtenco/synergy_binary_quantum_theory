@@ -576,3 +576,70 @@ The current branch head before this documentation update is
 370f36562a078583fe48261ed65f3feb2157fa2d; comparison reports 304 commits
 ahead of main and two behind. Main is unchanged and unmerged. The low-domain
 and 32-state production calculations remain pending actual execution.
+
+## Follow-up: spectral-threshold sensitivity of the physical kernel (2026-11-11 14:36 UTC)
+
+A review of the comparator's two rank tolerances found a semantic mismatch
+that must remain explicit in every interpretation:
+
+- `singular_rtol` is applied to singular values of C;
+- `rank_rtol` in the Gram diagnostic is applied to eigenvalues of
+  C^dagger C, so its equivalent singular-value threshold is
+  `sqrt(rank_rtol)`.
+
+Thus the defaults `singular_rtol=1e-10` and `rank_rtol=1e-10`
+do not describe the same numerical rank decision: the Gram threshold
+corresponds to a singular-value relative threshold of 1e-5. This is not
+an algebraic contradiction; it is a tolerance-semantics difference.
+Reports must not compare the two rank fields as though they were computed
+with a common cutoff.
+
+The stability comparator now includes a declared singular-value threshold
+grid (1e-14, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4). For each legacy and no-prune
+map it records:
+- numerical rank and nullity at each grid point;
+- largest retained and largest discarded normalized singular values;
+- distances of those boundary values from the threshold;
+- sampled rank plateaus;
+- legacy/no-prune kernel-projector distance at each identical threshold;
+- explicit nullity mismatch and TSQR scale-resolution status.
+
+This is a grid-based sensitivity diagnostic, not a proof for thresholds
+between grid points and not an exact-rank certificate. It also does not
+supply the missing upstream operator-construction error bound.
+
+Three regression methods were added: known rank transitions at singular
+scales 1, 1e-6, 1e-12; rejection of unsorted/non-finite threshold grids;
+and principal-angle comparison across a shared threshold grid.
+
+Independent local NumPy oracle checks returned ranks [3, 2, 1] for the
+matrix with singular values [1, 1e-6, 1e-12] at thresholds
+[1e-13, 1e-9, 1e-5]. A rotated one-dimensional kernel at angle 0.1 gave
+projector distance 0.09983341664682824 versus sin(0.1) =
+0.09983341664682815. These are independent synthetic checks, not execution
+of the checked-in suite or a production Peter-Weyl calculation.
+
+### Current focused test inventory (static source count)
+
+- master-projector integrity: 31 methods;
+- legacy/no-prune constraint stability: 19 methods;
+- streaming TSQR/direct-SVD: 13 methods;
+- production K5 raw-volume operator: 14 methods;
+- total: **77 test methods**.
+
+### Current repository and CI state
+
+The research branch head is
+`4854eb2d7f9c029da209259d2006cb4aea5264c0`; comparison with main reports
+308 commits ahead and two behind, with merge base
+`23669209c83fe0aa2741612e5b2b119562ee6d7d`. Main remains
+`254f19fdab41d32b920bf454f987aa7c0fdba34d` and was not changed or merged.
+
+The latest observed Actions run is `43040087118` for the threshold-test
+commit; its job remains queued with no conclusion. The preceding implementation
+run `43040079658` is also queued. No CI PASS is claimed. The queue backlog
+continues; no manual reruns or workflow dispatches were started.
+
+The low-domain and full 32-state production legacy/no-prune comparisons have
+not been executed. No physical-kernel equivalence, exact rank, regulator
+stability, or continuum theorem is established.
