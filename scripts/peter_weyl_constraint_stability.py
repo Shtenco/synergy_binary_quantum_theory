@@ -237,6 +237,29 @@ def kernel_projector_from_direct_svd(direct, dim):
 
 def compare_kernel_projectors(legacy_direct, no_prune_direct, dim):
     """Compare finite right-kernel subspaces, not merely their dimensions."""
+    scale_flags = (
+        legacy_direct.get("scale_separation_loss", True),
+        no_prune_direct.get("scale_separation_loss", True),
+    )
+    if any(not isinstance(flag, (bool, np.bool_)) for flag in scale_flags):
+        raise ValueError("scale_separation_loss metadata must be boolean")
+    if any(scale_flags):
+        # Physical-scale singular values may have underflowed after the
+        # normalized SVD. Do not construct a kernel from that lossy spectrum.
+        return {
+            "status": "INCONCLUSIVE_SCALE_SEPARATION",
+            "legacy_rank": None, "no_prune_rank": None,
+            "legacy_nullity": None, "no_prune_nullity": None,
+            "same_nullity": None,
+            "projector_difference_spectral_norm": None,
+            "max_principal_angle_sine": None,
+            "scale_separation_warning": True,
+            "projector_geometry_checks_passed": False,
+            "interpretation": (
+                "Scale separation may have erased nonzero singular modes; "
+                "kernel ranks and projectors were not constructed."
+            ),
+        }
     left = kernel_projector_from_direct_svd(legacy_direct, dim)
     right = kernel_projector_from_direct_svd(no_prune_direct, dim)
     same_nullity = left["nullity"] == right["nullity"]
@@ -384,6 +407,19 @@ def compare_threshold_sweeps(legacy_direct, no_prune_direct, dim, rtol_values):
     scale_warning = (
         left["scale_separation_warning"] or right["scale_separation_warning"]
     )
+    if scale_warning:
+        return {
+            "threshold_semantics": "relative threshold on singular values of C, not eigenvalues of C^dagger C",
+            "legacy_rank_plateaus": [],
+            "no_prune_rank_plateaus": [],
+            "comparisons": [],
+            "scale_separation_warning": True,
+            "status": "INCONCLUSIVE_SCALE_SEPARATION",
+            "interpretation": (
+                "At least one physical-scale singular spectrum may have lost "
+                "nonzero modes; no threshold rank or kernel geometry is reported."
+            ),
+        }
     comparisons = []
     for a, b in zip(left["threshold_results"], right["threshold_results"]):
         same_nullity = a["nullity"] == b["nullity"]
@@ -492,14 +528,20 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     delta_spec = spectrum_of_gram(delta_gram, rank_rtol)
     sigma_min = legacy_direct["singular_values"][-1]
     delta_norm = delta_direct["singular_values"][0]
+    scale_loss = bool(
+        legacy_direct["scale_separation_loss"]
+        or no_prune_direct["scale_separation_loss"]
+        or delta_direct["scale_separation_loss"]
+    )
     stable = bool(
-        legacy_direct["rank"] == dim
+        not scale_loss
+        and legacy_direct["rank"] == dim
         and no_prune_direct["rank"] == dim
         and delta_norm < sigma_min
-        and not legacy_direct["scale_separation_loss"]
-        and not no_prune_direct["scale_separation_loss"]
-        and not delta_direct["scale_separation_loss"]
     )
+    if scale_loss:
+        sigma_min = None
+        delta_norm = None
     return {
         "status": "legacy versus no-prune finite Peter-Weyl constraint-map comparison",
         "domain": domain,
@@ -526,9 +568,16 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
         "weyl_rank_stability_sufficient_condition": {
             "delta_operator_norm": delta_norm,
             "legacy_minimum_singular_value": sigma_min,
-            "strict_inequality_holds": bool(delta_norm < sigma_min),
-            "legacy_full_column_rank_at_declared_tolerance": bool(legacy_direct["rank"] == dim),
-            "no_prune_full_column_rank_at_declared_tolerance": bool(no_prune_direct["rank"] == dim),
+            "strict_inequality_holds": (
+                None if scale_loss else bool(delta_norm < sigma_min)
+            ),
+            "legacy_full_column_rank_at_declared_tolerance": (
+                None if scale_loss else bool(legacy_direct["rank"] == dim)
+            ),
+            "no_prune_full_column_rank_at_declared_tolerance": (
+                None if scale_loss else bool(no_prune_direct["rank"] == dim)
+            ),
+            "scale_separation_warning": scale_loss,
             "rank_source": "direct streaming SVD of C",
             "sufficient_rank_stability_for_computed_float_maps": stable,
             "exact_operator_rank_certified": False,
@@ -568,6 +617,16 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
         leg_direct = result["legacy"]["direct_svd"]
 
         def spectrum_summary(direct):
+            if direct["scale_separation_loss"]:
+                return {
+                    "rank": None, "nullity": None, "sigma_max": None,
+                    "sigma_min_including_numerical_kernel": None,
+                    "smallest_retained_sigma": None,
+                    "normalized_singular_values": None,
+                    "scale_separation_warning": True,
+                    "stacked_column_sha256": None,
+                    "classification": "INCONCLUSIVE_SCALE_SEPARATION",
+                }
             singular = np.asarray(direct["singular_values"], dtype=float)
             scale = float(singular[0]) if singular.size else 0.0
             normalized = singular / scale if scale > 0.0 else np.zeros_like(singular)
@@ -610,6 +669,21 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
         current = results[index]
         previous_direct = previous["no_prune"]["direct_svd"]
         current_direct = current["no_prune"]["direct_svd"]
+        if previous_direct["scale_separation_loss"] or current_direct["scale_separation_loss"]:
+            adjacent.append({
+                "from_jmax2": cutoffs[index - 1],
+                "to_jmax2": cutoffs[index],
+                "no_prune_kernel_subspace": {
+                    "status": "INCONCLUSIVE_SCALE_SEPARATION",
+                    "max_principal_angle_sine": None,
+                },
+                "max_abs_difference_of_normalized_singular_values": None,
+                "normalized_spectrum_comparison_scope": (
+                    "not evaluated because a physical-scale singular spectrum "
+                    "may have lost nonzero modes"
+                ),
+            })
+            continue
         previous_sigma = np.asarray(previous_direct["singular_values"], dtype=float)
         current_sigma = np.asarray(current_direct["singular_values"], dtype=float)
         previous_scale = float(previous_sigma[0]) if previous_sigma.size else 0.0

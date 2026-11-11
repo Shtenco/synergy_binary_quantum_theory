@@ -270,6 +270,22 @@ class ConstraintStabilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "block_rows"):
             stability.run(jmax2=1, block_rows=0)
 
+    def test_scale_separation_blocks_kernel_and_threshold_rank_claims(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        warned = dict(direct)
+        warned["scale_separation_loss"] = True
+        warned["singular_values"] = [0.0, 0.0]
+        kernel = stability.compare_kernel_projectors(direct, warned, 2)
+        self.assertEqual(kernel["status"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertIsNone(kernel["no_prune_rank"])
+        sweep = stability.compare_threshold_sweeps(
+            direct, warned, 2, [1e-12, 1e-8]
+        )
+        self.assertEqual(sweep["status"], "INCONCLUSIVE_SCALE_SEPARATION")
+        self.assertEqual(sweep["comparisons"], [])
+
     def test_singular_threshold_sweep_detects_rank_plateaus_and_transitions(self):
         columns = {
             0: {(0, "r0"): 1.0},

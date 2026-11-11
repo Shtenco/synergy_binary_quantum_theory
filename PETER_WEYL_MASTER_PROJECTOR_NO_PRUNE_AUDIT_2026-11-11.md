@@ -790,3 +790,32 @@ The constraint-stability suite now has 26 test methods; the four-suite
 static source inventory is **84 methods** (31 + 26 + 13 + 14). These are
 source counts only. The new cutoff sweep and its tests have not been run
 against the production Peter-Weyl columns in this environment.
+
+
+## Follow-up: scale-loss gates across kernel and regulator diagnostics (2026-11-11)
+
+The streaming TSQR routine flags cases where common-scale normalization or
+restoration may erase singular modes. The audit found that downstream
+consumers could still build projectors or report threshold ranks from the
+physical-scale singular-value array before honoring that flag. In an
+underflow case this could turn a lost nonzero mode into an apparent exact
+zero mode. The Weyl summary could also display a strict inequality computed
+from the same lossy spectrum despite separately marking the run unstable.
+
+The constraint-stability layer now fails closed before kernel-projector
+construction and before threshold-grid rank classification whenever either
+input map reports scale-separation loss. The Weyl numerical values and
+full-rank flags become unavailable in that case. The finite-cutoff sweep
+suppresses singular-spectrum summaries and adjacent-cutoff comparisons if
+either cutoff loses scale separation. This prevents a numerical information
+loss warning from being converted into a false zero-mode or convergence
+statement.
+
+One synthetic regression method was added. Static test-method inventory is
+85 methods across the four focused suites (31 master-projector integrity,
+27 constraint stability, 13 streaming TSQR/direct-SVD, 14 raw-volume
+operator tests). This is source inspection only; no test execution is claimed.
+
+This change is based on branch head 9dd4f9eb73922d4355bf3648575b8f6b4a4c4479. Main remains untouched and no
+merge is performed. It does not establish regulator convergence or
+physical-kernel equivalence.
