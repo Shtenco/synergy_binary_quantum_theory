@@ -50,6 +50,18 @@ def branch_heads(cwd=None) -> dict[str, str]:
     return dict(sorted(branches.items()))
 
 
+def git_commit_metadata(commit: str, cwd=None) -> dict:
+    raw = git_output(["cat-file", "-p", commit], cwd=cwd)
+    header = raw.split(b"\\n\\n", 1)[0].decode("utf-8", errors="replace")
+    metadata = {"parents": []}
+    for line in header.splitlines():
+        if line.startswith("tree "):
+            metadata["tree_sha"] = line[5:]
+        elif line.startswith("parent "):
+            metadata["parents"].append(line[7:])
+    return metadata
+
+
 def git_tree(commit: str, cwd=None) -> list[dict]:
     raw = git_output(["ls-tree", "-r", "-z", commit], cwd=cwd)
     entries = []
@@ -132,12 +144,14 @@ def build_snapshot(
     branches = branch_heads(cwd)
     commits = sorted(set(branches.values()))
     snapshots = {}
+    commit_graph = {}
     unique_blobs = set()
     total_path_entries = 0
     gitlinks = 0
     for commit in commits:
         entries = git_tree(commit, cwd)
         snapshots[commit] = entries
+        commit_graph[commit] = git_commit_metadata(commit, cwd)
         total_path_entries += len(entries)
         for entry in entries:
             if entry["type"] == "blob":
@@ -153,11 +167,14 @@ def build_snapshot(
         "unique_head_commit_count": len(commits),
         "main_head": branches["main"],
         "branch_heads": branches,
+        "commit_graph": commit_graph,
         "snapshot_commit_count": len(snapshots),
         "snapshot_path_entry_count": total_path_entries,
         "gitlink_entry_count": gitlinks,
         "unique_blob_count": len(unique_blobs),
         "blob_storage": "blobs/<git-blob-sha>; each unique blob is stored once",
+        "submodule_note": "gitlink commit IDs are recorded but submodule trees are not dereferenced",
+        "git_lfs_note": "tracked Git LFS pointer blobs are included; external LFS payloads are not fetched",
         "snapshots": snapshots,
     }
     manifest_bytes = (
