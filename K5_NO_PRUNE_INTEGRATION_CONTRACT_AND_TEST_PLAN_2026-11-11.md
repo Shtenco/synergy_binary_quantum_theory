@@ -312,3 +312,15 @@ For each of the four binary endpoint-channel pairs, the test compares the indepe
 **Evidence boundary:** the test and CI wiring are committed, but neither the new test nor the workflow has yet been executed or returned a CI result. A passing result would certify only this one closed-loop primitive, this finite spin wall, this basis convention and these channel sectors. It would not certify every primitive path, each T term, the assembled node-H operator, full HDA closure, or physical continuum behavior.
 
 The workflow now includes this sixth test script. The committed method inventory is 12 sparse-helper + 11 K5 policy-wiring + 4 synthetic dense-oracle + 3 production raw-volume + 3 local link-hit adjoint + 1 production primitive dense-adjoint = **34 test methods**. No PASS is claimed.
+
+
+## 24. Orthonormal-basis prerequisite added to the production primitive oracle — 2026-11-11
+
+The finite-sector dense-adjoint test now independently checks the local recoupling basis before comparing operator matrices. New method:
+`test_local_recoupling_bases_are_orthonormal_on_all_test_sectors`.
+
+For the all-doubled-spin-1 input sector and each of the eight output assignments on the three closed-triangle edges, it constructs every local oriented intertwiner tensor at all five vertices and verifies the full local Gram matrix against the identity. This guards a crucial hidden assumption: a matrix equality with a conjugate transpose is the correct adjoint test only when the chosen domain and codomain bases use the declared orthonormal inner product.
+
+The added check does not itself certify the global tensor-product basis or physical graph-changing inner product; it verifies the local recoupling factors used to form that basis. The production primitive matrix comparison remains a separate test and is not weakened or symmetrized.
+
+The production primitive test file now contains two test methods. Total committed inventory: **35 test methods** across six scripts. The workflow already invokes the file, so no workflow command change is needed. Neither the expanded test nor CI has been executed/confirmed; no PASS is claimed.
