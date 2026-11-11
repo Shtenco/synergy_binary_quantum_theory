@@ -1,0 +1,14 @@
+{
+  "schema":"synergy.import_manifest/v1",
+  "import_id":"synergy-723-2026-09",
+  "repository":"Shtenco/binary_quantum_theory",
+  "mapped_artifact_count":1,
+  "direct_payload_artifact_count":1,
+  "external_evidence_pending_count":0,
+  "payload_sha256":"f1994409ae229a6e3774ba77867afeffc628b007965942f54f3c63177f58581d",
+  "payload_state":"PAYLOAD_PENDING_CONNECTOR_LIMIT",
+  "target_branch":"migration/synergy-723-2026-09",
+  "quarantine_excluded":[".env","dao_robots_keys.json","withdraw_pw.py"],
+  "generated_excluded":["SINERGY_BOT_MINIMAL.cpython-312.pyc"],
+  "promotion_rule":"Import preserves provenance; R&D/LEGACY artifacts are not promoted to CANONICAL by migration."
+}
