@@ -482,3 +482,10 @@ A new source-grounded integration contract is preserved in [K5_NO_PRUNE_INTEGRAT
 **Newly explicit source boundary:** the K5 safe-column producer is not automatically the active V10 KKV production path discussed in the two commits currently on `main`. The V10 L1/L2/L3 linearity audit is methodologically relevant, but its call-site findings are not attributed to the K5 file without a confirmed caller. At this snapshot, `main` contains two commits absent from this research branch (`8d55ff4` and `254f19f`); this branch remains isolated and no merge or history rewrite was performed.
 
 **Verification status:** this update adds a source-audit/design contract only. It does not claim policy integration, direct execution of the committed unit tests, a K5 dense-oracle PASS, adjoint certification, raw-volume integrity, a no-prune HH run, or physical HDA closure. The existing HH result remains a legacy-thresholded finite regression.
+
+
+## 14. Reproducible CI entry point for sparse-pruning helper — 2026-11-11
+
+Added [`.github/workflows/bqg-sparse-pruning.yml`](.github/workflows/bqg-sparse-pruning.yml). It installs NumPy and runs the committed test file directly as `python scripts/test_bqg_sparse_pruning.py` (the direct invocation is intentional because that test currently imports `bqg_sparse_pruning` from the script directory). The workflow is scoped to the helper, its tests, and itself, and supports manual dispatch.
+
+**Status boundary:** workflow definition is committed and fetched back from GitHub; no CI run result is claimed in this audit update. A green CI result must be confirmed from the actual run and job logs before the eight tests are called CI-verified. This workflow validates only the standalone pruning primitive, not the K5 producer integration or any physical BQG claim.
