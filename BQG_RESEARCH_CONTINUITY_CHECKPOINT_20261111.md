@@ -203,3 +203,8 @@ Both independent basis responses are hard assertions, so an empty second vector 
 **Commits:** `10f9e4964e5caacbd3f2a08209fd840a29ded40f` (add independent-basis test), `ec82224564516d9b902ac52de37b3e540bce4c22` (require both basis responses).
 
 **New L2 run:** `42936669007`, HEAD `10f9e4964e5caacbd3f2a08209fd840a29ded40f`, job `130248321716`: queued, no artifacts. The immediately prior run `42936480504` also remains queued. Older L2 and L1 runs remain queued. No PASS/FAIL is available.
+
+
+Follow-up hardening of the independent-support fixture was committed as `ec82224564516d9b902ac52de37b3e540bce4c22`: the test now explicitly asserts that the two converted complete-state keys are distinct and that **both** individual volume responses are nonempty before evaluating additivity. This prevents a zero-response second basis vector from making the comparison vacuous.
+
+The corresponding L2 run `42936684504`, HEAD `ec82224564516d9b902ac52de37b3e540bce4c22`, job `130248370659`, is queued without artifacts. Run `42936669007` (the immediately preceding version) is also queued. The later documentation-only commits do not change the test or workflow contents.
