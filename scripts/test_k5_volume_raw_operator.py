@@ -166,14 +166,14 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
         base = np.array([-2.0, -1e-16, 0.0, 3.0])
         observed = [
             k5.volume_spectrum_resolution(base * scale)
-            for scale in (1e-120, 1e-12, 1.0, 1e12, 1e120)
+            for scale in (1e-320, 1e-120, 1e-12, 1.0, 1e12, 1e120)
         ]
         self.assertEqual(
             [item["resolved_numerical_nullity"] for item in observed],
-            [2] * 5,
+            [2] * 6,
         )
         gaps = [item["normalized_gap_to_zero"] for item in observed]
-        np.testing.assert_allclose(gaps, np.full(5, 2.0 / 3.0), rtol=2e-15)
+        np.testing.assert_allclose(gaps, np.full(6, 2.0 / 3.0), rtol=2e-15)
 
     def test_volume_spectrum_resolution_handles_zero_operator(self):
         result = k5.volume_spectrum_resolution(np.zeros(4))
