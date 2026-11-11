@@ -130,6 +130,29 @@ def projector_from_eigh(evals: np.ndarray, U: np.ndarray, threshold: float):
     return Q @ Q.conj().T, mask
 
 
+def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
+    """Evaluate max_v ||H_v sum_a coeff[a]|a>|| without amplitude cutoffs.
+
+    Contributions are accumulated with separate compensated real/imaginary
+    sums. Only an exactly zero coefficient is skipped.
+    """
+    maximum = 0.0
+    for v in nodes:
+        terms = {}
+        for a, amp in enumerate(coeff):
+            if amp == 0j:
+                continue
+            for key, value in columns[(v, a)].items():
+                terms.setdefault(key, []).append(amp * value)
+        norm_sq = math.fsum(
+            math.fsum(z.real for z in values) ** 2
+            + math.fsum(z.imag for z in values) ** 2
+            for values in terms.values()
+        )
+        maximum = max(maximum, math.sqrt(norm_sq))
+    return maximum
+
+
 def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         mode="legacy", hermitian_rtol=1e-10, psd_rtol=1e-10):
     if mode not in ("legacy", "no_prune"):
@@ -169,15 +192,10 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
         if rank0:
             Q0 = U[:, mask]
             for q in range(Q0.shape[1]):
-                coeff = Q0[:, q]
-                for v in nodes:
-                    out = {}
-                    for a, amp in enumerate(coeff):
-                        if abs(amp) < 1e-14:
-                            continue
-                        for key, val in columns[(v, a)].items():
-                            out[key] = out.get(key, 0j) + amp * val
-                    annihilation = max(annihilation, math.sqrt(sum(abs(x) ** 2 for x in out.values())))
+                annihilation = max(
+                    annihilation,
+                    constraint_annihilation_norm(columns, Q0[:, q], nodes),
+                )
         good = (herm_rel <= hermitian_rtol and min_G > 0.0
                 and min_eval >= -psd_tolerance and annihilation < 2e-7)
         all_ok &= good
