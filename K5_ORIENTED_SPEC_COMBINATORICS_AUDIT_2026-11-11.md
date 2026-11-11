@@ -37,3 +37,9 @@ This is a combinatorial generator test. It does not prove covariance of the resu
 2. Matrix-element Hermiticity of assembled (H_v=(T_v+T_v^\dagger)/2), with the full 12-spec signed sum.
 3. Spin-wall stability with explicit accounting of transitions clipped at each finite wall.
 4. Only after these gates: full HH composition and leakage Gram (L^\dagger L), retaining off-diagonal interference.
+
+## Full coherent T-sum test added — 2026-11-11
+
+The production test file now includes `test_full_32_term_T_sum_matches_reverse_matrix_element`. Unlike the five-hit single-monomial test, this evaluates all 32 signed monomials, coherently sums their contributions, and checks the reverse matrix element from the complete adjoint sum. It uses one deterministic largest-magnitude nonzero output element from a fixed all-spin-1/all-(K=0) input at doubled-spin wall 2.
+
+This is a materially stronger local acceptance gate, but not a full matrix adjoint proof. Its scope remains one matrix element, one input, one orientation triple, and one finite wall. The production primitive/orientation script now has five methods; total workflow source inventory is 41 methods. CI execution remains unconfirmed.
