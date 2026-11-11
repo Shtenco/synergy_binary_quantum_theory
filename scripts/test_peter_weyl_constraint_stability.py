@@ -174,6 +174,35 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertIsNone(result["max_principal_angle_sine"])
 
 
+    def test_kernel_projector_rejects_nonunitary_full_right_singular_vectors(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        malformed = dict(direct)
+        malformed["right_singular_vectors_real"] = np.zeros((2, 2)).tolist()
+        with self.assertRaisesRegex(ValueError, "not orthonormal"):
+            stability.kernel_projector_from_direct_svd(malformed, 2)
+
+    def test_kernel_projector_rejects_rank_inconsistent_with_spectrum(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        malformed = dict(direct)
+        malformed["rank"] = 0
+        with self.assertRaisesRegex(ValueError, "inconsistent"):
+            stability.kernel_projector_from_direct_svd(malformed, 2)
+
+    def test_kernel_projector_rejects_boolean_rank_and_dimension(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        malformed = dict(direct)
+        malformed["rank"] = True
+        with self.assertRaisesRegex(ValueError, "rank"):
+            stability.kernel_projector_from_direct_svd(malformed, 2)
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            stability.kernel_projector_from_direct_svd(direct, True)
+
     def test_singular_threshold_sweep_detects_rank_plateaus_and_transitions(self):
         columns = {
             0: {(0, "r0"): 1.0},
