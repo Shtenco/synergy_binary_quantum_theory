@@ -917,3 +917,28 @@ The test was further hardened in commit 122258ff0ac489f9e7bf3b5dd8f669acec485a30
 ### 30.4 CI runtime budget
 
 The workflow job timeout was increased from 5 to 15 minutes in commit `cf40a267ba38867acc4db206617eb37d40cc07f4`. Reason: the non-pruned assembled H action evaluates all 12 signed specifications and both T/T† sums; the exact reverse support filter limits the second-direction work but this remains materially heavier than a single primitive test. This is a runtime allowance, not evidence that the test completes within that budget. The workflow path filter includes the test and the workflow itself, so this change creates a fresh push run.
+
+
+## 32. Next matrix-wide gate: rectangular finite-sector H adjointness
+
+The corrected pairwise test is a non-vacuous smoke gate, not the endpoint. The next rigorous finite-sector object should be a rectangular forward/reverse pair, because the selected input sector is not invariant under H.
+
+Let D be an explicitly enumerated orthonormal input basis with maximum doubled link spin S_D, and let R be the union of all output keys returned by the no-prune production columns Hx for x in D. Define the forward matrix A by A[y,x]=<y|H|x> for y in R and x in D. Independently define B[x,y]=<x|H|y> by production T/T† matrix elements. The finite-sector adjoint gate is
+
+A=B†
+
+for every pair (x,y) in D×R. This compares every entry in the declared rectangular block; it does not require D or R to be invariant under H.
+
+For forward columns, the universal per-edge hit bound gives Jmax2≥S_D+2. Every y in R then has S_y≤S_D+2, so the reverse matrix elements can be evaluated with Jmax2≥S_y+2, or uniformly with Jmax2≥S_D+4. No-prune coherent aggregation is mandatory in both directions.
+
+The reverse matrix need not materialize complete H(y) columns. For each pair, compute the set of link edges whose spin labels differ; a signed spec can contribute only if its exact hit support contains every changed edge. This support filter is amplitude-independent and must be independently checked against the sequence generator. For multiple input kets sharing one link-spin vector, the same candidate-spec set applies to all their intertwiner channels; cached production T/T† maps can be reused to fill the whole reverse row.
+
+Resource-staged implementation:
+1. Start with a small D of two or four allowed K-channel kets on the all-link-spin-1 carrier.
+2. Materialize all no-prune forward columns and collect the complete reachable R; record |D|, |R|, per-column support and norms.
+3. If R is too large for a complete reverse calculation, first choose a deterministic top-k subset R_k by coherent amplitude magnitude and explicitly report forward leakage outside R_k. Label this as a projected rectangular block, not the complete reachable matrix.
+4. For every y in R_k, evaluate every candidate signed spec and both T/T† directions; fill B on all x in D. Compare A_k with B_k† using Frobenius, maximum-entry, and per-row/per-column residuals.
+5. Increase k and |D| only after runtime and memory are measured; ultimately attempt D={all 32 K∈{0,2}^5 states} and the complete reachable R if resources permit.
+6. After one-action H passes, extend to ordered HH maps with the conservative wall S_D+4, then construct the full leakage Gram including off-diagonal interference.
+
+A complete reachable R has zero forward leakage by definition; a truncated R_k must report the omitted forward L2/L1/max ledger. Reverse support filtering proves omitted specifications contribute zero to selected matrix entries; it does not imply that H(y) has no output outside D. Keep these two leakage notions separate.
