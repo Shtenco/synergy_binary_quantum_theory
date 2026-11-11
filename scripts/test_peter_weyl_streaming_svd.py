@@ -89,6 +89,13 @@ class StreamingSVDTests(unittest.TestCase):
         result = tsqr.streaming_svd(blocks, 2)
         self.assertTrue(result.scale_separation_loss)
 
+    def test_warns_on_nonzero_sub_ulp_component_even_without_underflow(self):
+        matrix = np.array([[1.0, 0.0], [0.0, 1e-20]])
+        result = tsqr.streaming_svd([matrix], 2)
+        self.assertFalse(np.any(matrix == 0.0) is False)
+        self.assertTrue(result.scale_separation_loss)
+        self.assertEqual(result.rank, 2)
+
     def test_complex_component_scaling_avoids_abs_overflow(self):
         value = 1.2e308 + 1.2e308j
         result = tsqr.streaming_svd([np.array([[value]])], 1)
