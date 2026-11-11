@@ -1502,3 +1502,28 @@ Source inspection explains the failure: the validator recognizes only dollar del
 At the current consolidated research HEAD the four public files selected by core CI use dollar-delimited math and contain no `\\(` or `\\[` delimiters, so the specific historical 22-error failure is not shown to reproduce on that snapshot. Nevertheless the validator remains incomplete: it should parse escaped inline `\\(...\\)` and display `\\[...\\]` delimiters, handle fenced code and unmatched delimiters, and include regression fixtures for all four supported styles. Do not silently label the old core-regression run green; retain its actual failure and its exact cause.
 
 Classification: historical CI failure independently diagnosed as validator/parser defect; post-HDA physical-projector workflow separately passed; current validator has a latent format-coverage bug.
+
+
+## 33. Public README math regression repaired and locally revalidated
+
+The current consolidated branch's README had a second, distinct issue from the historical August validator false positive. In section Г.2 onward, 12 display-math blocks used bare standalone `[` / `]` lines rather than actual math delimiters; several inline expressions also left TeX commands outside math mode. A local reproduction of the repository's `validate_github_latex.py` parser found 16 errors in README, while the other three core public files were clean.
+
+The README was corrected on this research branch:
+- 24 standalone bracket lines (12 display-math pairs) were changed to `$$` / `$$`;
+- the inline combined (H=-2E/3-32S/9+R) expression was wrapped in math delimiters;
+- (W_l), the effective (H_l[N]), (H_l[M]), (D_l[\beta]), the (s^2) calibration values, (M_{hq}^{(l)}), the DeWitt coefficient and the (4.83\times10^{-15}) diagnostic were normalized to inline math.
+
+I then fetched the four exact files selected by `core-regression.yml` at the updated branch HEAD and ran a local JavaScript reproduction of the validator's delimiter/fence/group/environment logic. Results:
+| File | Math expressions parsed | Errors |
+|---|---:|---:|
+| `README.md` | 125 | 0 |
+| `THEORY_STATUS.md` | 21 | 0 |
+| `OPEN_PROBLEMS.md` | 14 | 0 |
+| `BIT_TO_SPACETIME_CENTRAL_EQUATION.md` | 45 | 0 |
+| **Total** | **205** | **0** |
+
+This is a local reproduction of the validator logic against the exact fetched files, not a claim that the GitHub Actions workflow was rerun. No workflow-dispatch capability was available in this pass. The historical run `32129094214` remains a recorded failure; this README repair is a later research-branch correction and does not retroactively change that run.
+
+The validator's unsupported `\\(...\\)` / `\\[...\\]` syntax remains a latent compatibility limitation. The current public surface now uses the supported dollar-delimiter style consistently. A separate unit-test fixture should eventually exercise both supported and escaped-delimiter syntaxes before the validator is generalized.
+
+README repair commit chain ends at `5c554760fa8017a543f6bee43a106d2e126e3d84` before the audit/inventory checkpoint updates.
