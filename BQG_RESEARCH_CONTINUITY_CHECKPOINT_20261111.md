@@ -274,3 +274,27 @@ The new C(V) integration test is intentionally scoped to one matrix component, e
 ## 17. README gate-scope clarification — 11 November 2026
 
 After the C(V) integration test was added, README wording was narrowed so that the remaining open work is explicit: the full (C(K)) leg, the remaining matrix components of (C(V)), and L3 matrix reconstruction are still open. This documentation-only clarification is commit `6e402553253033568e7581a413e67e5d9b024b2b`. Immediately before this continuity update, the branch compared with `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` was 41 commits ahead and 0 behind. This update changes only the continuity ledger; it does not modify production code or tests.
+
+
+
+## 18. C(V) gate audit correction and 01:16 UTC branch/CI checkpoint — 11 November 2026
+
+A final source/documentation consistency pass made two corrections:
+1. Fixed a malformed inline-code delimiter in section 11 of `BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md`; no test logic or production code changed.
+2. Tightened README language to distinguish the three independent-support tests now present: local volume primitive, cached complete (H_E) map, and one full covariant (C(V)) matrix component. The README now explicitly limits the (C(V)) claim to one edge and one matrix component and does not imply that all of (C(V)), (C(K)), or the K commutator has passed.
+
+### Authoritative branch state
+
+The GitHub branch commit listing at 01:16 UTC identifies the current tip as `40b2e18c1a1d59ff4f9cddfc2492da0103e6c58b` (message: `Fix commit reference formatting in BQG checkpoint`). The branch compare against `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` reports **43 commits ahead, 0 behind**. The latest test-bearing commit is `f424ed517fa7ab6058988ad4064a1b456cf08ff2` (`Test additivity of full covariant volume leg`); subsequent commits are documentation/checkpoint clarifications. The canonical L2 test file is present at the branch tip and contains the full (C(V)) independent-support test.
+
+### Newly identified L2 run
+
+The push-triggered run for the full (C(V)) test is now identified:
+- Run `42937467628`, workflow `BQG production linearity L2 primitive audit`, run #7;
+- tested HEAD `f424ed517fa7ab6058988ad4064a1b456cf08ff2`;
+- job `130250982584`, `l2-production-primitives`;
+- status `queued`, conclusion absent, artifacts none.
+
+At this poll, the earlier five L2 runs (`42935840345`, `42935968925`, `42936480504`, `42936669007`, `42936684504`) and both L1 runs (`42929934053`, `42930769907`) also remain queued without artifacts. The V10 full-node closure, adapter, and V11 common-carrier runs previously enumerated in section 14 remain queued; the two older runs listed there remain cancelled. No CI PASS/FAIL is available.
+
+No production operator code was changed in this pass. No local execution was performed. `main` remains untouched; no merge was performed. The next step is to obtain the run #7 log and diagnose the actual (C(V)) result before broadening to other matrix components or (C(K)).
