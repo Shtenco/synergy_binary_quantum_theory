@@ -838,3 +838,12 @@ The primitive/orientation test file now contains **7 methods**. The six workflow
 2. Run and inspect the Jmax2=2 versus 4 wall-sensitivity ledger; if low-spin amplitudes change, identify the contributing clipped intermediate paths before increasing the wall.
 3. Extend to a three-wall ladder (for example 2/4/6) only if resource/runtime permits, with explicit support and amplitude convergence metrics.
 4. Then build the complete declared finite-sector T/reverse matrices and the assembled signed 12-spec H_v test.
+
+
+### 28.1 Analytical ceiling for the selected T spin-wall experiment
+
+The wall experiment was strengthened in commit `088c4ccf5dcde17e982c0a625e67ba71df4fd561` to evaluate `Jmax2=2,4,6` and assert exact equality of the complete coherent output dictionaries at walls 4 and 6.
+
+For the fixed input with every link at doubled spin 1, each monomial in `T_sequences(v,a,b,c)` contains two one-hit paths on the same edge ((c,v)), and one three-edge closed path ((v,a,b,v)). Since (c,a,b,v) are distinct, the ((c,v)) edge is hit at most twice and every other edge at most once. Each production hit changes doubled spin by exactly (+1) or (-1). Consequently the maximum reachable doubled spin from this input is bounded by (1+2=3). Thus `Jmax2=4` is already above the analytically derived reachable ceiling for this specific input and T sum; `Jmax2=6` is a redundant saturation check. This is stronger than treating wall 4 as an arbitrary larger cutoff, but remains input- and sequence-specific.
+
+The test now asserts `wall4 == wall6` as exact dictionary equality and reports the derived ceiling. It still separately reports wall-2 versus wall-4 low-final-spin amplitude changes and high-spin support. This does not imply that wall 4 is sufficient for other input spin sectors, other operators, or the full HH composition.
