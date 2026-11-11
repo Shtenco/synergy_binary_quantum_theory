@@ -429,9 +429,17 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
 
         wall2 = coherent_at_wall(2)
         wall4 = coherent_at_wall(4)
+        wall6 = coherent_at_wall(6)
         self.assertTrue(wall2, "T column vanished at Jmax2=2")
         self.assertTrue(wall4, "T column vanished at Jmax2=4")
-        for label, mapping in (("wall2", wall2), ("wall4", wall4)):
+        self.assertTrue(wall6, "T column vanished at Jmax2=6")
+        # For this exact input and each T monomial, the c-v edge is hit at
+        # most twice and every other edge at most once. Starting from doubled
+        # spin 1, no reachable edge can exceed doubled spin 3. Therefore both
+        # walls 4 and 6 are above the analytically derived reachable ceiling;
+        # identical maps certify wall saturation for this one input sector.
+        self.assertEqual(wall4, wall6)
+        for label, mapping in (("wall2", wall2), ("wall4", wall4), ("wall6", wall6)):
             for key, value in mapping.items():
                 self.assertTrue(
                     np.isfinite(value.real) and np.isfinite(value.imag),
@@ -458,7 +466,9 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
             "T_SPIN_WALL_SENSITIVITY",
             {
                 "input": input_key,
-                "walls": (2, 4),
+                "walls": (2, 4, 6),
+                "derived_max_reachable_doubled_spin": 3,
+                "wall4_equals_wall6": wall4 == wall6,
                 "support_wall2": len(wall2),
                 "support_wall4": len(wall4),
                 "common_support": len(common),
