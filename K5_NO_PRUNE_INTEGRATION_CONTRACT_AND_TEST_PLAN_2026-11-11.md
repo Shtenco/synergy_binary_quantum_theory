@@ -354,3 +354,36 @@ Acceptance identity:
 \]
 
 Scope is explicitly finite: one monomial, one all-spin-1/all-(K=0) input ket, and doubled-spin wall 2. This does not certify the coherent 32-monomial T sum, all orientation triples, or the assembled node Hamiltonian. The test is committed and included through the already-existing primitive test workflow step; no execution or CI PASS is claimed.
+
+
+## 28. Orientation enumerator audit and complete achievement register update — 2026-11-11
+
+The production orientation generator `oriented_specs(v)` is now covered by an independent combinatorics test at all five K5 vertices. The test derives the expected ordered list without calling the generator's internal construction: for each omitted-neighbor index (r=0,1,2,3), it preserves the inherited order of the remaining triple, emits its three cyclic rotations, and assigns common sign ((-1)^r). It checks exact sequence equality, cardinality 12, and uniqueness.
+
+New test method:
+`test_all_twelve_oriented_specs_have_exact_combinatorics`.
+
+New audit artifact:
+`K5_ORIENTED_SPEC_COMBINATORICS_AUDIT_2026-11-11.md`.
+
+### Current test inventory
+
+The six workflow scripts contain 40 methods by source inspection:
+- sparse pruning helper: 12;
+- K5 pruning/policy wiring: 11;
+- synthetic dense oracle: 4;
+- production raw-volume operator: 6;
+- production link-hit adjoint: 3;
+- production primitive/orientation: 4.
+
+This count is not an execution result. GitHub Actions run #27 (`42944352617`) was queued at the last check; run #26 (`42942768669`) was also queued. No local run and no CI PASS are claimed.
+
+### Remaining hard acceptance gates
+
+1. Full coherent 32-monomial T matrix-element adjointness, including all coefficient signs and interference.
+2. Assembled (H_v=(T_v+T_v^\dagger)/2) Hermiticity with all 12 signed orientation specifications.
+3. Explicit spin-wall leakage/clipping accounting and stability as (J_{\max}) grows.
+4. Full HH composition in no-prune mode, with resource accounting.
+5. Full leakage Gram (sum_vL_v^\dagger L_v), including off-diagonal interference and the correct graph-changing Hilbert inner product.
+
+The legacy path remains preserved. No-prune completion is not a physical acceptance result. Do not merge or rebase this research branch onto `main` without explicit approval.
