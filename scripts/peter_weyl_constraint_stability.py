@@ -860,6 +860,8 @@ def cutoff_difference_from_columns(lower, upper, dim):
                     and math.isfinite(uv.real) and math.isfinite(uv.imag)):
                 raise ValueError("cutoff maps must contain finite complex coefficients")
             difference = uv - lv
+            if not (math.isfinite(difference.real) and math.isfinite(difference.imag)):
+                raise FloatingPointError("cutoff coefficient subtraction overflowed")
             if difference != 0j:
                 col[key] = difference
             if key in common:
@@ -918,13 +920,15 @@ def compare_cutoff_operator_columns(lower, upper, dim, block_rows=4096,
             "dense_oracle": None,
             "weyl_singular_value_bound": None,
         }
-    lower_dense, lower_keys = dense_operator_from_columns(
-        lower, dim, dense_max_entries
+    union_keys = sorted(
+        {key for a in range(dim) for key in (set(lower[a]) | set(upper[a]))},
+        key=_row_key_order,
     )
-    upper_dense, upper_keys = dense_operator_from_columns(
-        upper, dim, dense_max_entries
-    )
-    union_keys = sorted(set(lower_keys) | set(upper_keys), key=_row_key_order)
+    if max(1, len(union_keys)) * dim > dense_max_entries:
+        raise ValueError(
+            f"dense oracle requires {max(1, len(union_keys)) * dim} entries; "
+            f"limit is {dense_max_entries}"
+        )
     row_index = {key: i for i, key in enumerate(union_keys)}
     lower_embedded = np.zeros((max(1, len(union_keys)), dim), dtype=np.complex128)
     upper_embedded = np.zeros_like(lower_embedded)
@@ -934,7 +938,9 @@ def compare_cutoff_operator_columns(lower, upper, dim, block_rows=4096,
         for key, value in upper[a].items():
             upper_embedded[row_index[key], a] = complex(value)
     dense_delta = upper_embedded - lower_embedded
-    dense_singular = np.linalg.svd(dense_delta, compute_uv=False)
+    dense_compact_singular = np.linalg.svd(dense_delta, compute_uv=False)
+    dense_singular = np.zeros(dim, dtype=float)
+    dense_singular[:len(dense_compact_singular)] = dense_compact_singular
     dense_norm = float(dense_singular[0]) if dense_singular.size else 0.0
     tsqr_singular = np.asarray(direct["singular_values"], dtype=float)
     tsqr_norm = float(tsqr_singular[0]) if tsqr_singular.size else 0.0
