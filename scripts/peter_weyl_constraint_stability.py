@@ -104,8 +104,9 @@ def spectrum_of_gram(G, gram_eigenvalue_rtol):
 def iter_operator_row_blocks(columns, dim, block_rows=4096):
     """Yield deterministic dense row blocks from sparse columns, never full C.
 
-    Sparse keys are (node, output-state). The heap merge forms a sorted union;
-    only one block_rows x dim dense buffer is allocated at a time.
+    Sparse keys are (node, output-state). Sorted key references are merged
+    deterministically; only one block_rows x dim dense numerical buffer is
+    allocated at a time (the sparse input dictionaries remain resident).
     """
     if not isinstance(block_rows, int) or block_rows <= 0:
         raise ValueError("block_rows must be a positive integer")
@@ -239,8 +240,10 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
             "strict_inequality_holds": bool(delta_norm < sigma_min),
             "legacy_full_column_rank_at_declared_tolerance": bool(legacy_direct["rank"] == dim),
             "rank_source": "direct streaming SVD of C",
-            "sufficient_rank_stability_certified": stable,
-            "note": "Sufficient perturbation bound only; failure to satisfy it does not prove rank loss.",
+            "sufficient_rank_stability_for_computed_float_maps": stable,
+            "exact_operator_rank_certified": False,
+            "scope": "represented float64 maps only; upstream operator-construction and subtraction error bounds are not included",
+            "note": "Weyl sufficient condition on the represented maps only; failure to satisfy it does not prove rank loss.",
         },
         "claim_boundary": "Finite carrier and finite Jmax only; float64 numerical result, not exact arithmetic or a continuum theorem.",
     }
