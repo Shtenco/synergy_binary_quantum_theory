@@ -678,3 +678,10 @@ The acceptance identity is
 This tests the coherent signed 32-term sum, not only one monomial. It is still one selected matrix element, one input ket, one orientation triple, and one finite spin wall. It does not certify the full T matrix, all 12 orientation specifications, assembled H, or unrestricted adjointness.
 
 **Inventory:** 41 test methods by source count across six workflow scripts (12 + 11 + 4 + 6 + 3 + 5). The new test is in the already-invoked production primitive test file; no workflow command change is needed. The source is committed, but execution/CI status must be checked separately. No PASS is claimed.
+
+
+## 23. CI trigger and scope correction after full T-sum gate — 2026-11-11
+
+The full 32-term T-sum test was committed as `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`, which triggered Actions run #28 (`42944740425`) on that exact test commit. At the last status query, runs #26, #27 and #28 were all `queued`, with no completed job result. The audit documents were subsequently updated in later documentation-only commits; run #28 therefore tests the code commit containing the new test, not the later documentation commits.
+
+The correct remaining target is now **matrix-wide** T/T† adjointness across a declared finite basis and multiple input columns/orientation triples. The newly committed test checks one matrix element of the full coherent sum and must not be described as a full matrix adjoint certificate.
