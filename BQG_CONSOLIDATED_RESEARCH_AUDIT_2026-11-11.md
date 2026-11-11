@@ -247,6 +247,8 @@ This separates leakage out of the refined habitat from mismatch inside the habit
 
 ## 10. K5 HDA: reachability, finite diagnostics, and regulator wall
 
+Implementation-level follow-up: [K5_SAFE_HDA_COLUMN_IMPLEMENTATION_AUDIT_2026-11-11.md](K5_SAFE_HDA_COLUMN_IMPLEMENTATION_AUDIT_2026-11-11.md) records the threshold cascade, adjointness and volume checks, cutoff scope, and acceptance criteria for the safe Peter–Weyl column.
+
 Primary sources:
 - [K5_ORIENTED_QUANTUM_HDA_RESULT.md](K5_ORIENTED_QUANTUM_HDA_RESULT.md)
 - [DUAL_K5_HDA_COCHAIN_TARGET.md](DUAL_K5_HDA_COCHAIN_TARGET.md)
