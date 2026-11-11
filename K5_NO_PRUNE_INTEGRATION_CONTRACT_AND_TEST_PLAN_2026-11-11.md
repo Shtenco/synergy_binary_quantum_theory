@@ -235,3 +235,13 @@ Latest K5 producer blob after integration: a87cc00c3be07b4a66c249c16ec840cb8cb56
 This is a source-path inspection, not yet a dynamic proof that every execution route is complete. The committed tests are six K5 wiring tests and twelve standalone pruning-helper tests. Their latest blobs are 476255880c123289b7f35d13b4bc81d03f1a4f50 and a1c2cbbb772b814355a520194e4bb32b19aa2383; the workflow blob is ffd43126b2d6003a7e551a5f51e2d5d59bde60de. No test execution result is available in the repository status query, so no green CI claim is made.
 
 No-prune can consume substantially more memory. The CLI catches MemoryError and emits resource_limit without switching modes. It does not yet catch every possible OS-level kill or external timeout; such termination may leave no JSON artifact. A future run wrapper should add wall-time and memory-budget supervision outside the Python process.
+
+
+## 12. Direct policy-path regression expansion
+
+The K5 wiring suite now contains nine focused tests (up from six). Three new tests exercise behavior rather than only function signatures:
+1. a mocked primitive branch with a local intertwiner coefficient of 1e-13 is retained by no_prune and rejected by legacy's 1e-12 local cutoff;
+2. two HH input-state contributions are coherently combined before thresholding in no_prune, while the legacy 1e-8 state cutoff remains intact;
+3. the same T_cached call arguments with distinct policy modes return distinct values, demonstrating that the mode participates in the cache key.
+
+The tests are intentionally small and deterministic. They test the producer's policy wiring with controlled primitives, not the physical K5 operator's full numerical output. Combined with the 12 helper tests, the committed suite now contains 21 tests. Latest K5 test blob: b83733713aca6bcfa03fdf9212ec7b7f97613e5c. No CI PASS is claimed; combined commit status remains empty. A local clone/test attempt was blocked because this execution environment could not resolve github.com, so no local execution claim is made either.
