@@ -276,21 +276,48 @@ def volume_raw_hermiticity_diagnostics(
                 min_resolved = spectrum["min_resolved_abs_eigenvalue"]
                 normalized_gap = spectrum["normalized_gap_to_zero"]
                 derivative = spectrum["max_scalar_sqrt_abs_derivative_on_resolved_modes"]
-                spectrum_valid = (
+                if min_resolved is not None:
+                    min_resolved = float(min_resolved)
+                if normalized_gap is not None:
+                    normalized_gap = float(normalized_gap)
+                if derivative is not None:
+                    derivative = float(derivative)
+                base_spectrum_valid = (
                     math.isfinite(spectral_scale) and spectral_scale >= 0.0
                     and math.isfinite(spectral_rtol) and spectral_rtol > 0.0
                     and math.isfinite(spectral_threshold) and spectral_threshold >= 0.0
-                    and isinstance(nullity, int) and nullity >= 0
-                    and (
-                        (min_resolved is None and normalized_gap is None and derivative is None)
-                        or (
-                            min_resolved is not None and normalized_gap is not None
-                            and derivative is not None
-                            and math.isfinite(float(min_resolved)) and float(min_resolved) > 0.0
-                            and math.isfinite(float(normalized_gap)) and 0.0 < float(normalized_gap) <= 1.0
-                            and math.isfinite(float(derivative)) and float(derivative) > 0.0
-                        )
+                    and isinstance(nullity, int) and not isinstance(nullity, bool)
+                    and nullity >= 0
+                )
+                if spectral_scale == 0.0:
+                    spectrum_shape_valid = (
+                        min_resolved is None and normalized_gap is None
+                        and derivative is None and spectral_threshold == 0.0
                     )
+                else:
+                    spectrum_shape_valid = (
+                        min_resolved is not None and normalized_gap is not None
+                        and derivative is not None
+                        and math.isfinite(min_resolved) and min_resolved > 0.0
+                        and math.isfinite(normalized_gap) and 0.0 < normalized_gap <= 1.0
+                        and math.isfinite(derivative) and derivative > 0.0
+                        and abs(normalized_gap - min_resolved / spectral_scale)
+                            <= 100.0 * np.finfo(float).eps
+                                * max(1.0, abs(normalized_gap))
+                        and abs(derivative - 0.5 / math.sqrt(min_resolved))
+                            <= 100.0 * np.finfo(float).eps
+                                * max(1.0, abs(derivative))
+                    )
+                threshold_expected = spectral_rtol * spectral_scale
+                threshold_consistent = (
+                    spectral_threshold == threshold_expected
+                    or (
+                        spectral_threshold == 0.0 and threshold_expected == 0.0
+                    )
+                )
+                spectrum_valid = (
+                    base_spectrum_valid and spectrum_shape_valid
+                    and threshold_consistent
                 )
                 spectrum_record = {
                     "spectral_scale": spectral_scale,
@@ -353,6 +380,27 @@ def volume_raw_hermiticity_diagnostics(
         for record in records
         if record["relative_antihermitian_defect"] is not None
     ]
+    finite_symmetrization_bounds = [
+        record["symmetrization_delta_frobenius_norm"]
+        for record in records
+        if record["symmetrization_delta_frobenius_norm"] is not None
+    ]
+    finite_relative_bounds = [
+        record["symmetrization_relative_frobenius_bound"]
+        for record in records
+        if record["symmetrization_relative_frobenius_bound"] is not None
+    ]
+    finite_spectral_scales = [
+        record["hermitian_spectrum_resolution"]["spectral_scale"]
+        for record in records
+        if record["hermitian_spectrum_resolution"] is not None
+    ]
+    finite_sensitivities = [
+        record["hermitian_spectrum_resolution"]["max_scalar_sqrt_abs_derivative_on_resolved_modes"]
+        for record in records
+        if record["hermitian_spectrum_resolution"] is not None
+        and record["hermitian_spectrum_resolution"]["max_scalar_sqrt_abs_derivative_on_resolved_modes"] is not None
+    ]
     return {
         "passed": passed,
         "rtol": float(rtol),
@@ -365,6 +413,18 @@ def volume_raw_hermiticity_diagnostics(
             else expected_unique_calls - len(records)
         ),
         "max_relative_defect": max(finite_defects) if finite_defects else None,
+        "max_symmetrization_delta_frobenius_norm": (
+            max(finite_symmetrization_bounds) if finite_symmetrization_bounds else None
+        ),
+        "max_symmetrization_relative_frobenius_bound": (
+            max(finite_relative_bounds) if finite_relative_bounds else None
+        ),
+        "max_hermitian_spectral_scale": (
+            max(finite_spectral_scales) if finite_spectral_scales else None
+        ),
+        "max_resolved_scalar_sqrt_abs_sensitivity": (
+            max(finite_sensitivities) if finite_sensitivities else None
+        ),
         "failures": failures,
         "records": records,
         "fail_closed_if_registry_empty": True,
