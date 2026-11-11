@@ -191,6 +191,43 @@ def stable_complex_frobenius_norm(matrix):
     return 0.0 if scale == 0.0 else scale * math.sqrt(ssq)
 
 
+def volume_spectrum_resolution(eigenvalues):
+    """Describe numerical zero-mode resolution and scalar sqrt(|lambda|) sensitivity.
+
+    The resolution threshold is a floating-point diagnostic, not a rigorous
+    eigensolver backward-error certificate. The derivative bound applies to
+    the scalar map lambda -> sqrt(|lambda|) on resolved eigenvalues only.
+    """
+    values = np.asarray(eigenvalues, dtype=np.float64)
+    if values.ndim != 1 or not np.all(np.isfinite(values)):
+        raise ValueError("volume spectrum must be a finite one-dimensional array")
+    scale = float(np.max(np.abs(values))) if values.size else 0.0
+    rtol = 100.0 * np.finfo(float).eps * max(1, values.size)
+    threshold = rtol * scale
+    resolved = np.abs(values) > threshold
+    resolved_abs = np.abs(values[resolved])
+    min_resolved = float(np.min(resolved_abs)) if resolved_abs.size else None
+    normalized_gap = (
+        min_resolved / scale if min_resolved is not None and scale > 0.0 else None
+    )
+    derivative_bound = (
+        0.5 / math.sqrt(min_resolved) if min_resolved is not None else None
+    )
+    if derivative_bound is not None and not math.isfinite(derivative_bound):
+        raise FloatingPointError("non-finite scalar volume-map sensitivity")
+    return {
+        "spectral_scale": scale,
+        "eigenvalue_resolution_rtol": rtol,
+        "eigenvalue_resolution_threshold": threshold,
+        "resolved_numerical_nullity": int(values.size - np.count_nonzero(resolved)),
+        "min_resolved_abs_eigenvalue": min_resolved,
+        "normalized_gap_to_zero": normalized_gap,
+        "max_scalar_sqrt_abs_derivative_on_resolved_modes": derivative_bound,
+        "sensitivity_scope": "scalar eigenvalue map only; not an operator-norm perturbation bound",
+        "resolution_scope": "floating-point diagnostic; not a certified eigensolver error bound",
+    }
+
+
 @functools.lru_cache(None)
 def volume123_matrix(s1,s2,s3):
     Q=volume123_raw_operator(s1,s2,s3)
@@ -213,7 +250,7 @@ def volume123_matrix(s1,s2,s3):
         symmetrization_delta_frobenius/qnorm if qnorm>0.0
         else (0.0 if symmetrization_delta_frobenius==0.0 else float("inf"))
     )
-    VOLUME_RAW_DEFECTS[(s1,s2,s3)]={
+    record={
         "relative_antihermitian_defect":defect,
         "raw_norm":qnorm,
         "symmetrization_delta_frobenius_norm":symmetrization_delta_frobenius,
@@ -226,6 +263,8 @@ def volume123_matrix(s1,s2,s3):
     ev,U=np.linalg.eigh(Qh)
     if not np.all(np.isfinite(ev)):
         raise FloatingPointError(f"non-finite Hermitian volume spectrum for {(s1,s2,s3)}")
+    record["hermitian_spectrum_resolution"]=volume_spectrum_resolution(ev)
+    VOLUME_RAW_DEFECTS[(s1,s2,s3)]=record
     return (U*np.sqrt(np.abs(ev)))@U.conj().T
 
 def apply_volume_tensor(T,spins_local):
