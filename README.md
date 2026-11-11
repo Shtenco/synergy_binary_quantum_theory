@@ -1252,3 +1252,10 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 Ключевое ограничение: текущий full C(V) тест охватывает только edge (0,1), компонент (0,0) и две независимые входные basis states. Диагональный прямой V-вклад структурно присутствует только при i=j; hVh-вклад присутствует во всех компонентах. Поэтому один тест (0,0) не доказывает остальные три компонента. В C(K) дополнительно остаются thresholded coefficient composition в `apply_HE_complete_state_custom`, сборка VH-HV и внешняя C(K) композиция.
 
 На 01:33 UTC все шесть отслеживаемых L2 и оба L1 jobs оставались `queued`, без conclusion и artifacts; run `42937467628` также не имел artifacts. Никакой PASS/FAIL не заявляется. Следующий шаг — получить и разобрать фактический лог C(V) run; расширение C(V), C(K) и L3 выполняется после этой диагностики, а не вместо неё.
+
+
+### Г.11. Усиление полноты L2 CI dependency closure — 01:38 UTC
+
+В L2 workflow найден и исправлен пропуск: тест использует полный covariant `COMP.C_volume_component`, но workflow первоначально не отслеживал изменения `peter_weyl_covariant_composition_gate.py` и не компилировал этот модуль отдельным шагом. Теперь watched paths и compile checks охватывают его и связанные прямые/транзитивные модули Peter–Weyl/charge/volume, включая `k5_peter_weyl_safe_hda_column.py`, `charged_intertwiner_recoupling_gate.py`, `peter_weyl_lorentzian_K_block_gate.py`, `peter_weyl_covariant_K_projection_audit_gate.py`, `peter_weyl_volume_cross_rep_audit.py` и `peter_weyl_q_block_gauge_audit.py`. Финальный YAML перечитан; дублирующие записи удалены.
+
+Это исправление полноты CI-триггеров и syntax checks, не изменение физического оператора и не результат выполнения тестов. Новый run ID и его фактический исход должны быть отдельно подтверждены. Старый C(V) test run `42937467628` по последней проверке всё ещё queued, без artifacts. PASS/FAIL не заявляется.
