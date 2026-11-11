@@ -171,6 +171,94 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
     }
 
 
+
+def kernel_projector_from_direct_svd(direct, dim):
+    """Build the right-kernel projector from a full-V direct SVD certificate."""
+    rank = direct.get("rank")
+    real = np.asarray(direct.get("right_singular_vectors_real"), dtype=float)
+    imag = np.asarray(direct.get("right_singular_vectors_imag"), dtype=float)
+    if not isinstance(rank, int) or rank < 0 or rank > dim:
+        raise ValueError("direct-SVD rank is outside the input dimension")
+    if real.shape != (dim, dim) or imag.shape != (dim, dim):
+        raise ValueError("full right-singular-vector matrices must be dim x dim")
+    vectors = real + 1j * imag
+    if not np.all(np.isfinite(vectors)):
+        raise ValueError("right singular vectors contain non-finite entries")
+    kernel_basis = vectors[:, rank:]
+    nullity = dim - rank
+    orthogonality = (
+        float(np.linalg.norm(kernel_basis.conj().T @ kernel_basis
+                             - np.eye(nullity), ord="fro"))
+        if nullity else 0.0
+    )
+    projector = kernel_basis @ kernel_basis.conj().T
+    return {
+        "rank": rank, "nullity": nullity, "kernel_basis": kernel_basis,
+        "projector": projector,
+        "kernel_basis_orthogonality_defect_frobenius": orthogonality,
+        "projector_hermiticity_defect_frobenius":
+            float(np.linalg.norm(projector - projector.conj().T, ord="fro")),
+        "projector_idempotence_defect_frobenius":
+            float(np.linalg.norm(projector @ projector - projector, ord="fro")),
+    }
+
+
+def compare_kernel_projectors(legacy_direct, no_prune_direct, dim):
+    """Compare finite right-kernel subspaces, not merely their dimensions."""
+    left = kernel_projector_from_direct_svd(legacy_direct, dim)
+    right = kernel_projector_from_direct_svd(no_prune_direct, dim)
+    same_nullity = left["nullity"] == right["nullity"]
+    projector_distance = float(np.linalg.norm(
+        left["projector"] - right["projector"], ord=2
+    ))
+    scale_warning = bool(
+        legacy_direct.get("scale_separation_loss", True)
+        or no_prune_direct.get("scale_separation_loss", True)
+    )
+    geometry_valid = all(
+        item[key] <= 1e-8
+        for item in (left, right)
+        for key in (
+            "kernel_basis_orthogonality_defect_frobenius",
+            "projector_hermiticity_defect_frobenius",
+            "projector_idempotence_defect_frobenius",
+        )
+    )
+    if not same_nullity:
+        status, angle = "NULLITY_MISMATCH", None
+    elif left["nullity"] == 0:
+        status, angle = "TRIVIAL_ZERO_KERNEL", 0.0
+    else:
+        status = "SAME_DIMENSION_SUBSPACE_DISTANCE"
+        angle = min(1.0, max(0.0, projector_distance))
+    if scale_warning:
+        status, angle = "INCONCLUSIVE_SCALE_SEPARATION", None
+    elif not geometry_valid:
+        status, angle = "INVALID_PROJECTOR_GEOMETRY", None
+    return {
+        "status": status,
+        "legacy_rank": left["rank"], "no_prune_rank": right["rank"],
+        "legacy_nullity": left["nullity"], "no_prune_nullity": right["nullity"],
+        "same_nullity": same_nullity,
+        "projector_difference_spectral_norm": projector_distance,
+        "max_principal_angle_sine": angle,
+        "scale_separation_warning": scale_warning,
+        "projector_geometry_checks_passed": geometry_valid,
+        "legacy_kernel_basis_orthogonality_defect_frobenius":
+            left["kernel_basis_orthogonality_defect_frobenius"],
+        "no_prune_kernel_basis_orthogonality_defect_frobenius":
+            right["kernel_basis_orthogonality_defect_frobenius"],
+        "legacy_projector_idempotence_defect_frobenius":
+            left["projector_idempotence_defect_frobenius"],
+        "no_prune_projector_idempotence_defect_frobenius":
+            right["projector_idempotence_defect_frobenius"],
+        "interpretation": (
+            "For equal nonzero nullities, ||P_L-P_N||_2 equals sin of the "
+            "largest principal angle. For unequal nullities, no principal-angle "
+            "comparison is reported. Scale-separation warnings block certification."
+        ),
+    }
+
 def column_digest(columns):
     records = []
     for a in sorted(columns):
@@ -221,6 +309,9 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     legacy_direct = direct_svd_from_columns(legacy, dim, singular_rtol, block_rows)
     no_prune_direct = direct_svd_from_columns(no_prune, dim, singular_rtol, block_rows)
     delta_direct = direct_svd_from_columns(delta, dim, singular_rtol, block_rows)
+    kernel_comparison = compare_kernel_projectors(
+        legacy_direct, no_prune_direct, dim
+    )
 
     legacy_spec = spectrum_of_gram(legacy_gram, rank_rtol)
     no_prune_spec = spectrum_of_gram(no_prune_gram, rank_rtol)
@@ -256,6 +347,7 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
             "stacked_column_sha256": delta_hash,
             "interpretation": "operator norm of C_no_prune-C_legacy",
         },
+        "physical_kernel_subspace_comparison": kernel_comparison,
         "weyl_rank_stability_sufficient_condition": {
             "delta_operator_norm": delta_norm,
             "legacy_minimum_singular_value": sigma_min,
