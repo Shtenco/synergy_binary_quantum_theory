@@ -146,3 +146,25 @@ The workflow compiles the production modules, runs the suite on Python 3.11 and 
 **CI status:** L2 run has only just been triggered by the scoped push. Do not claim PASS/FAIL until its job steps and uploaded log are inspected. The previous L1 runs remain separately tracked.
 
 **Next:** inspect L2 safe-domain homogeneity and each expected-failure reason; then extend to the full covariant maps and L3 direct-superposition/matrix reconstruction.
+
+
+## 10. L2 canonical-suite reconciliation and CI poll — 11 November 2026, 01:05 UTC
+
+A duplicate L2 test file was briefly introduced during implementation, then removed after a repository recheck found the canonical suite already present. The duplicate was deleted in commit `37dec6c0f5f282c7d893f9b45b8c427b7030e121`; no production source or canonical test was changed by that cleanup. The branch now retains one authoritative L2 test file and one L2 workflow.
+
+Canonical implementation:
+- `tests/test_bqg_l2_production_primitives.py` (145 lines): genuine Peter–Weyl covariant/complete basis fixture; applies the zero-aware volume convention and clears affected caches.
+- Hard safe-domain complex-homogeneity checks for `CK.apply_volume_complete_state`, `CK.apply_HE_complete_state`, and `KCOMP.apply_HE_complete_state_custom`.
+- Three `unittest.expectedFailure` threshold-boundary additivity characterizations. Their scale is calibrated from the actual unit-state output so individual contributions lie below the relevant output threshold while their coherent sum crosses it.
+- Empty fixture outputs are skipped by the characterization helper rather than silently counted as linearity evidence; safe-domain homogeneity tests also skip on empty reference output. The L2 report must therefore distinguish PASS, XFAIL, SKIP and ERROR and must inspect fixture reachability.
+
+Workflow:
+- `.github/workflows/bqg-production-linearity-l2.yml` compiles the active production modules and test, executes the canonical suite on Python 3.11, and uploads `l2-production-primitives.log` even when tests fail.
+- L2 run `42935840345` (run #1, HEAD `060b50dca818e2552067e5f905ccf240a4da6b85`) — job `130245591568`: queued; no artifacts.
+- L2 run `42935968925` (run #2, HEAD `f1a7c8d1941448b8453b6a895826f2a37658c9a5`) — job `130246013044`: queued; no artifacts.
+- L1 run `42930769907`, job `130228642399`: queued; no artifacts.
+- L1 run `42929934053`, job `130225807106`: queued; no artifacts.
+
+The four jobs are still waiting in GitHub Actions. There is no test PASS/FAIL evidence yet. The latest branch HEAD after duplicate cleanup is `37dec6c0f5f282c7d893f9b45b8c427b7030e121`; it is exactly the branch tip and is 14 commits ahead of the prior checkpoint `eb72a1ab...`, with no commits behind. The two L2 runs were triggered by earlier commits on the same branch and are not proof about the final tip. `main` remains untouched.
+
+Next gate: obtain the L2 logs, verify that the three fixture-reachability tests execute (not skip), verify all three safe-domain homogeneity tests pass, and verify the three expected failures fail for the intended threshold-boundary reason. If an expectedFailure unexpectedly succeeds, remove that marker and promote it to a hard acceptance test. Do not treat a green overall unittest result as proof of production linearity while expected failures remain.
