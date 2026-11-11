@@ -36,9 +36,15 @@ import k5_peter_weyl_safe_hda_column as PW
 
 
 def inner_sparse(a: dict, b: dict) -> complex:
+    """Sparse complex inner product with compensated real/imaginary sums."""
     if len(a) > len(b):
         return np.conjugate(inner_sparse(b, a))
-    return sum(np.conjugate(x) * b.get(k, 0j) for k, x in a.items())
+    products = (np.conjugate(x) * b.get(k, 0j) for k, x in a.items())
+    values = list(products)
+    return complex(
+        math.fsum(z.real for z in values),
+        math.fsum(z.imag for z in values),
+    )
 
 
 def carrier_basis(domain: str):
