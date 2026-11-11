@@ -259,3 +259,16 @@ The producer now uses apply_acceptance_gate(result, mode):
 The CLI returns zero for a completed no-prune calculation, but that return code means computation completed only; it is not a numerical or physical PASS. Legacy mode still exits according to the historical regression gate. Two additional tests cover this separation, bringing K5 wiring tests to eleven and the combined committed suite to twenty-three.
 
 Latest producer blob: 7db5bae2bb22535cc99f9d86f5dda0f024db7fbc. Latest K5 test blob: 0d43625f3d82f079f3f70c8b547fb4ac88039b8b. The producer, tests and docs have been fetched back from GitHub. No CI execution result or local test execution is available; no test PASS is claimed.
+
+
+## 14. Independent synthetic dense-oracle and adjoint harness
+
+Added scripts/test_bqg_sparse_dense_oracle.py and wired it into the sparse-pruning workflow. The test builds a deterministic 5-dimensional complex sparse operator with duplicate matrix-element contributions, a tiny nonzero amplitude, and an exact coherent cancellation. It independently assembles the dense matrix without calling the sparse aggregation helper, then checks:
+1. sparse assembly versus dense matrix assembly;
+2. sparse matrix-vector action versus dense matrix-vector multiplication;
+3. the complex Hilbert-space adjoint identity <x,Ay> = <A†x,y>, using the independently assembled dense matrix;
+4. retention of a tiny nonzero coefficient and removal of an exactly cancelled coefficient.
+
+Scope boundary: this is a synthetic algebraic oracle for sparse aggregation/action and complex adjoint conventions. It is not a dense oracle for the production K5 Hamiltonian, the Peter-Weyl volume tensor, or the physical K5 column. The production-operator oracle and adjoint checks remain open.
+
+The workflow now runs three scripts: 12 sparse-pruning helper tests, 11 K5 policy-wiring tests, and 4 synthetic dense-oracle/adjoint tests, for 27 committed test methods total. No test execution or CI PASS is claimed until logs are available.
