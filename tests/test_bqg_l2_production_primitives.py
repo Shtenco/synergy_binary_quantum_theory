@@ -63,7 +63,7 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             )
 
     def _assert_safe_domain_homogeneity(self, map_fn, label):
-        alpha = 0.375 + 0.625j
+        alpha = 1.25 + 1.5j
         base_scale = 1e6
         base = output_dict(map_fn(state_scale(self.complete_state, base_scale)))
         if not base:
