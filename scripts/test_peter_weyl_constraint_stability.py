@@ -100,6 +100,14 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertEqual(result["estimated_rank"], 0)
         self.assertEqual(result["rank_threshold_on_gram_eigenvalues"], 0.0)
 
+    def test_subnormal_gram_rank_uses_normalized_threshold(self):
+        gram = np.diag([0.0, 1e-320]).astype(complex)
+        result = stability.spectrum_of_gram(gram, 1e-10)
+        self.assertEqual(result["gram_eigenvalue_scale"], 1e-320)
+        self.assertEqual(result["rank_threshold_on_gram_eigenvalues"], 0.0)
+        self.assertEqual(result["normalized_rank_threshold_on_gram_eigenvalues"], 1e-10)
+        self.assertEqual(result["estimated_rank"], 1)
+
     def test_column_digest_is_order_independent(self):
         a = {0: {(0, "x"): 1.0 + 2.0j, (1, "y"): 3.0}}
         b = {0: {(1, "y"): 3.0, (0, "x"): 1.0 + 2.0j}}
