@@ -178,10 +178,8 @@ def constraint_annihilation_metrics(columns, coeff: np.ndarray, nodes):
     per_node = {}
     for v in nodes:
         terms = {}
-        operator_entries = []
         for a, amp in enumerate(coeff):
             column = columns[(v, a)]
-            operator_entries.extend(column.values())
             if amp == 0j:
                 continue
             for key, value in column.items():
@@ -192,7 +190,11 @@ def constraint_annihilation_metrics(columns, coeff: np.ndarray, nodes):
             for values in terms.values()
         ]
         residual_norm = stable_complex_norm(residual_values)
-        operator_frobenius = stable_complex_norm(operator_entries)
+        operator_frobenius = stable_complex_norm(
+            value
+            for a in range(len(coeff))
+            for value in columns[(v, a)].values()
+        )
         if operator_frobenius == 0.0:
             relative = 0.0 if residual_norm == 0.0 else float("inf")
         else:
@@ -219,6 +221,9 @@ def constraint_annihilation_metrics(columns, coeff: np.ndarray, nodes):
 
 def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
     """Backward-compatible absolute residual wrapper with stable norming."""
+    coeff = np.asarray(coeff, dtype=np.complex128)
+    if coeff.ndim == 1 and coeff.size and np.all(coeff == 0j):
+        return 0.0
     return constraint_annihilation_metrics(columns, coeff, nodes)["max_absolute_residual"]
 
 
