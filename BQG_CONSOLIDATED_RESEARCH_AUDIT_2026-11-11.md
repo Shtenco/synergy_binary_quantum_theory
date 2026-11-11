@@ -718,3 +718,76 @@ Recent additions in this pass:
 Latest Actions observations: run #29 `42944880600` for the oriented-volume test commit `50c807d03c8616dce639487afc83704ec19c5b36`, run #28 `42944740425`, run #27 `42944352617`, and run #26 `42942768669` were all queued. No completed job result, local test execution, or PASS is available. Later commits in this snapshot update audit documents only.
 
 This is the authoritative current source/evidence inventory; earlier section counts are historical snapshots. Keep the distinction between committed test, executed test, CI PASS, finite mathematical identity, and physical/continuum claim.
+
+
+## 26. Full achievement register, corrected repository snapshot, and next adjointness protocol — 2026-11-11 02:18 UTC
+
+This section supersedes earlier repository-state snapshots in this file. It consolidates the latest source-backed results and records the current evidence boundary.
+
+### 26.1 Current repository state
+
+- Branch: `research/consolidated-bqg-audit-20261111`.
+- Branch HEAD immediately before this register update: `3e4b45e944ecbe92e731b2d0e7cd497d9665afd2`.
+- Comparison with `main`: `diverged`, **109 commits ahead and 2 behind**; merge base `23669209c83fe0aa2741612e5b2b119562ee6d7d`.
+- `main` remains untouched; no merge or rebase was performed.
+- The preceding snapshot's 107-ahead count and HEAD `40e47031...` are historical and are superseded by this snapshot.
+
+### 26.2 Complete current finite-test inventory
+
+The six test scripts explicitly invoked by `.github/workflows/bqg-sparse-pruning.yml` contain **42 test methods by source inspection**:
+
+| Script | Methods |
+|---|---:|
+| `scripts/test_bqg_sparse_pruning.py` | 12 |
+| `scripts/test_k5_sparse_policy_wiring.py` | 11 |
+| `scripts/test_bqg_sparse_dense_oracle.py` | 4 |
+| `scripts/test_k5_volume_raw_operator.py` | 7 |
+| `scripts/test_k5_hit_adjoint.py` | 3 |
+| `scripts/test_k5_primitive_dense_adjoint.py` | 5 |
+| **Total** | **42** |
+
+The workflow declares Python 3.12, installs `numpy` and `sympy`, and invokes all six scripts. This table is a static source inventory, not evidence that the methods have executed.
+
+### 26.3 Consolidated achievements now retained in the branch
+
+1. **Sparse-pruning policy and deterministic coherent aggregation:** no-prune mode, strict nonzero retention, coherent aggregation, ledger and error-bound infrastructure, mode-separated cache signatures, and explicit resource-limit behavior. Completion is computational only; no physical pass is implied.
+2. **Raw local volume:** pre-symmetrization defect recording and finite raw-operator Hermiticity checks.
+3. **Alternating-tensor covariance:** all six permutations of a mixed-spin `(1,2,2)` triple satisfy the signed raw-Q transformation with explicit permutation unitaries.
+4. **Derived-volume covariance:** the production `sqrt(|Q|)` map is covariant under all six permutations, with the alternating sign removed by the absolute spectral map.
+5. **Spectral reconstruction:** for four finite triples `(1,1,1)`, `(1,1,2)`, `(1,2,2)`, `(2,2,2)`, an independently assembled spectral reference checks `V²=|Q|`.
+6. **Local oriented-volume self-adjointness:** deterministic complex tensors test the actual production `apply_volume_tensor_oriented` at all five K5 vertices and all four spin triples in the Frobenius inner product.
+7. **Production link-hit adjointness:** finite local link-hit matrix checks.
+8. **Production closed-loop primitive dense adjoint oracle:** independently materialized forward and reversed production matrices on explicit finite orthonormal recoupling bases, with local basis orthonormality checked first.
+9. **Orientation enumeration:** independently reconstructed ordered list of exactly 12 signed oriented specifications at each of the five K5 vertices.
+10. **Complete five-hit T monomial:** production forward/reversed matrix-element comparison for all nonzero outputs of one selected monomial.
+11. **Full coherent 32-term T sum:** independent coherent forward and reverse accumulation, checking one deterministic largest-magnitude nonzero matrix element for one input/orientation/spin wall.
+12. **Prior finite representation-theoretic and graph-sector results:** q4 collective E-sector rank squeeze; strict-interior boundary Gram rank six; S4 metric compression; local SU(2)/S4 bilinear partial-isometry theorem; K5 ancilla orientation covariance and master-selection non-uniqueness; local Peter–Weyl refinement; two-sided habitat and scale-free residual identities; K5 reachability/HDA diagnostics; regulator-wall and leakage-Gram analysis. Their individual hypotheses, provenance, and limitations remain recorded in the preceding sections and linked theorem/result files.
+
+### 26.4 Exact current Actions status
+
+The production code commit for the local oriented-volume test is `50c807d03c8616dce639487afc83704ec19c5b36`. The following Actions jobs were fetched directly and each remained `queued`, with null conclusion and no step results:
+
+- run #29 `42944880600` — job `130275165152`;
+- run #28 `42944740425` — job `130274702656`;
+- run #27 `42944352617` — job `130273434193`;
+- run #26 `42942768669` — job `130268283409`.
+
+Therefore: no local execution is recorded; no completed CI job is available; no PASS is claimed. Run #29 corresponds to the test-code commit above; later branch commits in this register are documentation updates.
+
+### 26.5 Next research gate: matrix-wide coherent T/T†, with boundary ledger
+
+The existing 32-term test checks one selected matrix element, not a matrix-wide identity. The next test must declare finite domain and codomain bases before evaluating matrices. It must:
+
+1. select multiple orthonormal input basis columns, not just one ket;
+2. coherently sum all 32 signed production monomials using no-prune aggregation;
+3. construct the reverse map independently from the 32 adjoint sequences;
+4. compare the complete rectangular matrices as `T_reverse = T_forward†` on the declared subspaces;
+5. enumerate and report every forward/reverse output key outside the declared codomain/domain instead of silently dropping it;
+6. separate exact finite-subspace adjointness from any claim about the unrestricted operator;
+7. keep the test runtime within the five-minute CI budget, using a small, justified basis rather than a broad but opaque sample.
+
+A second gate should assemble the actual signed 12-spec node operator `H_v=(T_v+T_v†)/2` and independently compare its matrix elements on a declared finite sector. Because this symmetrized definition can hide a defect in the constituent T adjoint, the T/T† gate must remain a prerequisite and the H gate must also report boundary leakage.
+
+Only after these gates should the programme advance to spin-wall stability, full no-prune HH composition, and the complete leakage Gram `Σ_v L_v†L_v` with off-diagonal interference. No threshold relaxation, forced symmetrization of the raw production matrix, or legacy fallback is acceptable as a way to make a gate pass.
+
+**Evidence classification:** the achievements above are source-committed finite identities/tests, exact finite algebraic results, or implementation audits as individually described. They are not collectively a proof of unrestricted adjointness, full HDA closure, continuum BQG, or empirical physics.
