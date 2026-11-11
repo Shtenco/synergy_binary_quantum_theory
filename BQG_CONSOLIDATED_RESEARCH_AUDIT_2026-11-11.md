@@ -454,3 +454,22 @@ Additional code-level findings:
 The prescribed next milestone is a policy threaded through every operator layer (`legacy`, `no_prune`, `aggregate_then_prune`), deterministic coherent aggregation, a tiny dense oracle, bilinear adjoint tests, raw volume integrity checks, and only then a recomputed shell with full leakage Gram.
 
 **Execution status:** this is a source audit and mathematical design record. No fresh execution of the expensive K5 HH calculation is claimed.
+
+
+## 12. Deterministic coherent sparse-pruning primitive — 2026-11-11
+
+New implementation and design record:
+- [BQG_DETERMINISTIC_SPARSE_PRUNING_POLICY_2026-11-11.md](BQG_DETERMINISTIC_SPARSE_PRUNING_POLICY_2026-11-11.md)
+- [scripts/bqg_sparse_pruning.py](scripts/bqg_sparse_pruning.py)
+- [scripts/test_bqg_sparse_pruning.py](scripts/test_bqg_sparse_pruning.py)
+
+The new independent helper separates coherent aggregation from pruning:
+- `coherent_aggregate` groups all complex contributions by canonical key, deterministically sorts them, and uses compensated `math.fsum` separately for real and imaginary parts.
+- `apply_pruning` only accepts an already coherently aggregated mapping and supports `no_prune` and `aggregate_then_prune`.
+- The ledger records stage, threshold, key counts, maximum discarded amplitude, discarded L1/L2 norms, and a SHA-256 digest of the sorted discarded vector.
+- A verifier checks the full-minus-pruned identity against the ledger.
+- A telescoping error-bound helper implements the propagated stage-error inequality.
+
+Eight committed unit tests cover permutation invariance, cancellation before thresholding, constructive accumulation, a dense-vector oracle, ledger identity, no-prune retention, telescoping-bound verification, and rejection of pre-aggregation pruning.
+
+**Verification boundary:** both source files were fetched back from GitHub and inspected. A separate local Python harness passed core checks for deterministic aggregation, cancellation/constructive accumulation, ledger norms, dense-vector comparison, and the telescoping bound. The committed unittest file itself has not yet been executed against a local checkout. Crucially, the K5 producer is not yet wired to this helper; existing HH outputs remain legacy-thresholded and are not promoted to pruning-certified status. The integration requirements and acceptance gate are recorded in the new design document.
