@@ -520,3 +520,10 @@ The initial fixed-spin two-ket projection was vacuous. All 32 T monomials for ev
 Commit 779d0a6d89c915ad152f74b9c202a2f8f22c0cc7 replaces that design with a non-vacuous adaptive pair: compute H on the all-spin-1/K=0 input, select the deterministic largest nonzero output amplitude, compute H on that output independently, and assemble the full projected 2×2 matrix. The test asserts a nonzero off-diagonal transition and nonzero matrix norm before the Hermiticity comparison. Each action uses its own analytically sufficient upper wall S+2. The same two-column leakage ledger remains.
 
 A local independent combinatorial reconstruction was run over all 1920 sequences and returned zero counterexamples to the (1,1,1,2) multiplicity invariant. Full production Python execution is still not available locally because GitHub DNS resolution fails; CI for the corrective commit remains unconfirmed. Keep these evidence categories separate.
+
+
+### 36.2 Verification status at 03:18 UTC
+
+Corrected test syntax compilation passed locally under Python 3.13.5. Independent local sequence-generator reconstruction: 1,920/1,920 monomials have multiplicity `(1,1,1,2)` and exactly three single-hit edges. This proves the old same-spin projected block was structurally zero under the current hit rule. It does not execute production amplitudes.
+
+GitHub Actions run #40 (`42951643306`, commit `779d0a6d89c915ad152f74b9c202a2f8f22c0cc7`) and its job (`130297065127`) were still queued with no steps started when inspected. The latest 15 runs on this branch were all queued. A local clone also failed because `github.com` did not resolve. Consequently the corrected production H test has neither local numerical execution nor a CI result yet. No PASS claim.
