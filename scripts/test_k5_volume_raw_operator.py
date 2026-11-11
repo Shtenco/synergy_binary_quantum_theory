@@ -150,6 +150,18 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                         ),
                     )
 
+    def test_stable_volume_norm_handles_large_finite_components(self):
+        value = 1.2e308 + 1.2e308j
+        observed = k5.stable_complex_frobenius_norm(np.array([[value]]))
+        expected = np.hypot(1.2e308, 1.2e308)
+        self.assertAlmostEqual(observed / expected, 1.0, places=14)
+
+    def test_stable_volume_norm_rejects_nonfinite_components(self):
+        with self.assertRaisesRegex(FloatingPointError, "non-finite"):
+            k5.stable_complex_frobenius_norm(
+                np.array([[complex(float("inf"), 0.0)]])
+            )
+
     def test_volume_square_reconstructs_absolute_raw_spectrum(self):
         # Check V^2 = |Q| from an independently assembled eigenspectral
         # reference. Positivity and Hermiticity alone do not establish that
