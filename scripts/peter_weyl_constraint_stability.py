@@ -3,14 +3,16 @@
 
 The map C is the direct sum over constraint nodes:
     C |a> = (H_0|a>, ..., H_{m-1}|a>).
-All spectral comparisons are made through small dim-by-dim Gram matrices,
-never by materializing the potentially enormous output Hilbert-space matrix.
+The legacy Gram diagnostics are retained for comparison, while the original
+constraint map is also analyzed by streaming Householder TSQR + direct SVD.
+The output Hilbert-space matrix is never materialized densely.
 """
 from __future__ import annotations
 
 import argparse
 import gc
 import hashlib
+import heapq
 import json
 import math
 import sys
@@ -23,6 +25,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 import peter_weyl_master_projector_pilot as PILOT
+import peter_weyl_streaming_svd as STREAM_SVD
 
 
 def stack_columns(columns, nodes, dim):
@@ -64,32 +67,84 @@ def gram_from_columns(columns, dim):
     return G
 
 
-def spectrum_of_gram(G, rank_rtol):
+def spectrum_of_gram(G, gram_eigenvalue_rtol):
+    """Gram-only diagnostic; its tolerance is relative to eigenvalues, not sigmas."""
+    if not math.isfinite(gram_eigenvalue_rtol) or gram_eigenvalue_rtol < 0:
+        raise ValueError("gram_eigenvalue_rtol must be finite and nonnegative")
     raw_hermiticity = float(np.linalg.norm(G - G.conj().T, ord="fro"))
     H = 0.5 * (G + G.conj().T)
     evals = np.linalg.eigvalsh(H)
-    scale = max(1.0, float(np.max(np.abs(evals))))
+    scale = float(np.max(np.abs(evals))) if len(evals) else 0.0
     psd_tol = 100.0 * np.finfo(float).eps * scale
-    if float(np.min(evals)) < -psd_tol:
+    if len(evals) and float(np.min(evals)) < -psd_tol:
         raise ValueError(f"Gram matrix is not PSD: min eigenvalue {float(np.min(evals))}")
-    threshold = rank_rtol * scale
+    threshold = gram_eigenvalue_rtol * scale
     clipped = np.maximum(evals, 0.0)
     singular = np.sqrt(clipped)
     positive = singular[evals > threshold]
     return {
         "gram_hermiticity_defect_frobenius": raw_hermiticity,
-        "gram_min_eigenvalue": float(np.min(evals)),
-        "gram_max_eigenvalue": float(np.max(evals)),
+        "gram_min_eigenvalue": float(np.min(evals)) if len(evals) else 0.0,
+        "gram_max_eigenvalue": float(np.max(evals)) if len(evals) else 0.0,
+        "gram_eigenvalue_scale": scale,
         "rank_threshold_on_gram_eigenvalues": threshold,
         "rank_threshold_resolves_roundoff": bool(threshold > psd_tol),
         "estimated_rank": int(np.count_nonzero(evals > threshold)),
-        "minimum_singular_value_including_nullity": float(singular[0]),
+        "minimum_singular_value_including_nullity": float(singular[0]) if len(singular) else 0.0,
         "smallest_positive_singular_value": float(np.min(positive)) if len(positive) else None,
-        "largest_singular_value": float(singular[-1]),
+        "largest_singular_value": float(singular[-1]) if len(singular) else 0.0,
         "singular_values": [float(x) for x in singular],
         "psd_tolerance": psd_tol,
+        "rank_tolerance_semantics": "relative Gram eigenvalue threshold; equivalent sigma threshold is sqrt(rtol)",
         "singular_value_method": "sqrt(eigvalsh(C^dagger C)); Gram formation squares condition number",
         "gram_spectral_resolution_floor": float(psd_tol),
+    }
+
+
+def iter_operator_row_blocks(columns, dim, block_rows=4096):
+    """Yield deterministic dense row blocks from sparse columns, never full C.
+
+    Sparse keys are (node, output-state). The heap merge forms a sorted union;
+    only one block_rows x dim dense buffer is allocated at a time.
+    """
+    if not isinstance(block_rows, int) or block_rows <= 0:
+        raise ValueError("block_rows must be a positive integer")
+    key_streams = [iter(sorted(columns[a], key=repr)) for a in range(dim)]
+    merged = heapq.merge(*key_streams, key=repr)
+    block = np.empty((block_rows, dim), dtype=np.complex128)
+    used = 0
+    previous = None
+    have_previous = False
+    for key in merged:
+        if have_previous and key == previous:
+            continue
+        block[used, :] = [columns[a].get(key, 0j) for a in range(dim)]
+        used += 1
+        previous = key
+        have_previous = True
+        if used == block_rows:
+            yield block.copy()
+            used = 0
+    if used:
+        yield block[:used].copy()
+
+
+def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
+    result = STREAM_SVD.streaming_svd(
+        iter_operator_row_blocks(columns, dim, block_rows), dim, singular_rtol
+    )
+    return {
+        "rank": result.rank,
+        "singular_value_rtol": result.rank_rtol,
+        "singular_values": [float(x) for x in result.singular_values],
+        "right_singular_vectors": result.right_singular_vectors.tolist(),
+        "row_count": result.row_count,
+        "block_count": result.block_count,
+        "input_scale": result.input_scale,
+        "max_abs_component": result.max_abs_component,
+        "method": result.method,
+        "exact_rank_certified": False,
+        "classification": "NUMERICAL_ONLY_NO_UPSTREAM_ERROR_BOUND",
     }
 
 
@@ -103,9 +158,12 @@ def column_digest(columns):
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def run(domain="low", jmax2=5, rank_rtol=1e-10):
+def run(domain="low", jmax2=5, rank_rtol=1e-10,
+        singular_rtol=1e-10, block_rows=4096):
     if not math.isfinite(rank_rtol) or rank_rtol < 0:
         raise ValueError("rank_rtol must be finite and nonnegative")
+    if not math.isfinite(singular_rtol) or singular_rtol < 0:
+        raise ValueError("singular_rtol must be finite and nonnegative")
     nodes = tuple(PILOT.PW.VERT)
     basis = PILOT.carrier_basis(domain)
     dim = len(basis)
@@ -136,14 +194,18 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10):
     delta_hash = column_digest(delta)
     delta_gram = gram_from_columns(delta, dim)
 
+    # Direct singular values of C, not square roots of Gram eigenvalues.
+    legacy_direct = direct_svd_from_columns(legacy, dim, singular_rtol, block_rows)
+    no_prune_direct = direct_svd_from_columns(no_prune, dim, singular_rtol, block_rows)
+    delta_direct = direct_svd_from_columns(delta, dim, singular_rtol, block_rows)
+
     legacy_spec = spectrum_of_gram(legacy_gram, rank_rtol)
     no_prune_spec = spectrum_of_gram(no_prune_gram, rank_rtol)
     delta_spec = spectrum_of_gram(delta_gram, rank_rtol)
-    sigma_min = legacy_spec["minimum_singular_value_including_nullity"]
-    delta_norm = delta_spec["largest_singular_value"]
+    sigma_min = legacy_direct["singular_values"][-1]
+    delta_norm = delta_direct["singular_values"][0]
     stable = bool(
-        legacy_spec["estimated_rank"] == dim
-        and legacy_spec["rank_threshold_resolves_roundoff"]
+        legacy_direct["rank"] == dim
         and delta_norm < sigma_min
     )
     return {
@@ -152,21 +214,27 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10):
         "domain_dimension": dim,
         "nodes": list(nodes),
         "Jmax": jmax2 / 2,
-        "rank_rtol": rank_rtol,
+        "gram_eigenvalue_rtol": rank_rtol,
+        "singular_value_rtol": singular_rtol,
+        "streaming_block_rows": block_rows,
         "row_space_definition": "direct sum over node labels; row keys are (node, output Peter-Weyl basis key)",
-        "legacy": {**legacy_spec, "stacked_column_sha256": legacy_hash,
+        "legacy": {**legacy_spec, "direct_svd": legacy_direct,
+                   "stacked_column_sha256": legacy_hash,
                    "node_column_supports": legacy_supports},
-        "no_prune": {**no_prune_spec, "stacked_column_sha256": no_prune_hash,
+        "no_prune": {**no_prune_spec, "direct_svd": no_prune_direct,
+                     "stacked_column_sha256": no_prune_hash,
                      "node_column_supports": no_prune_supports},
         "difference_no_prune_minus_legacy": {
-            **delta_spec, "stacked_column_sha256": delta_hash,
+            **delta_spec, "direct_svd": delta_direct,
+            "stacked_column_sha256": delta_hash,
             "interpretation": "operator norm of C_no_prune-C_legacy",
         },
         "weyl_rank_stability_sufficient_condition": {
             "delta_operator_norm": delta_norm,
             "legacy_minimum_singular_value": sigma_min,
             "strict_inequality_holds": bool(delta_norm < sigma_min),
-            "legacy_full_column_rank_at_declared_tolerance": bool(legacy_spec["estimated_rank"] == dim),
+            "legacy_full_column_rank_at_declared_tolerance": bool(legacy_direct["rank"] == dim),
+            "rank_source": "direct streaming SVD of C",
             "sufficient_rank_stability_certified": stable,
             "note": "Sufficient perturbation bound only; failure to satisfy it does not prove rank loss.",
         },
@@ -178,10 +246,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--domain", choices=("low", "full"), default="low")
     ap.add_argument("--jmax2", type=int, default=5)
-    ap.add_argument("--rank-rtol", type=float, default=1e-10)
+    ap.add_argument("--rank-rtol", type=float, default=1e-10,
+                    help="relative Gram-eigenvalue tolerance (not singular-value tolerance)")
+    ap.add_argument("--singular-rtol", type=float, default=1e-10,
+                    help="relative singular-value tolerance for direct TSQR/SVD")
+    ap.add_argument("--block-rows", type=int, default=4096)
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
-    result = run(args.domain, args.jmax2, args.rank_rtol)
+    result = run(args.domain, args.jmax2, args.rank_rtol,
+                 args.singular_rtol, args.block_rows)
     output = args.output or Path(
         f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_{args.domain}_J{args.jmax2}.json"
     )
