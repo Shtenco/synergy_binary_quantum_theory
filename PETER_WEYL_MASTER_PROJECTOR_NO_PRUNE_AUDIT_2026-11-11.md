@@ -1012,3 +1012,73 @@ across the four focused suites. The test is committed but has not been run.
 At this update the research branch is 345 commits ahead and two behind main;
 main remains untouched. The latest observed Actions runs are queued with no
 conclusion. No CI PASS or production execution is claimed.
+
+
+## Follow-up: positive-metric kernel theorem and spectral bounds (2026-11-11 15:0x UTC)
+
+For the direct-sum constraint map
+`C psi = (H_0 psi, ..., H_(n-1) psi)`, the weighted master operator is
+`M_G = C^dagger (G tensor I) C`. If the node metric `G` is Hermitian
+strictly positive definite, then
+`lambda_min(G) I <= G <= lambda_max(G) I`, and congruence by `C` gives
+
+`lambda_min(G) C^dagger C <= M_G <= lambda_max(G) C^dagger C`.
+
+Consequently, by the min-max principle, the ordered eigenvalues obey
+`lambda_min(G) sigma_i(C)^2 <= lambda_i(M_G)
+<= lambda_max(G) sigma_i(C)^2`, and
+`ker(M_G) = ker(C) = intersection_v ker(H_v)`.
+The metric can change the nonzero spectrum and condition number, but not the
+exact common kernel. If `G` is only positive semidefinite, the lower bound
+vanishes and this kernel-equivalence conclusion need not hold.
+
+The constraint-stability module now implements
+`positive_metric_spectral_bounds`. It:
+- fails closed when direct TSQR reports scale-separation loss;
+- validates finite, descending singular values and a finite Hermitian metric;
+- rejects metrics that are not strictly positive definite;
+- reports lower/upper eigenvalue bounds, metric condition number when
+  representable, and lower-bound underflow;
+- labels the result as an exact finite-dimensional matrix inequality, not
+  an error bound for the upstream construction.
+
+The result is integrated into `run()` for three deterministic positive
+metrics (identity, diagonal, and random positive) and both legacy/no-prune
+constraint maps. The random metric seed is recorded as `20261111`.
+
+Three synthetic regressions were added:
+1. Dense complex two-node constraint map: the actual eigenvalues of
+   `C^dagger(G tensor I)C` lie within the predicted bounds.
+2. The weighted master kernel projector agrees with the direct kernel
+   projector for a rank-deficient C and strictly positive G.
+3. Semidefinite/non-Hermitian metrics are rejected, and scale-separation
+   warnings suppress the bounds.
+
+An independent local NumPy calculation of the dense fixture gives
+constraint singular values approximately
+`(5.20810480, 1.69577249, 2.56e-16)`, metric eigenvalues
+`(1.23095842, 2.16904158)`, and weighted-master eigenvalues
+`(50.6686448, 5.73135518, 9.27e-16)`. All three ordered eigenvalues
+satisfy the corresponding lower and upper bounds. This is a synthetic
+oracle calculation, not execution of the repository test suite or a
+production BQG calculation.
+
+The constraint-stability suite now contains **34 test methods** by source
+inspection. The four-suite static inventory is **92 methods** (31
+master-projector integrity, 34 constraint stability, 13 streaming TSQR/SVD,
+14 raw-volume operator). None of these counts implies test execution.
+
+Commits for this stage:
+- `636d5a0fbf51c6795adc79d9e561ed5f2d7a1450` — add positive-metric
+  spectral-bound helper;
+- `770c2e58a1f0827bea26a835d35b48c09890e4ba` — add dense-oracle,
+  kernel-invariance, and metric-validation tests;
+- `9f9c0b56f045522f72534c9f3fe2c408a84563b2` — integrate three positive
+  metric bounds into the constraint audit;
+- `dda2d4fe252df9bc38c5148639a09a0d9aea2dbd` — guard condition-number and
+  lower-bound underflow reporting.
+
+This theorem concerns the finite represented matrices. It does not establish
+that the chosen finite-spin constraint maps converge to the intended
+continuum operators, nor that the discretized metric is a faithful
+approximation to a continuum rigging construction.
