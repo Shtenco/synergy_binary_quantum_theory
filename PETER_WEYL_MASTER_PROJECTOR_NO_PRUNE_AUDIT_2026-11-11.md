@@ -883,3 +883,54 @@ The branch head at this report update is `a7956fcd508074b4380286fbd328955e67190c
 was performed. GitHub Actions remains queued; no CI PASS or local test
 execution is claimed. The full production low-domain and 32-state runs
 remain outstanding.
+
+
+## Follow-up: common-row adjacent-cutoff norm and fail-closed rank metadata (2026-11-11 14:58 UTC)
+
+The regulator sweep now computes the direct operator 2-norm of each adjacent
+cutoff difference for both pruning modes. The maps are compared in the union
+of their canonical direct-sum output labels, with absent rows zero-extended.
+The largest singular value of the difference map is the reported
+`operator_difference_norm_2`. A synthetic dense-oracle case with one newly
+appearing row has the expected norm 0.5 and is covered by a regression test.
+
+The sweep now reports, for every adjacent cutoff pair:
+- no-prune and legacy `||C_(J_next)-C_J||_2`;
+- difference-map numerical rank at the declared singular tolerance;
+- scale-separation warning and a stable digest of the represented difference;
+- no-prune kernel-projector distance;
+- normalized singular-spectrum shape difference when resolvable.
+
+The comparison helper rejects incomplete input-column maps, boolean/nonfinite
+or negative tolerances, and invalid block sizes. A scale-separation warning
+suppresses the operator norm and difference rank.
+
+A further audit of the fail-closed path found that the nested direct-SVD
+record still exposed the normalized SVD's integer rank even when the scale
+warning made that rank inconclusive. The record now sets `rank: null` under
+that warning and preserves the internal count only under the explicitly
+untrusted field `untrusted_normalized_scale_rank`. A synthetic regression
+test verifies this behavior.
+
+The constraint-stability suite now has 31 test methods. The four-suite static
+inventory is **89 methods** (31 master-projector integrity, 31 constraint
+stability, 13 streaming TSQR/direct-SVD, 14 raw-volume operator). These are
+source counts only. No checked-in tests or production cutoff sweep have been
+executed in this environment.
+
+Commits:
+- `6d9e6daf68077e1eca1345dfbcd48e36052e74a9` — adjacent-cutoff difference
+  operator SVD;
+- `184631ab25bac0b836b03fe102b7ec9404fd357a` — sweep integration;
+- `555fbb7d0bee58af0f9fc2e60582c2dd6078a461` — common-row norm regression;
+- `2fdfab5d8a27d42ccda7dacbd781bd595735de4c` — helper input validation;
+- `a7956fcd508074b4380286fbd328955e67190c0a` — validation tests;
+- `022dca65f648396ef0ff1552183ab2b7f766aeea` — suppress inconclusive rank;
+- `00b7b43eaec1cd5b429cbf7b7a600eeeef595a7b` — rank-suppression regression.
+
+The current branch head at this report update is
+`00b7b43eaec1cd5b429cbf7b7a600eeeef595a7b`, 330 commits ahead and two
+behind main. Main remains unchanged; no merge was performed. CI has not
+completed, and no PASS is claimed. The operator norm is a finite float64
+comparison under the stated common-row embedding; it does not yet bound
+recoupling, truncation, or continuum-limit errors.
