@@ -87,3 +87,12 @@ Do not call the K5 operator pruning-certified until:
 - threshold ladder stabilizes output and relevant spectral data;
 - shell leakage is built coherently as (L^\dagger L);
 - all reported results include the policy, threshold ledger, source SHA and run manifest.
+
+
+## 8. K5 producer integration status
+
+The producer-specific integration contract is maintained in [K5_NO_PRUNE_INTEGRATION_CONTRACT_AND_TEST_PLAN_2026-11-11.md](K5_NO_PRUNE_INTEGRATION_CONTRACT_AND_TEST_PLAN_2026-11-11.md). It identifies all current K5 thresholds and defines the required policy threading and validation gates.
+
+The standalone helper is not yet wired into `k5_peter_weyl_safe_hda_column.py`. In particular, no-prune mode must bypass the local coefficient cutoff, primitive output cutoff, cached T cutoff, state/HH pruning, and top-level H/commutator pruning. The policy identity must be part of every affected cache key. The historical path must remain explicitly reproducible as `legacy`; post-aggregation pruning must not be described as reproducing the historical intermediate-pruning semantics.
+
+Until the producer-specific dense oracle, bilinear adjoint tests, raw volume integrity checks, and threshold/error-propagation gates pass, all current HH values remain legacy-thresholded finite regression values. This document and helper do not claim a production fix.
