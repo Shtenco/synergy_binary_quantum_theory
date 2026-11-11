@@ -346,3 +346,71 @@ queued, with its job also queued.
 The full 32-state production legacy/no-prune comparison has not been executed.
 No physical-kernel, exact-rank, or continuum conclusion is established by
 these additional numerical controls.
+
+## Follow-up: volume symmetrization error and spectral-resolution ledger (2026-11-11 13:45 UTC)
+
+The raw volume producer now records a quantitative bound for the Hermitian
+projection actually used by the implementation. With
+
+\[
+Q_H=\frac{Q+Q^\dagger}{2},
+\]
+
+the identity
+
+\[
+Q-Q_H=\frac{Q-Q^\dagger}{2}
+\]
+
+gives
+
+\[
+\|Q-Q_H\|_F=\frac12\|Q-Q^\dagger\|_F,
+\qquad
+\|Q-Q_H\|_2\leq\frac12\|Q-Q^\dagger\|_F.
+\]
+
+The producer records the absolute Frobenius displacement, the same quantity
+as a valid upper bound on the spectral-norm displacement, and its ratio to
+\(\|Q\|_F\). The projector audit independently checks consistency among
+the absolute and relative records and rejects malformed or inconsistent
+certificates. This is a rigorous bound for the change from raw Q to its
+Hermitian projection Q_H, not an error bound for the nonlinear volume
+map V=sqrt(|Q_H|).
+
+The Hermitian spectrum now also receives a scale-normalized numerical
+resolution diagnostic: spectral scale, relative resolution threshold,
+numerical nullity at that threshold, normalized gap to zero, minimum
+resolved absolute eigenvalue, and the maximum scalar derivative
+1/(2 sqrt(|lambda|)) over resolved eigenvalues. The classification is
+performed in normalized units so the absolute threshold may underflow
+without changing the relative classification. Tests include a subnormal
+scale probe.
+
+The derivative diagnostic is deliberately labelled as a scalar
+eigenvalue-map sensitivity indicator. It is not an operator-Lipschitz bound,
+does not control eigenvector rotation, and is not a certified eigensolver
+backward-error estimate. No stability claim for the full matrix-valued
+sqrt(|Q_H|) map is made from this number alone.
+
+### Current focused test inventory (static source count)
+
+- master-projector integrity: 28 test methods;
+- legacy/no-prune constraint stability: 12 test methods;
+- streaming TSQR/direct-SVD: 13 test methods;
+- production K5 raw-volume operator: 12 test methods;
+- total across these four focused suites: **65 test methods**.
+
+The workflow path filters and steps include all four suites. These are
+committed test methods, not an execution receipt. No local execution of the
+current branch snapshot and no successful GitHub Actions run are claimed.
+
+### Current branch state at this update
+
+The latest code/test commit before this documentation update was
+8bc3faaf07ccd22b0845f0ea64b9f85fd54b5301. The research branch was
+293 commits ahead of main and two commits behind it. The latest commit
+had no reported combined-status checks and no associated workflow runs in
+the connector response. Earlier queued runs remain non-successful,
+non-failing pending work. The 32-state production comparison remains
+unexecuted. Main was not changed or merged.
