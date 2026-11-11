@@ -162,6 +162,29 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                 np.array([[complex(float("inf"), 0.0)]])
             )
 
+    def test_symmetrization_operator_error_bound_is_recorded(self):
+        spins = (1, 2, 2)
+        k5.volume123_matrix(*spins)
+        q = k5.volume123_raw_operator(*spins)
+        record = k5.VOLUME_RAW_DEFECTS[spins]
+        exact_frobenius_delta = 0.5 * k5.stable_complex_frobenius_norm(
+            q - q.conj().T
+        )
+        self.assertAlmostEqual(
+            record["symmetrization_delta_frobenius_norm"],
+            exact_frobenius_delta,
+            places=14,
+        )
+        self.assertGreaterEqual(
+            record["symmetrization_delta_spectral_norm_upper_bound"],
+            record["symmetrization_delta_frobenius_norm"],
+        )
+        self.assertAlmostEqual(
+            record["symmetrization_relative_frobenius_bound"],
+            exact_frobenius_delta / record["raw_norm"],
+            places=14,
+        )
+
     def test_volume_square_reconstructs_absolute_raw_spectrum(self):
         # Check V^2 = |Q| from an independently assembled eigenspectral
         # reference. Positivity and Hermiticity alone do not establish that
