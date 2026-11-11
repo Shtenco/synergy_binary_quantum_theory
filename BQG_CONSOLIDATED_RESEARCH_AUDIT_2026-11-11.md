@@ -367,7 +367,7 @@ For every input shell basis vector (e_j) and node (v):
 
 Compute and compare:
 - (M_A=\sum_v C_v^\dagger C_v), current compressed-only operator;
-- (M_B=\sum_v(C_v^\dagger C_v+L_v^\dagger L_v)), exact full-master pullback to the current shell, subject to verified self-adjointness and complete action;
+- (M_B=\sum_v(C_v^\dagger C_v+L_v^\dagger L_v)), exact full-master pullback to the current shell, subject to complete action and the correct orthogonal/Gram-weighted decomposition;
 - (M_C), the newly compressed operator on an expanded shell.
 
 Compare nullity, positive gap, projectors, mode-resolved leakage, shell-depth convergence, and cross-graph blocks. (M_B) and (M_C) act on different spaces and need not have identical spectra; the convergence comparison must use explicit embeddings/restrictions and controlled residuals.
