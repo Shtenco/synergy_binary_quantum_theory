@@ -170,7 +170,10 @@ def verify_ledger_identity(
                    (full_value.real, full_value.imag,
                     pruned_value.real, pruned_value.imag)):
             raise ValueError(f"non-finite amplitude in ledger verification for key {key!r}")
-        delta[key] = full_value - pruned_value
+        difference = full_value - pruned_value
+        if not (math.isfinite(difference.real) and math.isfinite(difference.imag)):
+            raise ValueError(f"non-finite discarded difference for key {key!r}")
+        delta[key] = difference
     delta = {k: v for k, v in delta.items() if abs(v) > atol}
     return (
         len(delta) == entry.discarded_keys
