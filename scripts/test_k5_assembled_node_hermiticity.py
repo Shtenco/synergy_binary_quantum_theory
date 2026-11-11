@@ -95,7 +95,7 @@ class K5AssembledNodeHermiticityTests(unittest.TestCase):
         # hit support. This is an exact support filter, not amplitude pruning.
         changed_edges = {
             edge
-            for edge, (sin, sout) in enumerate(zip(output_key[0], input_key[0]))
+            for edge, sin, sout in zip(k5.EDGES, output_key[0], input_key[0])
             if sin != sout
         }
         reverse_terms = []
