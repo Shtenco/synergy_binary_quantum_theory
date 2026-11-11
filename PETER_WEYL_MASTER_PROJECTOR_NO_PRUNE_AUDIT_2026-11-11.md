@@ -254,3 +254,24 @@ latest run is the relevant branch-head check.
 The full 32-state production legacy/no-prune comparison has still not been
 executed. No physical-kernel conclusion is upgraded by the presence of the
 new TSQR implementation or by synthetic dense-oracle tests.
+
+## Follow-up: subnormal Gram threshold regression (2026-11-11 10:10 UTC)
+
+A review of the normalized Gram-rank classifier found that the absolute
+quantity `rtol * spectral_scale` can underflow to zero for subnormal Gram
+matrices even when the normalized eigenvalues remain well resolved. The
+classifier now compares normalized eigenvalues directly with the relative
+threshold and reports both normalized and absolute threshold quantities.
+
+Added a regression test using a Gram matrix with scale (10^{-320}). It
+requires the absolute threshold to underflow to zero while the normalized
+spectrum still classifies rank one. The focused suite inventory is now:
+
+- master-projector integrity: 22 tests;
+- constraint stability: 11 tests;
+- streaming TSQR/SVD: 11 tests;
+- **44 tests across these three focused suites**.
+
+This test is committed but has not yet been observed passing in GitHub Actions.
+The test-only change is covered by the workflow's path filters. No production
+32-state run has been performed.
