@@ -238,25 +238,27 @@ def volume_raw_hermiticity_diagnostics(registry=None, rtol=1e-10):
     for key, raw in sorted(registry.items(), key=lambda item: repr(item[0])):
         defect = float(raw.get("relative_antihermitian_defect", float("nan")))
         raw_norm = float(raw.get("raw_norm", float("nan")))
+        defect_finite = math.isfinite(defect)
+        norm_finite = math.isfinite(raw_norm)
         record = {
             "spin_triple": list(key),
-            "relative_antihermitian_defect": defect,
-            "raw_norm": raw_norm,
+            "relative_antihermitian_defect": defect if defect_finite else None,
+            "raw_norm": raw_norm if norm_finite else None,
         }
         records.append(record)
-        if (not math.isfinite(defect) or not math.isfinite(raw_norm)
-                or defect > rtol):
+        if (not defect_finite or not norm_finite or defect > rtol):
             failures.append(record)
     passed = bool(records) and not failures
+    finite_defects = [
+        float(raw["relative_antihermitian_defect"])
+        for raw in registry.values()
+        if math.isfinite(float(raw.get("relative_antihermitian_defect", float("nan"))))
+    ]
     return {
         "passed": passed,
         "rtol": float(rtol),
         "triples_checked": len(records),
-        "max_relative_defect": max(
-            (item["relative_antihermitian_defect"] for item in records
-             if math.isfinite(item["relative_antihermitian_defect"])),
-            default=float("inf") if not records else 0.0,
-        ),
+        "max_relative_defect": max(finite_defects) if finite_defects else None,
         "failures": failures,
         "records": records,
         "fail_closed_if_registry_empty": True,
@@ -336,6 +338,7 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
             "metric": name,
             "G_min_eigenvalue": min_G,
             "master_eigenvalues": [float(x) for x in evals],
+            "master_spectral_scale": scale,
             "master_min_eigenvalue": min_eval,
             "zero_threshold": threshold,
             "zero_sector_rank": rank0,
