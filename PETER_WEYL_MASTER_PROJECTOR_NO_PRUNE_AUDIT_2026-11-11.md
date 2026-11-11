@@ -149,3 +149,56 @@ alongside `sigma_min(C_legacy)`, with all matrix dimensions, support hashes, spi
 - The 12 new integrity tests are committed but have not yet been observed executing in CI.
 - The workflow runs created for this branch were queued at the last poll; no PASS is claimed.
 - `main` remains unchanged.
+
+
+## Follow-up numerical certificate hardening (2026-11-11)
+
+The research branch now contains an isolated streaming singular-value implementation
+in `scripts/peter_weyl_streaming_svd.py`. It accepts row blocks of the original
+constraint map (C), applies reduced Householder QR to each block, merges compact
+(R) factors in a deterministic binary tree, and performs a direct SVD of the final
+small (R). It does not form (C^\dagger C).
+
+The stability comparison now reconstructs deterministic row blocks from the sparse
+columns and computes direct singular values for the legacy map, no-prune map, and
+their represented-float difference. Gram spectra remain available as diagnostics,
+but their rank threshold is explicitly a relative **Gram eigenvalue** threshold.
+The direct SVD has a separate relative **singular-value** threshold. This avoids
+silently treating those two tolerances as interchangeable.
+
+The scale floor `max(1.0, ...)` was removed from the Gram spectral classifier.
+The master-projector pilot now derives zero and PSD tolerances from the actual
+spectral scale, with a zero-scale branch. Its raw Hermiticity diagnostic uses a
+scaled sum-of-squares norm rather than a unit/tiny denominator floor.
+
+Constraint annihilation now records both absolute and Frobenius-relative residuals:
+[
+r_v^{\rm rel}(\psi)=\frac{\|H_v\psi\|_2}
+{\|H_v\|_F\,\|\psi\|_2}.
+]
+The relative residual is used for acceptance; absolute residuals remain in the
+certificate for auditability. Norm evaluation uses scaled sum-of-squares to avoid
+naive square overflow/underflow.
+
+The master-projector pilot also snapshots and validates the producer's raw volume
+Hermiticity registry. An empty registry, non-finite entry, negative norm/defect, or
+defect above the declared tolerance fails closed. Non-finite diagnostics are
+serialized as null rather than non-standard JSON NaN/Infinity tokens.
+
+### Numerical controls performed locally
+
+- 11 TSQR unit tests passed against dense SVD oracles, including complex inputs,
+  rank-deficient maps, full right-nullspace output, row permutation, block-size
+  changes, controlled singular values down to (10^{-14}), scale changes from
+  (10^{-150}) to (10^{150}), and explicit dynamic-range-underflow detection.
+- A separate sparse-row assembly probe passed for duplicate output keys and the
+  empty-support zero operator.
+- Separate numerical probes passed for scale-invariant Gram thresholds,
+  scale-invariant Hermiticity ratios, relative annihilation residuals, large
+  complex norms, and fail-closed volume-defect handling.
+
+These are local synthetic/helper tests, not a full Peter-Weyl production run and
+not GitHub Actions results. The new direct-SVD comparison has **not** yet been
+run on the full 32-dimensional no-prune carrier. No upstream operator-construction
+error bound has been established, so the result remains numerical for the
+represented float64 maps and cannot certify exact rank of the symbolic operator.
