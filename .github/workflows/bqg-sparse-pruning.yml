@@ -12,6 +12,7 @@ on:
       - "scripts/test_bqg_sparse_dense_oracle.py"
       - "scripts/test_k5_volume_raw_operator.py"
       - "scripts/test_k5_hit_adjoint.py"
+      - "scripts/test_k5_primitive_dense_adjoint.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -51,3 +52,5 @@ jobs:
         run: python scripts/test_k5_volume_raw_operator.py
       - name: Run production K5 link-hit adjoint tests
         run: python scripts/test_k5_hit_adjoint.py
+      - name: Run finite-sector production K5 primitive dense-adjoint oracle
+        run: python scripts/test_k5_primitive_dense_adjoint.py
