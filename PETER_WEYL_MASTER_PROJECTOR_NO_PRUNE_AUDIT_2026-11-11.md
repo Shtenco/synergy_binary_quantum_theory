@@ -723,3 +723,31 @@ queue backlog persists. No rerun or manual dispatch was initiated, and no CI
 PASS is claimed. The low-domain and full 32-state production calculations
 remain unexecuted; no physical-kernel equivalence, exact rank, regulator
 stability, or continuum theorem is established.
+
+
+## Follow-up: regulator and tolerance argument validation (2026-11-11 14:50 UTC)
+
+The stability runner accepts a doubled-spin cutoff `jmax2` that is passed
+into the elementary spin-raising/lowering branches. Since both supported
+carrier domains start from links with doubled spin 1 (j=1/2), a cutoff below
+1 does not contain the declared input carrier and should not silently run as
+though it were a valid regulator. The runner now rejects non-integer,
+boolean, or sub-1 `jmax2` values before constructing any columns.
+
+The same early validation now rejects boolean rank tolerances (Python's
+`bool` is an `int` subclass), nonnumeric/nonfinite/negative tolerance
+values, and nonpositive or boolean streaming block sizes. One negative test
+checks all six invalid argument classes and confirms the failures occur
+before the expensive Peter-Weyl calculation is entered.
+
+The constraint-stability suite now contains 24 test methods; the four-suite
+static source inventory is **82 methods** (31 + 24 + 13 + 14). This remains
+a static count, not an execution result.
+
+Commits:
+- `5ca5062104752a4e23a026f7fd55f4e8d44883a1` — validate regulator and numerical tolerances;
+- `af67604a36c6220dc9356c8110ede1c32260b854` — add invalid-input regression test.
+
+The research branch remains isolated from main. GitHub Actions continues to
+queue push-triggered runs; no CI result is inferred from queued jobs. No
+production low-domain or 32-state calculation is claimed.
