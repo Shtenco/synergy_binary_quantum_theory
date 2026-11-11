@@ -475,3 +475,14 @@ The gate also reports forward amplitudes outside the selected output rows and re
 The primitive/orientation script now has 6 methods and the six workflow scripts have **43 methods by source inspection**. The existing workflow already invokes this script. The source was fetched back from GitHub and inspected. A local test execution could not be started because the container could not resolve github.com; Actions run discovery for the push commit returned no run, so execution/CI PASS is unconfirmed.
 
 **Interpretation:** this is the first multi-input/multi-output projected block test for the full coherent T sum. It is stronger than the earlier single-element test, but still not a full matrix-wide finite-sector adjoint certificate. Next gates: observe runtime and numerical output; expand to complete declared finite domain/codomain matrices with wall clipping accounting; then test the assembled signed 12-spec H_v.
+
+
+## 34. Finite spin-wall sensitivity gate for the coherent T column
+
+Added `test_full_32_term_T_spin_wall_2_vs_4_sensitivity_ledger` in code commit `bdb4fb1105dfc7b36c81c3bcfaffbdb9e595e6ba`. It evaluates the same input and all 32 signed T terms at `Jmax2=2` and `Jmax2=4`, using no-prune coherent aggregation at each wall.
+
+The CI log record `T_SPIN_WALL_SENSITIVITY` includes support counts, common and exclusive support, larger-wall outputs above the smaller wall, their L2 norm, and the low-final-spin amplitude delta (L2 and max). The low-final-spin delta is essential: a path can be clipped at an intermediate hit by the smaller wall and later return to a low final spin, so checking only final high-spin rows would miss a real wall effect.
+
+This is a finite two-wall sensitivity comparison, not a convergence theorem and not an unbounded reference. It uses the same production implementation at both walls. It makes no assertion about the numerical size of the wall effect until CI actually executes. The primitive/orientation suite now has 7 methods; six workflow scripts have 44 methods by source inspection. Execution and PASS remain unconfirmed.
+
+Next: inspect the measured wall sensitivity, trace clipped intermediate paths if nonzero, optionally extend to a 2/4/6 ladder, then proceed to full finite-sector T/reverse matrices and assembled signed 12-spec H_v.
