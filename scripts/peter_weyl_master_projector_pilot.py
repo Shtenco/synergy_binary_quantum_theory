@@ -229,7 +229,7 @@ def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
 
 
 def volume_raw_hermiticity_diagnostics(
-    registry=None, rtol=1e-10, expected_unique_calls=None
+    registry=None, rtol=1e-10, expected_unique_calls=None, max_spin2=None
 ):
     """Fail-closed audit of raw volume defects and registry call coverage."""
     if not np.isfinite(rtol) or rtol < 0.0:
@@ -238,6 +238,10 @@ def volume_raw_hermiticity_diagnostics(
         not isinstance(expected_unique_calls, int) or expected_unique_calls < 0
     ):
         raise ValueError("expected_unique_calls must be a nonnegative integer")
+    if max_spin2 is not None and (
+        not isinstance(max_spin2, int) or max_spin2 < 0
+    ):
+        raise ValueError("max_spin2 must be a nonnegative integer")
     if registry is None:
         registry = getattr(PW, "VOLUME_RAW_DEFECTS", {})
     records = []
@@ -245,7 +249,11 @@ def volume_raw_hermiticity_diagnostics(
     for key, raw in sorted(registry.items(), key=lambda item: repr(item[0])):
         key_valid = (
             isinstance(key, tuple) and len(key) == 3
-            and all(isinstance(x, (int, np.integer)) and x >= 0 for x in key)
+            and all(
+                isinstance(x, (int, np.integer)) and x >= 0
+                and (max_spin2 is None or x <= max_spin2)
+                for x in key
+            )
         )
         try:
             defect = float(raw.get("relative_antihermitian_defect", float("nan")))
@@ -279,6 +287,7 @@ def volume_raw_hermiticity_diagnostics(
         "rtol": float(rtol),
         "triples_checked": len(records),
         "expected_unique_calls": expected_unique_calls,
+        "spin_cutoff_doubled": max_spin2,
         "coverage_complete": coverage_complete,
         "coverage_shortfall": (
             None if expected_unique_calls is None
@@ -312,6 +321,7 @@ def run(domain="low", jmax2=5, seed=20260818, zero_rtol=1e-10,
     volume_diagnostics = volume_raw_hermiticity_diagnostics(
         rtol=volume_hermitian_rtol,
         expected_unique_calls=volume_cache_misses,
+        max_spin2=jmax2,
     )
     volume_diagnostics["volume_cache_misses"] = volume_cache_misses
     volume_ok = volume_diagnostics["passed"]
