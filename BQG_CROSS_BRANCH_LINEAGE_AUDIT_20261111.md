@@ -836,3 +836,156 @@ For each candidate theorem, record:
 10. final status: exact finite identity, conditional theorem, finite numerical evidence, conjecture, falsified ansatz, or untested.
 
 A result is promoted to the common theory only when its hypotheses are compatible with upstream and downstream branches. A formula with an unproved bridge is retained as a conditional node, not merged into a stronger theorem.
+
+
+## 24. Five-block microscopic P-carrier -> signed spatial TT precursor: a real new bridge, with a precise boundary
+
+New branch deeply inspected: `physical-tt-kernel-leading-ir`, HEAD `e3118e1a710b83d23622af57d9c41ed66d7da2c4`.
+
+Primary source files:
+- `BQG_MULTIBLOCK_TT_WILSON_PRODUCTION_STATUS.md`, blob `c640d361ecc63c6b596e0c9f9d8be190d8ba3df7`;
+- `scripts/bqg_fiveblock_p_carrier_producer.py`, blob `45eae813787e535a40cd9ff1a49dc30e8159e025`;
+- `.github/workflows/bqg-signed-five-block-bridge.yml`, blob `f8a29c24992b0b457265595051b4f71ee2361573`;
+- `scripts/bqg_multiblock_tt_wilson_extractor.py`, blob `b74ddcc41a525aa561660fb7a62d55835c503032`;
+- `PHYSICAL_TT_KERNEL_LEADING_IR_DERIVATION.md`, blob `00f9e8b1a046fd795a6d07d2f70d263c5db69e3b`.
+
+### 24.1. Frozen microscopic object and carrier
+
+The signed operator is frozen as
+[
+G_{frozen}=-\frac23 H_E^{sine}-\frac{32}{9}S,
+\qquad
+S=-\frac i2(L_{raw}-L_{raw}^{\dagger}).
+]
+No (R_{op}), GR ratio, TT target or fitted Wilson coefficient enters the P-carrier producer.
+
+The carrier is constructed on the full L1 16-cell habitat (384 fine tetrahedra, 768 dual links). Five coarse parent tetrahedra are selected: central parent 0 and its four face-neighbours 1,2,4,8. Each parent supplies 24 strict-interior q4 source columns, combined through the frozen S4 parity/coset rule into six edge tangents:
+[
+P\in\mathbb C^{960\times30},\qquad
+P^\dagger P\simeq I_{30}.
+]
+The branch report records rank 30, relative Gram defect (4.5324665183683945\times10^{-17}), common unnormalised six-edge norm square (0.6982713481539777), cross-parent maximum overlap 0, and zero cross-parent basis-label collisions. Every normalized column has support 32. The serialized NPZ/direct-Gram relative defect is (1.7786683001560746\times10^{-16}).
+
+The geometrical reason for no recoupling at this stage is precise: each strict-interior P column changes only links internal to its own parent; all parent-boundary links and exterior labels remain at background. Thus distinct parent supports are disjoint. Full shared-face SU(2) recoupling belongs after (H_E^{sine}) or (S) acts, because those images can touch/cross shared faces. Applying shared-face recoupling prematurely to P would change the carrier being defined.
+
+### 24.2. Exactness qualification discovered by source inspection
+
+The producer is finite and explicit, but the word “exact” must be qualified at the amplitude level. Its `add()` routine discards amplitudes with (|z|\le 10^{-10}) (`TOL=1e-10`), and the q4 source dictionary is filtered again by that threshold. Therefore the recorded P is the output of a fixed-threshold sparse representation, not a proof that every mathematically nonzero amplitude in the untruncated microscopic state has been retained.
+
+A strict follow-up must run a cutoff ladder (\epsilon=10^{-8},10^{-10},10^{-12},10^{-14}) (and, where feasible, a no-prune reference), then compare:
+[
+\|P_\epsilon-P_{\epsilon'}\|,\quad
+\sigma_{min}(P_\epsilon),\quad
+\|P_\epsilon^\dagger P_\epsilon-I\|,
+\quad
+\text{support and boundary-label invariants}.
+]
+The source also symmetrizes each Gram before reporting its Hermiticity defect; consequently the reported zero Hermiticity defect is not an independent raw-adjoint diagnostic. Future gate should record (|K_{raw}-K_{raw}^\dagger|/\|K_{raw}\|) before symmetrization, for both local six-edge and global 30-column Grams. These are audit hardening requirements, not evidence that the current rank/Gram result is false.
+
+### 24.3. The actual next operator calculation is still missing
+
+After constructing P, the next required calculation is:
+[
+P\xrightarrow{\ H_E^{sine},\ S\ }\{H_E^{sine}P,SP\}
+\xrightarrow{\text{complete shared-face recoupling}}\mathcal H_{E/S}
+\xrightarrow{\text{remove }\operatorname{span}P,\;\text{whiten residual}}Q_Q,
+\qquad W=[P,Q_Q].
+]
+Then compute (E_W=W^\dagger H_E^{sine}W), (S_W=W^\dagger SW), and the leakage ratios
+[
+\eta_O=\frac{\|(I-WW^\dagger)OW\|}{\|OW\|},
+\quad O\in\{H_E^{sine},S\}.
+]
+Only after closure of this target-independent amplitude basis may one assemble
+[
+G_W=-\frac23E_W-\frac{32}{9}S_W
+=\begin{pmatrix}A&B\\B^\dagger&D\end{pmatrix}
+]
+and form the orthonormal Schur complement
+[
+C_{eff}^{orth}=A-BD^+B^\dagger.
+]
+A zero/gapless Q mode coupled to P must be promoted, not hidden by a fitted (i\eta). Then return to labelled q coordinates, subtract the normalized-state background term, transport by the measured q-to-metric map (M_{hq}), build the five-block spatial symbol and TT-project it. The only permitted output at that stage is (\mathbf c_{micro,spatial}^{BQG}), never (\mathbf c_{BQG}^{IR}).
+
+The workflow file contains a pull-request path trigger and manual dispatch, and has explicit guards for the 61 face patterns, frozen upstream SHA, P rank, Gram and disjoint-support invariants. In this pass I inspected the workflow definition but did not independently retrieve a matching Actions run/artifact; do not silently turn a workflow specification into an executed CI result.
+
+### 24.4. The physical TT leading form is conditional, not yet BQG output
+
+The separate ADM/HDA derivation gives, inside its registered local two-derivative family,
+[
+c=\frac12,\qquad AB=1,
+]
+and for two TT polarizations
+[
+S_{TT}^{(2)}=\frac1{4A}\sum_{A=1}^{2}
+\int d^4x\,[\dot h_A^2-(\nabla h_A)^2].
+]
+Hence the *conditional ADM/HDA reference kernel* is
+[
+K_{E,TT}^{ADM}=Z_T(\omega_E^2+k^2)I_2+O(\partial^4),
+\quad
+K_{TT}^{ADM}=Z_T[-(\omega+i0)^2+k^2]I_2+O(\partial^4).
+]
+This yields (m_{TT}=0), two polarizations and (c_T=1) under those premises. It does not compute the BQG physical projector, history measure, connected (\Gamma_{phys}), physical residue/Newton normalization, or physical Wilson vector. The source explicitly keeps `physical_TT_kernel_frozen = false`. Also (z_{constraint}\ne\omega_{physical}) absent an independent clock/history map.
+
+## 25. Physical TT and scalar channels: complete finite symmetry spaces, then physicalization
+
+### 25.1. Six-dimensional quartic TT quotient is the general finite-regulator target
+
+The corrected onsite/momentum distinction is essential. At zero momentum (or a fully stabilised direction), the S4 onsite six-edge kernel has the three-orbit form (aI+bA+cO). At generic nonzero momentum only covariance is required:
+[
+C_6(\omega,g\mathbf k)=U_gC_6(\omega,\mathbf k)U_g^{-1};
+]
+one must not impose fixed-direction invariance and collapse the answer to three scalar functions.
+
+For the parity-even quartic metric response, the unrestricted representation count is 13 singlets before TT reduction. Imposing (\operatorname{tr}h=0) and (h_{ij}k_j=0) leaves exactly
+[
+\dim\mathcal W^{(4)}_{TT,S_4}=6.
+]
+The six Reynolds invariants (W_1,\ldots,W_6) and exact six-observable extraction matrix are recorded in `S4_TT_QUARTIC_COMPLETE_BASIS.md`. Three high-symmetry directions (100),(110),(111) have rank five only; the preregistered generic direction (120) closes the system. The exact extraction determinant is (1/699840000\ne0). Thus the production microscopic result must first be a full six-vector, not a two-number ansatz.
+
+### 25.2. The six -> one -> zero hierarchy is a conditional theorem
+
+The physical-pole branch contains a useful nested theorem:
+[
+\mathcal W^{(4)}_{TT,S_4}:6
+\supset
+\mathcal W^{(4)}_{TT,SO(3)}:1
+\supset
+\mathcal W^{(4)}_{TT,\text{local Lorentz metric massless pole}}:0.
+]
+First, spatial SO(3) invariance forces a parity-even real symmetric kernel on the two TT polarizations to be scalar, leaving only (eta_s a_*^2k^4I_{TT}). Second, if the physical vacuum is locally Lorentz invariant, the only gapless spin-2 field is the metric graviton, and the quadratic 1PI action has a local analytic derivative expansion, then
+[
+K_{TT}(s)=sI_{TT}F(a_*^2s),\qquad
+s=-\omega^2+c^2k^2,\quad F(0)=Z_T>0.
+]
+The original massless branch remains (s=0) at every finite local derivative order. Therefore a nonzero physical massless-pole k4 shift requires a real failure of at least one premise (preferred foliation/tensor order, extra gapless mixing, Lorentz breaking, nonlocality, or non-Poincare background). A regulator orientation alone is not such a physical evasion.
+
+This theorem is conditional EFT structure, not a result that BQG already satisfies the assumptions. It changes the scientific decision tree: extract all six finite-regulator coefficients blindly; test their SO(3) collapse; then test whether the isotropic term survives on the Lorentz-invariant massless pole. The bare lattice values are UV controls, not automatically IR observables.
+
+### 25.3. Scalar channel: local exact control is not a propagating physical scalar
+
+The q=2 relational source has an exact finite local Legendre transform, but its carrier is only a rank-two tracefree shape slice. Its conformal/volume direction and independent lapse response are absent; a product extension factorizes across blocks and has exactly zero connected cross-block Hessian. Hence this source alone cannot yield (\Phi,\Psi,\rho_{hist}(a)), a scalar (k)-dependent kernel, or a dark-sector prediction.
+
+The correct physical scalar object is the connected relational history kernel
+[
+C_{AB}(\Delta t;b,c)
+=\langle\delta\mathcal O_A(t,b)
+\delta\mathcal O_B(t+\Delta t,c)\rangle_{phys,c},
+]
+followed by a justified relational-time transform and inversion on physical support:
+[
+\Gamma_{scalar}^{(2)}(\omega,k)=C_{phys}^{-1}(\omega,k).
+]
+The six S3 transfer functions of the shared-face pair can constrain the tensor form of the nearest-neighbour response, but their physical-history weighting and values remain uncomputed. The three variables (	au) (master heat depth), (z) (constraint resolvent) and (\Delta t_{rel}) (physical relational separation) must remain distinct; neither (	au) nor (z) is physical frequency.
+
+### 25.4. Immediate proof obligations
+
+1. Reproduce the five-block P carrier under a cutoff ladder and raw-adjoint diagnostics.
+2. Execute the target-independent E/S image producer with full shared-face recoupling and no target pruning; publish wall-closure and leakage bounds.
+3. Independently reconstruct the Schur complement from the full compressed block matrix and verify the gapless-Q promotion rule.
+4. Freeze the six-Wilson extractor and verify its rational matrix/inverse independently (symbolic exact arithmetic), then compare direct directional observables against reconstruction.
+5. Derive the actual physical projector/rigging map and relational clock; demonstrate the connected metric/scalar history kernel and its regulator/refinement limit.
+6. Test the constraint algebra through the same derivative order as the physical TT/scalar kernel; only then identify the physical pole and observables.
+
+Classification: exact finite representation/quotient identities; conditional EFT theorem; finite numerical carrier evidence at fixed threshold; unexecuted downstream physicalization. No complete analytic proof of the full BQG theory is claimed.
