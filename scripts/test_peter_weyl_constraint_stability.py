@@ -443,6 +443,18 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertTrue(result["upper_bound_underflow_detected"])
         self.assertFalse(result["spectral_bounds_numerically_resolved"])
 
+    def test_positive_metric_bounds_reject_unresolved_near_singular_metric(self):
+        direct = {
+            "scale_separation_loss": False,
+            "singular_values": [1.0, 0.5],
+        }
+        # Mathematically positive, but its positive gap is below the
+        # conservative float64 eigenspectrum-resolution guard.
+        with self.assertRaisesRegex(ValueError, "numerically resolved positive gap"):
+            stability.positive_metric_spectral_bounds(
+                direct, np.diag([1.0, 1e-16])
+            )
+
     def test_positive_metric_bounds_validate_input_spectrum_dimension(self):
         direct = {
             "scale_separation_loss": False,
