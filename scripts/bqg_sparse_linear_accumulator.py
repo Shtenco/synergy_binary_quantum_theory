@@ -32,16 +32,23 @@ class SparseLinearAccumulator:
             return
         for key, value in state.items():
             z = _finite_complex(value, name="state amplitude") * factor
+            if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+                raise ValueError("scaled state amplitude must be finite")
             if z != 0:
                 self._terms.setdefault(key, []).append(z)
 
     def finish(self) -> dict[Hashable, complex]:
         out: dict[Hashable, complex] = {}
         for key, terms in self._terms.items():
-            z = complex(
-                math.fsum(term.real for term in terms),
-                math.fsum(term.imag for term in terms),
-            )
+            try:
+                z = complex(
+                    math.fsum(term.real for term in terms),
+                    math.fsum(term.imag for term in terms),
+                )
+            except OverflowError as exc:
+                raise ValueError("accumulated amplitude overflowed") from exc
+            if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+                raise ValueError("accumulated amplitude must be finite")
             if z != 0:
                 out[key] = z
         return out

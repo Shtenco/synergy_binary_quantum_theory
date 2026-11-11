@@ -86,6 +86,11 @@ class TestStrictSparseLinearAccumulator(unittest.TestCase):
                 lhs.get(key, 0j), fx.get(key, 0j) + fy.get(key, 0j), places=14
             )
 
+    def test_nonfinite_scaled_amplitude_is_rejected(self):
+        accumulator = SparseLinearAccumulator()
+        with self.assertRaises(ValueError):
+            accumulator.add({"huge": 1e308}, 1e308)
+
     def test_nonfinite_matrix_element_is_rejected(self):
         with self.assertRaises(ValueError):
             sparsify_matrix_columns([{"bad": complex(float("nan"), 0)}], 0.0)
