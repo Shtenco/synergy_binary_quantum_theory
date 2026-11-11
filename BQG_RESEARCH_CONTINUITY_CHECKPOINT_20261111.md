@@ -321,3 +321,20 @@ The branch was at `d8a4d1b47c59e122f13eb45d43017e186c42ca15` before this documen
 ### Dependency gate retained
 
 Do not expand the remaining C(V) matrix components or begin C(K) tests until run `42937467628` is inspected. If C(V) passes, test the remaining components with non-vacuous fixtures; then add a separate C(K) independent-support test; then perform L3 direct-superposition versus frozen basis-matrix reconstruction with complex phases, cancellation, and near-threshold vectors. Do not loosen tolerances to manufacture a pass.
+
+
+## 20. L2 workflow import-closure hardening — 11 November 2026, 01:38 UTC
+
+A CI trigger/compile gap was identified: the L2 test imports and calls `peter_weyl_covariant_composition_gate.py` for full C(V), but the workflow did not originally include that module in its watched paths or explicit compile list. A change to this production module could therefore bypass the L2 push trigger, and its syntax was not directly checked by the L2 compile step.
+
+The workflow `.github/workflows/bqg-production-linearity-l2.yml` was corrected. Its watched paths and compile list now cover the relevant direct/transitive production dependency closure, including:
+- `peter_weyl_covariant_composition_gate.py`;
+- `k5_peter_weyl_safe_hda_column.py`;
+- `charged_intertwiner_recoupling_gate.py`;
+- `peter_weyl_lorentzian_K_block_gate.py`;
+- `peter_weyl_covariant_K_projection_audit_gate.py`;
+- `peter_weyl_volume_cross_rep_audit.py`;
+- `peter_weyl_q_block_gauge_audit.py);
+as well as the L2 test, CK, KCOMP, CV and zero-aware volume migration modules. Duplicate entries introduced during the sequential edit were removed and the final workflow text was re-read.
+
+The correction is committed in the research branch. It changes CI coverage only; no operator implementation, test assertion, tolerance or scientific interpretation changed. The new push is expected to create a workflow run, but its ID and result must be confirmed from GitHub. The earlier C(V)-test run `42937467628` remains unexecuted/queued at the latest direct poll. No PASS/FAIL is claimed. `main` remains untouched.
