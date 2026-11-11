@@ -23,6 +23,10 @@
 **Интеграция существующих W5-модулей (11 ноября 2026):** [аудит V09/V10/common-carrier](BQG_W5_EXISTING_MODULE_INTEGRATION_AUDIT_20261111.md) связывает уже имеющиеся генераторы и фиксирует точный порядок получения единого (A,B)-носителя, условия сравнения cutoff и блокеры физической нормировки. Отдельно исправлен joint-Gram gate: обязательные явные коэффициенты, идентификаторы базиса и корректный подсчёт структурного правого ядра.
 **V11 common carrier (11 ноября 2026):** [сборщик общего W5-носителя](scripts/bqg_v11_w5_common_carrier.py), [регрессионные тесты](tests/test_bqg_v11_w5_common_carrier.py), [pilot workflow](.github/workflows/bqg-v11-w5-common-carrier-pilot.yml). Включает независимую проверку V09 node-sum против V10 forward, контроль (B=B_{sym}+B_{anti}), единый Gauss-носитель и SHA-256 ledger. Исправлен executor-контракт V09/LSINE; см. интеграционный аудит.
 
+
+
+**Production-linearity and closure-loss audit (11 ноября 2026):** [новый технический аудит](BQG_PRODUCTION_LINEARITY_AND_CLOSURE_AUDIT_20261111.md) отделяет фиксированное разреживание матричных коэффициентов от state-dependent amplitude pruning. Зафиксирован риск нелинейности production KKV при пороговом накоплении масштабированных вкладов; V10 adjoint residual поэтому трактуется как matrix-level check, а не как доказательство линейности полного production map. Документ задаёт L1/L2/L3 additivity/homogeneity gates, обязательные below-threshold loss diagnostics и cutoff-convergence protocol. Это аудит и план проверок, не заявление о прохождении новых тестов.
+
 ---
 
 ## Оглавление приключения
