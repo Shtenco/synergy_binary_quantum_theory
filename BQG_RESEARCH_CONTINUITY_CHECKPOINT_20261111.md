@@ -184,3 +184,22 @@ The existing safe-domain and threshold-boundary tests remain unchanged. Thus the
 **New L2 run:** `42936480504`, HEAD `750978aade52455db8cf680ee364a4e36493f098`, job `130247689781`: queued, no artifacts. Earlier L2 runs `42935840345` and `42935968925` remain queued without artifacts. Both L1 runs `42929934053` and `42930769907` remain queued without artifacts.
 
 **Current branch tip before this checkpoint update:** `750978aade52455db8cf680ee364a4e36493f098`. `main` remains untouched. No L1/L2 test result is yet available; do not report PASS, FAIL, or a physical conclusion.
+
+
+## 12. Independent-basis L2 superposition check — 11 November 2026, 01:08 UTC
+
+The L2 suite was extended beyond one-vector rescaling. A new test constructs two distinct genuine Peter–Weyl basis states (`basis_full_jhalf()[0]` and `basis_full_jhalf()[16]`), converts both through the repository's covariant/complete adapters, verifies that the keys differ and that each has a nonzero volume response, then compares:
+
+`CK.apply_volume_complete_state(x+y, 0)`
+
+against
+
+`CK.apply_volume_complete_state(x, 0) + CK.apply_volume_complete_state(y, 0)`
+
+at a common scale (10^6), chosen to keep the test away from the declared (10^{-11}) output cutoff. The relative L2 residual is required to be at most (5\times10^{-12}). This is a genuine independent-support additivity test, not merely a homogeneity test along one input ray.
+
+Both independent basis responses are hard assertions, so an empty second vector cannot silently turn the test into a vacuous pass. This test currently covers the volume primitive only; independent-support tests for complete H_E and full covariant C(V)/C(K) remain future work.
+
+**Commits:** `10f9e4964e5caacbd3f2a08209fd840a29ded40f` (add independent-basis test), `ec82224564516d9b902ac52de37b3e540bce4c22` (require both basis responses).
+
+**New L2 run:** `42936669007`, HEAD `10f9e4964e5caacbd3f2a08209fd840a29ded40f`, job `130248321716`: queued, no artifacts. The immediately prior run `42936480504` also remains queued. Older L2 and L1 runs remain queued. No PASS/FAIL is available.
