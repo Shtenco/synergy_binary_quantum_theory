@@ -275,3 +275,74 @@ spectrum still classifies rank one. The focused suite inventory is now:
 This test is committed but has not yet been observed passing in GitHub Actions.
 The test-only change is covered by the workflow's path filters. No production
 32-state run has been performed.
+
+## Follow-up: conservative TSQR scale-resolution gate and expanded producer-ledger audit (2026-11-11)
+
+A further source-level pass traced the no-prune path through the production
+K5 implementation. The amplitude-threshold branches in
+`apply_primitive_oriented`, `apply_T_oriented_basis`,
+`apply_T_cached_state`, `apply_H_cached_state`, and `prune_state`
+are bypassed in `mode="no_prune"`; aggregation is routed through the
+compensated sparse aggregation helpers. The remaining explicit cutoff in
+this path is the declared finite spin regulator `Jmax2`, not an amplitude
+threshold. The legacy-only threshold expressions remain in the legacy
+branches. The five-tetrahedron input vector also uses exact-nonzero component
+selection in no-prune mode.
+
+The volume-operator audit was strengthened independently: each projector run
+clears the volume cache and raw-defect registry, then requires the number of
+unique registry records to match the cache-miss count. It also validates
+spin-triple shape/type and that every doubled spin is within the declared
+`Jmax2`. Malformed records, malformed keys, missing coverage, or out-of-cutoff
+entries fail closed. This closes a weakness where a nonempty but incomplete
+registry could previously pass the Hermiticity gate.
+
+### TSQR scale-resolution warning
+
+The streaming TSQR implementation now conservatively flags two cases even
+when no represented component underflows to exact zero:
+
+1. a nonzero normalized input component is below machine epsilon relative to
+   the common input scale;
+2. a previously accumulated compact factor is rescaled by a factor below
+   machine epsilon when a later block raises the global scale.
+
+The warning deliberately over-approximates possible loss: an orthogonal
+sub-ulp component can survive in a special matrix geometry, and the regression
+fixture demonstrates exactly that the numerical rank may still be reported as
+two while the scale-resolution status is inconclusive. The warning is not a
+proof that the singular value was destroyed; it blocks treating the result as
+a robust certificate without a backward-error analysis.
+
+Two new regression cases exercise (i) a sub-ulp component within one block
+and (ii) a small block arriving before a much larger block. A local synthetic
+reproduction of both cases retained the represented singular values
+`[1, 1e-20]` and rank two, while correctly raising the conservative warning.
+A separate 113-by-9 complex random dense-oracle reproduction agreed with dense
+SVD to maximum absolute singular-value difference about (2.2\times10^{-14})
+and did not raise the warning. These are local synthetic probes, not a full
+suite execution or production K5 calculation.
+
+### Current focused test inventory
+
+At the latest source snapshot checked during this pass:
+
+- master-projector integrity: 27 test methods;
+- legacy/no-prune constraint stability: 12 test methods;
+- streaming TSQR/SVD: 13 test methods;
+- total across these three focused suites: **52 test methods**.
+
+The workflow invokes all three suites. The count is static source inspection;
+the corresponding GitHub Actions run is still queued and no PASS is claimed.
+
+### Current branch and scientific status
+
+The research branch head at the end of this pass is
+`88038f1ff8fa89a11e15f1454c9a2615eea518d4`; `main` remains
+`254f19fdab41d32b920bf454f987aa7c0fdba34d`. The branch remains isolated and
+has not been merged. The latest observed Actions run for the test commit was
+queued, with its job also queued.
+
+The full 32-state production legacy/no-prune comparison has not been executed.
+No physical-kernel, exact-rank, or continuum conclusion is established by
+these additional numerical controls.
