@@ -647,3 +647,19 @@ Extended `scripts/test_k5_primitive_dense_adjoint.py` with a production matrix-e
 This is a stronger acceptance gate than checking `adjoint_sequence` as an involution: it exercises the actual production branch expansion, local volume action, all five hits, recoupling projection, and reverse matrix elements. It remains deliberately scoped to one monomial, one input ket, and one finite spin wall (`Jmax2=2`). It does not yet certify the 32-term coherent sum (T), the other 11 oriented specifications, the assembled node (H), or unrestricted adjointness.
 
 The primitive dense-adjoint file now contains three test methods. The total source inventory across six workflow-invoked scripts is **39 test methods** (pending a full recount from the current branch). The workflow already invokes this test file. The change is committed; execution and CI PASS are not yet confirmed.
+
+
+## 21. K5 oriented-spec combinatorics gate and consolidated evidence update — 2026-11-11
+
+Added `test_all_twelve_oriented_specs_have_exact_combinatorics` to `scripts/test_k5_primitive_dense_adjoint.py`. For every one of the five K5 vertices, the test independently reconstructs the generator's expected ordered list from four omitted-neighbor choices, three cyclic orderings per retained triple, and the common sign `(-1)^r`. It checks exact ordered equality, exactly 12 entries, and uniqueness. This validates the orientation enumerator's finite combinatorics; it does not by itself prove covariance, adjointness of the coherent T sum, or HDA closure.
+
+A separate research note was committed:
+`K5_ORIENTED_SPEC_COMBINATORICS_AUDIT_2026-11-11.md`.
+
+**Current source inventory:** 40 test methods across the six scripts invoked by `.github/workflows/bqg-sparse-pruning.yml`: 12 sparse-helper, 11 K5 policy-wiring, 4 synthetic dense-oracle, 6 production raw-volume, 3 local link-hit adjoint, and 4 production primitive/orientation methods. This is a source inventory only.
+
+**Latest commits:** orientation test `6c9139791e649794444bc3a395588a23041ecdfc`; audit note `7fdb423137d06b941b7547e820a2a7e0dc2579c9`.
+
+**CI status:** workflow run #27 (`42944352617`) was observed queued, with job `sparse-pruning-tests` not yet started. Run #26 (`42942768669`) was also still queued at the last observation. No local execution was performed and no PASS is claimed.
+
+**Evidence discipline:** all finite-sector volume, primitive, monomial, and orientation tests remain source-committed but execution-unverified until Actions returns completed job logs. No result here upgrades a finite numerical identity to a continuum theorem or a physical BQG claim. The full 32-monomial T adjoint, assembled node-H matrix-element Hermiticity, spin-wall convergence, full HH, and complete leakage Gram remain open.
