@@ -1,0 +1,50 @@
+name: BQG production linearity L2 primitive audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/lemaitre-bqg-causal-cone-20261110
+    paths:
+      - 'tests/test_bqg_l2_production_primitives.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+      - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
+      - '.github/workflows/bqg-production-linearity-l2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  l2-production-primitives:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Compile L2 test and active production modules
+        run: |
+          python -m py_compile tests/test_bqg_l2_production_primitives.py
+          python -m py_compile scripts/peter_weyl_covariant_K_leg_gate.py
+          python -m py_compile scripts/peter_weyl_covariant_K_composition_gate.py
+          python -m py_compile scripts/peter_weyl_covariant_volume_leg_gate.py
+          python -m py_compile scripts/peter_weyl_zeroaware_volume_migration_experiment.py
+      - name: Run L2 production primitive tests
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -p 'test_bqg_l2_production_primitives.py' -v 2>&1 | tee l2-production-primitives.log
+      - name: Preserve L2 execution log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-l2-production-primitives-log
+          path: l2-production-primitives.log
+          if-no-files-found: warn
