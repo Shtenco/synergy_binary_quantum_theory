@@ -371,11 +371,17 @@ def run(mode="legacy"):
     max_spin2=max(max(k[0]) for k in comm) if comm else 0
 
     V5=v5_tensor();v5norm=float(np.linalg.norm(V5));full=basis_full_jhalf()
-    coeffs=[(full[idx],val/v5norm) for idx,val in enumerate(V5) if abs(val)>1e-12]
-    h0v={}
+    coeffs=[(full[idx],val/v5norm) for idx,val in enumerate(V5)
+            if (val != 0j) if mode=="no_prune"] if mode=="no_prune" else [
+                (full[idx],val/v5norm) for idx,val in enumerate(V5) if abs(val)>1e-12]
+    h0v_maps=[];h0v_scales=[]
     for key,amp in coeffs:
-        rr=apply_H_cached_state({key:1+0j},0,JMAX2,mode)
-        for ko,c in rr.items(): h0v[ko]=h0v.get(ko,0j)+amp*c
+        h0v_maps.append(apply_H_cached_state({key:1+0j},0,JMAX2,mode))
+        h0v_scales.append(amp)
+    h0v=aggregate_mappings(h0v_maps,h0v_scales) if mode=="no_prune" else {}
+    if mode!="no_prune":
+        for mapping,amp in zip(h0v_maps,h0v_scales):
+            for ko,c in mapping.items(): h0v[ko]=h0v.get(ko,0j)+amp*c
     h0v=prune_state(h0v,1e-8,mode);h0v2=norm2_state(h0v)
     h0v_fixed={k:v for k,v in h0v.items() if k[0]==(1,)*10}
     h0v_max_spin2=max(max(k[0]) for k in h0v) if h0v else 0
