@@ -528,3 +528,10 @@ A control-flow audit found and fixed an invalid acceptance rule: the historical 
 A dedicated apply_acceptance_gate now applies frozen regression targets only to legacy. For no_prune, it reports calculation_completed=true, passed_regression=null, regression_errors=null, and an explicit not-physically-certified acceptance scope. CLI exit code zero in no_prune mode now means execution completed; it does not mean physical validation passed. Two tests cover the distinction.
 
 K5 wiring tests: 11. Standalone sparse-pruning tests: 12. Combined committed tests: 23. Latest producer blob: 7db5bae2bb22535cc99f9d86f5dda0f024db7fbc; latest K5 test blob: 0d43625f3d82f079f3f70c8b547fb4ac88039b8b. Files were fetched back from GitHub. CI status remains empty and no local test run was possible in this session; no test PASS is claimed.
+
+
+## 20. Synthetic dense oracle and complex adjoint reference harness
+
+Added a deterministic 5-dimensional synthetic complex sparse operator test in scripts/test_bqg_sparse_dense_oracle.py. The dense reference is assembled independently of the sparse helper. The four tests cover sparse/dense matrix equality, sparse/dense matrix-vector action, the complex adjoint inner-product identity, and tiny-amplitude retention versus exact coherent cancellation.
+
+This is a meaningful independent algebraic control, but it is deliberately not represented as a production K5 dense oracle or as verification of the actual volume/primitive adjoints. Those production checks remain outstanding. The workflow now invokes the new test file. Committed suite inventory: 12 sparse-helper tests + 11 K5 policy-wiring tests + 4 synthetic dense-oracle/adjoint tests = 27 test methods. No local or CI execution has been confirmed; no PASS is claimed.
