@@ -275,3 +275,29 @@ The existing inline-audit tests cover ordinary Python fences/heredocs, indentati
 4. report unresolved template syntax separately from confirmed Python syntax errors.
 
 The other run #73 finding, `pl_lorentzian_group_worker_v2.py:49`, remains a genuine syntax error. No historical source was modified as part of this audit.
+
+
+## 10. Independent-control matrix transcription defect — Habr audit branch
+
+Audited branch: `audit/habr-emergent-graph-independent-control-20261111`, commit `553c2936a2c53352dfd12e4645255124422584a5`.
+
+The commit message says it preserves exact rational half-integer entries, but the actual diff changes six numeric coefficients in `audit_integer_kernel_full_matrices.py` incorrectly. The parent version (blob `76b2fe7565e8884d71bb2f7ca0a6c64dfaf6d76c`) had the original values as floats; the current version (blob `71625cd4a0e6c0daf0cdc9603cac8192c82bda8a`) converts them to different rationals:
+
+| Matrix row | Previous value | Current expression | Current value | Correct exact conversion |
+|---|---:|---|---:|---:|
+| Ksi_0 | 1/2 | `sp.Rational(0,2)` | 0 | `sp.Rational(1,2)` |
+| lambda_B0 | 1/2 | `sp.Rational(0,2)` | 0 | `sp.Rational(1,2)` |
+| Ksi_minus | 1/2 | `sp.Rational(0,2)` | 0 | `sp.Rational(1,2)` |
+| phi_meson | 1/2 | `sp.Rational(0,2)` | 0 | `sp.Rational(1,2)` |
+| rho_meson | 5/2 | `sp.Rational(4,2)` | 2 | `sp.Rational(5,2)` |
+| K_star_meson (70-row matrix only) | -5/2 | `sp.Rational(-4,2)` | -2 | `sp.Rational(-5,2)` |
+
+The 69-row matrix therefore has five corrupted coefficients; the 70-row matrix has six. Since the reproducer constructs `A=(2*M.T).applyfunc(int)`, each error changes an integer entry of A by exactly one. This is not a formatting-only difference: the input integer matrices for the Smith decomposition and both LLL calculations have changed.
+
+The committed `FINDINGS_019.md` and `STATUS.md` still report the earlier exact SNF/LLL results, including saturated-kernel indices `2^179` and `2^180`, and explicitly state the K-star row as `(2,0,-5/2,0,6,-1)`. Those results were produced against the parent matrix, not the current script. They are not verified for the current blob.
+
+The script's internal assertions verify rank, kernel multiplication, unimodularity and lattice identities **for whatever matrix is currently transcribed**. They do not verify that the matrix entries match the frozen external source revisions. There is no row-by-row source digest or independent matrix fixture. Consequently, a transcription error can pass the script's internal algebra checks while invalidating the external-source claim.
+
+No Actions run was found for this branch in the inspected run inventory. The branch's `core-regression.yml` is restricted to pushes and pull requests targeting `main`, so it does not automatically validate this branch's script.
+
+**Disposition:** quarantine the current `audit_integer_kernel_full_matrices.py` result. Restore the six exact values above in a separate corrective change, rerun the full 69×6 and 70×6 SNF/LLL calculation, compare every matrix row against the frozen source blobs, and regenerate `FINDINGS_019.md` and its JSON artifacts. Do not silently overwrite the prior result; preserve both source versions and record the corrected output as a new finding.
