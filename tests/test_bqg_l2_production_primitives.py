@@ -155,6 +155,40 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             f"additivity residual={relative:.6e}",
         )
 
+    def test_full_covariant_C_volume_component_additivity_on_independent_states(self):
+        # Exercise the complete covariant C_e(V) composition, not only its
+        # local volume primitive.  Inputs are two independent Gauss basis
+        # states mapped into the production covariant representation.
+        basis = PW.basis_full_jhalf()
+        cov_x = CV.gauss_to_covariant({basis[0]: 1.0 + 0j}, 0)
+        cov_y = CV.gauss_to_covariant({basis[16]: 1.0 + 0j}, 0)
+        self.assertEqual(len(cov_x), 1)
+        self.assertEqual(len(cov_y), 1)
+        self.assertNotEqual(next(iter(cov_x)), next(iter(cov_y)))
+
+        x = state_scale(cov_x, 1e6)
+        y = state_scale(cov_y, 1e6)
+        fx = output_dict(COMP.C_volume_component(x, 0, 1, 0, 0, 5))
+        fy = output_dict(COMP.C_volume_component(y, 0, 1, 0, 0, 5))
+        self.assertTrue(fx, "First independent covariant input has no C(V) response.")
+        self.assertTrue(fy, "Second independent covariant input has no C(V) response.")
+
+        combined = dict(x)
+        for key, value in y.items():
+            combined[key] = combined.get(key, 0j) + value
+        fxy = output_dict(COMP.C_volume_component(combined, 0, 1, 0, 0, 5))
+
+        rhs = dict(fx)
+        for key, value in fy.items():
+            rhs[key] = rhs.get(key, 0j) + value
+        residual = difference_norm(fxy, rhs)
+        relative = residual / max(norm(fxy), norm(rhs), 1e-300)
+        self.assertLessEqual(
+            relative, 5e-12,
+            f"COMP.C_volume_component independent-superposition "
+            f"additivity residual={relative:.6e}",
+        )
+
     def _assert_safe_domain_homogeneity(self, map_fn, label):
         alpha = 1.25 + 1.5j
         base_scale = 1e6
