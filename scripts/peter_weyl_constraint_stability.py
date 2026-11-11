@@ -178,7 +178,7 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
 
 
 
-def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expected_metric_dim=None):
+def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expected_metric_dim=None, expected_input_dim=None):
     """Bound the weighted master spectrum using a strictly positive node metric.
 
     For C the direct-sum constraint map and M_G=C^dagger(G tensor I)C,
@@ -207,6 +207,16 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expect
             or not np.all(np.isfinite(singular)) or np.any(singular < 0.0)
             or np.any(singular[:-1] < singular[1:])):
         raise ValueError("direct singular values must be finite, nonnegative, nonempty, and descending")
+    if expected_input_dim is not None:
+        if (not isinstance(expected_input_dim, int)
+                or isinstance(expected_input_dim, bool)
+                or expected_input_dim <= 0):
+            raise ValueError("expected_input_dim must be a positive integer")
+        if singular.size != expected_input_dim:
+            raise ValueError(
+                f"singular spectrum length {singular.size} does not match "
+                f"expected input dimension {expected_input_dim}"
+            )
     G = np.asarray(metric, dtype=np.complex128)
     if G.ndim != 2 or G.shape[0] != G.shape[1] or G.shape[0] == 0:
         raise ValueError("metric must be a nonempty square matrix")
@@ -661,10 +671,12 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     for metric_name, metric_matrix in PILOT.positive_metrics(len(nodes), metric_seed).items():
         metric_bounds[metric_name] = {
             "legacy": positive_metric_spectral_bounds(
-                legacy_direct, metric_matrix, expected_metric_dim=len(nodes)
+                legacy_direct, metric_matrix, expected_metric_dim=len(nodes),
+                expected_input_dim=dim
             ),
             "no_prune": positive_metric_spectral_bounds(
-                no_prune_direct, metric_matrix, expected_metric_dim=len(nodes)
+                no_prune_direct, metric_matrix, expected_metric_dim=len(nodes),
+                expected_input_dim=dim
             ),
         }
 
