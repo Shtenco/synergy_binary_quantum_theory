@@ -149,3 +149,15 @@ The suite also checks the fixture is a single valid complete covariant basis key
 At the 01:05 UTC poll, L2 runs `42935840345` and `42935968925` were both queued and had no artifacts. The two L1 runs `42929934053` and `42930769907` were also queued without artifacts. No execution outcome is claimed. The L2 workflow is a first primitive gate only: it does not yet exercise `COMP.apply_K_complete_custom`, `COMP.C_K_component`, `COMP.C_volume_component`, or the L3 arbitrary-superposition matrix reconstruction.
 
 One temporary duplicate L2 test file was removed in commit `37dec6c0f5f282c7d893f9b45b8c427b7030e121`; the canonical suite and workflow above remain the single source of truth.
+
+
+## 8. Fixture reachability is a hard gate
+
+The canonical L2 test suite was hardened in commit `750978aade52455db8cf680ee364a4e36493f098`. It now has separate nonempty-output assertions for the frozen Peter–Weyl input under all three tested maps: volume, cached complete (H_E), and custom complete (H_E) composition. This prevents the helper's empty-output `skipTest` behavior from masking a fixture that never reaches the operator.
+
+The current suite therefore separates three distinct outcomes:
+- fixture reachability: hard PASS/FAIL;
+- safe-domain complex homogeneity: hard PASS/FAIL (unless the map helper itself reports empty, which must be read alongside the hard fixture test);
+- threshold-boundary nonlinearity: expected failure while the current state-amplitude cutoffs remain.
+
+The newly triggered run `42936480504` (HEAD `750978aade52455db8cf680ee364a4e36493f098`, job `130247689781`) was queued at 01:07 UTC with no artifacts. Earlier L2 runs `42935840345`, `42935968925`, and L1 runs `42929934053`, `42930769907` were also queued. No test verdict is available.
