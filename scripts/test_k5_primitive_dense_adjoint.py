@@ -51,17 +51,18 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
         spin_wall = 2
         spins_in = (1,) * len(k5.EDGES)
         domain_in = basis_for_spins(spins_in)
-        edge_index = k5.EIDX[(0, 1)]
+        triangle_edges = tuple(k5.EIDX[e] for e in ((0, 1), (1, 2), (0, 2)))
 
         for iout, iin in itertools.product(range(2), repeat=2):
             with self.subTest(iout=iout, iin=iin):
                 domain_out = []
-                for edge_spin in (0, 2):
+                for edge_spins in itertools.product((0, 2), repeat=3):
                     spins_out = list(spins_in)
-                    spins_out[edge_index] = edge_spin
+                    for edge_index, edge_spin in zip(triangle_edges, edge_spins):
+                        spins_out[edge_index] = edge_spin
                     domain_out.extend(basis_for_spins(tuple(spins_out)))
 
-                forward_path = (0, 1)
+                forward_path = (0, 1, 2, 0)
                 forward_sequence = (("P", forward_path, iout, iin),)
                 reverse_sequence = k5.adjoint_sequence(forward_sequence)
 
