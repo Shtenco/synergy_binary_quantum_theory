@@ -425,3 +425,64 @@ The code correctly marks this as `PRECURSOR_ONLY`, says not to populate `D_space
 The artifact is local, not a CI artifact on this branch. The workflow's push trigger is restricted to `research/bcqg-core-candidate-v1`; on this branch it would require manual `workflow_dispatch`. No matching Actions run was found for `audit/pl48-volume-failclosed-20261110`.
 
 **Disposition:** retain as a useful independent static FEM precursor and a nontrivial monotone refinement trend; do not call it a three-dimensionality proof, a killer pass, or a dynamical collective result. More probes and independent seed checks can improve the uncertainty estimate, but cannot remove the current 0.1471 central-value miss by themselves.
+
+
+## 15. Q2 reversible history dilation: lower bound is valid, uniqueness claim is too strong
+
+Audited ref: `research/q2-unified-complex-structure`, HEAD `83f45dfc19cdef884e5290f111bf46dc0e10d1e7`.
+
+The information-preservation argument is valid under its stated premise. If four orthogonal active states are mapped isometrically to one common rank-one no-link state tensored with an environment, then the four environment states must be mutually orthogonal:
+`<e_k|e_l>=delta_kl`.
+Therefore the environment/history channel has dimension at least four. Under the specific active-plus-transition direct-sum model, the minimal carrier dimension is at least 4+4=8.
+
+However, the gate does not independently construct or test the isometry that forces this Gram matrix:
+- it sets `channel_gram = I4.copy()`;
+- it then computes the rank of that preselected identity matrix;
+- it separately constructs one particular 8×8 permutation `U=[[0,S4],[I4,0]]`.
+
+Thus `reversible_no_link_channel_requires_rank4` is true by construction in the code. The abstract inner-product proof in the markdown supplies the real lower-bound argument; the executable check is only a witness for one realization.
+
+More importantly, the source repeatedly calls the carry cycle **unique**. The lower-bound theorem does not determine the return map from the four history channels to the active states. That is an additional dynamical choice. For example, with active/transition block decomposition, the chosen model fixes active `k -> transition k -> active k+1`; the rank argument alone only requires four orthogonal history labels. Other reversible unitary completions and other channel-return permutations are possible unless the return rule, phase convention and equivalence under history-basis relabelling are specified.
+
+**Correct statement:** an eight-dimensional reversible dilation is minimal in the declared 4-active + rank-one-bottleneck model, and the repository gives an exact order-eight carry-cycle realization. Uniqueness of that dynamics is not established by the channel-rank argument. State whether uniqueness is intended literally, up to unitary equivalence, or only after fixing a particular carry map.
+
+## 16. Q2 winding-character gate has an optional-input fail-open mode
+
+In `scripts/q2_winding_phase_character_gate.py` (blob `0744b95e2d151942519e30a6217fd92fffcf6c3c`), `--history-json` is optional. If omitted:
+- `history_input_ok` remains initialized to `True`;
+- `history_evidence` remains `None`;
+- the script can still return `passed=true` after checking the abstract group-character algebra.
+
+The abstract theorem `Omega(w)=u^w` is correct conditional on an additive integer winding group and multiplicative unit-norm weights. But a gate advertised as validating the **history-to-winding** pipeline should not pass without its upstream history evidence. The phase-refinement workflow does pass `--history-json`, so its intended CI path is not affected; direct CLI use can nevertheless produce a misleading green status.
+
+Required hardening:
+1. make `--history-json` required for an end-to-end gate; or split the tool into clearly named `character_algebra_only` and `history_to_character` modes;
+2. in end-to-end mode validate the upstream schema, exact status, artifact provenance and required winding fields;
+3. include the upstream artifact SHA in the output;
+4. add a test asserting missing history input fails closed.
+
+Do not describe a standalone abstract character identity as independent evidence that the repository's physical histories actually generate integer winding.
+
+## 17. Q2 unified-J CI dependency closure is incomplete
+
+The wrapper `scripts/q2_unified_complex_structure_compatibility_gate.py` imports and calls:
+- `q2_history_fourier_real_complex_structure_gate.py`;
+- `phase_invariant_quadratic_weight_gate.py`;
+- `realification_quantum_dynamics_gate.py).
+
+But `.github/workflows/q2-unified-complex-structure.yml` path filters watch only:
+- `Q2_UNIFIED_COMPLEX_STRUCTURE_COMPATIBILITY.md`;
+- the wrapper script;
+- the workflow YAML itself.
+
+The workflow executes the three imported gates, but changes to those imported dependencies do not trigger it automatically. This recreates the same dependency-closure defect previously found in the Peter–Weyl L2 workflow.
+
+There is a related separation: `q2_orientation_complex_conjugation_gate.py` is not invoked by the unified-J workflow, and the phase-refinement workflow does not path-watch or execute that orientation/conjugation gate. Therefore the claimed cross-layer package currently has individually testable pieces but no single dependency-closed CI job that verifies the complete chain from q2 label reflection through orientation pseudoscalar, history Fourier block, winding character, quadratic invariant and realified dynamics.
+
+Required correction:
+- add every imported source and its own fixtures/data to path filters;
+- run the orientation/conjugation gate in the unified package;
+- add a final aggregator that records each upstream artifact SHA and refuses missing evidence;
+- keep physical time, Born rule, Hamiltonian and matter interpretation explicitly open.
+
+**Disposition:** the q2 real-complex-structure chain is a mathematically coherent and valuable finite-dimensional representation programme. The exact algebraic identities are not invalidated by these audit findings. What is not yet established is uniqueness of the physical history dynamics or a single independently reproducible CI certificate covering every layer.
