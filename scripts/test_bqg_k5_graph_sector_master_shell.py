@@ -96,6 +96,44 @@ class K5GraphShellLeakageTests(unittest.TestCase):
         self.assertFalse(result["psd_pass"])
         self.assertTrue(result["significant_negative_eigenvalue"])
 
+    def test_leakage_gram_fails_closed_when_true_result_overflows_float64(self):
+        with self.assertRaisesRegex(FloatingPointError, "float64 range"):
+            shell.assemble_leakage_gram(
+                ("inside",),
+                ({"outside": 1e200 + 0j},),
+            )
+
+    def test_psd_classifier_handles_near_maximal_finite_hermitian_matrix(self):
+        result = shell.classify_psd_spectrum(
+            np.array([[1e308 + 0j]], dtype=complex)
+        )
+        self.assertTrue(result["psd_pass"])
+        self.assertEqual(result["positive_rank"], 1)
+
+    def test_psd_classifier_rejects_invalid_tolerance_controls(self):
+        for rel_tol, eps_factor in ((float("nan"), 64.0), (1e-10, -1.0), (True, 64.0)):
+            with self.subTest(rel_tol=rel_tol, eps_factor=eps_factor):
+                with self.assertRaisesRegex(ValueError, "finite and nonnegative"):
+                    shell.classify_psd_spectrum(
+                        np.eye(2, dtype=complex),
+                        rel_tol=rel_tol,
+                        eps_factor=eps_factor,
+                    )
+
+    def test_generated_shell_checks_all_used_local_basis_sectors(self):
+        basis = shell.K5.basis_full_jhalf()
+        result = shell.validate_shell_basis_orthonormality(basis)
+        self.assertTrue(result["passed"])
+        self.assertGreater(result["local_sectors_checked"], 0)
+        self.assertLess(result["maximum_relative_gram_defect"], 2e-12)
+
+    def test_depth_two_requires_complete_pullback_spin_wall(self):
+        self.assertEqual(shell.required_spin_wall2(2), 7)
+        with patch.object(shell, "generate_shell") as generate:
+            with self.assertRaisesRegex(ValueError, "complete depth-2 pullback wall"):
+                shell.run(depth=2, jmax2=5)
+        generate.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
