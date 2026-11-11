@@ -276,6 +276,8 @@ class ConstraintStabilityTests(unittest.TestCase):
         )
         self.assertAlmostEqual(result["operator_difference_norm_2"], 0.5, places=12)
         self.assertEqual(result["row_count_union"], 3)
+        self.assertEqual(result["common_row_count"], 2)
+        self.assertEqual(result["difference_nonzero_row_count"], 2)
         self.assertFalse(result["scale_separation_warning"])
         self.assertFalse(result["exact_operator_norm_certified"])
 
