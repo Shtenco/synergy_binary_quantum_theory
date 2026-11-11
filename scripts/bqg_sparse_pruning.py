@@ -25,8 +25,8 @@ class PruningPolicy:
     stage: str = "unspecified"
 
     def __post_init__(self) -> None:
-        if self.mode not in {"no_prune", "aggregate_then_prune", "legacy"}:
-            raise ValueError("mode must be no_prune, aggregate_then_prune, or legacy")
+        if self.mode not in {"no_prune", "aggregate_then_prune"}:
+            raise ValueError("mode must be no_prune or aggregate_then_prune")
         if not math.isfinite(self.threshold) or self.threshold < 0:
             raise ValueError("threshold must be finite and nonnegative")
         if self.mode == "no_prune" and self.threshold != 0:
@@ -116,7 +116,7 @@ def apply_pruning(
     source = {k: complex(v) for k, v in aggregated.items() if complex(v) != 0j}
     if policy.mode == "no_prune":
         kept, discarded = dict(source), {}
-    elif policy.mode in {"aggregate_then_prune", "legacy"}:
+    elif policy.mode == "aggregate_then_prune":
         kept = {k: v for k, v in source.items() if abs(v) > policy.threshold}
         discarded = {k: v for k, v in source.items() if abs(v) <= policy.threshold}
     else:  # defensive; __post_init__ already validates
