@@ -1,10 +1,10 @@
-# BQG L2 source audit: C(V), C(K) and CI gate — 11 November 2026, 01:33 UTC
+# BQG L2 source audit: C(V), C(K) and CI gate — 11 November 2026, updated 01:57 UTC
 
 **Repository:** `Shtenco/synergy_binary_quantum_theory`  
 **Branch:** `research/lemaitre-bqg-causal-cone-20261110`  
-**Verified branch HEAD:** `d8a4d1b47c59e122f13eb45d43017e186c42ca15`  
+**Latest verified branch HEAD:** `64ba147757c70ccb4bfa4e24c20e1892c8090bbc`  
 **Compare base:** `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef`  
-**Compare:** 47 commits ahead, 0 behind.  
+**Compare:** 67 commits ahead, 0 behind.  
 **Main:** untouched; no merge.
 
 This note records a fresh source-level inspection and a CI re-poll. It deliberately does not claim that the L2 suite executed.
