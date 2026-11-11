@@ -334,7 +334,7 @@ The workflow `.github/workflows/bqg-production-linearity-l2.yml` was corrected. 
 - `peter_weyl_lorentzian_K_block_gate.py`;
 - `peter_weyl_covariant_K_projection_audit_gate.py`;
 - `peter_weyl_volume_cross_rep_audit.py`;
-- `peter_weyl_q_block_gauge_audit.py);
+- `peter_weyl_q_block_gauge_audit.py`;
 as well as the L2 test, CK, KCOMP, CV and zero-aware volume migration modules. Duplicate entries introduced during the sequential edit were removed and the final workflow text was re-read.
 
 The correction is committed in the research branch. It changes CI coverage only; no operator implementation, test assertion, tolerance or scientific interpretation changed. The new push is expected to create a workflow run, but its ID and result must be confirmed from GitHub. The earlier C(V)-test run `42937467628` remains unexecuted/queued at the latest direct poll. No PASS/FAIL is claimed. `main` remains untouched.
@@ -350,3 +350,16 @@ The correction is committed in the research branch. It changes CI coverage only;
 - `bdb1f5ef297615c75f78ee8a2d05bcf44a9deeee` — record it in README.
 
 At the time of this ledger update, the README commit above is the latest known branch commit. The L2 workflow's final blob SHA is `7a8398a40f7efce21587958782f0e81843a9cb83`. The old C(V) run `42937467628` is still queued and has no artifacts. The available GitHub Actions connector does not expose a workflow-dispatch operation or an all-push-run listing; no new run ID is fabricated. Commit status for the workflow correction returned no status entries. This is an observability limitation, not evidence that the workflow did or did not start.
+
+
+## 21. 01:57 UTC — CI queue re-poll and C(K) coefficient-path refinement
+
+The eight tracked L1/L2 workflow jobs were re-polled through both job and artifact endpoints. All six L2 jobs (runs `42937467628`, `42936684504`, `42936669007`, `42936480504`, `42935968925`, `42935840345`) and both L1 jobs (`42930769907`, `42929934053`) remain `queued`, with no conclusion and no artifacts. In particular, the C(V)-bearing run `42937467628` still has no log. This is a CI queue/observability limitation, not a test outcome. The available GitHub interface still does not expose an all-push-run listing or workflow-dispatch operation; no new run ID has been inferred.
+
+The C(K) source was re-read at the current branch ref. The custom path has three distinct threshold-sensitive stages: (i) arbitrary input coefficients are applied to unit-key H_E columns before `COMP.add`; (ii) the VH and HV terms of the K commutator are independently built and then combined through `COMP.add`; (iii) the outer hKh branches and diagonal direct term are combined through further thresholded additions. This makes C(K) an independent linearity gate, not a corollary of the cached-column H_E test.
+
+The dedicated source audit now records the 01:57 poll, exact C(K) coefficient path, and a stricter L2 reporting contract in `BQG_L2_CV_CK_SOURCE_AUDIT_20261111.md`, section 8. The malformed inline-code delimiter in the dependency list was also corrected. The audit update is documentation only: no production operator, test assertion, threshold, workflow, or physical interpretation changed.
+
+**Evidence status:** no L1/L2 PASS or FAIL; no test logs; no artifacts; no local test execution. Current C(V) independent-support coverage remains limited to edge (0,1), component (0,0), and two independent inputs. The other three C(V) components, full C(K) additivity, and L3 direct-superposition versus frozen-matrix reconstruction remain open. Matrix adjoint residuals remain downstream of production linearity. No physical normalization, physical kernel, HDA closure, or causal cone is established by this work.
+
+`main` remains untouched. No merge was performed.
