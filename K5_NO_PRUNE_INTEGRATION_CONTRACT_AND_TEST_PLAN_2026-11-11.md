@@ -406,3 +406,14 @@ Source inventory is now 41 methods across six workflow scripts. This is not a te
 The 32-monomial test now checks one selected matrix element of the complete coherent T sum. It is not yet a matrix-wide T/T† adjoint test. The next gate must expand to multiple input columns and a declared finite domain/codomain basis, with explicit handling of basis states clipped by the spin wall.
 
 At the latest check, Actions runs #26 (`42942768669`), #27 (`42944352617`) and #28 (`42944740425`) were all queued; no test PASS is claimed. Run #28 is attached to code commit `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`. Later commits only update audit documentation.
+
+
+## 31. Local oriented-volume adjointness gate
+
+The production volume suite now tests self-adjointness of `apply_volume_tensor_oriented` itself, not merely Hermiticity of the un-oriented spectral matrix. For deterministic complex tensors at all five vertices and all four declared spin triples, it checks the Frobenius identity
+[
+\langle A,V_vB\rangle_F=\langle V_vA,B\rangle_F.
+]
+This isolates the epsilon-conjugation convention used to orient the local volume action.
+
+The volume test file now has seven methods. Total workflow source inventory is 42 methods. This remains finite local tensor-space coverage and is not a full primitive/H adjoint certificate. Test commit: `50c807d03c8616dce639487afc83704ec19c5b36`; execution and CI PASS are not claimed.
