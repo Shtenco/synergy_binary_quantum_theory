@@ -539,6 +539,121 @@ def run(domain="low", jmax2=5, rank_rtol=1e-10,
     }
 
 
+def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
+                               rank_rtol=1e-10, singular_rtol=1e-10,
+                               block_rows=4096):
+    """Compare finite-cutoff kernel geometry and normalized spectra.
+
+    This is a regulator-sensitivity diagnostic. It does not estimate the
+    operator-norm difference between C_J and C_{J+1}, because this runner
+    retains spectra/projectors rather than the complete sparse maps.
+    """
+    try:
+        cutoffs = list(jmax2_values)
+    except TypeError as exc:
+        raise ValueError("jmax2_values must be an iterable of increasing integers") from exc
+    if (not cutoffs or any(
+            not isinstance(x, int) or isinstance(x, bool) or x < 1
+            for x in cutoffs)):
+        raise ValueError("every doubled-spin cutoff must be an integer >= 1")
+    if cutoffs != sorted(set(cutoffs)):
+        raise ValueError("doubled-spin cutoffs must be strictly increasing")
+
+    results = []
+    summaries = []
+    for cutoff in cutoffs:
+        result = run(domain, cutoff, rank_rtol, singular_rtol, block_rows)
+        results.append(result)
+        np_direct = result["no_prune"]["direct_svd"]
+        leg_direct = result["legacy"]["direct_svd"]
+
+        def spectrum_summary(direct):
+            singular = np.asarray(direct["singular_values"], dtype=float)
+            scale = float(singular[0]) if singular.size else 0.0
+            normalized = singular / scale if scale > 0.0 else np.zeros_like(singular)
+            rank = int(direct["rank"])
+            positive = singular[:rank]
+            return {
+                "rank": rank,
+                "nullity": int(len(singular) - rank),
+                "sigma_max": scale,
+                "sigma_min_including_numerical_kernel": (
+                    float(singular[-1]) if singular.size else 0.0
+                ),
+                "smallest_retained_sigma": (
+                    float(positive[-1]) if positive.size else None
+                ),
+                "normalized_singular_values": normalized.tolist(),
+                "scale_separation_warning": bool(direct["scale_separation_loss"]),
+                "stacked_column_sha256": None,
+            }
+
+        no_prune_summary = spectrum_summary(np_direct)
+        legacy_summary = spectrum_summary(leg_direct)
+        no_prune_summary["stacked_column_sha256"] = result["no_prune"]["stacked_column_sha256"]
+        legacy_summary["stacked_column_sha256"] = result["legacy"]["stacked_column_sha256"]
+        summaries.append({
+            "jmax2": cutoff,
+            "Jmax": cutoff / 2.0,
+            "domain_dimension": result["domain_dimension"],
+            "legacy": legacy_summary,
+            "no_prune": no_prune_summary,
+        })
+
+        if hasattr(PILOT.PW.T_cached, "cache_clear"):
+            PILOT.PW.T_cached.cache_clear()
+        gc.collect()
+
+    adjacent = []
+    for index in range(1, len(results)):
+        previous = results[index - 1]
+        current = results[index]
+        previous_direct = previous["no_prune"]["direct_svd"]
+        current_direct = current["no_prune"]["direct_svd"]
+        previous_sigma = np.asarray(previous_direct["singular_values"], dtype=float)
+        current_sigma = np.asarray(current_direct["singular_values"], dtype=float)
+        previous_scale = float(previous_sigma[0]) if previous_sigma.size else 0.0
+        current_scale = float(current_sigma[0]) if current_sigma.size else 0.0
+        previous_normalized = (
+            previous_sigma / previous_scale if previous_scale > 0.0
+            else np.zeros_like(previous_sigma)
+        )
+        current_normalized = (
+            current_sigma / current_scale if current_scale > 0.0
+            else np.zeros_like(current_sigma)
+        )
+        kernel = compare_kernel_projectors(
+            previous_direct, current_direct, previous["domain_dimension"]
+        )
+        adjacent.append({
+            "from_jmax2": cutoffs[index - 1],
+            "to_jmax2": cutoffs[index],
+            "no_prune_kernel_subspace": kernel,
+            "max_abs_difference_of_normalized_singular_values": float(
+                np.max(np.abs(current_normalized - previous_normalized))
+            ),
+            "normalized_spectrum_comparison_scope": (
+                "shape-only diagnostic after independent sigma_max normalization; "
+                "not an operator-norm convergence bound"
+            ),
+        })
+
+    return {
+        "status": "finite Peter-Weyl regulator sensitivity sweep",
+        "domain": domain,
+        "domain_dimension": summaries[0]["domain_dimension"],
+        "doubled_spin_cutoffs": cutoffs,
+        "points": summaries,
+        "adjacent_cutoff_comparisons": adjacent,
+        "claim_boundary": (
+            "Compares finite-cutoff numerical ranks, normalized singular spectra, "
+            "and right-kernel projectors only. It does not compute ||C_J-C_Jnext||, "
+            "prove nested-operator convergence, establish regulator independence, "
+            "or imply a continuum theorem."
+        ),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--domain", choices=("low", "full"), default="low")
@@ -548,13 +663,33 @@ def main():
     ap.add_argument("--singular-rtol", type=float, default=1e-10,
                     help="relative singular-value tolerance for direct TSQR/SVD")
     ap.add_argument("--block-rows", type=int, default=4096)
+    ap.add_argument(
+        "--jmax2-sweep",
+        help="optional comma-separated increasing doubled-spin cutoffs, e.g. 1,3,5",
+    )
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
-    result = run(args.domain, args.jmax2, args.rank_rtol,
-                 args.singular_rtol, args.block_rows)
-    output = args.output or Path(
-        f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_{args.domain}_J{args.jmax2}.json"
-    )
+    if args.jmax2_sweep:
+        try:
+            cutoffs = [int(value.strip()) for value in args.jmax2_sweep.split(",")]
+        except ValueError as exc:
+            ap.error(f"invalid --jmax2-sweep: {exc}")
+        result = cutoff_convergence_sweep(
+            args.domain, cutoffs, args.rank_rtol,
+            args.singular_rtol, args.block_rows
+        )
+        default_output = (
+            f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_"
+            f"{args.domain}_J_SWEEP.json"
+        )
+    else:
+        result = run(args.domain, args.jmax2, args.rank_rtol,
+                     args.singular_rtol, args.block_rows)
+        default_output = (
+            f"verification_results/PETER_WEYL_CONSTRAINT_STABILITY_"
+            f"{args.domain}_J{args.jmax2}.json"
+        )
+    output = args.output or Path(default_output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, ensure_ascii=False))
