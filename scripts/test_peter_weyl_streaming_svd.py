@@ -95,6 +95,15 @@ class StreamingSVDTests(unittest.TestCase):
         self.assertTrue(result.scale_separation_loss)
         self.assertEqual(result.rank, 2)
 
+    def test_warns_when_late_large_block_demotes_old_nonzero_block(self):
+        blocks = [
+            np.array([[0.0, 1e-20]]),
+            np.array([[1.0, 0.0]]),
+        ]
+        result = tsqr.streaming_svd(blocks, 2, rank_rtol=1e-25)
+        self.assertTrue(result.scale_separation_loss)
+        self.assertEqual(result.rank, 2)
+
     def test_complex_component_scaling_avoids_abs_overflow(self):
         value = 1.2e308 + 1.2e308j
         result = tsqr.streaming_svd([np.array([[value]])], 1)
