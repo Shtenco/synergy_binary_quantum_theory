@@ -616,6 +616,14 @@ def adjacent_cutoff_operator_difference(previous_columns, current_columns,
     """
     if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
         raise ValueError("dim must be a positive integer")
+    if (isinstance(singular_rtol, (bool, np.bool_))
+            or not isinstance(singular_rtol, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(singular_rtol)) or float(singular_rtol) < 0.0):
+        raise ValueError("singular_rtol must be finite and nonnegative")
+    if not isinstance(block_rows, int) or isinstance(block_rows, bool) or block_rows <= 0:
+        raise ValueError("block_rows must be a positive integer")
+    if set(previous_columns) != set(range(dim)) or set(current_columns) != set(range(dim)):
+        raise ValueError("both cutoff maps must contain every input column")
     delta = subtract_stacked(previous_columns, current_columns, dim)
     digest = column_digest(delta)
     direct = direct_svd_from_columns(delta, dim, singular_rtol, block_rows)
