@@ -113,3 +113,8 @@ This is an initial integration milestone only. The actual no-prune HH computatio
 ## 11. Acceptance semantics for strict mode
 
 The producer's historical regression constants apply only to the legacy mode. The no-prune mode reports calculation completion separately and leaves passed_regression null; a zero CLI exit in no-prune mode means only that the computation completed. It is not a numerical or physical certification. Eleven K5 wiring tests now include two tests for this acceptance distinction. The combined suite has 23 committed tests, none yet confirmed by a CI result in this session.
+
+
+## 12. Synthetic dense reference and adjoint control
+
+The new test_bqg_sparse_dense_oracle.py provides an independent dense assembly for a deterministic 5-dimensional complex synthetic operator. It tests sparse-vs-dense assembly, sparse-vs-dense action, complex adjoint inner-product identity, and tiny nonzero/exact cancellation behavior. It is a generic algebraic reference harness only, not a production K5 operator oracle. The workflow runs it alongside the two existing suites. Current committed inventory is 27 test methods; execution is not yet confirmed.
