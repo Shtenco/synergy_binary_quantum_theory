@@ -257,6 +257,47 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertFalse(result["coverage_complete"])
         self.assertEqual(result["coverage_shortfall"], 1)
 
+    def test_volume_registry_checks_spectral_nullity_against_spin_dimension(self):
+        base = {
+            "relative_antihermitian_defect": 0.0,
+            "raw_norm": 1.0,
+            "symmetrization_delta_frobenius_norm": 0.0,
+            "symmetrization_delta_spectral_norm_upper_bound": 0.0,
+            "symmetrization_relative_frobenius_bound": 0.0,
+        }
+        invalid = {(1, 1, 1): {
+            **base,
+            "hermitian_spectrum_resolution": {
+                "spectral_scale": 1.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 1e-13,
+                "resolved_numerical_nullity": 8,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 1.0,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.5,
+            },
+        }}
+        self.assertFalse(
+            pilot.volume_raw_hermiticity_diagnostics(invalid)["passed"]
+        )
+
+        zero = {(0, 0, 0): {
+            **base,
+            "raw_norm": 0.0,
+            "hermitian_spectrum_resolution": {
+                "spectral_scale": 0.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 0.0,
+                "resolved_numerical_nullity": 1,
+                "min_resolved_abs_eigenvalue": None,
+                "normalized_gap_to_zero": None,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": None,
+            },
+        }}
+        self.assertTrue(
+            pilot.volume_raw_hermiticity_diagnostics(zero)["passed"]
+        )
+
     def test_volume_registry_rejects_inconsistent_spectral_sensitivity(self):
         registry = {(1, 1, 1): {
             "relative_antihermitian_defect": 0.0,
