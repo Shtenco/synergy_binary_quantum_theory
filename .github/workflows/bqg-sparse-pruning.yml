@@ -27,6 +27,7 @@ on:
       - "scripts/test_k5_hit_adjoint.py"
       - "scripts/test_k5_primitive_dense_adjoint.py"
       - "scripts/test_k5_assembled_node_hermiticity.py"
+      - "scripts/test_k5_rectangular_node_h_adjointness.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   workflow_dispatch:
 
