@@ -74,6 +74,34 @@ class K5SparsePolicyTests(unittest.TestCase):
         self.assertEqual(strict, {"mode": 2.0})
         k5.T_cached.cache_clear()
 
+
+    def test_no_prune_acceptance_is_completion_not_legacy_regression(self):
+        result = {
+            "commutator_norm": 999.0,
+            "fixed_all_jhalf_norm_squared_fraction": 0.9,
+            "safe_H0_on_old_V5_norm": 999.0,
+            "safe_H0_on_old_V5_fixed_all_jhalf_support": 12,
+        }
+        checked = k5.apply_acceptance_gate(result, "no_prune")
+        self.assertTrue(checked["calculation_completed"])
+        self.assertIsNone(checked["passed_regression"])
+        self.assertIsNone(checked["regression_errors"])
+        self.assertEqual(
+            checked["acceptance_scope"],
+            "unpruned_calculation_completed_not_physically_certified",
+        )
+
+    def test_legacy_acceptance_still_uses_historical_targets(self):
+        result = {
+            "commutator_norm": 1.681559985798016,
+            "fixed_all_jhalf_norm_squared_fraction": 0.29790166313739946,
+            "safe_H0_on_old_V5_norm": 1.4002194669856702,
+            "safe_H0_on_old_V5_fixed_all_jhalf_support": 0,
+        }
+        checked = k5.apply_acceptance_gate(result, "legacy")
+        self.assertTrue(checked["passed_regression"])
+        self.assertEqual(checked["acceptance_scope"], "legacy_regression")
+
     def test_raw_volume_hermiticity_is_recorded_before_symmetrization(self):
         k5.VOLUME_RAW_DEFECTS.clear()
         matrix = k5.volume123_matrix(1, 1, 1)
