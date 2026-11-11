@@ -205,6 +205,51 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
             places=14,
         )
 
+    def test_volume_square_matches_independent_svd_absolute_operator(self):
+        # Independent oracle: for Hermitian Q_H, SVD gives
+        # |Q_H| = sqrt(Q_H^dagger Q_H) = U diag(sigma) U^dagger.
+        for spins in self.CASES:
+            with self.subTest(spins=spins):
+                q_raw = k5.volume123_raw_operator(*spins)
+                q_hermitian = 0.5 * q_raw + 0.5 * q_raw.conj().T
+                left, singular_values, _ = np.linalg.svd(
+                    q_hermitian, full_matrices=False
+                )
+                abs_q_svd = (
+                    left * singular_values
+                ) @ left.conj().T
+                volume_svd = (
+                    left * np.sqrt(singular_values)
+                ) @ left.conj().T
+                volume = k5.volume123_matrix(*spins)
+                np.testing.assert_allclose(
+                    volume @ volume,
+                    abs_q_svd,
+                    rtol=8e-12,
+                    atol=8e-12,
+                )
+                np.testing.assert_allclose(
+                    volume,
+                    volume_svd,
+                    rtol=8e-12,
+                    atol=8e-12,
+                )
+
+    def test_zero_spin_volume_operator_has_zero_spectrum_and_finite_ledger(self):
+        spins = (0, 0, 0)
+        q = k5.volume123_raw_operator(*spins)
+        volume = k5.volume123_matrix(*spins)
+        np.testing.assert_array_equal(q, np.zeros((1, 1), dtype=complex))
+        np.testing.assert_array_equal(volume, np.zeros((1, 1), dtype=complex))
+        record = k5.VOLUME_RAW_DEFECTS[spins]
+        self.assertEqual(record["raw_norm"], 0.0)
+        self.assertEqual(record["relative_antihermitian_defect"], 0.0)
+        self.assertEqual(record["symmetrization_delta_frobenius_norm"], 0.0)
+        self.assertEqual(
+            record["hermitian_spectrum_resolution"]["resolved_numerical_nullity"],
+            1,
+        )
+
     def test_volume_square_reconstructs_absolute_raw_spectrum(self):
         # Check V^2 = |Q| from an independently assembled eigenspectral
         # reference. Positivity and Hermiticity alone do not establish that
