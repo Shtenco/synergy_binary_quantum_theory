@@ -147,6 +147,69 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         )
         self.assertAlmostEqual(norm, 1.0, places=14)
 
+    def test_spectral_thresholds_are_scale_invariant(self):
+        base = np.array([0.0, 1e-12])
+        masks = []
+        normalized_thresholds = []
+        for scale in (1e-12, 1e-6, 1.0, 1e6, 1e12):
+            values = base * scale
+            spectral_scale, zero, psd = pilot.spectral_thresholds(values, 1e-10, 1e-10)
+            masks.append(pilot.classify_spectrum(values, zero, psd).tolist())
+            normalized_thresholds.append((zero / spectral_scale, psd / spectral_scale))
+        self.assertEqual(masks, [[True, False]] * 5)
+        np.testing.assert_allclose(normalized_thresholds, [[1e-10, 1e-10]] * 5)
+
+    def test_relative_annihilation_residual_is_scale_invariant(self):
+        observed = []
+        for scale in (1e-100, 1e-12, 1.0, 1e12, 1e100):
+            columns = {(0, 0): {"x": scale + 0j}}
+            result = pilot.constraint_annihilation_metrics(
+                columns, np.array([1.0 + 0j]), nodes=(0,)
+            )
+            observed.append(result["max_relative_residual"])
+        np.testing.assert_allclose(observed, np.ones(5), rtol=2e-15, atol=0.0)
+
+    def test_exact_common_kernel_has_zero_relative_annihilation(self):
+        columns = {
+            (0, 0): {"x": 1.0 + 0j},
+            (0, 1): {"x": 1.0 + 0j},
+        }
+        coeff = np.array([1.0, -1.0], dtype=complex) / np.sqrt(2.0)
+        result = pilot.constraint_annihilation_metrics(columns, coeff, nodes=(0,))
+        self.assertEqual(result["max_absolute_residual"], 0.0)
+        self.assertEqual(result["max_relative_residual"], 0.0)
+
+    def test_stable_complex_norm_avoids_naive_square_overflow(self):
+        observed = pilot.stable_complex_norm([1.2e308 + 1.2e308j])
+        expected = np.hypot(1.2e308, 1.2e308)
+        self.assertAlmostEqual(observed / expected, 1.0, places=14)
+
+    def test_volume_hermiticity_registry_fails_closed(self):
+        self.assertFalse(
+            pilot.volume_raw_hermiticity_diagnostics({}, rtol=1e-10)["passed"]
+        )
+        good = {(1, 1, 1): {
+            "relative_antihermitian_defect": 1e-14, "raw_norm": 2.0
+        }}
+        self.assertTrue(
+            pilot.volume_raw_hermiticity_diagnostics(good, rtol=1e-10)["passed"]
+        )
+        bad = {(1, 1, 1): {
+            "relative_antihermitian_defect": 1e-4, "raw_norm": 2.0
+        }}
+        self.assertFalse(
+            pilot.volume_raw_hermiticity_diagnostics(bad, rtol=1e-10)["passed"]
+        )
+
+    def test_absolute_annihilation_wrapper_keeps_zero_vector_compatibility(self):
+        columns = {(0, 0): {"x": 1.0 + 0j}}
+        self.assertEqual(
+            pilot.constraint_annihilation_norm(
+                columns, np.array([0.0 + 0j]), nodes=(0,)
+            ),
+            0.0,
+        )
+
     def test_run_rejects_negative_tolerances(self):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
             pilot.run(zero_rtol=-1.0)
