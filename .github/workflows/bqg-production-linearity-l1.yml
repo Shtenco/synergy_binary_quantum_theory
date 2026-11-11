@@ -2,6 +2,13 @@ name: BQG production linearity L1 audit
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - research/lemaitre-bqg-causal-cone-20261110
+    paths:
+      - 'scripts/bqg_sparse_linear_accumulator.py'
+      - 'tests/test_bqg_production_linearity.py'
+      - '.github/workflows/bqg-production-linearity-l1.yml'
 
 permissions:
   contents: read
