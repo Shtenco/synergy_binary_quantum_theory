@@ -663,3 +663,18 @@ A separate research note was committed:
 **CI status:** workflow run #27 (`42944352617`) was observed queued, with job `sparse-pruning-tests` not yet started. Run #26 (`42942768669`) was also still queued at the last observation. No local execution was performed and no PASS is claimed.
 
 **Evidence discipline:** all finite-sector volume, primitive, monomial, and orientation tests remain source-committed but execution-unverified until Actions returns completed job logs. No result here upgrades a finite numerical identity to a continuum theorem or a physical BQG claim. The full 32-monomial T adjoint, assembled node-H matrix-element Hermiticity, spin-wall convergence, full HH, and complete leakage Gram remain open.
+
+
+## 22. Full coherent 32-term T matrix-element adjoint gate — 2026-11-11
+
+Added `test_full_32_term_T_sum_matches_reverse_matrix_element` to the production primitive/orientation test file. For one fixed all-spin-1, all-(K=0) input ket at vertex 0 and spin wall (J_{\max,2}=2), the test evaluates all 32 sequences returned by `T_sequences(0,1,2,3)`. It independently accumulates the forward matrix column by coefficient using real/imaginary `math.fsum`, selects the largest-magnitude nonzero output element deterministically, and independently evaluates the corresponding reverse matrix element by applying all 32 adjoint sequences to that output ket.
+
+The acceptance identity is
+[
+\langle y|T|x\rangle
+=
+\overline{\langle x|T^\dagger|y\rangle}.
+]
+This tests the coherent signed 32-term sum, not only one monomial. It is still one selected matrix element, one input ket, one orientation triple, and one finite spin wall. It does not certify the full T matrix, all 12 orientation specifications, assembled H, or unrestricted adjointness.
+
+**Inventory:** 41 test methods by source count across six workflow scripts (12 + 11 + 4 + 6 + 3 + 5). The new test is in the already-invoked production primitive test file; no workflow command change is needed. The source is committed, but execution/CI status must be checked separately. No PASS is claimed.
