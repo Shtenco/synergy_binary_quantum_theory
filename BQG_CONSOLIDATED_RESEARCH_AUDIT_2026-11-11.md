@@ -847,3 +847,29 @@ The wall experiment was strengthened in commit `088c4ccf5dcde17e982c0a625e67ba71
 For the fixed input with every link at doubled spin 1, each monomial in `T_sequences(v,a,b,c)` contains two one-hit paths on the same edge ((c,v)), and one three-edge closed path ((v,a,b,v)). Since (c,a,b,v) are distinct, the ((c,v)) edge is hit at most twice and every other edge at most once. Each production hit changes doubled spin by exactly (+1) or (-1). Consequently the maximum reachable doubled spin from this input is bounded by (1+2=3). Thus `Jmax2=4` is already above the analytically derived reachable ceiling for this specific input and T sum; `Jmax2=6` is a redundant saturation check. This is stronger than treating wall 4 as an arbitrary larger cutoff, but remains input- and sequence-specific.
 
 The test now asserts `wall4 == wall6` as exact dictionary equality and reports the derived ceiling. It still separately reports wall-2 versus wall-4 low-final-spin amplitude changes and high-spin support. This does not imply that wall 4 is sufficient for other input spin sectors, other operators, or the full HH composition.
+
+
+## 29. Universal combinatorial edge-hit bound for all K5 T/H monomials
+
+Added `test_all_k5_T_and_H_monomials_have_edge_hit_multiplicity_at_most_two` in code commit `4fc916a5e2e85650d5a6ca7dea1c7f72bd3a456a`. It exhaustively inspects all five vertices, all 12 oriented specifications per vertex, and all 32 signed production T monomials per specification: (5\cdot12\cdot32=1920) sequences.
+
+For each monomial it verifies:
+- exactly five link hits in total;
+- exactly four distinct undirected K5 edges are hit;
+- the undirected edge multiplicities are exactly ((1,1,1,2));
+- reversing the production sequence preserves the complete undirected edge-hit multiset.
+
+This yields a general, amplitude-independent bound. If the maximum doubled edge spin in an input basis state is (S), no individual T or T† monomial can raise any edge above (S+2). Since (H_v) is a linear combination of these monomials over the 12 oriented specifications, the same upper bound applies to one application of any node (H_v) and to any coherent superposition supported below (S). Therefore a hard upper wall
+\[
+J_{max}^{(2)}\ge S+2
+\]
+is sufficient to avoid *upper-wall clipping* in one H action from that declared input support. For a composition of (n) node-H actions, the conservative bound is
+\[
+J_{max}^{(2)}\ge S+2n.
+\]
+
+This is a combinatorial reachability bound, not a statement that all transitions occur or survive coherent cancellation. It addresses only artificial upper-wall clipping; the nonnegative-spin lower boundary is part of the SU(2) representation domain. It is specific to the current five-hit T construction and must be recomputed if path definitions or hit rules change.
+
+The earlier selected-input result (S=1Rightarrow J_{max}^{(2)}=3) is now seen as a special case of this universal bound. The wall-4/6 equality test is a redundant finite saturation check for that selected input; the combinatorial argument itself proves the wall-4 upper bound without needing numerical equality.
+
+The primitive/orientation file now has **8 methods**. The six workflow-invoked scripts contain **45 methods by source inspection**. The new test is committed but not yet execution-confirmed; no CI PASS is claimed.
