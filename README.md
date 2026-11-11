@@ -1108,7 +1108,7 @@ $$
 
 Ранее зарегистрированные контрольные значения:
 
-- L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около (4.83\times10^{-15}), размерность 17 с seed.
+- L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около $4.83\times10^{-15}$, размерность 17 с seed.
 - L1 E-only worker family: 72 shard triplets (3 edge representatives × 24 nodes). Это вычислительное разбиение одного Euclidean E-path, а не 72 независимых физических уровня.
 - Наличие L0 precursor и L1 E-only shard family не означает наличие четырёх сопоставимых физических refinement levels.
 - Общий (c_{\mathrm{DeWitt}}(\epsilon)) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
