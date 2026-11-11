@@ -204,7 +204,23 @@ def volume123_matrix(s1,s2,s3):
     if not (math.isfinite(qnorm) and math.isfinite(defect_norm)):
         raise FloatingPointError(f"unrepresentable raw volume norm for {(s1,s2,s3)}")
     defect=(defect_norm/qnorm) if qnorm>0.0 else (0.0 if defect_norm==0.0 else float("inf"))
-    VOLUME_RAW_DEFECTS[(s1,s2,s3)]={"relative_antihermitian_defect":defect,"raw_norm":qnorm}
+    # Q_H is the Frobenius-orthogonal projection of Q onto Hermitian matrices.
+    # Therefore ||Q-Q_H||_F = 1/2 ||Q-Q^dagger||_F, and
+    # ||Q-Q_H||_2 <= ||Q-Q_H||_F. This is a bound for Q symmetrization,
+    # not yet a bound for the nonlinear sqrt(|Q_H|) volume map.
+    symmetrization_delta_frobenius=0.5*defect_norm
+    symmetrization_relative_bound=(
+        symmetrization_delta_frobenius/qnorm if qnorm>0.0
+        else (0.0 if symmetrization_delta_frobenius==0.0 else float("inf"))
+    )
+    VOLUME_RAW_DEFECTS[(s1,s2,s3)]={
+        "relative_antihermitian_defect":defect,
+        "raw_norm":qnorm,
+        "symmetrization_delta_frobenius_norm":symmetrization_delta_frobenius,
+        "symmetrization_delta_spectral_norm_upper_bound":symmetrization_delta_frobenius,
+        "symmetrization_relative_frobenius_bound":symmetrization_relative_bound,
+        "symmetrization_bound_semantics":"||Q-Q_H||_2 <= ||Q-Q_H||_F = 0.5*||Q-Q^dagger||_F",
+    }
     # Half each operand before addition to avoid avoidable overflow.
     Qh=0.5*Q+0.5*Q.conj().T
     ev,U=np.linalg.eigh(Qh)
