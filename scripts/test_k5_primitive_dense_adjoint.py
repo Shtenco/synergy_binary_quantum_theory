@@ -380,6 +380,15 @@ class K5PrimitiveDenseAdjointTests(unittest.TestCase):
         # is measured and never silently interpreted as a closed subspace.
         self.assertEqual(len(forward_leakage), 2)
         self.assertEqual(len(reverse_leakage), 2)
+        print(
+            "T_BLOCK_LEAKAGE",
+            {
+                "forward": forward_leakage,
+                "reverse": reverse_leakage,
+                "spin_wall_Jmax2": spin_wall,
+                "block_shape": (2, 2),
+            },
+        )
         for item in forward_leakage + reverse_leakage:
             self.assertGreaterEqual(item["count"], 0)
             self.assertGreaterEqual(item["l2"], 0.0)
