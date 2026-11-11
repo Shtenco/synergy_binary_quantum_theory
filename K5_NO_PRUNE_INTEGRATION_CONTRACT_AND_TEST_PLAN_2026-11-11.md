@@ -504,3 +504,10 @@ Commit `4fc916a5e2e85650d5a6ca7dea1c7f72bd3a456a` adds an exhaustive combinatori
 Thus, for a basis-state support with maximum input doubled spin (S), one T, T†, or node-H action cannot increase any edge above (S+2). A conservative no-upper-clipping wall for one action is `Jmax2 >= S+2`; for a composition of (n) node-H actions it is `Jmax2 >= S+2*n`. This is a finite combinatorial reachability bound for the current operator definition, not an amplitude estimate and not a continuum theorem. It does not address changes to the path/hit definition, nor the physical SU(2) lower boundary.
 
 The earlier all-spin-1 selected-input wall result is a special case. The new test adds 1 method; primitive/orientation now has 8 methods and the six workflow scripts contain 45 by source inventory. Execution and CI PASS remain unconfirmed.
+
+
+## 36. Assembled node-H projected Hermiticity gate
+
+Added `scripts/test_k5_assembled_node_hermiticity.py` (one unittest method) and registered it as the seventh command in `.github/workflows/bqg-sparse-pruning.yml`. The test builds the complete projected 2×2 matrix (P H_0 P) on two allowed orthonormal input kets, with all link doubled spins 1 and recoupling channels `(0,0,0,0,0)), `(0,0,0,0,2)`. Each column comes from the production `apply_H_cached_state(..., mode="no_prune")`; it then checks (M=M^dagger), finite amplitudes, and emits leakage count/L2/max outside the selected subspace.
+
+The one-action upper wall is `Jmax2=3), justified by the universal per-edge hit multiplicity ≤2 bound for the current T/T†/H monomials. This is a complete projected-block check, not a full finite-sector matrix certificate. Leakage is explicitly measured rather than assumed zero. The test source was fetched back and inspected; local execution is unavailable in this environment because DNS resolution for github.com fails, and CI execution is not yet confirmed. Do not record PASS until a run completes.
