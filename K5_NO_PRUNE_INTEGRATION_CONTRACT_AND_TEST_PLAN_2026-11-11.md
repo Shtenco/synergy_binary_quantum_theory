@@ -387,3 +387,15 @@ This count is not an execution result. GitHub Actions run #27 (`42944352617`) wa
 5. Full leakage Gram (sum_vL_v^\dagger L_v), including off-diagonal interference and the correct graph-changing Hilbert inner product.
 
 The legacy path remains preserved. No-prune completion is not a physical acceptance result. Do not merge or rebase this research branch onto `main` without explicit approval.
+
+
+## 29. Full coherent T-sum adjoint acceptance gate — 2026-11-11
+
+Added `test_full_32_term_T_sum_matches_reverse_matrix_element`. It evaluates all 32 production T monomials for a fixed finite-sector input, accumulates their signed forward contributions independently, then evaluates the corresponding reverse matrix element by applying all 32 reversed production sequences. The test checks one deterministic, largest-magnitude nonzero matrix element:
+[
+\langle y|T|x\rangle=\overline{\langle x|T^\dagger|y\rangle}.
+]
+
+This closes an important gap between a single-monomial check and the coherent T sum. It does not yet establish matrix-wide adjointness: only one selected element, one input ket, one orientation triple and one spin wall are covered.
+
+Source inventory is now 41 methods across six workflow scripts. This is not a test execution result. CI status must be verified from the actual Actions job; no PASS is implied by commit presence.
