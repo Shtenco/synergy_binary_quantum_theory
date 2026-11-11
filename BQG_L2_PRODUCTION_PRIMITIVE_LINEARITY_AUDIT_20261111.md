@@ -161,3 +161,12 @@ The current suite therefore separates three distinct outcomes:
 - threshold-boundary nonlinearity: expected failure while the current state-amplitude cutoffs remain.
 
 The newly triggered run `42936480504` (HEAD `750978aade52455db8cf680ee364a4e36493f098`, job `130247689781`) was queued at 01:07 UTC with no artifacts. Earlier L2 runs `42935840345`, `42935968925`, and L1 runs `42929934053`, `42930769907` were also queued. No test verdict is available.
+
+
+## 9. Independent-support additivity for the volume primitive
+
+The canonical test file now also checks additivity on two distinct Peter–Weyl basis keys, rather than relying only on rescaling one input vector. It uses `basis_full_jhalf()[0]` and `basis_full_jhalf()[16]`, verifies distinct complete covariant keys and nonzero individual volume responses, then compares the direct production action on their sum with the sum of separate actions.
+
+The common input scale is (10^6) and the relative residual bound is (5\times10^{-12}), intended to keep the comparison safely above the (10^{-11}) output-amplitude cutoff. This extends L2 from one-dimensional homogeneity/threshold characterization to independent-support additivity for `CK.apply_volume_complete_state`. It does not yet establish additivity of complete (H_E), the K commutator, or the full covariant legs.
+
+The scoped L2 workflow was triggered as run `42936669007` (job `130248321716`), queued with no artifacts at 01:08 UTC. No result is claimed.
