@@ -201,6 +201,15 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
             "symmetrization_delta_frobenius_norm": 1e-14,
             "symmetrization_delta_spectral_norm_upper_bound": 1e-14,
             "symmetrization_relative_frobenius_bound": 5e-15,
+            "hermitian_spectrum_resolution": {
+                "spectral_scale": 1.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 1e-13,
+                "resolved_numerical_nullity": 0,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 1.0,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.5,
+            },
         }}
         self.assertTrue(
             pilot.volume_raw_hermiticity_diagnostics(good, rtol=1e-10)["passed"]
@@ -257,12 +266,30 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
                 "symmetrization_delta_frobenius_norm": 0.0,
                 "symmetrization_delta_spectral_norm_upper_bound": 0.0,
                 "symmetrization_relative_frobenius_bound": 0.0,
+                "hermitian_spectrum_resolution": {
+                "spectral_scale": 1.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 1e-13,
+                "resolved_numerical_nullity": 0,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 1.0,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.5,
+            },
             },
             (1, 1, 2): {
                 "relative_antihermitian_defect": 1e-15, "raw_norm": 2.0,
                 "symmetrization_delta_frobenius_norm": 1e-15,
                 "symmetrization_delta_spectral_norm_upper_bound": 1e-15,
                 "symmetrization_relative_frobenius_bound": 5e-16,
+                "hermitian_spectrum_resolution": {
+                "spectral_scale": 1.0,
+                "eigenvalue_resolution_rtol": 1e-13,
+                "eigenvalue_resolution_threshold": 1e-13,
+                "resolved_numerical_nullity": 0,
+                "min_resolved_abs_eigenvalue": 1.0,
+                "normalized_gap_to_zero": 1.0,
+                "max_scalar_sqrt_abs_derivative_on_resolved_modes": 0.5,
+            },
             },
         }
         result = pilot.volume_raw_hermiticity_diagnostics(
