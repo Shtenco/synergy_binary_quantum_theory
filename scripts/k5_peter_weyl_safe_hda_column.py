@@ -408,13 +408,21 @@ def run(mode="legacy"):
       'safe_H0_on_old_V5_max_spin_reached':h0v_max_spin2/2,
       'scope_note':'One safe HH column only; no discrete D(k,l), simplicity or Lorentzian correction yet.'
     }
-    targets={'commutator_norm':1.681559985798016,'fixed_fraction':0.29790166313739946,'H0V5_norm':1.4002194669856702}
-    result['regression_errors']={
-      'commutator_norm':abs(result['commutator_norm']-targets['commutator_norm']),
-      'fixed_fraction':abs(result['fixed_all_jhalf_norm_squared_fraction']-targets['fixed_fraction']),
-      'H0V5_norm':abs(result['safe_H0_on_old_V5_norm']-targets['H0V5_norm'])}
-    result['passed_regression']=(max(result['regression_errors'].values())<5e-8 and result['safe_H0_on_old_V5_fixed_all_jhalf_support']==0)
-    return result
+     if mode=="legacy":
+         targets={'commutator_norm':1.681559985798016,'fixed_fraction':0.29790166313739946,'H0V5_norm':1.4002194669856702}
+         result['regression_errors']={
+           'commutator_norm':abs(result['commutator_norm']-targets['commutator_norm']),
+           'fixed_fraction':abs(result['fixed_all_jhalf_norm_squared_fraction']-targets['fixed_fraction']),
+           'H0V5_norm':abs(result['safe_H0_on_old_V5_norm']-targets['H0V5_norm'])}
+         result['passed_regression']=(max(result['regression_errors'].values())<5e-8 and result['safe_H0_on_old_V5_fixed_all_jhalf_support']==0)
+         result['calculation_completed']=True
+         result['acceptance_scope']='legacy_regression'
+     else:
+         result['regression_errors']=None
+         result['passed_regression']=None
+         result['calculation_completed']=True
+         result['acceptance_scope']='unpruned_calculation_completed_not_physically_certified'
+     return result
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
@@ -432,6 +440,8 @@ def main():
         return 2
     txt=json.dumps(out,indent=2);print(txt)
     if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(txt+'\n',encoding='utf-8')
+    if not out.get('calculation_completed',False): return 1
+    if a.mode=="no_prune": return 0
     return 0 if out['passed_regression'] else 1
 
 if __name__=='__main__':raise SystemExit(main())
