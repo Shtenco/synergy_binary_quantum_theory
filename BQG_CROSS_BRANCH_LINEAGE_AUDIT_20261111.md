@@ -196,3 +196,62 @@ The K5 reachability enumerator reports 120 Gauss-admissible assignments and an 8
 - No branch should be merged into main merely because its documentation or CI workflow exists.
 
 **Main remains untouched. No scientific claim has been promoted by this audit.**
+
+
+## 8. Newer successful branch-wide static scan — run #73
+
+A later successful run was found and its artifact was downloaded and inspected:
+- workflow run: [42823223090](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/42823223090), run #73;
+- run HEAD: `1f9f09c4320abace3939120d8eb8c9af2f992516`;
+- artifact ID: `13801636701`;
+- artifact SHA-256: `7fae3985481e5ecea86b5d582e3467db3fa931ea9b5ee2cec81039ea549cfd65`;
+- job and all audit/upload steps: completed successfully.
+
+This run used the expanded scanner revision that scans standalone Python, explicitly marked Python fences/heredocs, notebooks, and supported Python sources inside tracked archives/base64 archives. It supersedes the earlier 2026-11-10 report counts for that run's 167-branch snapshot.
+
+### Run #73 inventory
+
+- 167 branch refs / 156 unique branch-head commits;
+- 21,038 Python-file appearances across branch snapshots;
+- 713 unique Python paths, 837 path/content versions, 834 unique Python-source blobs;
+- 52,798 tree entries across the 156 unique snapshots;
+- 1,383 parsed source units, including standalone, inline, and embedded archive sources;
+- 2,327 assertion statements;
+- 14 explicit random-seed occurrences.
+
+Embedded/inline coverage:
+- 22,895 branch-snapshot inline-source file occurrences;
+- 942 unique inline-source blobs and 216 extracted Python blocks;
+- 215 archive occurrences, 10 unique archive blobs scanned;
+- 983 archive members, 335 embedded Python sources, 1,442,660 embedded-source bytes;
+- zero unsafe archive members and zero archive-processing errors.
+
+### Run #73 syntax findings
+
+The run found exactly two source syntax errors:
+1. Inline Python heredoc `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2`, line 86, blob `a0869d6eb4474206015c0d4efaff8e01ed0aff23`, present on branch heads `4cb8ae20b72768d556973361820edb1e3137ae05` and `ab24171a4bb327d190551bdf68957bd10a819c1d`.
+2. `scripts/pl_lorentzian_group_worker_v2.py`, line 49, blob `6eb7ba71ddfec1051eb4874399b224768c680372`, present on branch heads `524240db085485ac31678e82778f585ffd38d199`, `b58872dcb23404fd509421e14b975a98d2214a3e`, and `fddd49427c636e92dfe79b96034862aeba629927`.
+
+The previously reported `tests/test_v21_c1_checkpoint_repair.py:455` syntax error is not present in this later scan; the `fix/v21-c1-fail-closed-20261108` branch had advanced to a corrected head before run #73. The historical report's two-error list must not be copied forward unchanged.
+
+### Main snapshot in run #73
+
+The run scanned main HEAD `23669209c83fe0aa2741612e5b2b119562ee6d7d`:
+- 210 Python files;
+- zero standalone syntax errors;
+- zero inline Python syntax errors;
+- `main_ast_status=PASS`.
+
+Main-only static findings included 250 assertion nodes, 8 broad exception handlers, 7 process-execution call sites and 2 network call sites. The run reported no main-branch `pickle.load` or unguarded archive-extraction finding. These are static pattern counts, not proof that every call site is unsafe or safe.
+
+Across all branch snapshots the scanner reported 100 broad-exception handlers, 55 process-execution call sites, 32 pickle-deserialization call sites, 17 network call sites, 12 archive-extraction call sites and one bare `except`. The bare handler is at `aggregate_existing/bqg_s4sign_aggregate_capacity.py:61` on the `research/depth6-s4sign-proof` snapshot. It catches `BaseException` while parsing a filename and should be narrowed to explicitly expected parse errors. Broad exception counts require semantic review; worker-boundary serialization is not automatically a defect.
+
+### Why another refresh is still required
+
+Run #73 predates the current branch census:
+- run #73: 167 refs / 156 unique heads;
+- current inventory: 168 refs / 157 unique heads;
+- the additional branch is `research/consolidated-bqg-audit-20261111`, created after run #73;
+- current main HEAD is `254f19fdab41d32b920bf454f987aa7c0fdba34d`, later than run #73's main HEAD.
+
+Thus run #73 is the latest confirmed complete static baseline, including inline/archive coverage, but it is not a scan of the current 168-ref snapshot. The next branch-wide run must be tied to the current branch-head manifest and current main SHA. Do not claim current 168/157 coverage until that artifact exists.
