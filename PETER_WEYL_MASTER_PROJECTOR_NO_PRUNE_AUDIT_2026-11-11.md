@@ -13,7 +13,7 @@ This change integrates the previously separate finite Peter-Weyl master-projecto
 - The Hermitian part is formed only after diagnostics, for the eigensolver. A defect above `--hermitian-rtol` causes the internal acceptance check to fail.
 - The zero sector uses `abs(lambda) <= zero_threshold`; positive semidefiniteness is tested separately against `psd_tolerance`. Negative eigenvalues outside the zero window are reported separately and are not counted as positive gaps.
 - Tolerances and raw matrix inputs are checked for finiteness.
-- Added 12 focused tests in `scripts/test_peter_weyl_master_projector_integrity.py`.
+- Added 15 focused tests in `scripts/test_peter_weyl_master_projector_integrity.py`.
 - Added both scripts to push and pull-request path filters and added the test command to `.github/workflows/bqg-sparse-pruning.yml`.
 
 ## Follow-up integrity correction (2026-11-11 09:27 UTC)
@@ -98,7 +98,8 @@ The script avoids materializing a potentially enormous dense output-space
 matrix. Its small Gram matrices are assembled independently in both
 conjugate directions, so the raw Hermiticity defect is not imposed to zero by
 construction. Sparse inner products now use compensated real/imaginary
-`math.fsum` sums.
+`math.fsum` sums, and the legacy operator cache is cleared and garbage-collected
+before constructing no-prune columns to reduce peak memory.
 
 Important numerical limitation: singular values are estimated from
 `eigvalsh(C^dagger C)`, which squares the condition number. The script
@@ -112,7 +113,19 @@ Added five synthetic dense-oracle tests in
 `scripts/test_peter_weyl_constraint_stability.py`, including direct
 comparison of the sparse perturbation norm with dense SVD. Both new files
 are included in push and pull-request workflow path filters, and the tests
-are part of the CI job. The production full-32 comparison has not yet run.
+are part of the CI job. A local independent synthetic control of the new comparison algebra gave
+exact agreement between the sparse Gram construction and dense matrix
+multiplication (Frobenius difference 0); for the two-column perturbation
+fixture, both sparse-Gram and dense-SVD operator norms were exactly 0.2.
+This validates only the synthetic contraction/perturbation implementation,
+not the production K5 column calculation.
+
+The stability suite contains five tests. The combined integrity/stability
+test count is therefore 20. CI is wired for both push and pull-request paths;
+the GitHub Actions runs remain queued, so these tests are not yet claimed as
+CI-passed.
+
+The production full-32 comparison has not yet run.
 
 Reproduction:
 
