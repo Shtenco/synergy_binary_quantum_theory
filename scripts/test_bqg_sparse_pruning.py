@@ -94,6 +94,14 @@ class SparsePruningTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_ledger_identity(full, kept, entry, atol=-1.0)
 
+    def test_reject_overflow_in_ledger_difference(self):
+        full = {"x": complex(1e308, 0.0)}
+        pruned = {"x": complex(-1e308, 0.0)}
+        with self.assertRaises(ValueError):
+            verify_ledger_identity(
+                full, pruned, apply_pruning({"x": 0.0}, PruningPolicy())[1]
+            )
+
     def test_cannot_prune_before_coherent_aggregation(self):
         with self.assertRaises(ValueError):
             apply_pruning(
