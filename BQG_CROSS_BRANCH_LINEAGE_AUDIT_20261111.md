@@ -486,3 +486,21 @@ Required correction:
 - keep physical time, Born rule, Hamiltonian and matter interpretation explicitly open.
 
 **Disposition:** the q2 real-complex-structure chain is a mathematically coherent and valuable finite-dimensional representation programme. The exact algebraic identities are not invalidated by these audit findings. What is not yet established is uniqueness of the physical history dynamics or a single independently reproducible CI certificate covering every layer.
+
+
+## 18. W5 scalar-covariance blocker: pruning ablation is specified, but not executed on the audited branch
+
+Audited ref: `audit/depth6-stageb-ledger-reconcile-20261110`, HEAD `56fa40e4efae47fd600487200f11cf0b0bb80555`.
+
+The W5 pilot's reported forbidden-sector weight is `5.390512613173637e-20`, with allowed-sector weight `6.641081550043974`. The independent zero-tolerance diagnostic reported forbidden-sector weight `4.016710228941321e-30` and total H-sine norm squared `6.641081686796968`. This is a large relative difference in the tiny forbidden tail, but the allowed-sector result also differs by about `1.36752995e-7` (about `2.06e-8` relative). Therefore the issue cannot be dismissed solely as an irrelevant forbidden tail.
+
+The code identifies at least three numerical boundaries that must be separated:
+- `project_branch_complete_charges` production tolerance `1e-11`;
+- `add_state` production accumulator tolerance `1e-11`;
+- an internal basis coefficient cutoff `1e-13` which remains active even when the caller passes `tol=0`.
+
+The ablation design is thoughtful: it compares projection and accumulator tolerances independently, flat versus per-oriented-spec accumulation, reversed spec order, and a `math.fsum` real/imaginary reference on the same generated branches. The newer one-pass script `scripts/w5_scalar_tolerance_ablation_onepass.py` (blob `73e1235999b75a7665ed7d374da28c4e6eddd4fc`) generates each branch once and evaluates both projection tolerances on that same branch, which is preferable to repeated expensive branch regeneration.
+
+However, its workflow `.github/workflows/w5-scalar-tolerance-ablation.yml` is configured with `push.branches: [main]`, and the inspected Actions inventory contains no run named W5 scalar tolerance ablation. The audited branch is 3 commits ahead and 5 behind main, so its version of the workflow/script has not been demonstrated by a branch-specific CI execution. The workflow invokes the one-pass script, not the older multi-pass script with the similar name.
+
+**Disposition:** W5 remains a genuine scalar-covariance blocker. The ablation is a well-designed diagnostic, not a result. Run it against the exact audited branch HEAD (manual dispatch or a temporary branch-aware trigger), preserve the frozen production guard, and inspect all eight full-map comparisons before attributing the residual to numerical noise or changing any physical operator. No five-seed W5 covariance, five-node closure, physical Gram, or joint physical kernel is certified by the evidence reviewed here.
