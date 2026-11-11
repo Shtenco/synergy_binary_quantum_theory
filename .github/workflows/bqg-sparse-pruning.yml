@@ -15,6 +15,8 @@ on:
       - "scripts/test_k5_primitive_dense_adjoint.py"
       - "scripts/test_k5_assembled_node_hermiticity.py"
       - "scripts/test_k5_rectangular_node_h_adjointness.py"
+      - "scripts/peter_weyl_master_projector_pilot.py"
+      - "scripts/test_peter_weyl_master_projector_integrity.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   pull_request:
     paths:
@@ -28,6 +30,8 @@ on:
       - "scripts/test_k5_primitive_dense_adjoint.py"
       - "scripts/test_k5_assembled_node_hermiticity.py"
       - "scripts/test_k5_rectangular_node_h_adjointness.py"
+      - "scripts/peter_weyl_master_projector_pilot.py"
+      - "scripts/test_peter_weyl_master_projector_integrity.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   workflow_dispatch:
 
@@ -63,3 +67,5 @@ jobs:
         run: python scripts/test_k5_assembled_node_hermiticity.py
       - name: Run rectangular projected finite-sector production K5 node-H adjointness oracle
         run: python scripts/test_k5_rectangular_node_h_adjointness.py
+      - name: Run finite Peter-Weyl master-projector integrity gates
+        run: python scripts/test_peter_weyl_master_projector_integrity.py
