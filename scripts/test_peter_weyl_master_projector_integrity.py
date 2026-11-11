@@ -257,6 +257,16 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         import json
         json.dumps(result, allow_nan=False)
 
+    def test_volume_registry_rejects_spin_triple_above_declared_cutoff(self):
+        registry = {(1, 1, 6): {
+            "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(
+            registry, max_spin2=5
+        )
+        self.assertFalse(result["passed"])
+        self.assertIsNone(result["records"][0]["spin_triple"])
+
     def test_absolute_annihilation_wrapper_keeps_zero_vector_compatibility(self):
         columns = {(0, 0): {"x": 1.0 + 0j}}
         self.assertEqual(
