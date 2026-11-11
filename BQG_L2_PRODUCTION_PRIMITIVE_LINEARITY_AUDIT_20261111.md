@@ -170,3 +170,6 @@ The canonical test file now also checks additivity on two distinct Peter–Weyl 
 The common input scale is (10^6) and the relative residual bound is (5\times10^{-12}), intended to keep the comparison safely above the (10^{-11}) output-amplitude cutoff. This extends L2 from one-dimensional homogeneity/threshold characterization to independent-support additivity for `CK.apply_volume_complete_state`. It does not yet establish additivity of complete (H_E), the K commutator, or the full covariant legs.
 
 The scoped L2 workflow was triggered as run `42936669007` (job `130248321716`), queued with no artifacts at 01:08 UTC. No result is claimed.
+
+
+The independent-support test was further hardened in commit `ec82224564516d9b902ac52de37b3e540bce4c22`: it asserts that the two complete basis keys are distinct and that both basis states individually produce nonempty volume outputs. The corresponding run `42936684504` (job `130248370659`) was queued with no artifacts at 01:08 UTC. No result is available.
