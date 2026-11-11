@@ -1070,7 +1070,7 @@ $$
 
 ### Г.3.3. Прямой HDA
 
-Для одного и того же production operator и общего (W_l) необходимо построить (H_l[N]^{\rm eff}), (H_l[M]^{\rm eff}), (D_l[\beta]^{\rm eff}) и измерить
+Для одного и того же production operator и общего $W_l$ необходимо построить $H_l[N]^{\rm eff}$, $H_l[M]^{\rm eff}$, $D_l[\beta]^{\rm eff}$ и измерить
 
 $$
 \Delta_{HH,l}=
@@ -1102,7 +1102,7 @@ M_{hq}^TM_{hq}
 =\frac16(P_{A_1}+P_E)+\frac13P_{T_2},
 $$
 
-то есть (s^2_{A_1}=s^2_E=1/6), (s^2_{T_2}=1/3). Это конечный block result, а не последовательная refinement calibration. Для закрытия пункта нужны независимые (M_{hq}^{(l)}) на L0–L3, все шесть singular values, rank, conditioning, covariance и устойчивость базиса.
+то есть $s^2_{A_1}=s^2_E=1/6$, $s^2_{T_2}=1/3$. Это конечный block result, а не последовательная refinement calibration. Для закрытия пункта нужны независимые $M_{hq}^{(l)}$ на L0–L3, все шесть singular values, rank, conditioning, covariance и устойчивость базиса.
 
 ## Г.4. Предыдущие конечные ориентиры — не четыре физических уровня
 
