@@ -239,6 +239,17 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertFalse(result["coverage_complete"])
         self.assertEqual(result["coverage_shortfall"], 1)
 
+    def test_volume_registry_rejects_inconsistent_symmetrization_bound(self):
+        registry = {(1, 1, 1): {
+            "relative_antihermitian_defect": 1e-4,
+            "raw_norm": 2.0,
+            "symmetrization_delta_frobenius_norm": 1e-4,
+            "symmetrization_delta_spectral_norm_upper_bound": 1e-4,
+            "symmetrization_relative_frobenius_bound": 1e-8,
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(registry)
+        self.assertFalse(result["passed"])
+
     def test_volume_registry_accepts_exact_unique_call_coverage(self):
         good = {
             (1, 1, 1): {
