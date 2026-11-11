@@ -115,10 +115,10 @@ A second source inspection was completed after the original checkpoint. The new 
 Additional source-confirmed boundaries:
 
 - `peter_weyl_covariant_K_composition_gate.py:43-51`: `apply_HE_complete_state_custom` multiplies a unit-key result by an arbitrary input coefficient and passes it through thresholded `COMP.add`. This is a direct arbitrary-superposition nonlinearity risk.
-- The same module's `apply_K_complete_custom` combines `V H_E) and `H_E V` components through further thresholded accumulation.
+- The same module's `apply_K_complete_custom` combines `V H_E` and `H_E V` components through further thresholded accumulation.
 - `peter_weyl_covariant_K_leg_gate.py`: `add_state` thresholds branch sums; `apply_HE_complete_key` uses it while assembling oriented/adjoint branches; `apply_volume_complete_state` applies a final (10^{-11}) output filter; `apply_HE_complete_state` applies a final (10^{-10}) output filter.
 - `peter_weyl_covariant_K_composition_gate.py` therefore contains distinct loss boundaries at primitive branch assembly, arbitrary coefficient composition, volume action, and commutator combination. They must be measured independently.
-- V10's outer `amp_tol) pruning occurs after coherent node-map summation, but the removed forward/adjoint amplitudes are not currently counted. This external loss must not be merged with internal primitive losses or scalar-projection rejection.
+- V10's outer `amp_tol` pruning occurs after coherent node-map summation, but the removed forward/adjoint amplitudes are not currently counted. This external loss must not be merged with internal primitive losses or scalar-projection rejection.
 
 The new L2 test plan prioritizes real production maps: `CK.apply_volume_complete_state`, `CK.apply_HE_complete_state`, `COMP.apply_HE_complete_state_custom`, `COMP.apply_K_complete_custom`, `COMP.C_K_component`, and `COMP.C_volume_component`. It requires additivity, complex homogeneity, permutation/cancellation tests, direct-superposition versus frozen basis-matrix reconstruction, and stage-specific loss ledgers.
 
