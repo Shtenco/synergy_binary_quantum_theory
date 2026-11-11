@@ -583,3 +583,16 @@ The production finite-sector primitive test and workflow were fetched back from 
 The branch comparison against `main` reports `diverged`, 75 commits ahead and 2 behind at this snapshot. The two commits on `main` remain unmerged; no rebase, merge, or main-branch write was performed.
 
 The combined commit-status query for the latest workflow update returned an empty status list. No Actions run or green CI result is confirmed. The test suite is committed and statically inspected, not yet execution-verified. The finite-sector matrix test is an acceptance gate intended to reveal a convention mismatch if one exists; it must not be described as passed until its actual test output is available.
+
+
+## 16. Orthonormal local recoupling basis gate — 2026-11-11
+
+Before treating the finite-sector production primitive matrix comparison as a valid adjoint test, the harness now explicitly verifies the local recoupling inner product. For every local vertex basis appearing in the all-spin-1 input sector and the eight allowed 0/2 assignments on the closed triangle, it assembles
+[
+G^{(v)}_{KK'}=\langle \iota_{v,K},\iota_{v,K'}\rangle
+]
+from the production `oriented_intertwiner` tensors and requires (G^{(v)}=I) to a declared floating-point tolerance.
+
+This is an important logical prerequisite, not cosmetic extra coverage: the matrix identity (B=A^\dagger) is meaningful only relative to the stated orthonormal bases. A failure here must be resolved at the basis/normalization layer before interpreting a primitive adjoint mismatch.
+
+The primitive dense-adjoint script now has two methods: local recoupling orthonormality and closed-loop production primitive matrix adjointness. Total committed inventory is 35 test methods across six scripts. The workflow already executes this script. All changes are committed and source-fetched; execution and CI status remain unconfirmed.
