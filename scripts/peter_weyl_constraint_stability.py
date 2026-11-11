@@ -979,7 +979,7 @@ def compare_cutoff_operator_columns(lower, upper, dim, block_rows=4096,
 
 def cutoff_operator_sweep(domain="low", jmax2_values=(1, 3),
                           block_rows=4096, dense_max_entries=200000):
-    """Build and compare adjacent no-prune cutoff maps in a common row space."""
+    """Build adjacent no-prune maps, retaining at most two sparse cutoffs."""
     cutoffs = list(jmax2_values)
     if (not cutoffs or any(
             not isinstance(value, int) or isinstance(value, bool) or value < 1
@@ -990,26 +990,32 @@ def cutoff_operator_sweep(domain="low", jmax2_values=(1, 3),
     nodes = tuple(PILOT.PW.VERT)
     basis = PILOT.carrier_basis(domain)
     dim = len(basis)
-    maps = []
-    for cutoff in cutoffs:
+
+    def build_map(cutoff):
         raw, _ = PILOT.constraint_columns(
             basis, nodes, cutoff, mode="no_prune"
         )
         stacked, _ = stack_columns(raw, nodes, dim)
-        maps.append(stacked)
         del raw
         if hasattr(PILOT.PW.T_cached, "cache_clear"):
             PILOT.PW.T_cached.cache_clear()
         gc.collect()
+        return stacked
+
     comparisons = []
+    lower_map = build_map(cutoffs[0])
     for index in range(1, len(cutoffs)):
+        upper_map = build_map(cutoffs[index])
         comparison = compare_cutoff_operator_columns(
-            maps[index - 1], maps[index], dim,
+            lower_map, upper_map, dim,
             block_rows=block_rows, dense_max_entries=dense_max_entries,
         )
         comparison["from_jmax2"] = cutoffs[index - 1]
         comparison["to_jmax2"] = cutoffs[index]
         comparisons.append(comparison)
+        del lower_map
+        lower_map = upper_map
+    del lower_map
     return {
         "status": "finite no-prune cutoff operator comparison",
         "domain": domain,
@@ -1022,7 +1028,6 @@ def cutoff_operator_sweep(domain="low", jmax2_values=(1, 3),
             "independence, or continuum convergence."
         ),
     }
-
 
 
 def main():
