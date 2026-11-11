@@ -258,20 +258,38 @@ def volume_raw_hermiticity_diagnostics(
         try:
             defect = float(raw.get("relative_antihermitian_defect", float("nan")))
             raw_norm = float(raw.get("raw_norm", float("nan")))
+            delta_frob = float(raw.get("symmetrization_delta_frobenius_norm", float("nan")))
+            delta_2_bound = float(raw.get("symmetrization_delta_spectral_norm_upper_bound", float("nan")))
+            relative_bound = float(raw.get("symmetrization_relative_frobenius_bound", float("nan")))
         except (AttributeError, TypeError, ValueError, OverflowError):
-            defect = float("nan")
-            raw_norm = float("nan")
-        defect_finite = math.isfinite(defect)
-        norm_finite = math.isfinite(raw_norm)
+            defect = raw_norm = delta_frob = delta_2_bound = relative_bound = float("nan")
+        finite = all(math.isfinite(x) for x in (
+            defect, raw_norm, delta_frob, delta_2_bound, relative_bound
+        ))
         record = {
             "spin_triple": [int(x) for x in key] if key_valid else None,
             "invalid_key_repr": None if key_valid else repr(key),
-            "relative_antihermitian_defect": defect if defect_finite else None,
-            "raw_norm": raw_norm if norm_finite else None,
+            "relative_antihermitian_defect": defect if math.isfinite(defect) else None,
+            "raw_norm": raw_norm if math.isfinite(raw_norm) else None,
+            "symmetrization_delta_frobenius_norm": delta_frob if math.isfinite(delta_frob) else None,
+            "symmetrization_delta_spectral_norm_upper_bound": delta_2_bound if math.isfinite(delta_2_bound) else None,
+            "symmetrization_relative_frobenius_bound": relative_bound if math.isfinite(relative_bound) else None,
         }
         records.append(record)
-        if (not key_valid or not defect_finite or not norm_finite
-                or defect < 0.0 or raw_norm < 0.0 or defect > rtol):
+        expected_relative = (
+            delta_frob / raw_norm if raw_norm > 0.0
+            else (0.0 if delta_frob == 0.0 else float("inf"))
+        )
+        consistency_tol = 100.0 * np.finfo(float).eps * max(1.0, abs(expected_relative))
+        bounds_consistent = (
+            finite and delta_frob >= 0.0 and delta_2_bound >= delta_frob
+            and relative_bound >= 0.0
+            and abs(relative_bound - expected_relative) <= consistency_tol
+        )
+        if (not key_valid or not finite or defect < 0.0 or raw_norm < 0.0
+                or delta_frob < 0.0 or delta_2_bound < 0.0
+                or relative_bound < 0.0 or defect > rtol
+                or not bounds_consistent):
             failures.append(record)
     coverage_complete = (
         expected_unique_calls is None or len(records) == expected_unique_calls
