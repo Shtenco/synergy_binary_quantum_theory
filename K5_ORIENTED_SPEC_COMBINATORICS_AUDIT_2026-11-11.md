@@ -43,3 +43,10 @@ This is a combinatorial generator test. It does not prove covariance of the resu
 The production test file now includes `test_full_32_term_T_sum_matches_reverse_matrix_element`. Unlike the five-hit single-monomial test, this evaluates all 32 signed monomials, coherently sums their contributions, and checks the reverse matrix element from the complete adjoint sum. It uses one deterministic largest-magnitude nonzero output element from a fixed all-spin-1/all-(K=0) input at doubled-spin wall 2.
 
 This is a materially stronger local acceptance gate, but not a full matrix adjoint proof. Its scope remains one matrix element, one input, one orientation triple, and one finite wall. The production primitive/orientation script now has five methods; total workflow source inventory is 41 methods. CI execution remains unconfirmed.
+
+
+## CI and next-scope clarification — 2026-11-11
+
+The full 32-term test is committed in code commit `ba4dfc48db4f1a2ea5caea8ef7a3160fc63bdd00`; its Actions run #28 (`42944740425`) was queued at the last observation. Runs #26 and #27 were also queued. No PASS is claimed.
+
+The test checks one selected matrix element of the complete coherent T sum. It is not a matrix-wide adjoint certificate. The next target is an explicit finite-basis matrix comparison over multiple input columns and orientation triples, with spin-wall clipping recorded rather than hidden.
