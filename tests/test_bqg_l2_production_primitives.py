@@ -117,6 +117,44 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             f"additivity residual={relative:.6e}",
         )
 
+    def test_he_state_map_additivity_on_independent_basis_states(self):
+        # Test the cached-basis-column extension on two independent
+        # Peter-Weyl inputs, not merely homogeneity on one input ray.
+        basis = PW.basis_full_jhalf()
+        second_covariant = CV.gauss_to_covariant({basis[16]: 1.0 + 0j}, 0)
+        second_complete = COMP.covariant_to_complete(second_covariant, 0)
+        self.assertEqual(len(second_complete), 1)
+        self.assertNotEqual(
+            next(iter(second_complete)), next(iter(self.complete_state))
+        )
+
+        # CK.apply_HE_complete_state applies cached unit-key columns and
+        # combines their input coefficients before its final 1e-10 filter.
+        # A large common scale keeps the comparison away from that final
+        # output threshold; this does not test threshold-boundary behavior.
+        x = state_scale(self.complete_state, 1e6)
+        y = state_scale(second_complete, 1e6)
+        fx = output_dict(CK.apply_HE_complete_state(x, 0, 5))
+        fy = output_dict(CK.apply_HE_complete_state(y, 0, 5))
+        self.assertTrue(fx, "First independent basis vector has no H_E response.")
+        self.assertTrue(fy, "Second independent basis vector has no H_E response.")
+
+        combined = dict(x)
+        for key, value in y.items():
+            combined[key] = combined.get(key, 0j) + value
+        fxy = output_dict(CK.apply_HE_complete_state(combined, 0, 5))
+
+        rhs = dict(fx)
+        for key, value in fy.items():
+            rhs[key] = rhs.get(key, 0j) + value
+        residual = difference_norm(fxy, rhs)
+        relative = residual / max(norm(fxy), norm(rhs), 1e-300)
+        self.assertLessEqual(
+            relative, 5e-12,
+            f"CK.apply_HE_complete_state independent-superposition "
+            f"additivity residual={relative:.6e}",
+        )
+
     def _assert_safe_domain_homogeneity(self, map_fn, label):
         alpha = 1.25 + 1.5j
         base_scale = 1e6
