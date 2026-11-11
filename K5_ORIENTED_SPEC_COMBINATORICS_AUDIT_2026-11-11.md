@@ -56,3 +56,10 @@ The test checks one selected matrix element of the complete coherent T sum. It i
 The volume suite now includes a direct test of the vertex-oriented tensor action under the Frobenius inner product. It checks all five vertices and all four spin triples, with deterministic complex test tensors, and therefore exercises the production epsilon conjugations before and after the local spectral volume map.
 
 This expands the volume test file to seven methods and the six-script source inventory to 42. The test is committed in `50c807d03c8616dce639487afc83704ec19c5b36`. It remains unexecuted until the corresponding Actions job completes.
+
+
+## Matrix-wide T/T† continuation checkpoint — 2026-11-11
+
+The latest production audit now records 42 source-inventoried test methods across six workflow scripts. The 32-term T check is one selected matrix element only. The next required gate is a rectangular matrix comparison over multiple orthonormal input columns, with coherent no-prune accumulation of all 32 signed terms and independently generated reverse sequences. Forward outputs outside the declared codomain and reverse outputs outside the declared domain must be counted and reported; no silent projection or thresholding is permitted.
+
+The assembled node operator `H_v=(T_v+T_v†)/2` is a separate subsequent gate over all 12 signed orientation specifications. A successful H test cannot substitute for checking the constituent T/T† relation. Actions runs #26–#29 were all observed queued with no job conclusion; no CI PASS is claimed. The branch is 109 commits ahead and 2 behind `main`, with no merge/rebase performed.
