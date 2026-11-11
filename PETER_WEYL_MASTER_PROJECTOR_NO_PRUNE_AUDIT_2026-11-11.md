@@ -1093,3 +1093,21 @@ queued with no conclusion. The four-suite static test inventory is 92
 methods; only the small independent dense NumPy fixture was calculated
 locally. The checked-in tests and full low/full-domain production calculations
 remain unexecuted in this environment.
+
+## Follow-up: positive node-metric spectral-bound hardening (2026-11-11)
+
+A second implementation review found two edge cases in the finite-matrix Loewner-bound helper:
+
+1. The helper did not verify that the supplied node metric dimension matched the number of constraint nodes, nor that the singular spectrum had the expected input-space dimension.
+2. It detected underflow in the multiplication by the metric eigenvalue only when the already-squared singular value remained nonzero. A nonzero singular value could first underflow in `sigma * sigma`, silently producing a zero lower/upper bound.
+
+The helper now accepts explicit expected input and metric dimensions; the production call passes `dim` and `len(nodes)`. It separately reports underflow in `sigma^2), the lower bound and the upper bound, and marks the bound set numerically unresolved if any such underflow occurs.
+
+The streaming TSQR implementation was checked directly: it pads its singular-value vector to the full input dimension when the row count is smaller than the column count, while retaining a full right-singular-vector matrix. The new regression fixture exercises a one-row / three-column map and verifies the two exact zero singular directions are retained in the bound arrays. Additional tests cover sigma-square underflow and dimension mismatch rejection.
+
+Current static inventory in `scripts/test_peter_weyl_constraint_stability.py`: **38 test methods**. This is a source count only. The latest branch Actions runs observed for the changes remain queued; no PASS is claimed. No full low-domain or 32-state production calculation was run in this update.
+
+Source blobs at this update:
+- `scripts/peter_weyl_constraint_stability.py`: `060f7f0630b5f4fb6bf9d5d34b8cffe0f0a166e0`
+- `scripts/test_peter_weyl_constraint_stability.py`: `0caf326438668b61ad2df0eccb5b0b60e1193348`
+
