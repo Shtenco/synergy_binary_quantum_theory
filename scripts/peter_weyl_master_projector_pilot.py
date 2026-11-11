@@ -117,7 +117,8 @@ def classify_spectrum(evals: np.ndarray, zero_threshold: float, psd_tolerance: f
             f"master operator is not PSD within tolerance: min eigenvalue={minimum}, "
             f"allowed={psd_tolerance}"
         )
-    # Negative roundoff is not silently promoted to a zero mode.
+    # The zero window is symmetric; PSD tolerance is checked independently
+    # above, so a negative residual outside the zero window is never a zero mode.
     return np.abs(evals) <= zero_threshold
 
 
