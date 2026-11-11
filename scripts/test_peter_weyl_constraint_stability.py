@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 import numpy as np
 
 import peter_weyl_constraint_stability as stability
@@ -202,6 +203,58 @@ class ConstraintStabilityTests(unittest.TestCase):
             stability.kernel_projector_from_direct_svd(malformed, 2)
         with self.assertRaisesRegex(ValueError, "positive integer"):
             stability.kernel_projector_from_direct_svd(direct, True)
+
+    def test_cutoff_sweep_compares_adjacent_kernel_projectors(self):
+        left = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        theta = 0.12
+        right = stability.direct_svd_from_columns(
+            {0: {(0, "r"): np.sin(theta)},
+             1: {(0, "r"): -np.cos(theta)}}, 2
+        )
+        def result(direct, digest):
+            return {
+                "domain_dimension": 2,
+                "legacy": {
+                    "direct_svd": direct,
+                    "stacked_column_sha256": digest + "-L",
+                },
+                "no_prune": {
+                    "direct_svd": direct,
+                    "stacked_column_sha256": digest + "-N",
+                },
+            }
+        with patch.object(
+            stability, "run",
+            side_effect=[result(left, "cut1"), result(right, "cut2")]
+        ) as mocked:
+            sweep = stability.cutoff_convergence_sweep(
+                "low", [1, 3], block_rows=16
+            )
+        self.assertEqual(mocked.call_count, 2)
+        self.assertEqual(sweep["doubled_spin_cutoffs"], [1, 3])
+        self.assertEqual(len(sweep["points"]), 2)
+        self.assertEqual(len(sweep["adjacent_cutoff_comparisons"]), 1)
+        comparison = sweep["adjacent_cutoff_comparisons"][0]
+        self.assertEqual(
+            comparison["no_prune_kernel_subspace"]["status"],
+            "SAME_DIMENSION_SUBSPACE_DISTANCE"
+        )
+        self.assertAlmostEqual(
+            comparison["no_prune_kernel_subspace"]["max_principal_angle_sine"],
+            abs(np.sin(theta)), places=12
+        )
+
+    def test_cutoff_sweep_rejects_nonincreasing_or_invalid_cutoffs(self):
+        with patch.object(stability, "run") as mocked:
+            with self.assertRaisesRegex(ValueError, "strictly increasing"):
+                stability.cutoff_convergence_sweep("low", [1, 1])
+            with self.assertRaisesRegex(ValueError, "strictly increasing"):
+                stability.cutoff_convergence_sweep("low", [3, 1])
+            with self.assertRaisesRegex(ValueError, "integer >= 1"):
+                stability.cutoff_convergence_sweep("low", [1, True])
+            mocked.assert_not_called()
 
     def test_run_rejects_invalid_regulator_and_tolerance_arguments_before_work(self):
         with self.assertRaisesRegex(ValueError, "jmax2"):
