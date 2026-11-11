@@ -1601,3 +1601,57 @@ The projected adjointness tests are deliberately finite:
 These are meaningful independent checks, but they do not establish self-adjointness of the complete infinite-domain operator or full quantum HDA closure.
 
 At the time of this source audit, the latest sparse-pruning workflow run was `43044422606`, queued on source SHA `dda2d4fe252df9bc38c5148639a09a0d9aea2dbd`. The current research HEAD `d491...` is three commits beyond that SHA, and the only file changed across those three commits was the audit Markdown file. Therefore the queued run targets the same reviewed Python source snapshot, but it has no result yet. Do not report PASS.
+
+## 36. Consolidated branch source recheck and LZMA whole-branch snapshot tooling
+
+This section supersedes the graph-shell defect statements in §4 for the later consolidated-branch source state. The historical findings in §4 remain valid for the older blobs named there, but they are not descriptions of the current source.
+
+### 36.1 Current K5 graph-shell implementation
+
+The current source blobs inspected in this recheck are:
+- `scripts/bqg_k5_graph_sector_master_shell.py`: `12cb1e5653bf78d39fd798d70ca77926795d3c57`;
+- `scripts/bqg_sparse_leakage_gram.py`: `6920db9053ccdb469857373e503f697c0e1f926b`;
+- `scripts/test_bqg_k5_graph_sector_master_shell.py`: `d02ea20d0eded35b76c3a9cd9d7e33964cdae794`;
+- `.github/workflows/bqg-sparse-pruning.yml`: `ecdb044773910b684697a8670c4585839903b88a`.
+
+The following earlier §4 claims are now stale for these blobs:
+- the shell wrapper calls a second legacy prune: **corrected**; `apply_H_to_key` passes `mode="no_prune"` to the producer and does not add a second `prune_state` call;
+- only scalar outside-shell norms are retained: **corrected**; `assemble_leakage_gram` builds the full coherent off-diagonal \(L^\dagger L\);
+- raw Hermiticity is measured after symmetrization: **corrected**; raw projected, leakage and full master defects are measured before Hermitian cleanup;
+- unit-floor spectral classification: **corrected**; the PSD classifier uses a matrix-relative scale and half-before-addition Hermitianization;
+- no spin-wall enforcement: **corrected**; `required_spin_wall2(depth)=2*depth+3` is enforced before shell generation;
+- no local basis-metric check: **corrected**; every local spin/intertwiner sector represented in the generated shell is checked, and the result participates in the structural gate;
+- leakage helper not wired: **corrected**; the shell wrapper imports and calls it.
+
+The current graph-shell test file has 12 methods by source inspection. It includes synthetic dense-oracle leakage tests, raw-Hermiticity ordering, scale invariance, float64 overflow rejection, near-maximal finite Hermitian PSD input, local basis orthonormality and depth-two spin-wall rejection. The workflow invokes this suite. These are committed tests, not a fresh test execution: the observed current branch Actions runs remain queued, and no PASS is claimed.
+
+Remaining graph-shell limitations:
+- no production-generated multi-state shell calculation has been freshly confirmed in this recheck;
+- the leakage helper uses ordinary float64 outer products and accumulation, with explicit non-finite rejection rather than a fully scaled/compensated Gram algorithm;
+- the basis gate covers every local sector actually represented in the generated shell, not every possible graph/spin sector;
+- upstream CG, volume square-root, coherent-aggregation, cutoff and solver errors still lack one propagated global operator-norm budget;
+- a finite shell pullback is not the continuum physical projector or a rigging map.
+
+### 36.2 Positive-metric spectral-bound correction
+
+The constraint-stability helper was hardened after review:
+- explicit expected input dimension and node-metric dimension are passed by the production audit driver;
+- singular-value-square underflow is detected separately from lower/upper bound multiplication underflow;
+- the helper marks the bound set numerically unresolved when any of these underflows occur;
+- regressions cover a one-row / three-input wide map, zero-padding of its two right-null singular directions, underflow, and dimension mismatch.
+
+The current static method count in `scripts/test_peter_weyl_constraint_stability.py` is 38. This count is not a test-run result.
+
+### 36.3 LZMA snapshot generator added; full archive not yet generated
+
+The existing all-branch Python scanner is static and its last confirmed artifact predates the current 168-ref census. It does not itself produce an LZMA source bundle. A separate utility has now been added:
+- `scripts/bqg_branch_snapshot_lzma.py`;
+- `scripts/test_bqg_branch_snapshot_lzma.py`;
+- the all-branch audit workflow now runs the synthetic archive test and creates a deduplicated `tar.xz` snapshot after fetching every remote branch head.
+
+The archive design stores each unique Git blob once under its Git SHA, with a manifest mapping all branch names, commit heads, parent links, tree entries, modes, original paths and blob IDs. It records submodule gitlinks without dereferencing submodule contents and includes Git LFS pointer blobs without fetching external LFS payloads.
+
+A separate local synthetic Git-repository harness exercised the same core archive algorithm: 3 branch refs, 2 unique commit heads, 4 path entries and 3 unique blobs were packed and reopened from `tar.xz`; every extracted blob's Git SHA was independently rechecked. This is a synthetic harness, not execution of the newly committed repository test file or generation of the real 168-branch archive.
+
+**Current execution boundary:** the actual all-branch LZMA archive and fresh 168/157 AST artifact have not yet been produced in this session. The workflow is configured for manual dispatch and weekly execution, but no matching run has been observed. Do not claim the full source bundle has been compressed until the artifact exists and its branch-head manifest matches the live refs.
+
