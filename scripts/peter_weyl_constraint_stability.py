@@ -848,7 +848,7 @@ def cutoff_difference_from_columns(lower, upper, dim):
     upper_only = upper_rows - lower_rows
     changed_common = 0
     max_common_delta = 0.0
-    common_delta_frob_sq = 0.0
+    common_delta_values = []
     delta = {}
     for a in range(dim):
         keys = set(lower[a]) | set(upper[a])
@@ -867,7 +867,7 @@ def cutoff_difference_from_columns(lower, upper, dim):
                 if magnitude != 0.0:
                     changed_common += 1
                     max_common_delta = max(max_common_delta, magnitude)
-                    common_delta_frob_sq += magnitude * magnitude
+                    common_delta_values.append(difference)
         delta[a] = col
     return delta, {
         "lower_row_count": len(lower_rows),
@@ -877,7 +877,7 @@ def cutoff_difference_from_columns(lower, upper, dim):
         "upper_only_row_count": len(upper_only),
         "changed_common_coefficients": changed_common,
         "max_abs_common_coefficient_change": max_common_delta,
-        "common_coefficient_difference_frobenius_norm": math.sqrt(common_delta_frob_sq),
+        "common_coefficient_difference_frobenius_norm": PILOT.stable_complex_norm(common_delta_values),
         "row_embedding_semantics": (
             "exact union of represented sparse row keys; absent dictionary entries "
             "are zero in the represented maps only"
