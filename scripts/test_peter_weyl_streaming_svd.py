@@ -65,6 +65,22 @@ class StreamingSVDTests(unittest.TestCase):
             x.singular_values, y.singular_values, rtol=2e-13, atol=2e-13
         )
 
+    def test_streaming_svd_is_scale_invariant_over_wide_range(self):
+        rng = np.random.default_rng(74)
+        a = rng.normal(size=(41, 6)) + 1j * rng.normal(size=(41, 6))
+        base = tsqr.streaming_svd([a[:9], a[9:]], 6)
+        for factor in (1e-150, 1e150):
+            scaled = tsqr.streaming_svd(
+                [factor * a[:9], factor * a[9:]], 6
+            )
+            np.testing.assert_allclose(
+                scaled.singular_values / factor,
+                base.singular_values,
+                rtol=5e-13,
+                atol=5e-13,
+            )
+            self.assertEqual(scaled.rank, base.rank)
+
     def test_all_zero_matrix(self):
         got = tsqr.streaming_svd(
             [np.zeros((5, 3)), np.zeros((2, 3))], 3
