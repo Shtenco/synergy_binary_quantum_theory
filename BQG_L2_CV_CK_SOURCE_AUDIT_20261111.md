@@ -81,3 +81,20 @@ The strict sparse accumulator remains a reference implementation and is not yet 
 ## 6. Record of this inspection
 
 At 01:33 UTC the branch was unchanged from `d8a4d1b47c59e122f13eb45d43017e186c42ca15`. This note adds source-contract detail and an explicit sequencing gate only. No production operator, test, workflow, numerical threshold, or physical claim was changed. No local test execution was performed. `main` remains untouched.
+
+
+## 7. L2 workflow dependency-closure correction — 11 November 2026, 01:38 UTC
+
+A CI wiring defect was found by comparing the test's import graph with the workflow's `paths` and `py_compile` lists. The L2 test calls `COMP.C_volume_component`, but the workflow originally did not watch or explicitly compile `scripts/peter_weyl_covariant_composition_gate.py`. Thus a change to that production module could fail to trigger the L2 workflow, and its syntax was not covered by the dedicated compile step.
+
+The workflow has now been corrected and the correction itself reviewed for duplicate entries. It explicitly watches and compiles the L2 import/dependency closure:
+- `peter_weyl_covariant_composition_gate.py`;
+- `k5_peter_weyl_safe_hda_column.py`;
+- `charged_intertwiner_recoupling_gate.py`;
+- `peter_weyl_lorentzian_K_block_gate.py`;
+- `peter_weyl_covariant_K_projection_audit_gate.py`;
+- `peter_weyl_volume_cross_rep_audit.py`;
+- `peter_weyl_q_block_gauge_audit.py);
+alongside the already tracked L2 test, CK, KCOMP, CV and zero-aware volume migration modules.
+
+This is a CI coverage correction, not a production-operator change and not a test result. The push should create a new workflow execution; its actual run identifier and status must be obtained and inspected. No PASS is inferred from the workflow file being updated. The earlier run `42937467628` remains separately identified as the test-bearing run for the C(V) gate and must still be inspected. Do not confuse a later workflow-configuration run with execution of a different test revision.
