@@ -541,3 +541,20 @@ The source implementation applies `PW.prune_state(..., 1e-8)` after every `H_v) 
 - the inherited workflow push trigger is restricted to `audit/active-habitat-master-v1`, not the v2-preregistered branch.
 
 Therefore v2 is a genuine preregistration, not an executed experiment. Its next step is implementation against the frozen P2 definition, without changing its 1e-11 dependence rule or the five preregistered zero-mode thresholds after seeing the v1 spectrum.
+
+
+## 20. Five-step representation-RG ancestry: one-step certificates are real, global composition remains untested
+
+The five consecutive one-step channel-flow matrices are backed by a successful historical workflow run `42797583866` and persisted JSON shards for `s2=3,4,5,6,7`. Their row-stochasticity and paired-eigenvalue checks are valid finite representation-RG evidence. The maximum-product ancestry path is also correctly labeled as a local scalar-overlap candidate.
+
+The direct two-step composition script `scripts/bqg_two_step_channel_composition.py` (blob `22f7357810329f2df44ab815ea3c87b465553828`) is a meaningful next experiment. It recomputes both one-step matrices, checks them against the saved references, propagates the actual intermediate rank-2 carrier, tests invariance under a U(2) basis rotation, and compares:
+- direct composed overlap `G_direct`;
+- scalar matrix product `F_first @ F_second`;
+- maximum-product intermediate-channel path;
+- intermediate off-diagonal block norms and within-channel anisotropy.
+
+No run of `bqg-two-step-channel-composition` was found in the inspected Actions inventory. Its workflow push trigger is restricted to `main`; the audited branch `audit/depth6-stageb-ledger-reconcile-20261110` has 3 commits ahead and 5 behind main. The workflow supports manual dispatch, but no manual branch run or result artifact was found.
+
+This means the five-step maximum-product path remains a **local ancestry statistic**, not yet a demonstrated global microscopic refinement lineage. The missing comparison is not cosmetic: scalar multiplication `F_j F_{j+1}` is equivalent to an intermediate channel measure-and-prepare map and can discard coherence. The direct `G_direct` computation is precisely the experiment needed to test whether that information matters.
+
+**Disposition:** preserve all five one-step matrices and their historical successful run. Do not promote their product to a global refinement fidelity or physical transition probability. Execute both source pairs `s2=3` and `s2=4` at the audited branch HEAD, retain all artifacts and compare direct composition defects before making any multi-scale physical interpretation.
