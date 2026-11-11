@@ -131,17 +131,35 @@ P_\tau(\alpha x)\ne\alpha P_\tau(x).
 
 ### 4.3. Подтверждённые production hotspots
 
-В проверенном call graph обнаружены следующие места, которые требуют раздельной проверки:
-- `peter_weyl_covariant_K_leg_gate.py`: `add_state`, `project_branch_complete_charges`, финальная фильтрация `apply_HE_complete_state`, volume projection;
-- `peter_weyl_covariant_composition_gate.py`: `TOL=1e-11`, incremental `add`, `complete_to_covariant`;
-- `peter_weyl_covariant_K_composition_gate.py`: `COMP.add` при накоплении масштабированных basis contributions в `apply_HE_complete_state_custom`, а также при композиции K legs;
-- `peter_weyl_covariant_volume_leg_gate.py`: `project_covariant_branches`, branch amplitudes (amp\cdot\prod c), финальные state filters;
-- `peter_weyl_lorentzian_ordered_triple_gate.py`: incremental `add` с `TOL=1e-11`;
-- `k5_peter_weyl_safe_hda_column.py`: `add_dict`, `apply_primitive_oriented`, `apply_T_cached_state`, `prune_state`.
+### 4.3.1. Подтверждённый активный V10 call path (с привязкой к строкам)
 
-Важная оговорка для column builders: порог, применённый только при построении фиксированной basis column, сам по себе не доказывает нелинейность уже зафиксированного столбца. Риск возникает, когда output basis columns масштабируются произвольными input coefficients и после этого промежуточная сумма снова порогуется. В частности, такой путь имеется в `apply_HE_complete_state_custom`, где basis-column contributions проходят через `COMP.add`.
+В V10 `node_kkv_maps` передаёт `RAW.COMP.C_volume_component` и `RAW.KCOMP.C_K_component`. Для этого пути подтверждены следующие активные точки:
 
-Таким образом, текущий аудит выявляет **конкретный риск и места его проверки**, но не подменяет эмпирический L2/L3 test каждого production primitive.
+| Файл и строки | Операция | Классификация |
+|---|---|---|
+| `peter_weyl_covariant_composition_gate.py:48-54` | `add(dst,src,scale,tol)` порогует после каждого добавленного вклада и удаляет ключ, если промежуточная сумма опустилась ниже `TOL=1e-11` | State-dependent и order-dependent |
+| `peter_weyl_covariant_composition_gate.py:99-110` | `inverse_complete` вызывает `CK.project_branch_complete_charges`, затем складывает результат через `add` | Ветвевые state-amplitude losses плюс incremental pruning |
+| `peter_weyl_covariant_composition_gate.py:113-120` | `close_complete` вызывает `CV.project_covariant_branches([hb], source_v)`, затем `add` | Branch-amplitude pruning плюс incremental pruning |
+| `peter_weyl_covariant_composition_gate.py:142-157` | `C_volume_component` складывает прямую и (hVh^{-1}) части через тот же `add` | State-dependent, order-dependent |
+| `peter_weyl_covariant_K_leg_gate.py:53-60` | `add_state` с `tol=1e-11` | State-dependent, order-dependent |
+| `peter_weyl_covariant_K_leg_gate.py:89-134` | `project_branch_complete_charges`: (val=amp\cdot\prod c), порог до и после сборки output | State-dependent branch pruning |
+| `peter_weyl_covariant_K_leg_gate.py:168-185` | `apply_volume_complete_state`: fixed (V_{row,index}) mask (10^{-13}), затем финальный state-amplitude filter (10^{-11}) | Первый порог — fixed matrix sparsification; финальный — nonlinear state threshold |
+| `peter_weyl_covariant_K_leg_gate.py:207-221` | `apply_HE_complete_key` суммирует completed branches через `add_state` | Активный путь построения basis column с промежуточным pruning |
+| `peter_weyl_covariant_K_composition_gate.py:43-51` | `apply_HE_complete_state_custom` масштабирует cached basis-column contribution коэффициентом `amp` и сразу передаёт в `COMP.add` | Прямое доказательство state-dependent pruning при накоплении произвольной суперпозиции |
+| `peter_weyl_covariant_K_composition_gate.py:54-64,75-99` | Коммутатор (K=[V,H_E]), (C_e(K)) и их суммы используют те же thresholded helpers | Активный K-leg production path |
+| `peter_weyl_covariant_volume_leg_gate.py:98-145` | `project_covariant_branches` вычисляет (amp\cdot\prod c) и фильтрует ветви; вызывается активным `COMP.close_complete` | State-dependent branch pruning |
+
+Особенно критична связка строк `K_composition_gate.py:43-50`: для произвольного входа `state` каждая basis column умножается на фактический коэффициент `amp`, после чего накопитель с порогом решает, сохранить или удалить сумму. Это не эквивалентно умножению входного вектора на заранее зафиксированную матрицу.
+
+### 4.3.2. Смежные/legacy функции, не подтверждённые как часть V10 KKV route
+
+В `k5_peter_weyl_safe_hda_column.py` найдены `add_dict` (191-195), `apply_primitive_oriented` (231+), `apply_T_cached_state` (277-282) и `prune_state` (292-293). Однако прямой поиск вызовов в активных V10 modules не обнаружил обращений к `PW.add_dict`, `PW.apply_primitive_oriented`, `PW.apply_T_cached_state` или `PW.prune_state`. Модуль `k5_peter_weyl_safe_hda_column.py` действительно предоставляет базовые геометрические функции, используемые текущим путём (например, `apply_path_branch`), но перечисленные legacy helpers нельзя записывать в список доказанных V10 pruning hotspots без отдельного caller path. Они остаются отдельной задачей аудита других HDA execution routes.
+
+Аналогично, `apply_HE_complete_state` в `peter_weyl_covariant_K_leg_gate.py:230-236` имеет финальный amplitude filter, но текущий V10 K-composition path использует `apply_HE_complete_key` через `apply_HE_complete_state_custom`; поэтому этот wrapper не следует автоматически считать активным V10 вызовом.
+
+Важная оговорка для column builders: порог, применённый только при построении фиксированной basis column, сам по себе не доказывает нелинейность уже зафиксированного столбца. Но active `apply_HE_complete_state_custom` порогует уже сумму basis-column contributions, умноженных на произвольные input coefficients; следовательно, риск для полной production map реален и должен быть измерен L2/L3 тестами.
+
+Таким образом, аудит теперь отделяет **подтверждённые активные V10 точки**, **fixed matrix masks**, **смежные legacy функции** и **необходимые эмпирические проверки**. Он не подменяет L2/L3 test каждого production primitive.
 
 ## 5. Новые acceptance gates: L1 / L2 / L3
 
