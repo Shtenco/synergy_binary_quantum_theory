@@ -172,14 +172,44 @@ def volume123_raw_operator(s1,s2,s3):
             Q += e*np.kron(np.kron(mats[0][a],mats[1][b]),mats[2][c])
     return Q
 
+def stable_complex_frobenius_norm(matrix):
+    """Overflow-resistant Frobenius norm for a finite complex array."""
+    values = np.asarray(matrix, dtype=np.complex128).ravel()
+    if not (np.all(np.isfinite(values.real)) and np.all(np.isfinite(values.imag))):
+        raise FloatingPointError("non-finite component in volume diagnostic")
+    scale = 0.0
+    ssq = 1.0
+    for value in values:
+        for component in (abs(float(value.real)), abs(float(value.imag))):
+            if component == 0.0:
+                continue
+            if scale < component:
+                ssq = 1.0 + ssq * (scale / component) ** 2
+                scale = component
+            else:
+                ssq += (component / scale) ** 2
+    return 0.0 if scale == 0.0 else scale * math.sqrt(ssq)
+
+
 @functools.lru_cache(None)
 def volume123_matrix(s1,s2,s3):
     Q=volume123_raw_operator(s1,s2,s3)
-    qnorm=float(np.linalg.norm(Q))
-    defect=float(np.linalg.norm(Q-Q.conj().T)/max(qnorm,np.finfo(float).tiny))
+    if not (np.all(np.isfinite(Q.real)) and np.all(np.isfinite(Q.imag))):
+        raise FloatingPointError(f"non-finite raw volume operator for {(s1,s2,s3)}")
+    antihermitian = Q-Q.conj().T
+    if not (np.all(np.isfinite(antihermitian.real)) and np.all(np.isfinite(antihermitian.imag))):
+        raise FloatingPointError(f"non-finite raw volume defect for {(s1,s2,s3)}")
+    qnorm=stable_complex_frobenius_norm(Q)
+    defect_norm=stable_complex_frobenius_norm(antihermitian)
+    if not (math.isfinite(qnorm) and math.isfinite(defect_norm)):
+        raise FloatingPointError(f"unrepresentable raw volume norm for {(s1,s2,s3)}")
+    defect=(defect_norm/qnorm) if qnorm>0.0 else (0.0 if defect_norm==0.0 else float("inf"))
     VOLUME_RAW_DEFECTS[(s1,s2,s3)]={"relative_antihermitian_defect":defect,"raw_norm":qnorm}
-    Q=(Q+Q.conj().T)/2
-    ev,U=np.linalg.eigh(Q)
+    # Half each operand before addition to avoid avoidable overflow.
+    Qh=0.5*Q+0.5*Q.conj().T
+    ev,U=np.linalg.eigh(Qh)
+    if not np.all(np.isfinite(ev)):
+        raise FloatingPointError(f"non-finite Hermitian volume spectrum for {(s1,s2,s3)}")
     return (U*np.sqrt(np.abs(ev)))@U.conj().T
 
 def apply_volume_tensor(T,spins_local):
