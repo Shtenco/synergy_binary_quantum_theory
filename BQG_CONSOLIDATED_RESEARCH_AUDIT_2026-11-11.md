@@ -315,7 +315,7 @@ Let (P_S) project onto the finite shell and (Q_S=I-P_S). Define
 [
 C_v=P_SH_vP_S,\qquad L_v=Q_SH_vP_S.
 ]
-If (H_v) is self-adjoint on the relevant full Hilbert space and the inside/outside basis decomposition is orthogonal, then the exact pullback identity is
+If the inside/outside decomposition is orthogonal in the actual Hilbert-space inner product and the full action (H_v P_S) is represented without truncation, then the exact pullback identity is
 [
 P_SH_v^\dagger H_vP_S
 =C_v^\dagger C_v+L_v^\dagger L_v.
@@ -332,7 +332,7 @@ Consequently,
 ]
 The compressed-only master can have spurious zero modes because it omits positive semidefinite leakage contributions.
 
-This identity is conditional: first verify that each implemented (H_v) is genuinely self-adjoint in the actual basis/inner product and that graph-changing outputs are represented in a common orthonormal (or correctly weighted) Hilbert basis. If pruning/truncation changes the action, include a certified residual or explicitly label the result approximate.
+**Important precision:** the leakage identity itself does not require (H_v) to be self-adjoint. It follows from the orthogonal decomposition (H_v P_S=P_S H_v P_S+(I-P_S)H_v P_S), and is an identity for (P_S H_v^dagger H_v P_S). Self-adjointness remains a separate requirement if the intended constraint is specifically a symmetric/Hermitian Hamiltonian. The identity does require the correct Hilbert inner product (orthogonal projection, or the corresponding Gram-weighted formulation), complete representation of graph-changing outputs, and no unaccounted pruning/truncation.
 
 ### Required implementation correction
 
