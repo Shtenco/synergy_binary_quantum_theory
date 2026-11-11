@@ -178,6 +178,80 @@ def direct_svd_from_columns(columns, dim, singular_rtol=1e-10, block_rows=4096):
 
 
 
+def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
+    """Bound the weighted master spectrum using a strictly positive node metric.
+
+    For C the direct-sum constraint map and M_G=C^dagger(G tensor I)C,
+    lambda_min(G)*sigma_i(C)^2 <= lambda_i(M_G)
+    <= lambda_max(G)*sigma_i(C)^2 (descending eigenvalue order).
+    The result is a finite-matrix inequality; it is not an upstream error bound.
+    """
+    if not isinstance(hermitian_rtol, (int, float, np.integer, np.floating)) or isinstance(
+            hermitian_rtol, (bool, np.bool_)) or not math.isfinite(float(hermitian_rtol)) or hermitian_rtol < 0:
+        raise ValueError("hermitian_rtol must be finite and nonnegative")
+    if direct.get("scale_separation_loss", True):
+        return {
+            "status": "INCONCLUSIVE_SCALE_SEPARATION",
+            "metric_min_eigenvalue": None,
+            "metric_max_eigenvalue": None,
+            "master_eigenvalue_lower_bounds": None,
+            "master_eigenvalue_upper_bounds": None,
+            "kernel_equivalence_applicable": None,
+            "interpretation": (
+                "The direct constraint-map spectrum may have lost modes; "
+                "no metric-weighted spectral bounds are reported."
+            ),
+        }
+    singular = np.asarray(direct.get("singular_values"), dtype=float)
+    if (singular.ndim != 1 or singular.size == 0
+            or not np.all(np.isfinite(singular)) or np.any(singular < 0.0)
+            or np.any(singular[:-1] < singular[1:])):
+        raise ValueError("direct singular values must be finite, nonnegative, nonempty, and descending")
+    G = np.asarray(metric, dtype=np.complex128)
+    if G.ndim != 2 or G.shape[0] != G.shape[1] or G.shape[0] == 0:
+        raise ValueError("metric must be a nonempty square matrix")
+    if not np.all(np.isfinite(G)):
+        raise ValueError("metric contains non-finite entries")
+    defect = float(np.linalg.norm(G - G.conj().T, ord="fro"))
+    scale = float(np.linalg.norm(G, ord="fro"))
+    relative_defect = defect / scale if scale > 0.0 else defect
+    if relative_defect > float(hermitian_rtol):
+        raise ValueError("metric is not Hermitian within hermitian_rtol")
+    G_h = 0.5 * G + 0.5 * G.conj().T
+    metric_eigenvalues = np.linalg.eigvalsh(G_h)
+    if not np.all(np.isfinite(metric_eigenvalues)):
+        raise FloatingPointError("metric eigensolver returned non-finite eigenvalues")
+    lambda_min = float(metric_eigenvalues[0])
+    lambda_max = float(metric_eigenvalues[-1])
+    if lambda_min <= 0.0:
+        raise ValueError("metric must be strictly positive definite")
+    with np.errstate(over="ignore", invalid="ignore"):
+        sigma_squared = singular * singular
+        lower = lambda_min * sigma_squared
+        upper = lambda_max * sigma_squared
+    if (not np.all(np.isfinite(sigma_squared))
+            or not np.all(np.isfinite(lower)) or not np.all(np.isfinite(upper))):
+        raise FloatingPointError("metric spectral bounds exceed float64 range")
+    return {
+        "status": "FINITE_SPD_METRIC_SPECTRAL_BOUNDS",
+        "metric_dimension": int(G.shape[0]),
+        "metric_min_eigenvalue": lambda_min,
+        "metric_max_eigenvalue": lambda_max,
+        "metric_condition_number_2": lambda_max / lambda_min,
+        "metric_hermiticity_relative_defect": relative_defect,
+        "constraint_singular_values_descending": singular.tolist(),
+        "master_eigenvalue_lower_bounds": lower.tolist(),
+        "master_eigenvalue_upper_bounds": upper.tolist(),
+        "kernel_equivalence_applicable": True,
+        "kernel_equivalence": "ker(C^dagger(G tensor I)C)=ker(C) for G strictly positive definite",
+        "inequality": "lambda_min(G)*sigma_i(C)^2 <= lambda_i(M_G) <= lambda_max(G)*sigma_i(C)^2",
+        "claim_boundary": (
+            "Exact finite-dimensional Loewner-order consequence for the represented "
+            "matrices; excludes errors in construction of C and G."
+        ),
+    }
+
+
 def kernel_projector_from_direct_svd(direct, dim):
     """Build a kernel projector only from a self-consistent full-V SVD record."""
     if not isinstance(dim, int) or isinstance(dim, bool) or dim <= 0:
