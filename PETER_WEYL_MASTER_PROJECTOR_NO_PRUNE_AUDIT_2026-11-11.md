@@ -967,3 +967,25 @@ behind main. Main remains `254f19fdab41d32b920bf454f987aa7c0fdba34d`;
 merge base remains `23669209c83fe0aa2741612e5b2b119562ee6d7d`. No merge
 was performed. Latest observed workflow runs remain queued with no
 conclusion; no CI PASS or local execution is claimed.
+
+
+## Follow-up: independent dense SVD oracle for adjacent-cutoff difference (2026-11-11)
+
+The existing common-row adjacent-cutoff regression now performs a second,
+independent assembly of the represented difference matrix. It constructs
+the explicit union of nonzero row labels, materializes the small dense
+matrix for the synthetic fixture, and compares the complete singular-value
+list against the streaming TSQR/SVD result. The TSQR comparison uses a
+one-row block size to exercise the streaming merge path rather than only a
+single dense block.
+
+This strengthens the test beyond checking one hand-computed operator norm:
+it checks the nonzero singular spectrum of a rectangular row-embedded
+difference. It remains a synthetic finite-dimensional regression; it does
+not execute the production Peter-Weyl column producer or certify upstream
+recoupling coefficients.
+
+The change modifies an existing test method, so the static method inventory
+is unchanged: 31 constraint-stability methods and 89 methods across the
+four focused suites. The updated test has not been executed in this
+environment. GitHub Actions remains queued; no CI PASS is claimed.
