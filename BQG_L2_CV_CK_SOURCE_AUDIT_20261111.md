@@ -2,9 +2,9 @@
 
 **Repository:** `Shtenco/synergy_binary_quantum_theory`  
 **Branch:** `research/lemaitre-bqg-causal-cone-20261110`  
-**Latest verified branch HEAD:** `64ba147757c70ccb4bfa4e24c20e1892c8090bbc`  
+**Branch HEAD at initial 01:33 source inspection:** `d8a4d1b47c59e122f13eb45d43017e186c42ca15`  
 **Compare base:** `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef`  
-**Compare:** 67 commits ahead, 0 behind.  
+**Compare at initial 01:33 inspection:** 47 commits ahead, 0 behind.  
 **Main:** untouched; no merge.
 
 This note records a fresh source-level inspection and a CI re-poll. It deliberately does not claim that the L2 suite executed.
