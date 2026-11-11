@@ -232,16 +232,28 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12):
     if (not np.all(np.isfinite(sigma_squared))
             or not np.all(np.isfinite(lower)) or not np.all(np.isfinite(upper))):
         raise FloatingPointError("metric spectral bounds exceed float64 range")
+    try:
+        metric_condition = lambda_max / lambda_min
+    except OverflowError:
+        metric_condition = float("inf")
+    condition_resolved = math.isfinite(metric_condition)
+    if not condition_resolved:
+        metric_condition = None
+    lower_bound_underflow = bool(np.any(
+        (sigma_squared > 0.0) & (lower == 0.0)
+    ))
     return {
         "status": "FINITE_SPD_METRIC_SPECTRAL_BOUNDS",
         "metric_dimension": int(G.shape[0]),
         "metric_min_eigenvalue": lambda_min,
         "metric_max_eigenvalue": lambda_max,
-        "metric_condition_number_2": lambda_max / lambda_min,
+        "metric_condition_number_2": metric_condition,
+        "metric_condition_number_resolved": condition_resolved,
         "metric_hermiticity_relative_defect": relative_defect,
         "constraint_singular_values_descending": singular.tolist(),
         "master_eigenvalue_lower_bounds": lower.tolist(),
         "master_eigenvalue_upper_bounds": upper.tolist(),
+        "lower_bound_underflow_detected": lower_bound_underflow,
         "kernel_equivalence_applicable": True,
         "kernel_equivalence": "ker(C^dagger(G tensor I)C)=ker(C) for G strictly positive definite",
         "inequality": "lambda_min(G)*sigma_i(C)^2 <= lambda_i(M_G) <= lambda_max(G)*sigma_i(C)^2",
