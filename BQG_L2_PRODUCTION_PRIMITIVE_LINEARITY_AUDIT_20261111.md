@@ -194,7 +194,7 @@ The new check was committed to the canonical test file and triggers the scoped L
 
 ## 11. Full covariant C(V) additivity on independent source states
 
-The L2 suite now reaches beyond the local volume primitive and cached complete (H_E) column extension to the full covariant composition `COMP.C_volume_component). The test constructs two distinct Gauss Peter–Weyl basis inputs (indices 0 and 16), maps each through `CV.gauss_to_covariant`, asserts distinct covariant source keys, and evaluates the same matrix component ((i,j)=(0,0)) on each input and on their sum.
+The L2 suite now reaches beyond the local volume primitive and cached complete (H_E) column extension to the full covariant composition `COMP.C_volume_component`. The test constructs two distinct Gauss Peter–Weyl basis inputs (indices 0 and 16), maps each through `CV.gauss_to_covariant`, asserts distinct covariant source keys, and evaluates the same matrix component ((i,j)=(0,0)) on each input and on their sum.
 
 Both individual (C(V)) responses are hard-required to be nonzero. The common input scale is (10^6), and the relative L2 additivity tolerance is (5\times10^{-12}). The map includes the direct volume term and the inverse-holonomy / volume / forward-holonomy composition, so this is an integration-level probe of the complete covariant leg rather than another local primitive test.
 
