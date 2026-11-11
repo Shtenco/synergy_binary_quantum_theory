@@ -38,6 +38,65 @@ def graph_signature(key):
     return tuple(K5.EDGES[i] for i, s2 in enumerate(spins) if s2 != 0)
 
 
+def required_spin_wall2(depth: int) -> int:
+    """Conservative doubled-spin wall for depth H generation plus one pullback H."""
+    if not isinstance(depth, int) or isinstance(depth, bool) or depth < 0:
+        raise ValueError("depth must be a nonnegative integer")
+    return 2 * depth + 3
+
+
+def validate_shell_basis_orthonormality(basis, tolerance=2e-12):
+    """Check every local recoupling sector actually used by the shell basis."""
+    if (isinstance(tolerance, (bool, np.bool_))
+            or not isinstance(tolerance, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(tolerance)) or tolerance < 0.0):
+        raise ValueError("basis orthonormality tolerance must be finite and nonnegative")
+    sectors = defaultdict(set)
+    for key in basis:
+        spins, Ks = key
+        if len(spins) != len(K5.EDGES) or len(Ks) != len(K5.VERT):
+            raise ValueError("malformed Peter-Weyl shell basis key")
+        for v in K5.VERT:
+            local = K5.local_spins(spins, v)
+            allowed = K5.allowed_k2_t(*local)
+            if Ks[v] not in allowed:
+                raise ValueError(
+                    f"recoupling label {Ks[v]} is not allowed at vertex {v}, spins={local}"
+                )
+            sectors[(v, local)].add(Ks[v])
+
+    max_defect = 0.0
+    checked_channels = 0
+    for (v, local), used_channels in sectors.items():
+        channels = sorted(used_channels)
+        tensors = [
+            K5.oriented_intertwiner(v, local, channel)
+            for channel in channels
+        ]
+        gram = np.asarray([
+            [np.vdot(left, right) for right in tensors]
+            for left in tensors
+        ], dtype=np.complex128)
+        defect = float(np.linalg.norm(gram - np.eye(len(channels)), ord="fro"))
+        relative = defect / max(1.0, math.sqrt(len(channels)))
+        if not math.isfinite(relative) or relative > tolerance:
+            raise ValueError(
+                f"non-orthonormal shell recoupling basis at vertex={v}, "
+                f"spins={local}, defect={relative}, tolerance={tolerance}"
+            )
+        max_defect = max(max_defect, relative)
+        checked_channels += len(channels)
+
+    return {
+        "passed": True,
+        "local_sectors_checked": len(sectors),
+        "used_local_channels_checked": checked_channels,
+        "maximum_relative_gram_defect": max_defect,
+        "tolerance": float(tolerance),
+        "scope": "all local spin/intertwiner sectors represented in the declared shell basis",
+    }
+
+
 def apply_H_to_key(key, v: int, jmax2: int, mode: str = "no_prune"):
     """Apply the production node constraint without adding a second prune layer."""
     if mode not in ("legacy", "no_prune"):
@@ -258,7 +317,14 @@ def graph_blocks(basis, P0):
 
 def run(depth: int = 1, jmax2: int = 5, mode: str = "no_prune",
         zero_rtol: float = 1e-10):
+    required_jmax2 = required_spin_wall2(depth)
+    if not isinstance(jmax2, int) or isinstance(jmax2, bool) or jmax2 < required_jmax2:
+        raise ValueError(
+            f"jmax2={jmax2!r} is below the complete depth-{depth} pullback wall "
+            f"jmax2>={required_jmax2}"
+        )
     initial, levels, basis = generate_shell(depth, jmax2, mode)
+    basis_metric = validate_shell_basis_orthonormality(basis)
     constraints, leakage_grams, leakage = compressed_constraints(basis, jmax2, mode)
     masters = master_matrices(constraints, leakage_grams)
     full_spec = projector_from_master(masters["full"], zero_rtol)
@@ -298,6 +364,7 @@ def run(depth: int = 1, jmax2: int = 5, mode: str = "no_prune",
     )
     structural_ok = bool(
         finite_ok and herm_ok and decomposition_ok and leakage_psd_ok
+        and basis_metric["passed"]
         and full_spec["psd_pass"] and projected_spec["psd_pass"]
     )
 
@@ -305,6 +372,8 @@ def run(depth: int = 1, jmax2: int = 5, mode: str = "no_prune",
         "status": "K5 Peter-Weyl graph-sector full-pullback master-shell diagnostic",
         "depth": depth,
         "Jmax": jmax2 / 2,
+        "required_complete_pullback_jmax2": required_jmax2,
+        "shell_basis_orthonormality": basis_metric,
         "pruning_mode": mode,
         "basis_dimension": len(basis),
         "level_sizes": [len(level) for level in levels],
