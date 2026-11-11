@@ -200,6 +200,13 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertFalse(
             pilot.volume_raw_hermiticity_diagnostics(bad, rtol=1e-10)["passed"]
         )
+        nonfinite = {(1, 1, 1): {
+            "relative_antihermitian_defect": float("nan"), "raw_norm": 2.0
+        }}
+        result = pilot.volume_raw_hermiticity_diagnostics(nonfinite, rtol=1e-10)
+        self.assertFalse(result["passed"])
+        self.assertIsNone(result["records"][0]["relative_antihermitian_defect"])
+        self.assertIsNone(result["max_relative_defect"])
 
     def test_absolute_annihilation_wrapper_keeps_zero_vector_compatibility(self):
         columns = {(0, 0): {"x": 1.0 + 0j}}
