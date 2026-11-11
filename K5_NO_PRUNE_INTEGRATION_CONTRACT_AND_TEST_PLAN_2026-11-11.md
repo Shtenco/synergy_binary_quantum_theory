@@ -464,3 +464,14 @@ After the constituent T gate, independently materialize the signed 12-spec sum f
 5. complete leakage Gram `Σ_v L_v†L_v), including off-diagonal interference and the correct graph-changing inner product.
 
 No-prune completion remains a computation status, not a physical acceptance result. Preserve the legacy path and never use fallback to legacy to conceal a resource limit.
+
+
+## 33. First 2×2 coherent production T/T† block gate
+
+Added `test_full_32_term_T_two_by_two_matrix_block_matches_reverse` in commit `3bb5e42bc946791ae96ecc6f57d041a4c1fd7554`; the follow-up commit `92ab5397876aabfbe509b179d8efaa56ec64ad59` prints its leakage ledger into CI logs. The test uses two distinct input recoupling basis kets, all 32 signed T monomials, coherent no-prune accumulation, two deterministic output rows, and independently accumulated reverse columns. It compares the resulting 2×2 block to the conjugate transpose of the forward block.
+
+The gate also reports forward amplitudes outside the selected output rows and reverse amplitudes outside the selected input kets (support count, L2 norm, max absolute value). These are projected-subspace leakage metrics, **not** finite-spin-wall clipping metrics. It deliberately does not require these values to vanish: the selected 2D subspaces are not claimed invariant.
+
+The primitive/orientation script now has 6 methods and the six workflow scripts have **43 methods by source inspection**. The existing workflow already invokes this script. The source was fetched back from GitHub and inspected. A local test execution could not be started because the container could not resolve github.com; Actions run discovery for the push commit returned no run, so execution/CI PASS is unconfirmed.
+
+**Interpretation:** this is the first multi-input/multi-output projected block test for the full coherent T sum. It is stronger than the earlier single-element test, but still not a full matrix-wide finite-sector adjoint certificate. Next gates: observe runtime and numerical output; expand to complete declared finite domain/codomain matrices with wall clipping accounting; then test the assembled signed 12-spec H_v.
