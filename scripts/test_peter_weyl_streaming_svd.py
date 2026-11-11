@@ -91,8 +91,7 @@ class StreamingSVDTests(unittest.TestCase):
 
     def test_warns_on_nonzero_sub_ulp_component_even_without_underflow(self):
         matrix = np.array([[1.0, 0.0], [0.0, 1e-20]])
-        result = tsqr.streaming_svd([matrix], 2)
-        self.assertFalse(np.any(matrix == 0.0) is False)
+        result = tsqr.streaming_svd([matrix], 2, rank_rtol=1e-25)
         self.assertTrue(result.scale_separation_loss)
         self.assertEqual(result.rank, 2)
 
