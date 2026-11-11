@@ -147,3 +147,24 @@ A red suite caused by an expected threshold-boundary characterization is not equ
 ### 8.4 Scientific boundary
 
 No production operator or test was changed in this re-audit. No local execution was performed. The active C(V) test still covers only one matrix component, and no C(K) additivity or L3 matrix-reconstruction result exists. The next mathematical gate remains the actual execution/diagnosis of the current C(V) fixture; the next software gate is to restore CI observability before expanding claims. `main` remains untouched.
+
+
+### 8.5 Branch-wide Actions queue diagnosis
+
+A full branch-scoped Actions inventory (`per_page=100`, API reported `total_count=72`) shows the blockage is not isolated to L1/L2:
+
+| Workflow family | Queued | Cancelled | Success |
+|---|---:|---:|---:|
+| Production linearity L2 | 10 | 0 | 0 |
+| Production linearity L1 | 2 | 0 | 0 |
+| W5 adjoint closure cutoff study | 7 | 0 | 0 |
+| W5 Lorentzian adapter tests | 25 | 5 | 0 |
+| V11 W5 common carrier pilot | 10 | 12 | 0 |
+| LeMaitre-BQG causal-cone reference gate | 0 | 0 | 1 |
+| **Total** | **54** | **17** | **1** |
+
+The sole successful run in this branch inventory is the finite causal-cone reference gate, run `42879669156`; its success must not be generalized to L1/L2 or the W5 operator workflows. The distribution of queued jobs across five distinct workflow families is evidence of a branch-wide Actions execution backlog or availability issue. It is not enough to identify the root cause: runner availability, repository/account concurrency, billing/quota, and GitHub service state have not been independently distinguished.
+
+Operational consequence: avoid generating further duplicate push-triggered runs while this queue remains saturated. The L2 workflow is already configured for scoped pushes and manual dispatch, but no manual dispatch action has been invoked. Preserve the existing run inventory and resume diagnosis when queued jobs begin transitioning to `in_progress` or `completed`.
+
+This finding is infrastructure triage only. It changes no scientific evidence classification and does not make any queued test a pass or failure.
