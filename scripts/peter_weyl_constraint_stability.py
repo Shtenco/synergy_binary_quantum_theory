@@ -243,8 +243,15 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expect
         raise FloatingPointError("metric eigensolver returned non-finite eigenvalues")
     lambda_min = float(metric_eigenvalues[0])
     lambda_max = float(metric_eigenvalues[-1])
-    if lambda_min <= 0.0:
-        raise ValueError("metric must be strictly positive definite")
+    metric_spectral_scale = float(np.max(np.abs(metric_eigenvalues)))
+    metric_spd_resolution_threshold = (
+        100.0 * np.finfo(float).eps * max(1, G.shape[0]) * metric_spectral_scale
+    )
+    if (not math.isfinite(metric_spd_resolution_threshold)
+            or lambda_min <= metric_spd_resolution_threshold):
+        raise ValueError(
+            "metric must be strictly positive definite with a numerically resolved positive gap"
+        )
     with np.errstate(over="ignore", invalid="ignore"):
         sigma_squared = singular * singular
         lower = lambda_min * sigma_squared
@@ -276,6 +283,12 @@ def positive_metric_spectral_bounds(direct, metric, hermitian_rtol=1e-12, expect
         "metric_dimension": int(G.shape[0]),
         "metric_min_eigenvalue": lambda_min,
         "metric_max_eigenvalue": lambda_max,
+        "metric_spd_resolution_threshold": metric_spd_resolution_threshold,
+        "metric_positive_gap_over_resolution_threshold": (
+            lambda_min / metric_spd_resolution_threshold
+            if metric_spd_resolution_threshold > 0.0 else None
+        ),
+        "metric_positive_definite_numerically_resolved": True,
         "metric_condition_number_2": metric_condition,
         "metric_condition_number_resolved": condition_resolved,
         "metric_hermiticity_relative_defect": relative_defect,
