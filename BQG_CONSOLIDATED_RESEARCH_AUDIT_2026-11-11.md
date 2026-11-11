@@ -607,3 +607,18 @@ Q_\pi=\operatorname{sgn}(\pi)U_\pi Q U_\pi^\dagger.
 The parity factor is essential: the volume triple product uses the alternating (epsilon_{abc}) tensor. This test can detect an axis-order or orientation-sign defect even when the raw matrix remains Hermitian and the derived (sqrt{|Q|}) remains positive.
 
 The production raw-volume script now has four methods: raw Hermiticity, derived volume Hermiticity/PSD, raw-defect ledger integrity, and all-leg permutation covariance. Combined with the local recoupling orthonormality prerequisite, the committed inventory is now **36 test methods across six scripts**. The existing workflow already invokes both expanded test files; no new workflow command was required. Execution and CI remain unconfirmed.
+
+
+## 18. Derived-volume spectral permutation covariance — 2026-11-11
+
+Extended `scripts/test_k5_volume_raw_operator.py` with a direct production-level test of the derived volume matrix
+\[
+V(Q)=\sqrt{|Q|}.
+\]
+For the mixed-spin sector `(1,2,2)`, the test constructs the six explicit tensor-factor permutation unitaries and checks
+\[
+V(Q_\pi)=U_\pi V(Q)U_\pi^\dagger.
+\]
+This is distinct from the raw alternating-tensor test: odd permutations reverse the sign of (Q), while the absolute-value spectral map must remove that sign and remain covariant. The test therefore exercises the production eigendecomposition/reconstruction, not merely the raw Kronecker assembly.
+
+The volume test file now contains **5 methods**. Across the six workflow-invoked scripts, the committed source inventory is **37 test methods**. The workflow already invokes this file, so no workflow edit was needed. Source was committed and fetched through GitHub; test execution and CI PASS remain unconfirmed. This is a finite mixed-spin covariance check, not a proof of the full oriented four-valent volume operator or its physical interpretation.
