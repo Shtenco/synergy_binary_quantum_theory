@@ -168,3 +168,19 @@ Workflow:
 The four jobs are still waiting in GitHub Actions. There is no test PASS/FAIL evidence yet. The latest branch HEAD after duplicate cleanup is `37dec6c0f5f282c7d893f9b45b8c427b7030e121`; it is exactly the branch tip and is 14 commits ahead of the prior checkpoint `eb72a1ab...`, with no commits behind. The two L2 runs were triggered by earlier commits on the same branch and are not proof about the final tip. `main` remains untouched.
 
 Next gate: obtain the L2 logs, verify that the three fixture-reachability tests execute (not skip), verify all three safe-domain homogeneity tests pass, and verify the three expected failures fail for the intended threshold-boundary reason. If an expectedFailure unexpectedly succeeds, remove that marker and promote it to a hard acceptance test. Do not treat a green overall unittest result as proof of production linearity while expected failures remain.
+
+
+## 11. L2 fixture hardening — 11 November 2026, 01:07 UTC
+
+A test-quality weakness was identified in the canonical L2 suite: its generic map helpers used `skipTest` when the selected reference output was empty. A suite with an empty physical fixture could therefore show skips rather than a decisive fixture failure. To prevent a vacuous green result, three ordinary hard tests were added to require nonempty output from:
+- `CK.apply_volume_complete_state`;
+- `CK.apply_HE_complete_state`;
+- `KCOMP.apply_HE_complete_state_custom`.
+
+The existing safe-domain and threshold-boundary tests remain unchanged. Thus the suite now has three explicit fixture-reachability checks, three hard safe-domain homogeneity checks, and three expected-failure threshold-boundary characterizations. A skip in an individual characterization can no longer conceal that the same frozen input has no production response, because the independent fixture test for that map must fail.
+
+**Commit:** `750978aade52455db8cf680ee364a4e36493f098` — require nonzero L2 production fixtures.
+
+**New L2 run:** `42936480504`, HEAD `750978aade52455db8cf680ee364a4e36493f098`, job `130247689781`: queued, no artifacts. Earlier L2 runs `42935840345` and `42935968925` remain queued without artifacts. Both L1 runs `42929934053` and `42930769907` remain queued without artifacts.
+
+**Current branch tip before this checkpoint update:** `750978aade52455db8cf680ee364a4e36493f098`. `main` remains untouched. No L1/L2 test result is yet available; do not report PASS, FAIL, or a physical conclusion.
