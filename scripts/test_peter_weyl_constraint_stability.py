@@ -428,7 +428,6 @@ class ConstraintStabilityTests(unittest.TestCase):
             direct, np.array([[3.0]]), expected_metric_dim=1
         )
         self.assertEqual(len(bounds["master_eigenvalue_lower_bounds"]), 3)
-        weighted = np.array([[2.0]]) .conj().T @ np.array([[3.0]]) @ np.array([[2.0]])
         self.assertAlmostEqual(bounds["master_eigenvalue_lower_bounds"][0], 12.0)
         self.assertAlmostEqual(bounds["master_eigenvalue_upper_bounds"][0], 12.0)
         self.assertEqual(bounds["master_eigenvalue_lower_bounds"][1:], [0.0, 0.0])
