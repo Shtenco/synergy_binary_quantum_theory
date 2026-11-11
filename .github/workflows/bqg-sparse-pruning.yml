@@ -7,6 +7,9 @@ on:
     paths:
       - "scripts/bqg_sparse_pruning.py"
       - "scripts/test_bqg_sparse_pruning.py"
+      - "scripts/bqg_sparse_leakage_gram.py"
+      - "scripts/bqg_k5_graph_sector_master_shell.py"
+      - "scripts/test_bqg_k5_graph_sector_master_shell.py"
       - "scripts/k5_peter_weyl_safe_hda_column.py"
       - "scripts/test_k5_sparse_policy_wiring.py"
       - "scripts/test_bqg_sparse_dense_oracle.py"
@@ -26,6 +29,9 @@ on:
     paths:
       - "scripts/bqg_sparse_pruning.py"
       - "scripts/test_bqg_sparse_pruning.py"
+      - "scripts/bqg_sparse_leakage_gram.py"
+      - "scripts/bqg_k5_graph_sector_master_shell.py"
+      - "scripts/test_bqg_k5_graph_sector_master_shell.py"
       - "scripts/k5_peter_weyl_safe_hda_column.py"
       - "scripts/test_k5_sparse_policy_wiring.py"
       - "scripts/test_bqg_sparse_dense_oracle.py"
@@ -61,6 +67,8 @@ jobs:
         run: python -m pip install --disable-pip-version-check numpy sympy
       - name: Run committed sparse-pruning regression tests
         run: python scripts/test_bqg_sparse_pruning.py
+      - name: Run K5 full-pullback shell and coherent leakage-Gram dense oracles
+        run: python scripts/test_bqg_k5_graph_sector_master_shell.py
       - name: Run K5 policy wiring tests
         run: python scripts/test_k5_sparse_policy_wiring.py
       - name: Run independent synthetic dense-oracle and adjoint tests
