@@ -223,7 +223,7 @@ def constraint_annihilation_metrics(columns, coeff: np.ndarray, nodes):
 def constraint_annihilation_norm(columns, coeff: np.ndarray, nodes) -> float:
     """Backward-compatible absolute residual wrapper with stable norming."""
     coeff = np.asarray(coeff, dtype=np.complex128)
-    if coeff.ndim == 1 and coeff.size and np.all(coeff == 0j):
+    if coeff.ndim == 1 and (coeff.size == 0 or np.all(coeff == 0j)):
         return 0.0
     return constraint_annihilation_metrics(columns, coeff, nodes)["max_absolute_residual"]
 
@@ -247,7 +247,8 @@ def volume_raw_hermiticity_diagnostics(registry=None, rtol=1e-10):
             "raw_norm": raw_norm if norm_finite else None,
         }
         records.append(record)
-        if (not defect_finite or not norm_finite or defect > rtol):
+        if (not defect_finite or not norm_finite or defect < 0.0
+                or raw_norm < 0.0 or defect > rtol):
             failures.append(record)
     passed = bool(records) and not failures
     finite_defects = [
