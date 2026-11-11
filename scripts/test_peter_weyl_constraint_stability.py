@@ -174,5 +174,55 @@ class ConstraintStabilityTests(unittest.TestCase):
         self.assertIsNone(result["max_principal_angle_sine"])
 
 
+    def test_singular_threshold_sweep_detects_rank_plateaus_and_transitions(self):
+        columns = {
+            0: {(0, "r0"): 1.0},
+            1: {(1, "r1"): 1e-6},
+            2: {(2, "r2"): 1e-12},
+        }
+        direct = stability.direct_svd_from_columns(columns, 3)
+        sweep = stability.singular_threshold_sweep(
+            direct, 3, [1e-13, 1e-9, 1e-5]
+        )
+        self.assertEqual(
+            [row["rank"] for row in sweep["threshold_results"]],
+            [3, 2, 1],
+        )
+        self.assertEqual(
+            [row["nullity"] for row in sweep["threshold_results"]],
+            [0, 1, 2],
+        )
+        self.assertEqual(
+            [row["rank"] for row in sweep["rank_plateaus_on_declared_grid"]],
+            [3, 2, 1],
+        )
+
+    def test_singular_threshold_sweep_rejects_unsorted_or_invalid_grid(self):
+        direct = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 1.0}, 1: {(1, "s"): 1e-5}}, 2
+        )
+        with self.assertRaisesRegex(ValueError, "strictly increasing"):
+            stability.singular_threshold_sweep(direct, 2, [1e-5, 1e-8])
+        with self.assertRaisesRegex(ValueError, "finite"):
+            stability.singular_threshold_sweep(direct, 2, [float("nan")])
+
+    def test_threshold_sweep_comparison_reports_projector_distance(self):
+        left = stability.direct_svd_from_columns(
+            {0: {(0, "r"): 0.0}, 1: {(0, "r"): 1.0}}, 2
+        )
+        right = stability.direct_svd_from_columns(
+            {0: {(0, "r"): np.sin(0.1)},
+             1: {(0, "r"): -np.cos(0.1)}}, 2
+        )
+        result = stability.compare_threshold_sweeps(
+            left, right, 2, [1e-12, 1e-8]
+        )
+        self.assertEqual(len(result["comparisons"]), 2)
+        self.assertTrue(all(row["same_nullity"] for row in result["comparisons"]))
+        self.assertAlmostEqual(
+            result["comparisons"][0]["max_principal_angle_sine"],
+            abs(np.sin(0.1)), places=12
+        )
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
