@@ -480,3 +480,59 @@ kernel-geometry commits are also queued. No full 32-state production
 legacy/no-prune comparison has been executed. No exact operator rank,
 physical-kernel equivalence, continuum limit, or physical prediction is
 established by these changes.
+
+## Follow-up: independent SVD oracle and dimension-aware spectral ledger (2026-11-11 14:24 UTC)
+
+The production K5 volume regression suite now contains a second, independent
+construction of the absolute Hermitian operator. For each declared small-spin
+case it forms Q_H, computes an SVD
+
+\[
+Q_H=U\Sigma W^\dagger,
+\]
+
+and constructs
+
+\[
+|Q_H|_{\rm SVD}=U\Sigma U^\dagger,
+\qquad
+V_{\rm SVD}=U\sqrt{\Sigma}U^\dagger.
+\]
+
+For Hermitian Q_H, this is the positive square root of Q_H^dagger Q_H and
+therefore independently checks both V^2=|Q_H| and V itself against the
+producer's Hermitian-eigendecomposition path. The test also exercises the
+all-zero (0,0,0) spin triple and requires a finite, zero-valued raw-volume
+ledger entry.
+
+The master-projector audit now cross-checks the recorded scalar sensitivity
+against 1/(2 sqrt(lambda_min_resolved)), checks the normalized spectral gap
+against lambda_min_resolved / spectral_scale, verifies the reported threshold,
+and constrains the numerical nullity by the exact tensor-product dimension
+(s1+1)(s2+1)(s3+1). The zero-spectrum case must report the full matrix
+dimension as numerical nullity. Boolean values are rejected where integer
+spin indices or coverage limits are expected, preventing Python's bool-is-int
+subclassing from admitting malformed metadata.
+
+### Updated focused test inventory (static source count)
+
+- master-projector integrity: 31 test methods;
+- legacy/no-prune constraint stability: 16 test methods;
+- streaming TSQR/direct-SVD: 13 test methods;
+- production K5 raw-volume operator: 14 test methods;
+- total across these four focused suites: **74 test methods**.
+
+These counts were obtained by source inspection. The tests have been added to
+the branch; they have not been executed in this environment. The current
+commit has no reported combined-status entries and no associated workflow
+runs in the connector response. No CI PASS is claimed.
+
+### Branch state
+
+The latest confirmed commit at this update is
+370f36562a078583fe48261ed65f3feb2157fa2d. The research branch is 304
+commits ahead of main and two commits behind it, with merge base
+23669209c83fe0aa2741612e5b2b119562ee6d7d. Main remains unchanged and no
+merge was performed. The full 32-state production legacy/no-prune run and
+the low-domain pilot execution remain unperformed; source changes alone do
+not establish a physical kernel or a continuum result.
