@@ -111,6 +111,17 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
                 direct += G[v, w] * (dense[v].conj().T @ dense[w])
         np.testing.assert_allclose(gram_master, direct, rtol=1e-13, atol=1e-13)
 
+    def test_spectral_classifier_rejects_nonfinite_tolerances(self):
+        with self.assertRaisesRegex(ValueError, "finite and nonnegative"):
+            pilot.classify_spectrum(
+                np.array([0.0, 1.0]), zero_threshold=float("nan"),
+                psd_tolerance=1e-9
+            )
+
+    def test_hermitian_diagnostics_rejects_nonfinite_matrix(self):
+        with self.assertRaisesRegex(ValueError, "non-finite"):
+            pilot.hermitian_diagnostics(np.array([[complex(float("nan"), 0.0)]]))
+
     def test_run_rejects_negative_tolerances(self):
         with self.assertRaisesRegex(ValueError, "nonnegative"):
             pilot.run(zero_rtol=-1.0)
