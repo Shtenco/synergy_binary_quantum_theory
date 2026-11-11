@@ -204,11 +204,16 @@ def volume_spectrum_resolution(eigenvalues):
     scale = float(np.max(np.abs(values))) if values.size else 0.0
     rtol = 100.0 * np.finfo(float).eps * max(1, values.size)
     threshold = rtol * scale
-    resolved = np.abs(values) > threshold
+    # Classify in normalized units: rtol*scale can underflow for subnormal
+    # spectra even though the relative spectral information is still present.
+    normalized_abs = (
+        np.zeros_like(values) if scale == 0.0 else np.abs(values) / scale
+    )
+    resolved = normalized_abs > rtol
     resolved_abs = np.abs(values[resolved])
     min_resolved = float(np.min(resolved_abs)) if resolved_abs.size else None
     normalized_gap = (
-        min_resolved / scale if min_resolved is not None and scale > 0.0 else None
+        float(np.min(normalized_abs[resolved])) if np.any(resolved) else None
     )
     derivative_bound = (
         0.5 / math.sqrt(min_resolved) if min_resolved is not None else None
