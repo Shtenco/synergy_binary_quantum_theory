@@ -210,7 +210,7 @@ C_P^\dagger C_P+L_P^\dagger L_P.
 
 The leakage Gram contains off-diagonal interference between different input columns that reach the same outside basis state. Replacing it by separate column norms or a diagonal leakage penalty changes the operator.
 
-The new bqg_sparse_leakage_gram.py prototype implements the coherent finite identity for complete supplied columns. It is not yet wired to the K5 producer or covered by the sparse-pruning workflow. Its accumulation also needs scaled-overflow protection before it can be treated as a production numerical primitive.
+The bqg_sparse_leakage_gram.py helper is now wired through the downstream bqg_k5_graph_sector_master_shell.py wrapper. For each node, the wrapper obtains complete no-prune K5 output columns, partitions them into shell action C_v and outside-shell leakage, and assembles the coherent G_v^leak=L_v^dagger L_v. The sparse-pruning workflow now includes the wrapper and a seven-method synthetic dense-oracle test file. This is a real integration step, but the tests patch the production action with synthetic columns; no full production shell calculation has been execution-confirmed. The helper and wrapper still need scaled-overflow protection and a checked orthonormal-basis precondition.
 
 ## 6. Direct singular values, rank, and error certification
 
@@ -383,7 +383,7 @@ The existence, path independence, normalization and physical interpretation of t
 | K5 volume | Raw-defect diagnostics, finite permutation covariance, independent finite SVD/eigenspectral oracles | Operator-norm propagation through \(\sqrt{|Q|}\); full-domain error bound |
 | K5 node constraints | Selected finite primitive and projected adjointness tests | Full same-domain quantum self-adjointness and HDA closure |
 | Sparse pruning | Deterministic coherent aggregation helper; legacy/no-prune modes | Production-wide stage ledger and certified accumulated error |
-| Leakage | Correct finite coherent Gram identity and prototype | Production wiring, overflow-safe accumulation, dedicated workflow tests |
+| Leakage | Coherent Gram integrated through graph-shell wrapper; seven synthetic dense-oracle tests wired into workflow | Production-shell execution, overflow-safe accumulation, verified orthonormal basis and cutoff completeness |
 | Master constraint | Exact \(G\succ0\) kernel theorem and Loewner bounds | Physical projector/rigging map on refined carrier |
 | Direct spectrum | TSQR/direct-SVD and dense synthetic oracles | Upstream operator-construction error certificate |
 | Actual 32D carrier | Strong finite numerical empty-kernel evidence | General no-go for enlarged/refined spaces |
@@ -394,3 +394,43 @@ The existence, path independence, normalization and physical interpretation of t
 | Continuum/experiment | Explicit target and dependency map | Joint regulator limit, calibrated observables and experimental confirmation |
 
 **Scientific rule:** no finite numerical gate, successful workflow, representation identity, or conditional EFT theorem may be promoted into a claim of complete physical BQG closure without the missing maps and limits above.
+
+
+## 12. Graph-shell integration, cutoff completeness, and numerical hardening
+
+The later graph-shell wrapper now computes the complete finite pullback for each node from the supplied K5 columns:
+
+\[
+M_{\mathrm{projected}}=\sum_v C_v^\dagger C_v,
+\qquad
+M_{\mathrm{leak}}=\sum_v L_v^\dagger L_v,
+\qquad
+M_{\mathrm{full}}=M_{\mathrm{projected}}+M_{\mathrm{leak}}.
+\]
+
+The wrapper is included in the sparse-pruning workflow and has seven synthetic tests. Those tests establish the wrapper's algebra on controlled columns; they do not yet execute the production K5 action over a generated shell.
+
+### Spin-wall requirement
+
+The exhaustive current T-monomial combinatorics gives edge-hit multiplicities \((1,1,1,2)\). Therefore one node-H action can raise a doubled edge spin by at most 2. The graph shell starts from all-link doubled spin 1. A depth-\(d\) shell generation performs \(d\) H actions, and the pullback master then applies one additional H to every shell basis vector. A conservative complete wall is therefore
+
+\[
+J_{\max}^{(2)}\ge 1+2(d+1)=2d+3.
+\]
+
+The current graph-shell run accepts depth and jmax2 independently and does not enforce this relation. The default depth 1 / jmax2 5 meets the bound. A depth 2 run with jmax2 5 does not; it can silently omit reachable intermediate paths and therefore cannot be called a full pullback. Add a fail-closed validation or a derived wall before accepting non-default depths.
+
+### Basis metric prerequisite
+
+The leakage identity assumes that the shell keys are an orthonormal basis, or that the corresponding basis Gram is explicitly included. The graph-shell wrapper currently describes its result as relative to orthonormal Peter–Weyl keys but does not compute or assert the Gram matrix of every local recoupling sector appearing in its generated shell. Existing local orthonormality tests cover selected sectors, not every sector in every generated shell. The structural-check flag does not currently include this basis-metric prerequisite. Either prove the normalization for every generated sector from the construction or add an exhaustive local-sector Gram gate.
+
+### Overflow and PSD diagnostics
+
+The leakage helper accumulates squared amplitudes and outer products without scaling. A finite amplitude can therefore overflow during the Gram construction. Its PSD classifier also forms the Hermitian part as \((A+A^\dagger)/2\); this can overflow for a finite Hermitian matrix near float64 maximum even though the safer expression \(A/2+A^\dagger/2\) remains finite. A local independent arithmetic check with \(A=[10^{308}]\) confirmed that the former produces non-finite values while the latter remains finite. Required hardening:
+- use scaled sum-of-squares and scaled outer-product accumulation;
+- detect when the true Gram is outside float64 representability and fail explicitly;
+- use half-before-addition Hermitianization;
+- validate rel_tol and eps_factor as finite, nonnegative, non-boolean numeric controls;
+- verify all assembled Gram/master outputs are finite before eigensolvers.
+
+These are source-level findings and independent arithmetic demonstrations, not execution results from the committed module.
