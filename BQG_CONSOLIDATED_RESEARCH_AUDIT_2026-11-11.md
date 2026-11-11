@@ -552,3 +552,20 @@ This verifies the local link-hit convention only. It does not yet prove full pri
 
 
 A final workflow configuration audit found and corrected incomplete pull_request path filters. All five test scripts are now covered by both push and pull_request filters and each has an explicit execution step. Workflow blob SHA: 7caec171b996b3c662b4445681764ff24f1d2a1f. No workflow result is claimed.
+
+
+## 14. Production K5 primitive matrix-level adjoint gate — 2026-11-11
+
+The K5 verification ladder now advances beyond local link-hit identities. New file: [`scripts/test_k5_primitive_dense_adjoint.py`](scripts/test_k5_primitive_dense_adjoint.py).
+
+It assembles the actual production `apply_primitive_oriented` map on a finite, explicitly enumerated recoupling basis for the closed triangle `(0,1,2,0)), then separately assembles the reversed production map. The comparison is matrix-level:
+[
+B_{\mathrm{reverse}}=A_{\mathrm{forward}}^\dagger.
+]
+The four binary endpoint-channel pairs are covered. The spin wall is doubled-spin `Jmax2=2`; the input has all ten links at doubled spin 1, while the output basis includes all eight assignments of doubled spins 0/2 on the three triangle edges. This closed path modifies two incident links at each affected node and preserves the parity required for invariant intertwiner channels.
+
+This is a materially stronger check than testing `adjoint_path` as an involution or testing the individual CG matrices: it exercises the actual production primitive, its branch expansion, node tensor transformations, recoupling projection and coherent sparse output. It remains one finite-sector primitive test, not a proof for all paths or the assembled node Hamiltonian.
+
+**Test inventory:** 34 committed test methods across six scripts (12 sparse-helper, 11 K5 policy-wiring, 4 synthetic dense-oracle, 3 raw-volume, 3 local hit-adjoint, 1 production primitive dense-adjoint). The workflow explicitly invokes all six scripts and includes the new test in both push and pull-request path filters.
+
+**Verification status:** the new source, workflow and audit record are committed and fetched back from GitHub. No test execution or CI PASS is confirmed. The next acceptance step is to run this test and inspect any failure at the first differing matrix element; do not relax tolerances or symmetrize the matrices to force agreement. After it passes, extend the same independent matrix construction to the remaining primitive path families, individual T terms, and the assembled node-H map, with explicit finite-wall boundary accounting.
