@@ -652,11 +652,11 @@ def adjacent_cutoff_operator_difference(previous_columns, current_columns,
 def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
                                rank_rtol=1e-10, singular_rtol=1e-10,
                                block_rows=4096):
-    """Compare finite-cutoff kernel geometry and normalized spectra.
+    """Compare finite-cutoff spectra, kernels, and adjacent operator maps.
 
-    This is a regulator-sensitivity diagnostic. It does not estimate the
-    operator-norm difference between C_J and C_{J+1}, because this runner
-    retains spectra/projectors rather than the complete sparse maps.
+    Adjacent maps are embedded into the common union of canonical output
+    basis labels and compared by direct streaming SVD. This is still a
+    finite float64 diagnostic, not a continuum convergence theorem.
     """
     try:
         cutoffs = list(jmax2_values)
@@ -672,6 +672,7 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
     summaries = []
     adjacent = []
     previous_maps = None
+    previous_direct = None
     for cutoff in cutoffs:
         result = run(
             domain, cutoff, rank_rtol, singular_rtol, block_rows,
@@ -679,6 +680,8 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
         )
         current_maps = result.pop("_operator_maps")
         if previous_maps is not None:
+            np_direct = result["no_prune"]["direct_svd"]
+            leg_direct = result["legacy"]["direct_svd"]
             pair = {
                 "from_jmax2": previous_maps["jmax2"],
                 "to_jmax2": cutoff,
@@ -690,15 +693,40 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
                     previous_maps["legacy"], current_maps["legacy"],
                     result["domain_dimension"], singular_rtol, block_rows
                 ),
+                "no_prune_kernel_subspace": compare_kernel_projectors(
+                    previous_direct, np_direct, result["domain_dimension"]
+                ),
             }
+            if (not previous_direct["scale_separation_loss"]
+                    and not np_direct["scale_separation_loss"]):
+                old_s = np.asarray(previous_direct["singular_values"], dtype=float)
+                new_s = np.asarray(np_direct["singular_values"], dtype=float)
+                old_scale = float(old_s[0]) if old_s.size else 0.0
+                new_scale = float(new_s[0]) if new_s.size else 0.0
+                old_n = old_s / old_scale if old_scale > 0.0 else np.zeros_like(old_s)
+                new_n = new_s / new_scale if new_scale > 0.0 else np.zeros_like(new_s)
+                pair["max_abs_difference_of_normalized_singular_values"] = float(
+                    np.max(np.abs(new_n - old_n))
+                )
+                pair["normalized_spectrum_comparison_scope"] = (
+                    "shape-only diagnostic after independent sigma_max normalization; "
+                    "not an operator-norm convergence bound"
+                )
+            else:
+                pair["max_abs_difference_of_normalized_singular_values"] = None
+                pair["normalized_spectrum_comparison_scope"] = (
+                    "not evaluated because a physical-scale singular spectrum "
+                    "may have lost nonzero modes"
+                )
             adjacent.append(pair)
+        np_direct = result["no_prune"]["direct_svd"]
+        leg_direct = result["legacy"]["direct_svd"]
+        previous_direct = np_direct
         previous_maps = {
             "jmax2": cutoff,
             "legacy": current_maps["legacy"],
             "no_prune": current_maps["no_prune"],
         }
-        np_direct = result["no_prune"]["direct_svd"]
-        leg_direct = result["legacy"]["direct_svd"]
 
         def spectrum_summary(direct):
             if direct["scale_separation_loss"]:
@@ -755,10 +783,12 @@ def cutoff_convergence_sweep(domain="low", jmax2_values=(1, 3, 5),
         "points": summaries,
         "adjacent_cutoff_comparisons": adjacent,
         "claim_boundary": (
-            "Compares finite-cutoff numerical ranks, normalized singular spectra, "
-            "and right-kernel projectors only. It does not compute ||C_J-C_Jnext||, "
-            "prove nested-operator convergence, establish regulator independence, "
-            "or imply a continuum theorem."
+            "Computes adjacent-cutoff operator-difference norms in a common "
+            "canonical row-label embedding, alongside finite numerical ranks, "
+            "normalized spectra, and kernel projectors. These are represented "
+            "float64 finite-cutoff diagnostics; upstream recoupling/truncation "
+            "error bounds, regulator independence, and a continuum theorem "
+            "are not established."
         ),
     }
 
