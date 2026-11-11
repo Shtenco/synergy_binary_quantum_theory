@@ -162,6 +162,26 @@ class K5RawVolumeOperatorTests(unittest.TestCase):
                 np.array([[complex(float("inf"), 0.0)]])
             )
 
+    def test_volume_spectrum_resolution_is_scale_invariant(self):
+        base = np.array([-2.0, -1e-16, 0.0, 3.0])
+        observed = [
+            k5.volume_spectrum_resolution(base * scale)
+            for scale in (1e-120, 1e-12, 1.0, 1e12, 1e120)
+        ]
+        self.assertEqual(
+            [item["resolved_numerical_nullity"] for item in observed],
+            [2] * 5,
+        )
+        gaps = [item["normalized_gap_to_zero"] for item in observed]
+        np.testing.assert_allclose(gaps, np.ones(5), rtol=2e-15)
+
+    def test_volume_spectrum_resolution_handles_zero_operator(self):
+        result = k5.volume_spectrum_resolution(np.zeros(4))
+        self.assertEqual(result["spectral_scale"], 0.0)
+        self.assertEqual(result["resolved_numerical_nullity"], 4)
+        self.assertIsNone(result["min_resolved_abs_eigenvalue"])
+        self.assertIsNone(result["max_scalar_sqrt_abs_derivative_on_resolved_modes"])
+
     def test_symmetrization_operator_error_bound_is_recorded(self):
         spins = (1, 2, 2)
         k5.volume123_matrix(*spins)
