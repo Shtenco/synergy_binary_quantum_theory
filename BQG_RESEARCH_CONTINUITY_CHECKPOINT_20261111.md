@@ -223,3 +223,30 @@ Added a hard L2 test to `tests/test_bqg_l2_production_primitives.py` for `CK.app
 Source-level distinction: `CK.apply_HE_complete_state` applies cached unit-key columns, combines their arbitrary input coefficients, and then applies its final (10^{-10}) output filter. This test probes the cached-column extension on a safe-scale two-vector fixture. It does not test threshold-boundary behavior or the full (C(K)), (C(V)), or K-commutator maps. The custom composition map `KCOMP.apply_HE_complete_state_custom` remains a separate and more direct coefficient-dependent threshold risk because it sends each scaled column through `COMP.add`.
 
 The new test, its L2 audit interpretation, and README status were committed on the research branch. The scoped push workflow should run on this test change; its run identifier and outcome must be captured separately. At 01:10 UTC, all previously tracked L1/L2 jobs were still queued and had no artifacts. No PASS/FAIL is claimed. `main` remains untouched; no merge is performed.
+
+
+
+## 14. CI re-poll and repository integrity — 11 November 2026, 01:12 UTC
+
+The latest source change and its documentation are now present on the research branch. Repository compare against checkpoint base `eb72a1ab1b6fac36c2f2ca83d42eec83062e63ef` reports **33 commits ahead, 0 behind**. The branch tip is `14e300b19e11bc8e25802781586fb0fac79b3c9f`; comparing that commit to the branch ref reports identical. The most recent four commits are:
+- `4cc8638c89cd25481c0e99027e6ee50d7a4d30b0` — independent-support additivity test for cached complete H_E;
+- `4e191ff8d8f220a4c9e2572b0c31701a10a20253` — L2 audit interpretation;
+- `04ee7d94f5401dd4e61d525062fad3e975155df7` — continuity checkpoint update;
+- `14e300b19e11bc8e25802781586fb0fac79b3c9f` — README status update.
+
+### Latest available Actions poll
+
+At 01:12 UTC, the available job and artifact endpoints still reported:
+
+| Workflow family | Run IDs | Job state | Artifacts |
+|---|---|---|---|
+| L2 production primitives | `42935840345`, `42935968925`, `42936480504`, `42936669007`, `42936684504` | all queued | none |
+| L1 accumulator | `42929934053`, `42930769907` | both queued | none |
+| V10 full-node closure | `42908538520`, `42908462865` | all six matrix jobs queued | none |
+| Adapter tests | `42908462954` | queued | none |
+| V11 common carrier | `42908462792` | queued | none |
+| Older adapter / V11 runs | `42908538513`, `42908538772` | completed, cancelled | none |
+
+The new test commit `4cc8638` changes a path watched by the L2 push workflow. The push-triggered run identifier was not returned by the available commit-associated run listing, which is limited to pull-request-triggered runs; do not infer a run ID or a test outcome. Its job must be identified and inspected through the Actions run listing when available.
+
+No L1/L2/V10/V11 PASS or FAIL is claimed from queued or cancelled jobs. No artifacts are available. The added independent H_E test has not been executed in this environment. `main` remains untouched and no merge was performed.
