@@ -260,14 +260,16 @@ def apply_primitive_oriented(input_key,seq,Jmax2,mode="legacy"):
             ls=local_spins(spins,v);opts=[]
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
-                if (c != 0j) if mode=="no_prune" else (abs(c)>1e-12): opts.append((K,c))
+                keep_channel = (c != 0j) if mode=="no_prune" else (abs(c)>1e-12)
+                if keep_channel: opts.append((K,c))
             if not opts: ok=False;break
             local_opts.append(opts)
         if not ok: continue
         for ch in itertools.product(*local_opts):
             val=amp
             for _,c in ch: val*=c
-            if (val != 0j) if mode=="no_prune" else (abs(val)>1e-12):
+            keep_output = (val != 0j) if mode=="no_prune" else (abs(val)>1e-12)
+            if keep_output:
                 ko=(spins,tuple(k for k,_ in ch))
                 contributions.append((ko,val))
     if mode=="no_prune": return coherent_aggregate(contributions)
@@ -420,7 +422,15 @@ def main():
     ap.add_argument('--mode',choices=('legacy','no_prune'),default='legacy',
                     help='legacy reproduces historical thresholds; no_prune disables all amplitude thresholds')
     a=ap.parse_args()
-    out=run(a.mode);txt=json.dumps(out,indent=2);print(txt)
+    try:
+        out=run(a.mode)
+    except MemoryError:
+        out={"status":"resource_limit","pruning_mode":a.mode,
+             "reason":"MemoryError during sparse operator expansion; no fallback to legacy mode was attempted."}
+        txt=json.dumps(out,indent=2);print(txt)
+        if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(txt+'\n',encoding='utf-8')
+        return 2
+    txt=json.dumps(out,indent=2);print(txt)
     if a.output:a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(txt+'\n',encoding='utf-8')
     return 0 if out['passed_regression'] else 1
 
