@@ -807,3 +807,32 @@ The conformal direction is orthogonal to this rank-two tangent. The present sour
 Thus no momentum-dependent scalar Poisson kernel or cosmological potentials follow from the local control. The next structurally motivated carrier is the collective radial/volume channel: fixed (j=1/2) freezes the absolute four-valent volume, while the equal-spin (j=1) sector is the first where it is non-scalar. The symmetric-block (2\to j=1) result is conditional on symmetric blocking; the microscopic dynamics has not yet been shown to select it.
 
 **Disposition:** the q=2 chain now has a precise split: orientation flux and directed history algebra are exact finite observables; the intrinsic metric deliberately forgets orientation; the source Legendre transform is exact but belongs to a positive control; physical Lorentzian history, conformal/lapse response and connected inter-block scalar dynamics remain open.
+
+
+## 23. Whole-repository branch census and scope correction
+
+The refreshed GitHub branch census at this checkpoint contains **168 branch refs and 157 unique HEAD commits**. The family inventory includes 95 `research/*` branches, 22 `audit/*` branches, 10 `exp/*` branches, 3 `docs/*` branches, and the remaining implementation, recovery, release, CI and maintenance branches. Duplicate branch names sharing the same HEAD are retained in the branch inventory but count as one source snapshot for content analysis.
+
+Important scope correction: the previously committed branch-wide Python AST audit (`PYTHON_BRANCH_WIDE_AUDIT_2026-11-10.md`) covered an earlier snapshot of **157 branches / 146 unique HEAD commits**, not the refreshed 168 / 157 census. It reported 18,674 Python-file occurrences across branch snapshots, 674 unique Python paths, 757 path/content versions, 754 unique source blobs, 752 parsed sources and 2 historical syntax errors. Those are valid historical audit results for that earlier census, but they must not be presented as a complete AST scan of the refreshed 168/157 snapshot.
+
+Therefore the current full-repository work has two separate scopes:
+- **Branch census:** refreshed to 168 refs / 157 unique source snapshots.
+- **Deep analytical cross-branch review:** currently covers the linked Q2 orientation/history/source chain, active-habitat leakage identity, K5 volume and graph-changing adjoint obligations, finite HDA obstruction, RG composition caveat, binary dimension selector and conditional HDA uniqueness chain.
+
+The full all-branch content/AST refresh and exhaustive symbolic theorem extraction over all 157 distinct snapshots remain unfinished. The next repository-wide pass must first scan the 11 additional unique HEAD snapshots relative to the previous 146-head AST baseline, deduplicate blobs, then classify every distinct theorem/specification and map exact branch ancestry. It must not silently infer that a branch is covered merely because its name appears in the census.
+
+### Analytical proof ledger format required for every branch family
+
+For each candidate theorem, record:
+1. exact source definition and branch/commit/blob;
+2. mathematical objects, domains, inner products and gauge quotients;
+3. assumptions and quantifiers;
+4. line-by-line symbolic derivation;
+5. equivalence transformations and conditions for each;
+6. counterexamples/no-go results from sibling branches;
+7. executable finite gate and whether it was actually run;
+8. cutoff/pruning/roundoff error statement;
+9. refinement/continuum theorem or explicit open obligation;
+10. final status: exact finite identity, conditional theorem, finite numerical evidence, conjecture, falsified ansatz, or untested.
+
+A result is promoted to the common theory only when its hypotheses are compatible with upstream and downstream branches. A formula with an unproved bridge is retained as a conditional node, not merged into a stronger theorem.
