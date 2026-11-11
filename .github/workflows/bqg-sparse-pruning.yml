@@ -19,6 +19,9 @@ on:
       - "scripts/test_bqg_sparse_pruning.py"
       - "scripts/k5_peter_weyl_safe_hda_column.py"
       - "scripts/test_k5_sparse_policy_wiring.py"
+      - "scripts/test_bqg_sparse_dense_oracle.py"
+      - "scripts/test_k5_volume_raw_operator.py"
+      - "scripts/test_k5_hit_adjoint.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
   workflow_dispatch:
 
