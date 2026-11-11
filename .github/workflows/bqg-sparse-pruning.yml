@@ -17,6 +17,8 @@ on:
       - "scripts/test_k5_rectangular_node_h_adjointness.py"
       - "scripts/peter_weyl_master_projector_pilot.py"
       - "scripts/test_peter_weyl_master_projector_integrity.py"
+      - "scripts/peter_weyl_streaming_svd.py"
+      - "scripts/test_peter_weyl_streaming_svd.py"
       - "scripts/peter_weyl_constraint_stability.py"
       - "scripts/test_peter_weyl_constraint_stability.py"
       - ".github/workflows/bqg-sparse-pruning.yml"
@@ -73,5 +75,7 @@ jobs:
         run: python scripts/test_k5_rectangular_node_h_adjointness.py
       - name: Run finite Peter-Weyl master-projector integrity gates
         run: python scripts/test_peter_weyl_master_projector_integrity.py
+      - name: Run streaming Householder TSQR and direct-SVD dense-oracle gates
+        run: python scripts/test_peter_weyl_streaming_svd.py
       - name: Run legacy/no-prune constraint-map perturbation dense-oracle gates
         run: python scripts/test_peter_weyl_constraint_stability.py
