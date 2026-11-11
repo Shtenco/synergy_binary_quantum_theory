@@ -505,3 +505,10 @@ The K5 producer source scripts/k5_peter_weyl_safe_hda_column.py has been updated
 Added six focused K5 wiring tests in scripts/test_k5_sparse_policy_wiring.py and extended the GitHub Actions workflow to install SymPy and run both the 12 sparse-pruning tests and the K5 wiring tests. Workflow paths include the producer and both test files for push and pull-request events.
 
 Evidence boundary: source files and workflow were fetched back from GitHub after updates. No CI PASS is asserted yet; no full no-prune HH run, K5 dense oracle, production bilinear adjoint test, threshold ladder, or certified leakage Gram is claimed. Raw volume defect is currently recorded but not yet used as a fail gate. This is initial producer integration, not completion of the K5 acceptance plan.
+
+
+## 17. Exact K5 integration snapshot
+
+Latest producer blob: a87cc00c3be07b4a66c249c16ec840cb8cb5629d. Source inspection finds all previously catalogued amplitude thresholds either inside the explicit legacy branch or after a no-prune early return. The no-prune mode now coherently aggregates at primitive, T-sequence, input-state, node-H, HH-composition, commutator and V5-superposition boundaries; cache identity includes mode; MemoryError returns resource_limit with no fallback. The raw pre-symmetrization volume defect is recorded by spin triple.
+
+The committed verification suite consists of 12 sparse-pruning helper tests and 6 K5 wiring tests. Latest test blobs: a1c2cbbb772b814355a520194e4bb32b19aa2383 and 476255880c123289b7f35d13b4bc81d03f1a4f50. Workflow blob: ffd43126b2d6003a7e551a5f51e2d5d59bde60de. The current GitHub status query contains no status entries, so CI execution remains unverified. No full no-prune HH calculation or K5 dense-oracle / adjoint certification is claimed.
