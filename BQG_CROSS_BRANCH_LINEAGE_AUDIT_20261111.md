@@ -324,3 +324,52 @@ This independently confirms that the current script and the frozen result docume
 A further fail-open issue: `audit_integer_kernel_full_matrices.py` uses Python `assert` for its rank, exact-kernel, unimodularity and basis checks, then prints literal `PASS` labels. Running it with `python -O` removes those assertions while leaving the PASS output. It has no `__debug__` refusal or explicit runtime `require` helper. This script must not be used as a certification gate under optimized Python until that is corrected.
 
 **Revised disposition:** the parent-version computation reproduces the recorded 2^179/2^180 indices. The current committed M70 script reproduces 2^181, and both current matrices use different kernels. Correct the rational entries, add exact row-fixture checks, replace optimization-sensitive assertions, rerun both complete matrices, and only then publish a new result revision.
+
+
+## 12. Tetrahedral charged-volume branch: CI failure is a near-zero relative-error false positive
+
+Audited branch: `audit/pl48-volume-failclosed-20261110`, HEAD `b26ae55f64e3f9646c91735f005a35b30b4bb34b`. The current backend blob is `c50e1e8597c21a1624c864da1abc5ea56c8b1f97`.
+
+### Actual CI evidence
+
+The latest inspected `tetrahedral-charged-volume-audit` run was `42848173310` at source HEAD `7edee78d2e06a2486fc6f614570f7c8268bb4473`. Its backend blob is identical to the current branch backend. It failed in `test_tetrahedral_volume_spectral.py` before the uniqueness, S4 covariance, and full charged-volume audit steps could execute.
+
+The traceback reports:
+`raw tetrahedral Q leaks out of its total-(J,M) sector: absolute=5.551115123125783e-17, relative=1.0`.
+
+A second run, `42848284454`, at the current branch HEAD, also failed in its preflight `Tetrahedral charged-volume audit` step:
+`absolute=4.9065389333867974e-18, relative=1.0`.
+
+The absolute residuals are at or below ordinary double-precision roundoff. The backend computes:
+`relative = err / max(norm(QB), 1e-30)`
+and rejects whenever this relative value exceeds `1e-10`. When the mathematically expected output `QB` is zero or nearly zero, a roundoff residual of order 10^-17 becomes a relative defect of 1.0. The code does not apply an absolute tolerance to this near-zero case, and the exception omits the spin tuple, J2 and M2 that produced it.
+
+This is a **numerical gate defect**, not evidence of a 10^-17 absolute operator leakage. It is not a PASS either: the test is currently red and the remaining gates are skipped.
+
+### Required correction
+
+Use a mixed backward-error condition, for example:
+`err <= atol + rtol * norm(QB)`,
+where `atol` is derived from machine epsilon, the operator/block scale and the norm of the normalized basis input. Record `norm(QB)`, `err`, `atol`, `rtol`, `spins_local`, `J2`, and `M2` in every failure. Do not simply raise the tolerance until the test turns green. Add a deliberate exact-zero-output fixture and a nonzero-output leakage fixture so the two regimes are separately tested.
+
+The local file `verification_results/TETRAHEDRAL_CHARGED_VOLUME_AUDIT_LOCAL.json` says `passed=true`, but it is explicitly a prior local prototype and does not override the failing current CI runs. No CI artifact was produced by the failing runs.
+
+### Uniqueness theorem: correct result, numerical rank implementation
+
+The uniqueness gate constructs an integer 96×4 constraint matrix but computes its rank using `numpy.linalg.svd` with a floating threshold of `1e-12`. The markdown describes the rank result as exact; the implementation is numerical.
+
+An independent local SymPy exact-integer recomputation gives:
+- exact constraint rank: 3;
+- exact nullspace generator: `(-1,1,-1,1)`, projectively `(1,-1,1,-1)`;
+- zero failures of the representation homomorphism over all 24×24 permutation pairs;
+- exact zero defect for all 24 alternating-character identities.
+
+Thus the one-dimensional S4 pseudoscalar result is independently supported, but the executable rank gate should use exact rational/integer rank and nullspace rather than SVD.
+
+### Additional source-level precision issues
+
+- `TETRA_Q_DIAGNOSTICS["raw_frobenius_norm"]` stores `max(norm(Q),1.0)`, not the raw Frobenius norm. Preserve the actual norm separately from the tolerance scale.
+- M-independence and `V^4-Q^2` diagnostics also use unit-floored scales. Report absolute and genuinely relative residuals separately so scale dependence is visible.
+- The current workflow's preflight failure prevents the later S4 covariance and Euclidean-invariance checks from being rerun in CI on the current code. The local JSON values remain historical until the workflow is green.
+
+**Disposition:** retain the tetrahedral completion as a strong finite-sector candidate and retain the exact uniqueness result, but keep the charged-volume production gate RED until the mixed-tolerance correction, exact-rank gate, diagnostic context and fresh artifacts are committed and executed.
