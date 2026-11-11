@@ -1134,3 +1134,120 @@ The recovered 30-file core evidence package contains both positive and negative 
 5. Run the physicalization truth validator on a PR targeting main (or reproduce the full ledger locally) while keeping every physical gate open until the actual graph-changing rigging/history and connected metric response exist.
 
 Classification: successful historical CI for the frozen physical branch; independently recomputed archived finite P and higher-shell matrices; independently reproduced finite master/projector/relational/Schur algebra; several exact finite identities; substantial structural and HDA progress; full physical BQG projector/history, connected physical TT/scalar kernels, joint quantum HDA, IR six-vector, common physical scale and experimental validation remain open.
+
+
+## 28. Post-HDA branch: the actual 32D gravitational carrier has no exact finite common kernel
+
+This is a major negative result recovered from the separate branch `research/post-hda-physicalization-v2`, HEAD `6d3f23860fc134ec0f10259fa17adb2c32588739`.
+
+### 28.1. Workflow status and why the green smoke is scientifically important
+
+Two workflows are associated with that branch commit:
+- `core-regression`, run `32129094214`: **failed** at `Validate public status surface`;
+- `post-hda-physicalization-smoke`, run `32129094215`: **success**.
+
+The core-regression failure is not a failed physics test. The canonical proof-ledger validator completed successfully and reported 24 gates, status counts conditional=2, open=5, proved=6, tested_finite=11, `complete=false`, `valid=true`. The next public Markdown/LaTeX validator failed with 22 “TeX command outside a math delimiter” problems across `OPEN_PROBLEMS.md`, `README.md` and `THEORY_STATUS.md`. Because the workflow is fail-fast, all subsequent scientific jobs were skipped. This is a real documentation/CI blocker, not a scientific falsification.
+
+The dedicated post-HDA smoke workflow did run both tests and uploaded artifact ID `9322145616`, name `post-hda-physicalization-full32`, ZIP SHA-256 `806df0a740eae831f1fdf6a93bf6cf28c8c6fa056c962cd74c4b252dcc0232f2`.
+
+### 28.2. Synthetic theorem positive control passes — but it is not the gravitational result
+
+The artifact's `MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.json` passes its finite 8D theorem selftest:
+- Hilbert dimension 8;
+- four constraints;
+- deliberately prescribed common-kernel dimension 2;
+- four positive constraint metrics;
+- maximum pairwise zero-projector difference (2.734956467314999\times10^{-15});
+- maximum heat-kernel identity error below (8\times10^{-16}).
+
+This is a valid numerical positive control for the identity
+[
+M_G=\mathcal C^\dagger(G\otimes I)\mathcal C,
+\qquad
+\langle\psi|M_G|\psi\rangle
+=\|(G^{1/2}\otimes I)\mathcal C\psi\|^2.
+]
+It is not a demonstration that the actual Peter-Weyl gravitational constraints have a common kernel.
+
+### 28.3. Actual all-32-state Peter-Weyl pilot returns an empty exact physical sector
+
+The second artifact, `PETER_WEYL_MASTER_PROJECTOR_FULL32.json`, uses the actual regulated K5 Peter-Weyl (H_v) columns on:
+- all 32 all-(j=1/2), (K=0/2) intertwiner states;
+- all five constraint nodes (v=0,1,2,3,4);
+- (J_{max}=5/2);
+- the full 32-dimensional declared carrier.
+
+The pilot explicitly sets `scientific_result_is_not_forced_to_pass=true`. All internal construction checks pass, but the scientific result is:
+[
+\boxed{\operatorname{rank}P_{0}=0.}
+]
+For three positive-definite constraint metrics the minimum eigenvalues of the actual finite master operator are:
+
+| Constraint metric | (lambda_{min}(G)) | (lambda_{min}(M_G)) | Zero-sector rank |
+|---|---:|---:|---:|
+| Identity | 1.0000 | 9.6518111081 | 0 |
+| Diagonal | 1.0000 | 29.0389990597 | 0 |
+| Random positive | 0.7247424644 | 130.5945311561 | 0 |
+
+The registered zero threshold is (10^{-10}\max(1,\|M_G\|)), between (1.45\times10^{-9}) and (2.41\times10^{-8}). The lowest eigenvalues are many orders of magnitude above that threshold. The three zero projectors all have rank zero and therefore agree trivially.
+
+Using the exact positive-metric kernel theorem,
+[
+\ker M_G=\bigcap_{v=0}^{4}\ker H_v,
+]
+this means that the intersection of the five actual regulated constraint kernels is trivial **inside this 32D all-(j=1/2), (K=0/2), (J_{max}=5/2) carrier**. Consequently
+[
+P_{phys}^{(32)}=\mathbf1_{\{0\}}(M_G)=0
+]
+on this declared finite carrier, and
+[
+\lim_{T\to\infty}e^{-TM_G}=0
+]
+rather than a nonzero finite physical projector.
+
+This is not a no-go theorem for the full theory or for larger/refined Hilbert spaces. It is, however, a genuine finite-carrier no-go for an exact common zero state in the tested sector. It cannot be hidden by the fact that the workflow job is green: the workflow is designed to pass internal correctness while reporting a negative scientific outcome.
+
+The source script is commendably fail-closed: it states that if the exact common kernel is empty, one must enlarge/refine the carrier or use a preregistered spectral-window/rigging sequence, and must not retune HDA or rename a small positive eigenvalue as zero. The next study must determine whether the gap remains bounded away from zero under systematic enlargement/refinement, or closes with a controlled scaling law. A spectral window is not automatically a physical projector; its normalization and limit must be derived.
+
+### 28.4. Exact HDA no-go and the constructive route-sector result
+
+The same post-HDA branch documents a clean exact no-go for the old factorized Hamiltonian:
+[
+H[N]=H_{geom}[N]\otimes I_{path}
+\quad\Longrightarrow\quad
+[H[N],H[M]]
+=[H_{geom}[N],H_{geom}[M]]\otimes I_{path}.
+]
+The commutator has identically zero path-derivative component. For generic nonconstant lapses the independently frozen target
+[
+D_{path}[\sharp_{E,q}(N\,dM-M\,dN)]
+]
+is nonzero. The finite witness records normalized path-channel residual (Delta_{factor}=1). Increasing (J_{max}) cannot repair this factorization defect.
+
+The route-sector constructive replacement is
+[
+H_{path}[N]=\frac12\{N,\Omega_q\},
+\qquad
+\Omega_q=\sqrt{-\Delta_{path,q}},
+\qquad
+h_N(x,p)=N(x)|p|_q.
+]
+At principal-symbol level,
+[
+\{h_N,h_M\}
+=q^{ab}(M\partial_bN-N\partial_bM)p_a,
+]
+up to one global orientation convention. The path-normal WKB gate passes with decay exponent about (2.1403) and terminal defect (3.7152\times10^{-6}). This is a route-sector principal-symbol result only. The same-operator coupling (H_{geom+route}[N]) and full Peter-Weyl Lorentzian commutator remain open.
+
+The separate K5 oriented (J_{max}=1/2) diagnostic is not a physical HDA test: it is below the HH support-safe wall (J_{max}\ge5/2) for (j_{in}=1/2). Its permutation-covariant graph leakage (sqrt{37/69}) is a useful regulator diagnostic, not a continuum anomaly coefficient.
+
+### 28.5. Scientific decision forced by this result
+
+The post-HDA sequence must now be:
+1. retain the exact 32D empty-kernel result as a no-go for that carrier;
+2. enlarge the carrier in a preregistered way (spin, intertwiner, graph/refinement and boundary-history sectors), not by changing (G) to force a zero;
+3. measure (lambda_{min}(M_G)), its scaling with refinement and the actual constraint residual of the associated eigenvector;
+4. distinguish three limits: exact kernel, normalized spectral window, and rigging/group-averaged distribution;
+5. only after a nontrivial physical inner product is established, construct relational metric sources and connected inter-block cumulants.
+
+Classification: exact finite master-kernel theorem; exact synthetic positive control; actual finite gravitational 32D carrier has empty common kernel; route-factorization HDA no-go exact; route-normal principal symbol finite/semiclassical PASS; full physical projector, full quantum HDA and continuum/rigging limit remain open.
