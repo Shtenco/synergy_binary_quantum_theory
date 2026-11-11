@@ -272,3 +272,15 @@ Added scripts/test_bqg_sparse_dense_oracle.py and wired it into the sparse-pruni
 Scope boundary: this is a synthetic algebraic oracle for sparse aggregation/action and complex adjoint conventions. It is not a dense oracle for the production K5 Hamiltonian, the Peter-Weyl volume tensor, or the physical K5 column. The production-operator oracle and adjoint checks remain open.
 
 The workflow now runs three scripts: 12 sparse-pruning helper tests, 11 K5 policy-wiring tests, and 4 synthetic dense-oracle/adjoint tests, for 27 committed test methods total. No test execution or CI PASS is claimed until logs are available.
+
+
+## 15. Production K5 raw-volume operator exposure and small-sector tests
+
+The K5 producer now exposes volume123_raw_operator(s1,s2,s3), which returns the unsymmetrized triple-product Q before the existing Hermitian completion. volume123_matrix now consumes this shared raw operator, records the pre-symmetrization anti-Hermitian defect, and then retains the historical completion and sqrt(abs(Q)) construction. This makes the raw object directly testable rather than inferring its properties from the symmetrized output.
+
+Added scripts/test_k5_volume_raw_operator.py with three test methods over doubled-spin triples (1,1,1), (1,1,2), (1,2,2), (2,2,2):
+1. raw Q is Hermitian before symmetrization to a relative defect <= 5e-14;
+2. the derived volume matrix is Hermitian and positive semidefinite within stated floating-point tolerances;
+3. the recorded raw defect and raw norm agree with independently recomputed diagnostics from Q.
+
+These are tests of the actual production K5 spin/volume routines in small finite sectors, not a full HH computation and not a proof of continuum volume properties. The workflow now includes this test file. Committed test-method inventory: 12 sparse helper + 11 K5 wiring + 4 synthetic dense oracle/adjoint + 3 production raw-volume tests = 30. No test run or CI PASS is claimed in this update.
