@@ -373,6 +373,19 @@ class MasterProjectorIntegrityTests(unittest.TestCase):
         self.assertEqual(result["max_hermitian_spectral_scale"], 1.0)
         self.assertEqual(result["max_resolved_scalar_sqrt_abs_sensitivity"], 0.5)
 
+    def test_volume_registry_rejects_boolean_spin_indices_and_limits(self):
+        malformed = {(True, 0, 0): {
+            "relative_antihermitian_defect": 0.0,
+            "raw_norm": 1.0,
+        }}
+        self.assertFalse(
+            pilot.volume_raw_hermiticity_diagnostics(malformed)["passed"]
+        )
+        with self.assertRaisesRegex(ValueError, "max_spin2"):
+            pilot.volume_raw_hermiticity_diagnostics({}, max_spin2=True)
+        with self.assertRaisesRegex(ValueError, "expected_unique_calls"):
+            pilot.volume_raw_hermiticity_diagnostics({}, expected_unique_calls=True)
+
     def test_volume_registry_rejects_malformed_spin_key(self):
         malformed = {"not-a-spin-triple": {
             "relative_antihermitian_defect": 0.0, "raw_norm": 1.0
