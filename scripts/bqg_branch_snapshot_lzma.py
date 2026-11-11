@@ -52,7 +52,7 @@ def branch_heads(cwd=None) -> dict[str, str]:
 
 def git_commit_metadata(commit: str, cwd=None) -> dict:
     raw = git_output(["cat-file", "-p", commit], cwd=cwd)
-    header = raw.split(b"\\n\\n", 1)[0].decode("utf-8", errors="replace")
+    header = raw.split(b"\n\n", 1)[0].decode("utf-8", errors="replace")
     metadata = {"parents": []}
     for line in header.splitlines():
         if line.startswith("tree "):
