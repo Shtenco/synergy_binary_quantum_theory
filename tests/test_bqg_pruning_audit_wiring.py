@@ -39,14 +39,20 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
                 d = {}
                 RAW.add(d, {"k": 0.5e-11})
                 e = PW.prune_state({"k": 0.5e-8}, 1e-8)
+                source_label = ("C", 0, 0, 0, 0)
+                labels = (source_label,) + tuple(("G", 0) for _ in range(4))
+                f = COMP.complete_to_covariant(
+                    {((4,) * 10, labels): 0.5e-11}, 0, tol=1e-11
+                )
 
         self.assertEqual(a, {"k": 0.5e-13})
         self.assertEqual(b, {"k": 0.5e-11})
         self.assertEqual(c, {"k": 0.5e-11})
         self.assertEqual(d, {"k": 0.5e-11})
         self.assertEqual(e, {"k": 0.5e-8})
+        self.assertEqual(f, {((4,) * 10, (-1, 0, 0, 0, 0), 0, 0, 0, 0): 0.5e-11})
         events = collector.snapshot()["events"]
-        self.assertEqual(len(events), 5)
+        self.assertEqual(len(events), 6)
         self.assertTrue(all(x["kind"] == "would_prune_bypassed" for x in events))
 
     def test_core_operator_merge_sites_are_observed_without_semantic_change(self):
