@@ -14,40 +14,83 @@ permissions:
 jobs:
   package-production-sources:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout audited research branch
+      - name: Checkout the exact event commit
         uses: actions/checkout@v4
         with:
-          ref: research/physical-history-causality-20261112
-      - name: Build deterministic source bundle and manifest
+          fetch-depth: 1
+      - name: Package complete tracked source tree with provenance
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p staging
-          cp -a scripts staging/scripts
-          find staging/scripts -type f -print0 | sort -z | xargs -0 sha256sum > staging/SHA256SUMS.txt
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p staging/source
+          git archive --format=tar HEAD | tar -xf - -C staging/source
+          git rev-parse HEAD > staging/SOURCE_COMMIT.txt
+          git rev-parse 'HEAD^{tree}' > staging/SOURCE_TREE.txt
+          git rev-parse --abbrev-ref HEAD > staging/SOURCE_REF.txt
+          git ls-tree -r HEAD > staging/GIT_TREE_MANIFEST.txt
+          {
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'commit=%s\n' "$GITHUB_SHA"
+            printf 'ref=%s\n' "$GITHUB_REF"
+            printf 'run_id=%s\n' "$GITHUB_RUN_ID"
+            printf 'run_attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
+            printf 'runner_os=%s\n' "$RUNNER_OS"
+            python --version
+            python -m pip --version
+          } > staging/RUNTIME.txt
+          python -m pip freeze > staging/PIP_FREEZE.txt
           python - <<'PY'
-          import hashlib, json, pathlib, zipfile
-          root = pathlib.Path('staging')
-          files = sorted(p for p in root.rglob('*') if p.is_file())
+          import hashlib, json, pathlib, platform, subprocess, sys
+          root = pathlib.Path("staging")
+          source = root / "source"
+          files = []
+          for p in sorted(x for x in source.rglob("*") if x.is_file()):
+              data = p.read_bytes()
+              files.append({
+                  "path": str(p.relative_to(source)),
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+              })
           manifest = {
-              'repository': 'Shtenco/synergy_binary_quantum_theory',
-              'ref': 'research/physical-history-causality-20261112',
-              'purpose': 'read-only local staging of production W5 scripts and dependencies',
-              'files': [{'path': str(p.relative_to(root)), 'bytes': p.stat().st_size,
-                         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in files],
+              "repository": "Shtenco/synergy_binary_quantum_theory",
+              "source_commit": (root / "SOURCE_COMMIT.txt").read_text().strip(),
+              "source_tree": (root / "SOURCE_TREE.txt").read_text().strip(),
+              "source_ref": (root / "SOURCE_REF.txt").read_text().strip(),
+              "python": sys.version,
+              "platform": platform.platform(),
+              "tracked_source_file_count": len(files),
+              "files": files,
+              "submodule_gitlinks_present": any(
+                  line.startswith("160000 ") for line in
+                  (root / "GIT_TREE_MANIFEST.txt").read_text().splitlines()
+              ),
           }
-          (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-          with zipfile.ZipFile('w5-production-scripts.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-              for p in sorted(root.rglob('*')):
-                  if p.is_file():
-                      z.write(p, p.relative_to(root))
-          print(json.dumps({'files': len(files), 'zip_bytes': pathlib.Path('w5-production-scripts.zip').stat().st_size}, indent=2))
+          (root / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+          )
           PY
-      - name: Upload production source bundle
+          (
+            cd staging
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+          python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path("staging")
+          with zipfile.ZipFile("w5-production-source.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in sorted(x for x in root.rglob("*") if x.is_file()):
+                  z.write(p, p.relative_to(root))
+          print({
+              "source_files": sum(1 for p in (root / "source").rglob("*") if p.is_file()),
+              "archive_bytes": pathlib.Path("w5-production-source.zip").stat().st_size,
+          })
+          PY
+      - name: Upload complete source tree
         uses: actions/upload-artifact@v4
         with:
-          name: w5-production-scripts-${{ github.sha }}
-          path: w5-production-scripts.zip
+          name: w5-production-source-${{ github.sha }}
+          path: w5-production-source.zip
           if-no-files-found: error
           retention-days: 7
