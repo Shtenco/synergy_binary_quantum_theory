@@ -73,7 +73,7 @@ def apply_HE_allJ_then_Gauss(initial,source_v,Jmax2):
     return {k:a for k,a in out.items() if PRUNE.keep(a,RAW_FLOOR)},max_vleak
 
 def norm2(s): return float(sum(abs(a)**2 for a in s.values()))
-def prune(s,t): return {k:a for k,a in s.items() if abs(a)>t}
+def prune(s,t): return PRUNE.filter_state("covariant_K_projection_audit.ladder_prune",s,t)
 def relerr(a,b):
     keys=set(a)|set(b); num=math.sqrt(sum(abs(a.get(k,0j)-b.get(k,0j))**2 for k in keys)); den=math.sqrt(norm2(b)); return num/max(den,1e-30)
 
