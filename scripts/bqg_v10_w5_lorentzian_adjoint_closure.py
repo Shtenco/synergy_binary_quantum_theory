@@ -438,7 +438,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if max_states < len(W5_K) or max_depth < 0 or amp_tol <= 0:
+    if max_states < len(W5_K) or max_depth < 0 or amp_tol < 0:
         raise ValueError("invalid closure limits")
 
     HERE = Path(__file__).resolve().parent
