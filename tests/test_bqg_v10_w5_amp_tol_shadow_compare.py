@@ -1,5 +1,8 @@
+import sys
 import unittest
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from bqg_v10_w5_amp_tol_shadow_compare import compare_vectors, unpack_columns
 
 
