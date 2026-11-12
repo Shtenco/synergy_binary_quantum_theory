@@ -360,9 +360,10 @@ def run():
     coeffs=[]
     for idx,val in enumerate(V5):
         coefficient=val/v5norm
-        if abs(coefficient)<=1e-12:
-            PRUNE.record_threshold("k5.V5_input_decomposition.1e-12",full[idx],coefficient,1e-12)
-        if PRUNE.keep(coefficient,1e-12):
+        # Preserve the historical production decision on the raw V5 entry;
+        # normalization is applied only to the retained coefficient.
+        PRUNE.record_threshold("k5.V5_input_decomposition.1e-12",full[idx],val,1e-12)
+        if PRUNE.keep(val,1e-12):
             coeffs.append((full[idx],coefficient))
     h0v={}
     for key,amp in coeffs:
