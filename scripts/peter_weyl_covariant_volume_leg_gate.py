@@ -115,10 +115,9 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
             opts = []
             for K in PW.allowed_k2_t(*ls):
                 c = np.vdot(PW.oriented_intertwiner(u, ls, K), tensors[u])
+                PRUNE.record_threshold("covariant_volume_leg.gauss_projection.1e-13",(spins,u,K),c,1e-13)
                 if PRUNE.keep(c,1e-13):
                     opts.append((K, c))
-                else:
-                    PRUNE.record_threshold("covariant_volume_leg.gauss_projection.1e-13",(spins,u,K),c,1e-13)
             if not opts:
                 ok = False
                 break
@@ -134,10 +133,9 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                 for K12, K34 in CH.allowed_charged_labels(tuple(ls0), J2):
                     B = CH.charged_tensor(tuple(ls0), K12, K34, J2, M2)
                     c = np.vdot(B, X0)
+                    PRUNE.record_threshold("covariant_volume_leg.charged_projection.1e-13",(spins,source_v,J2,M2,K12,K34),c,1e-13)
                     if PRUNE.keep(c,1e-13):
                         src_opts.append((J2, M2, K12, K34, c))
-                    else:
-                        PRUNE.record_threshold("covariant_volume_leg.charged_projection.1e-13",(spins,source_v,J2,M2,K12,K34),c,1e-13)
 
         for chosen in itertools.product(*other_opts):
             base_amp = amp
@@ -151,10 +149,9 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
             for J2, M2, K12, K34, cs in src_opts:
                 val = base_amp * cs
                 key = (spins, tuple(Kother), J2, M2, K12, K34)
+                PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
                 if PRUNE.keep(val,tol):
                     out[key] = out.get(key, 0j) + val
-                else:
-                    PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
     for key, value in out.items():
         if abs(value) <= tol:
             PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
