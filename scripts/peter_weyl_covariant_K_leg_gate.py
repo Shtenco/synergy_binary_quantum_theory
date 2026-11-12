@@ -112,6 +112,8 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
                         if abs(c) > 1e-13:
                             opts.append((label_charge(J2, M2, K12, K34), c))
                             recon_u += c * B
+                        else:
+                            PRUNE.record_threshold("covariant_K_leg.charged_projection.1e-13",(spins,v,J2,M2,K12,K34),c,1e-13)
             recon = CV.orient_local(recon_u, ls, v)
         else:
             for K in PW.allowed_k2_t(*ls):
@@ -120,6 +122,8 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
                 if abs(c) > 1e-13:
                     opts.append((label_gauss(K), c))
                     recon += c * B
+                else:
+                    PRUNE.record_threshold("covariant_K_leg.gauss_projection.1e-13",(spins,v,K),c,1e-13)
         nrm = float(np.linalg.norm(X))
         leak = float(np.linalg.norm(X - recon) / max(nrm, 1e-30))
         max_basis_leak = max(max_basis_leak, leak)
@@ -133,9 +137,14 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
         labels = []
         for lab, c in choice:
             labels.append(lab); val *= c
+        key = (spins, tuple(labels))
         if abs(val) > tol:
-            key = (spins, tuple(labels))
             out[key] = out.get(key, 0j) + val
+        else:
+            PRUNE.record_threshold("covariant_K_leg.complete_branch_projection",key,val,tol)
+    for key, value in out.items():
+        if abs(value) <= tol:
+            PRUNE.record_threshold("covariant_K_leg.complete_branch_output",key,value,tol)
     return {k:a for k,a in out.items() if abs(a)>tol}, max_basis_leak
 
 
@@ -183,10 +192,15 @@ def apply_volume_complete_state(state, v):
         Vb = canonical_volume_block_general(tuple(ls), J2)
         for row,(A,B) in enumerate(rec):
             c = Vb[row,idx]
+            labs = list(labels); labs[v] = label_charge(J2,M2,A,B)
+            ko = (spins,tuple(labs))
             if abs(c)>1e-13:
-                labs = list(labels); labs[v] = label_charge(J2,M2,A,B)
-                ko = (spins,tuple(labs))
                 out[ko] = out.get(ko,0j)+amp*c
+            else:
+                PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,amp*c,1e-13)
+    for key, value in out.items():
+        if abs(value)<=1e-11:
+            PRUNE.record_threshold("covariant_K_leg.volume_state_output.1e-11",key,value,1e-11)
     return {k:a for k,a in out.items() if abs(a)>1e-11}
 
 
@@ -238,6 +252,9 @@ def apply_HE_complete_state(state,source_v,Jmax2):
         items,vleak,bleak=HE_complete_cached(key,source_v,Jmax2)
         max_v=max(max_v,vleak); max_b=max(max_b,bleak)
         for ko,c in items: out[ko]=out.get(ko,0j)+amp*c
+    for key, value in out.items():
+        if abs(value)<=1e-10:
+            PRUNE.record_threshold("covariant_K_leg.HE_state_output.1e-10",key,value,1e-10)
     return {k:a for k,a in out.items() if abs(a)>1e-10},max_v,max_b
 
 
