@@ -27,6 +27,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+      - name: Set up Python for W5 audit regressions
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numerical test dependencies
+        run: python -m pip install --disable-pip-version-check numpy sympy
+      - name: Run lower-level pruning audit regressions
+        run: |
+          python -m unittest discover -s tests -p 'test_bqg_pruning_audit.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_pruning_audit_wiring.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_amp_tol_shadow_compare.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
       - name: Package complete tracked source tree with provenance
         shell: bash
         run: |
