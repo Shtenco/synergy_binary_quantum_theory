@@ -54,12 +54,11 @@ def add(dst,src,scale=1.0,tol=TOL):
         prior=dst.get(key,0j)
         incoming=scale*amp
         z=prior+incoming
-        if abs(z)>tol:
+        PRUNE.record_merge("lorentzian_ordered_triple.add",key,prior,incoming,z,tol)
+        if PRUNE.keep(z,tol):
             dst[key]=z
-        else:
-            PRUNE.record_merge("lorentzian_ordered_triple.add",key,prior,incoming,z,tol)
-            if key in dst:
-                del dst[key]
+        elif key in dst:
+            del dst[key]
 
 
 def norm2(state):
