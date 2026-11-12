@@ -27,7 +27,14 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           mkdir -p staging/source
-          git archive --format=tar HEAD | tar -xf - -C staging/source
+          # Refuse to silently package empty submodule directories.
+          if git ls-files --stage | awk '$1 == "160000" { print; found=1 } END { exit found ? 0 : 1 }'; then
+            echo "Submodule gitlinks detected; recursive submodule materialization is required." >&2
+            exit 1
+          fi
+          # Copy exactly the tracked index paths. Unlike git archive, this does not
+          # silently omit paths marked export-ignore in .gitattributes.
+          git ls-files -z | tar --null -T - -cf - | tar -xf - -C staging/source
           git rev-parse HEAD > staging/SOURCE_COMMIT.txt
           git rev-parse 'HEAD^{tree}' > staging/SOURCE_TREE.txt
           printf '%s\n' "$GITHUB_REF" > staging/SOURCE_REF.txt
