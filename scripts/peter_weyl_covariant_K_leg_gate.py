@@ -193,7 +193,7 @@ def apply_volume_complete_state(state, v):
             c = Vb[row,idx]
             labs = list(labels); labs[v] = label_charge(J2,M2,A,B)
             ko = (spins,tuple(labs))
-            if PRUNE.keep(amp*c,1e-13):
+            if PRUNE.keep(c,1e-13):
                 out[ko] = out.get(ko,0j)+amp*c
             else:
                 PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,amp*c,1e-13)
