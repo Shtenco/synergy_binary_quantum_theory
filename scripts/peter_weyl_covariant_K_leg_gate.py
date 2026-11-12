@@ -56,12 +56,11 @@ def add_state(dst, src, scale=1.0, tol=1e-11):
         prior = dst.get(key, 0j)
         incoming = scale * amp
         z = prior + incoming
-        if abs(z) > tol:
+        PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tol)
+        if PRUNE.keep(z,tol):
             dst[key] = z
-        else:
-            PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tol)
-            if key in dst:
-                del dst[key]
+        elif key in dst:
+            del dst[key]
 
 
 def label_gauss(K):
