@@ -95,6 +95,9 @@ def complete_to_covariant(state, source_v, tol=TOL):
         for key,value in out.items():
         if abs(value)<=tol:
             PRUNE.record_threshold("covariant_composition.complete_to_covariant",key,value,tol)
+    for key,value in out.items():
+        if abs(value)<=tol:
+            PRUNE.record_threshold("covariant_composition.complete_to_covariant",key,value,tol)
     return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}
 
 
