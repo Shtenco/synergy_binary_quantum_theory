@@ -685,6 +685,37 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 PW.apply_hit_branch = old_apply_hit_branch
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
     lower_level_pruning_ledger["mode"] = pruning_mode
+    lower_level_pruning_ledger["coverage"] = {
+        "complete": False,
+        "status": "PARTIAL_INSTRUMENTATION_NOT_A_ZERO_LOSS_CERTIFICATE",
+        "instrumented_modules": [
+            "k5_peter_weyl_safe_hda_column.py",
+            "peter_weyl_covariant_volume_leg_gate.py",
+            "peter_weyl_covariant_K_leg_gate.py",
+            "peter_weyl_covariant_composition_gate.py",
+            "peter_weyl_lorentzian_K_block_gate.py",
+            "peter_weyl_lorentzian_ordered_triple_gate.py",
+            "peter_weyl_euclidean_sine_ordering_gate.py",
+            "peter_weyl_covariant_K_projection_audit_gate.py",
+            "bqg_v10_w5_lorentzian_adjoint_closure.py",
+        ],
+        "remaining_checks": [
+            "independent transitive threshold-site inventory and coverage proof",
+            "cache-on/cache-off pruning-ledger equality for the full composition chain",
+            "complete spin-wall and state/depth-cap loss separation",
+            "full complex support convergence across Jmax2 and amplitude-threshold ladders",
+        ],
+        "excluded_from_amplitude_bypass": [
+            "exact SU(2) representation and parity selection rules",
+            "spin-wall truncation and state/depth caps",
+            "zero-aware spectral volume/nullspace convention",
+        ],
+        "shadow_no_prune_interpretation": (
+            "shadow_no_prune bypasses only wired nonzero amplitude thresholds. "
+            "Until coverage.complete is true, it is a partial diagnostic and "
+            "must never be reported as a true no-pruning reference."
+        ),
+    }
     lower_level_pruning_ledger["cache_policy"] = {
         "cleared_lru_cache_function_count": int(cleared_cache_functions),
         "cleared_before_capture": True,
@@ -813,8 +844,16 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         spin_wall_omitted_branches=spin_wall_stats["count"],
         max_intermediate_spin_reached=spin_wall_stats["max_intermediate_spin_reached"],
     )
+    algebraic_status = "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE"
+    reported_status = (
+        "INCOMPLETE_NO_PRUNING_COVERAGE"
+        if pruning_mode == "shadow_no_prune"
+        else algebraic_status
+    )
     return {
-        "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
+        "status": reported_status,
+        "algebraic_status": algebraic_status,
+        "lower_level_pruning_coverage_complete": False,
         "source_nodes": list(source_nodes),
         "pruning_mode": pruning_mode,
         "Jmax2": Jmax2,
