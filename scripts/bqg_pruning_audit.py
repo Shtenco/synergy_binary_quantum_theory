@@ -138,13 +138,16 @@ def record_merge(site_id: str, key: Any, prior: complex, incoming: complex,
                  result: complex, threshold: float) -> None:
     collector = _ACTIVE.get()
     z = complex(result)
-    if collector is not None and (z == 0j or abs(z) <= threshold):
+    p, inc = complex(prior), complex(incoming)
+    exact_cancellation = z == 0j and p != 0j and inc != 0j
+    subthreshold_nonzero = z != 0j and abs(z) <= threshold
+    if collector is not None and (exact_cancellation or subthreshold_nonzero):
         kind = (
-            "exact_cancellation" if z == 0j else
+            "exact_cancellation" if exact_cancellation else
             "would_prune_bypassed" if _BYPASS.get() else
             "incremental_merge_result"
         )
         collector.record(
             site_id, key, z, threshold, kind=kind,
-            prior=prior, incoming=incoming,
+            prior=p, incoming=inc,
         )
