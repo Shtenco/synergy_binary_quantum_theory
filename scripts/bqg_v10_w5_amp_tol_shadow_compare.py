@@ -18,6 +18,27 @@ import tempfile
 from pathlib import Path
 
 
+COMPLETE_CLOSURE_STATUSES = {
+    "PASS_ADJOINT_CONSISTENCY",
+    "FAIL_ADJOINT_OR_LEAKAGE_GATE",
+}
+
+
+def closure_matrix_available(result: dict, *, shadow: bool = False) -> bool:
+    status = result.get("status")
+    if status in COMPLETE_CLOSURE_STATUSES:
+        return True
+    # Full shadow matrices remain labelled INCOMPLETE until the pruning-site
+    # coverage proof is complete, but are valid for bounded diagnostics.
+    return bool(
+        shadow
+        and status == "INCOMPLETE_NO_PRUNING_COVERAGE"
+        and result.get("pruning_mode") == "shadow_no_prune"
+        and result.get("algebraic_status") in COMPLETE_CLOSURE_STATUSES
+        and isinstance(result.get("forward_B_columns_sparse"), list)
+    )
+
+
 def run_one(script: Path, output: Path, amp_tol: float, args,
              pruning_mode: str = "production") -> dict:
     command = [
@@ -120,11 +141,7 @@ def main() -> int:
             pruning_mode="shadow_no_prune",
         )
 
-    complete_statuses = {
-        "PASS_ADJOINT_CONSISTENCY",
-        "FAIL_ADJOINT_OR_LEAKAGE_GATE",
-    }
-    if production.get("status") not in complete_statuses or zero_output.get("status") not in complete_statuses:
+    if not closure_matrix_available(production) or not closure_matrix_available(zero_output, shadow=True):
         result = {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "production_status": production.get("status"),
@@ -146,6 +163,7 @@ def main() -> int:
             "shadow_lower_level_pruning": zero_output.get("lower_level_pruning_ledger"),
             "production_status": production.get("status"),
             "shadow_no_prune_status": zero_output.get("status"),
+            "shadow_algebraic_status": zero_output.get("algebraic_status"),
             "comparison": comparison,
             "scope": (
                 "Isolated-process comparison of production thresholds against "
