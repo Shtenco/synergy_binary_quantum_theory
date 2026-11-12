@@ -156,6 +156,11 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         stats = {
             "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
             "by_edge": {}, "samples": [],
+            "max_intermediate_spin_reached": 0.0,
+            "intermediate_above_3_5_count": 0,
+            "intermediate_above_3_5_l1": 0.0,
+            "intermediate_above_3_5_l2_sq": 0.0,
+            "intermediate_samples": [],
         }
 
         def primitive(branch, x, y, i, j, wall):
