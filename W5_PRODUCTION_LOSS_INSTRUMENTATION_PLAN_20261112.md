@@ -183,3 +183,46 @@ The spin probe was extended beyond upper-wall events: it now observes every reta
 ### Branch-amplitude representation in the spin probe
 
 The spin-wall probe does not treat the scalar branch prefactor as the entire state amplitude. Each hit branch is factorized as `(spins, local_tensors, scalar_factor)`, so the probe now computes branch L1 and L2 norms as the scalar magnitude multiplied by the corresponding product of local tensor norms, and computes the maximum full product-basis coefficient from the product of local tensor maxima. It records the scalar complex factor, local tensor shapes and a SHA-256 fingerprint for every sampled branch; the first five samples at each diagnostic class also carry the exact flattened real/imaginary tensor payloads. This keeps the aggregate pathwise norms meaningful while bounding JSON output size. The test suite includes a direct factorized-norm check. The probe still records pathwise branch mass, not coherent sums between branches.
+
+
+## 2026-11-12 coefficient-ledger and isolated-threshold-comparison increment
+
+### V10 coefficient ledger added (source-level; execution pending)
+
+The V10 closure wrapper now preserves every coefficient it removes at its own final coherent output threshold and every coefficient attached to a new support key rejected by the state/depth cap. Records are split into forward and direct-adjoint channels and include input key, output key, exact binary64 real/imaginary components, absolute magnitude, threshold (for `amp_tol`), input depth and active cap (for closure-cap rejection). The result contains full record arrays plus per-channel count, pathwise L1, pathwise L2 and maximum magnitude.
+
+The zero output threshold is now accepted by V10 for a controlled sensitivity run. It retains every nonzero output coefficient at this final wrapper threshold; it does **not** disable lower-level pruning in imported operator modules.
+
+### Isolated process comparison harness added
+
+`scripts/bqg_v10_w5_amp_tol_shadow_compare.py` runs the same V10 source in two separate Python processes with fresh import namespaces/caches: the requested positive `amp_tol` and `amp_tol=0`. For completed closures it compares the complete complex sparse forward columns over the union of input/output keys, reporting support symmetric difference, absolute/relative L2 residual, maximum coefficient residual and per-input-column diagnostics. If either closure hits a state/depth cap, it returns `INCOMPLETE_CLOSURE_LIMIT_REACHED` and does not compare partial matrices.
+
+The harness deliberately returns `INCOMPLETE_NO_PRUNING_REFERENCE` even after a successful threshold comparison. Lower-level amplitude pruning remains active, so this is a final-output-threshold sensitivity control, not the requested complete no-pruning shadow evaluator and not a ZERO_LOSS proof. Unit tests were added for complex sparse-vector decoding and comparison.
+
+### Lower-level pruning-site inventory revalidated
+
+The exact source files still contain the following active numerical elimination sites requiring independent before/after coherent-sum instrumentation:
+
+- `k5_peter_weyl_safe_hda_column.py`: `add_dict` threshold 1e-13; intertwiner coefficient 1e-12; primitive output 1e-12/1e-11; cached output 1e-10; state threshold default 1e-8.
+- `peter_weyl_lorentzian_K_block_gate.py`: local volume 1e-12; V-state 1e-10; H_E/K-state 1e-9.
+- `peter_weyl_covariant_volume_leg_gate.py`: charged projection 1e-13; branch projection/merge `tol` default 1e-11; completed state 1e-10.
+- `peter_weyl_covariant_K_leg_gate.py`: state merge 1e-11; charged projection 1e-13; completed branch 1e-11; completed C(K) state 1e-10.
+- `peter_weyl_covariant_composition_gate.py`: `TOL=1e-11` in state merges and covariant completion.
+- `peter_weyl_covariant_K_composition_gate.py`: inherits the composition/branch thresholds; exact scalar-relevance projection must remain classified separately from numerical pruning.
+- `peter_weyl_covariant_K_composition_cached_gate.py`: cache wrappers must be tested for full dictionary equality, not treated as an independent numerical cutoff.
+- `peter_weyl_covariant_K_sine_composition_gate.py`: historical Gauss H_E cutoff 1e-9.
+- `peter_weyl_lorentzian_ordered_triple_gate.py`: local `TOL=1e-11` branch accumulation; exact J=2 scalar-channel elimination is a separate selection-rule class.
+- `peter_weyl_lorentzian_sine_ordered_triple_gate.py`: cached wrappers around the same sine path; cache-on/cache-off equality remains required.
+
+The lower-level ledger must retain both (a) branch coefficients removed before coherent summation and (b) coefficients removed after coherent summation. These are not interchangeable: pre-sum pathwise L1/L2 are not the coherent residual norm. Every site needs a stable site identifier, complete state/branch key, input-column identity, exact complex value and threshold. Spectral zero-aware eigenvalue regularization remains a separate operator-definition sensitivity axis, not amplitude pruning.
+
+### Current completion boundary
+
+- V10 final `amp_tol` coefficient ledger: implemented in source, not yet executed.
+- V10 state/depth cap coefficient ledger: implemented in source, not yet executed.
+- Isolated two-process full complex-vector comparison at final output threshold: implemented, unit tests added, not yet executed.
+- Complete lower-level pruning instrumentation: OPEN.
+- True no-pruning shadow evaluator: OPEN; the current harness explicitly refuses to claim this.
+- Jmax2/amp_tol convergence ladder: OPEN; must run only after staging archive and complete coefficient instrumentation are verified.
+- All cap-hit results remain `INCOMPLETE`; no partial matrix can be accepted as PASS.
+- Production ZERO_LOSS remains OPEN.
