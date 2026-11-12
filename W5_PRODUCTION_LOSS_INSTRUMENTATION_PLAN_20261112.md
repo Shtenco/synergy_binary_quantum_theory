@@ -72,3 +72,69 @@ Do not label the production path ZERO_LOSS merely because reported losses are ze
 - deterministic repeated execution with identical source SHA and parameters.
 
 Until those tests run on the staged source archive, production loss and ZERO_LOSS remain OPEN.
+
+
+## Additional source findings from the exact W5 call path
+
+The following modules are part of the executable path and must be included in the dependency closure, not treated as optional examples:
+
+- `peter_weyl_zeroaware_volume_migration_experiment.py`
+- `peter_weyl_covariant_K_projection_audit_gate.py`
+- `peter_weyl_volume_cross_rep_audit.py`
+- `peter_weyl_q_block_gauge_audit.py`
+- `peter_weyl_covariant_K_sine_composition_gate.py`
+- `peter_weyl_lorentzian_sine_ordered_triple_gate.py`
+- `bqg_v10_w5_lorentzian_adjoint_closure.py`
+
+The latter is the W5 closure wrapper. It calls the sine-ordered engine while intercepting the raw ordered-triple executor, then constructs forward and direct-adjoint columns across the selected source nodes. A standalone run of the one-triple gate is therefore not a substitute for the V10 closure path.
+
+### Spectral zero-aware cutoff — separate from amplitude pruning
+
+The volume path applies a spectral convention before state amplitudes are generated. In `peter_weyl_zeroaware_volume_migration_experiment.py`, `ZERO_FACTOR=1000.0` and
+
+```
+tau = 1000 * machine_epsilon * matrix_dimension * max(1, spectral_scale)
+```
+
+Eigenvalues with `abs(ev) <= tau` are assigned zero before `sqrt(abs(ev))`. The same scale-dependent zero-aware convention is independently present in `peter_weyl_volume_cross_rep_audit.py` and `peter_weyl_q_block_gauge_audit.py`.
+
+This is not the same operation as dropping a sparse-state amplitude. It is a spectral/nullspace regularization choice in the definition of the volume block. The first baseline-vs-no-amplitude-pruning comparison must keep this convention fixed on both sides. A separate spectral sensitivity study must vary the factor and compare eigenvalue masks, volume matrices, and downstream complex state vectors. Setting this cutoff to zero is not a valid shortcut: numerical near-zero eigenvalues may then be square-rooted and change the operator itself.
+
+### V10 closure controls that the reference evaluator must expose
+
+At source SHA `54bcf101d1fab06b1c5df1ef0d8aa5fdb9704aac`, `bqg_v10_w5_lorentzian_adjoint_closure.py` has these defaults:
+
+| Control | Default | Consequence |
+|---|---:|---|
+| `Jmax2` | 10 | finite doubled-spin wall |
+| `max_states` | 500 | reachable-support cap |
+| `max_depth` | 8 | closure-depth cap |
+| `amp_tol` | 1e-12 | forward/adjoint output support pruning |
+
+The wrapper rejects `amp_tol <= 0`, filters the coherently aggregated forward and adjoint maps at `amp_tol`, and marks closure incomplete when the state/depth caps are hit. Its `TOL=0.0` accumulator does not make the full path lossless: lower-level operators still prune, the final column filter is positive, and `apply_hit_branch` still silently rejects upper-wall transitions.
+
+The existing conservative one-step KKV support estimate is doubled spin `Jmax2=20` from a seed doubled spin 4 if all 16 link hits land on one edge. This is a worst-case path bound, not evidence that an amplitude reaches the bound. The V10 default 10 therefore cannot certify one-step carrier completeness. Record every attempted `s_out > Jmax2` branch before rejecting it and repeat with larger walls. For repeated depth, the conservative bound grows as `4 + 16d`; a finite default wall is not a proof of closure.
+
+### Independent reference evaluator — implementation contract
+
+The evaluator must be a shadow execution of the exact pinned source tree, not a reimplementation that silently changes operator definitions.
+
+1. **Pin and verify.** Stage all 176 `scripts/` files plus project metadata and record the repository ref, commit SHA, per-file SHA-256, Python version, and dependency versions. Refuse execution if any source hash differs.
+2. **Isolate modes.** Run production and reference modes in separate Python processes/import namespaces. Clear all `lru_cache` instances between modes. Never reuse a cached production result in the reference path.
+3. **Reference amplitude accumulation.** In the reference mode, preserve every nonzero binary64 contribution through all numerical amplitude filters and incremental sparse merges. Accumulate by the complete output key first; apply any requested comparison threshold only after the coherent group is complete. Keep exact SU(2) selection rules and negative-spin forbidden transitions as structural exclusions, with explicit reason codes.
+4. **Do not conflate the spectral convention.** Hold the zero-aware volume eigenvalue mask fixed for the first comparison. Run the `ZERO_FACTOR` sensitivity ladder separately and report changes to the volume matrix before interpreting downstream state differences.
+5. **Instrument the spin wall.** Capture the full branch identity and complex amplitude immediately before the `s_out > Jmax2` rejection. A wall-crossing counter without amplitudes is insufficient.
+6. **Instrument closure caps.** Preserve outputs rejected by `amp_tol`, state-cap and depth-cap events. A capped run must return `INCOMPLETE`, never a partial `PASS`. The reference mode must have an explicit no-prune setting; the current V10 positive-only `amp_tol` guard must be bypassed only in the shadow harness, never by editing the pinned production source.
+7. **Compare vectors, not only norms.** At each stage compare full complex sparse dictionaries over the union of keys: absolute and relative L2 residual, support symmetric difference, max coefficient residual, pathwise omitted L1/L2, and coherent omitted L2. Propagate signed residual vectors through the remaining operator chain where feasible; use triangle-inequality bounds only as conservative supplements.
+8. **Separate cache and operator checks.** Compare cached/uncached full dictionaries under the same mode. Separately compare Lorentzian and sine paths, forward and direct-adjoint columns, branch-resolved and coherent SU(2) commutators, and the complete five-node epsilon sum.
+
+A double-precision no-pruning run is the first control, not an exact-arithmetic proof. If near-cancellation or conditioning makes its result unstable, repeat bounded low-spin subproblems with higher precision or exact SymPy coefficients. Memory/time caps must be reported as incomplete rather than silently converted into pruning.
+
+## Updated evidence status
+
+- Additional source-level findings: confirmed by reading the pinned production files.
+- Spectral cutoff sensitivity: not measured.
+- Full dependency archive in local runtime: not available.
+- Independent no-pruning reference evaluator: design specified, not implemented or executed.
+- V10 production closure with instrumented wall/cap events: not run.
+- Production ZERO_LOSS: OPEN.
