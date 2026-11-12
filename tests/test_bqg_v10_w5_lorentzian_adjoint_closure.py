@@ -112,6 +112,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             max_component_leakage=0.0,
             max_spin_reached=3.5,
             spin_wall_omitted_branches=0,
+            max_intermediate_spin_reached=3.5,
         )
         self.assertTrue(gate.closure_acceptance(
             **common, sine_engine_result={"passed": True}
@@ -176,6 +177,48 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertAlmostEqual(stats["l1"], abs(2 + 2j))
         self.assertAlmostEqual(stats["l2_sq"], abs(2 + 2j) ** 2)
         self.assertEqual(stats["samples"][0]["omitted_output_spins"], [5])
+
+
+    def test_final_closure_gate_rejects_intermediate_spin_excursion(self):
+        common = dict(
+            forward_norm=1.0,
+            adjoint_norm=1.0,
+            adjoint_relative_residual=0.0,
+            scalar_projection_rejected_terms=0,
+            max_component_leakage=0.0,
+            max_spin_reached=3.5,
+            sine_engine_result={"passed": True},
+            spin_wall_omitted_branches=0,
+        )
+        self.assertFalse(gate.closure_acceptance(
+            **common, max_intermediate_spin_reached=4.0
+        ))
+
+    def test_spin_probe_tracks_retained_intermediate_spin_above_3_5(self):
+        stats = {
+            "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
+            "by_edge": {}, "samples": [],
+            "max_intermediate_spin_reached": 0.0,
+            "intermediate_above_3_5_count": 0,
+            "intermediate_above_3_5_l1": 0.0,
+            "intermediate_above_3_5_l2_sq": 0.0,
+            "intermediate_samples": [],
+        }
+
+        def primitive(branch, x, y, i, j, wall):
+            spins, tensors, amp = branch
+            return [
+                ((next_spin,), tensors, amp * (1 + 1j))
+                for next_spin in (spins[0] - 1, spins[0] + 1)
+                if 0 <= next_spin <= wall
+            ]
+
+        probe = gate._make_spin_wall_probe(
+            primitive, {(0, 1): 0}, 10, stats
+        )
+        probe(((7,), (), 1 + 0j), 0, 1, 0, 1, 10)
+        self.assertEqual(stats["max_intermediate_spin_reached"], 4.0)
+        self.assertEqual(stats["intermediate_above_3_5_count"], 1)
 
     def test_epsilon_orbit_contains_24_unique_terms(self):
         triples = gate.epsilon_triples((1, 2, 3, 4))

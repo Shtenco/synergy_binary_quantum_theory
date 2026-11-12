@@ -243,6 +243,7 @@ def closure_acceptance(
     max_spin_reached,
     sine_engine_result,
     spin_wall_omitted_branches=0,
+    max_intermediate_spin_reached=0.0,
 ):
     """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate.
 
@@ -257,6 +258,7 @@ def closure_acceptance(
         and max_component_leakage < 1e-9
         and max_spin_reached <= 3.5 + 1e-12
         and spin_wall_omitted_branches == 0
+        and max_intermediate_spin_reached <= 3.5 + 1e-12
         and isinstance(sine_engine_result, dict)
         and sine_engine_result.get("passed") is True
     )
@@ -325,12 +327,38 @@ def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats
                             "amplitude_imag": float(out_amp.imag),
                             "amplitude_abs": magnitude,
                         })
-        return original_apply_hit_branch(branch, x, y, i, j, Jmax2)
+        actual = original_apply_hit_branch(branch, x, y, i, j, Jmax2)
+        for candidate in actual:
+            out_spins, _out_tensors, out_amp = candidate
+            reached = max(out_spins, default=0) / 2
+            stats["max_intermediate_spin_reached"] = max(
+                stats["max_intermediate_spin_reached"], float(reached)
+            )
+            if max(out_spins, default=0) > 7 and abs(out_amp) > 0.0:
+                magnitude = float(abs(out_amp))
+                stats["intermediate_above_3_5_count"] += 1
+                stats["intermediate_above_3_5_l1"] += magnitude
+                stats["intermediate_above_3_5_l2_sq"] += magnitude * magnitude
+                if len(stats["intermediate_samples"]) < 25:
+                    stats["intermediate_samples"].append({
+                        "edge": list(edge),
+                        "auxiliary_indices": [int(i), int(j)],
+                        "output_spins": list(out_spins),
+                        "amplitude_real": float(out_amp.real),
+                        "amplitude_imag": float(out_amp.imag),
+                        "amplitude_abs": magnitude,
+                    })
+        return actual
     return probed
 
 
 def _spin_wall_diagnostics(stats):
     return {
+        "max_intermediate_spin_reached": float(stats["max_intermediate_spin_reached"]),
+        "intermediate_above_3_5_branch_count": int(stats["intermediate_above_3_5_count"]),
+        "intermediate_above_3_5_pathwise_l1": float(stats["intermediate_above_3_5_l1"]),
+        "intermediate_above_3_5_pathwise_l2": math.sqrt(float(stats["intermediate_above_3_5_l2_sq"])),
+        "intermediate_above_3_5_samples": list(stats["intermediate_samples"]),
         "spin_wall_omitted_branch_count": int(stats["count"]),
         "spin_wall_omitted_pathwise_l1": float(stats["l1"]),
         "spin_wall_omitted_pathwise_l2": math.sqrt(float(stats["l2_sq"])),
@@ -379,6 +407,11 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     spin_wall_stats = {
         "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
         "by_edge": {}, "samples": [],
+        "max_intermediate_spin_reached": 0.0,
+        "intermediate_above_3_5_count": 0,
+        "intermediate_above_3_5_l1": 0.0,
+        "intermediate_above_3_5_l2_sq": 0.0,
+        "intermediate_samples": [],
     }
     PW.apply_hit_branch = _make_spin_wall_probe(
         old_apply_hit_branch, PW.EIDX, Jmax2, spin_wall_stats
@@ -436,8 +469,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "output_norm": norm_f,
             "final_nonscalar_J_weight_fraction": 0.0 if rejected_norm2 == 0 else 1.0,
             "max_spin_reached": max(
-                (max(key[0]) for key in closure_keys), default=0
-            ) / 2,
+                max((max(key[0]) for key in closure_keys), default=0) / 2,
+                spin_wall_stats["max_intermediate_spin_reached"],
+            ),
             "max_diagnostics": {
                 "CV_complete_basis_leakage": aggregate_leakage.get("CV_complete_basis_leakage", 0.0),
                 "CK_outer_complete_basis_leakage": aggregate_leakage.get("CK_outer_complete_basis_leakage", 0.0),
@@ -560,7 +594,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         {"value": aggregate_leakage.get("CK_complete_charge_basis_leakage", 0.0),
          "hard_acceptance": False},
     )
-    max_spin_reached = max((max(key[0]) for key in basis_keys), default=0) / 2
+    max_spin_reached = max(
+        max((max(key[0]) for key in basis_keys), default=0) / 2,
+        spin_wall_stats["max_intermediate_spin_reached"],
+    )
     passed = closure_acceptance(
         forward_norm=bnorm,
         adjoint_norm=bdag_norm,
@@ -570,6 +607,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         max_spin_reached=max_spin_reached,
         sine_engine_result=sine_engine_result,
         spin_wall_omitted_branches=spin_wall_stats["count"],
+        max_intermediate_spin_reached=spin_wall_stats["max_intermediate_spin_reached"],
     )
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",

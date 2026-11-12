@@ -173,3 +173,8 @@ A focused review of the exact V10 execution path found a false-completeness risk
 - Regression tests were added for the fail-closed acceptance condition and for capturing a complex branch immediately before wall rejection.
 
 This is a source-level instrumentation correction, not a measured production result. The test suite has not yet executed on a runner, the W5 staging artifact is still unavailable, and the new diagnostic has not yet been exercised against the real production KKV closure. Numerical amplitude pruning, state/depth cap accounting, and the independent no-pruning shadow evaluator remain open. Production ZERO_LOSS remains OPEN.
+
+
+### Intermediate-spin support observability extension
+
+The spin probe was extended beyond upper-wall events: it now observes every retained primitive hit branch and records the maximum intermediate link spin before later KKV legs can lower it. It separately counts and reports pathwise amplitudes for intermediate branches above the declared `J=7/2` acceptance ceiling. The closure's `max_spin_reached` now takes the maximum of the final Gauss basis and all observed intermediate hit outputs, and acceptance requires this maximum to remain at or below `3.5`. This closes the related blind spot where a high intermediate spin could disappear from the final scalar basis without ever touching the configured upper regulator wall. The new regression tests reject such a hidden intermediate excursion and verify its branch capture. This remains unexecuted source-level hardening until Actions runs; it is not a measured production result.
