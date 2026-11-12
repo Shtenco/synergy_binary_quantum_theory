@@ -448,6 +448,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_covariant_volume_leg_gate as CV
     import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
+    import bqg_pruning_audit as PRUNE
 
     seeds = [w5_input_key(K) for K in W5_K]
     closure_keys = list(seeds)
@@ -652,15 +653,17 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         }
 
     RAW.run = closure_executor
-    try:
-        # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
-        # cache wrappers once for the entire closure walk.
-        # One invocation installs the sine K engine once; the intercepted
-        # executor coherently sums the selected node maps on every basis key.
-        sine_engine_result = LSINE.run(source_nodes[0])
-    finally:
-        RAW.run = old_raw_run
-        PW.apply_hit_branch = old_apply_hit_branch
+    with PRUNE.capture() as lower_level_pruning:
+        try:
+            # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
+            # cache wrappers once for the entire closure walk.
+            # One invocation installs the sine K engine once; the intercepted
+            # executor coherently sums the selected node maps on every basis key.
+            sine_engine_result = LSINE.run(source_nodes[0])
+        finally:
+            RAW.run = old_raw_run
+            PW.apply_hit_branch = old_apply_hit_branch
+    lower_level_pruning_ledger = lower_level_pruning.snapshot()
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
     if not complete:
@@ -695,6 +698,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "max_depth": max_depth,
             "omitted_new_support_keys": omitted_support,
             "coefficient_loss_ledger": summarize_ledger(),
+            "lower_level_pruning_ledger": lower_level_pruning_ledger,
             "coherent_node_sum_ledger": coherent_sum_ledger,
             "partial_diagnostics": {
                 "forward_frobenius_norm": sparse_frobenius(forward_columns),
@@ -809,6 +813,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
         },
         "coefficient_loss_ledger": summarize_ledger(),
+        "lower_level_pruning_ledger": lower_level_pruning_ledger,
         "coherent_node_sum_ledger": coherent_sum_ledger,
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
