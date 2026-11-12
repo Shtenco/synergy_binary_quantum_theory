@@ -51,12 +51,11 @@ def add(dst, src, scale=1.0, tol=TOL):
         prior = dst.get(k, 0j)
         incoming = scale * a
         z = prior + incoming
-        if abs(z) > tol:
+        PRUNE.record_merge("covariant_composition.add", k, prior, incoming, z, tol)
+        if PRUNE.keep(z,tol):
             dst[k] = z
-        else:
-            PRUNE.record_merge("covariant_composition.add", k, prior, incoming, z, tol)
-            if k in dst:
-                del dst[k]
+        elif k in dst:
+            del dst[k]
 
 
 def covariant_key_to_complete(key, source_v):
