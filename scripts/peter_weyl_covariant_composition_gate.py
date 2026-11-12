@@ -90,6 +90,9 @@ def complete_to_covariant(state, source_v, tol=TOL):
                 Kother.append(lab[1])
         key = (spins, tuple(Kother), J2, M2, K12, K34)
         out[key] = out.get(key, 0j) + amp
+    for key, value in out.items():
+        if abs(value) <= tol:
+            PRUNE.record_threshold("covariant_composition.complete_to_covariant",key,value,tol)
     return {k:a for k,a in out.items() if abs(a) > tol}
 
 
