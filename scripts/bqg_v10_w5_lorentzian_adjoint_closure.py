@@ -455,7 +455,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     # in this dependency family before the audited execution.
     cleared_cache_functions = 0
     for module_name, module in list(sys.modules.items()):
-        if module_name == "k5_peter_weyl_safe_hda_column" or module_name.startswith("peter_weyl_"):
+        module_file = getattr(module, "__file__", None)
+        if module_file and Path(module_file).resolve().parent == HERE:
             for candidate in vars(module).values():
                 clear = getattr(candidate, "cache_clear", None)
                 if callable(clear):
