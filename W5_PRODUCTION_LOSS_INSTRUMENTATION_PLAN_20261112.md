@@ -257,3 +257,31 @@ This increment is partial instrumentation, not complete pruning coverage. In par
 - the spin-wall probe remains a separate regulator-omission ledger.
 
 Therefore `complete_lower_level_pruning_coverage=false`, `true_no_pruning_reference=false`, and `Production ZERO_LOSS=OPEN`. The new workflow must pass on the exact final commit and its artifact must be downloaded and verified before these source-level changes are treated as executed evidence.
+
+
+## 2026-11-12 bounded no-pruning shadow mode — current source state
+
+The earlier sections above are chronological implementation notes. Their statements that the shadow evaluator and lower-level bypass were entirely open have been superseded by the following source changes.
+
+### Implemented in the current branch
+
+- `scripts/bqg_pruning_audit.py` now provides a context-local `bypass()` mode and a single `keep(value, threshold)` policy. Outside the explicit shadow context, `keep` is exactly the original strict `abs(value) > threshold) decision. In shadow mode it retains every exact nonzero coefficient while still excluding exact zeros.
+- `record_threshold` and `record_merge` distinguish a genuine exact cancellation (nonzero prior plus nonzero incoming value producing exact zero) from a structural zero or an ordinary subthreshold nonzero value. The latter is recorded as `would_prune_bypassed` in shadow mode.
+- The reachable W5 operator path now routes its amplitude cutoffs through this policy: K5 primitive and cached state construction; covariant volume projection and closure; covariant K projection and volume/K state construction; covariant conversion; Lorentzian K-block volume and state pruning; Euclidean sine ordering; ordered-triple accumulation; and the K-composition/cached/sine adapters through those shared functions.
+- V10 accepts `pruning_mode=production|shadow_no_prune`. The shadow mode is bounded by the same explicit `Jmax2`, `max_states`, and `max_depth` limits; hitting any cap remains an incomplete result, never a partial PASS.
+- `bqg_v10_w5_amp_tol_shadow_compare.py` now launches isolated production and bounded `shadow_no_prune` subprocesses and compares the complete complex sparse forward columns when both closures finish. It also retains both lower-level event ledgers and explicitly refuses to claim `ZERO_LOSS`.
+- The independent `peter_weyl_covariant_K_projection_audit_gate.py` has also been connected to the same bypass/ledger policy for its merge and projection stages.
+- Regression coverage now includes collector isolation, nested contexts, genuine cancellation, production threshold behavior, merge-site wiring, state pruning, covariant projection, and preservation of subthreshold nonzero coefficients in shadow mode.
+
+### Evidence status and remaining closure conditions
+
+This is now a **bounded shadow evaluator for the explicitly instrumented amplitude-threshold sites**, not yet a certified complete no-pruning reference.
+
+1. The latest staging and PR-gate workflows for the current source head are queued/pending; no successful run or artifact for that exact head has yet been inspected. Source edits and unit-test definitions are not execution evidence.
+2. The full call graph still needs a line-by-line coverage manifest proving that every reachable approximate amplitude threshold is routed through `PRUNE.keep`. The independent audit scripts and any optional diagnostic paths must be classified separately from the production V10 call graph.
+3. The zero-aware spectral eigenvalue convention is an operator-definition sensitivity axis, not an amplitude threshold; it remains separately controlled and must not be silently bypassed as though it were coefficient pruning.
+4. The spin-wall probe and state/depth caps remain independent finite-regulator boundaries. A shadow run that touches either is incomplete for the corresponding support claim.
+5. Only after the exact-source staging artifact is verified and both production/shadow closures finish without caps can the full complex support, coherent L1/L2, pathwise L1/L2, adjoint residual, and `Jmax2 × amp_tol` ladder be interpreted.
+6. Continuum/refinement convergence and physical regulator removal remain separate obligations beyond this finite W5 calculation.
+
+Current gates therefore remain: `complete_lower_level_pruning_coverage=false`, `certified_true_no_pruning_reference=false`, and `Production ZERO_LOSS=OPEN` until the above evidence is produced. The earlier finite causal-order theorem, reduced analytic cone, and finite interference/decoherence results remain unchanged; this W5 instrumentation work does not upgrade those mathematical results into a full physical BQG proof.
