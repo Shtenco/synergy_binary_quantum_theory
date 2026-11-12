@@ -138,3 +138,18 @@ A double-precision no-pruning run is the first control, not an exact-arithmetic 
 - Independent no-pruning reference evaluator: design specified, not implemented or executed.
 - V10 production closure with instrumented wall/cap events: not run.
 - Production ZERO_LOSS: OPEN.
+
+
+## 2026-11-12 staging completeness correction
+
+A second inspection of the repository root and both staging workflows found that the earlier W5 staging bundles were not complete repository snapshots:
+
+- `.github/workflows/stage-w5-production-source.yml` packages `scripts/` plus a short allowlist of root dependency/configuration files.
+- The initial `.github/workflows/w5-production-source-staging.yml` on this research branch packages only `scripts/`; it omits the root-level Python modules, `proof_tools/`, `tools/`, `tests/`, and the root dependency manifest.
+- The repository root at the audited revision contains additional tracked source locations (including root Python modules, `proof_tools/`, `tools/`, and `tests/`). Therefore a scripts-only artifact cannot be described as the complete production source tree, even if all 176 scripts are present.
+
+The research-branch staging workflow has now been corrected to package `git archive HEAD` for the exact event commit, rather than copying only `scripts/`. It records the source commit and tree IDs, event ref, Git tree manifest, Python/pip/runtime metadata, pip freeze, per-file SHA-256 manifest, and a SHA256SUMS file. A guard requires `git rev-parse HEAD == GITHUB_SHA`, so a workflow_dispatch or push run cannot silently package a different branch tip. The source ref is taken from `GITHUB_REF` (not the detached checkout's symbolic branch name).
+
+This is a packaging/provenance correction only. It does not alter the physical operators or establish numerical loss values. The corrected workflow's run must complete and its artifact must be downloaded and independently verified before the source-transfer gate can be marked closed. The older scripts-only run is not an acceptable substitute.
+
+Current validation boundary: workflow source was committed and reread from GitHub; no runner has yet executed the corrected packaging steps, so archive contents, hashes, and artifact availability remain unverified. Production ZERO_LOSS remains OPEN.
