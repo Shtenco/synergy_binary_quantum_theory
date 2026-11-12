@@ -196,7 +196,7 @@ def apply_volume_complete_state(state, v):
             if PRUNE.keep(c,1e-13):
                 out[ko] = out.get(ko,0j)+amp*c
             else:
-                PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,amp*c,1e-13)
+                PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,c,1e-13)
     for key, value in out.items():
         if abs(value)<=1e-11:
             PRUNE.record_threshold("covariant_K_leg.volume_state_output.1e-11",key,value,1e-11)
