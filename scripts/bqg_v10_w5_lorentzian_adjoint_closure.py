@@ -242,6 +242,7 @@ def closure_acceptance(
     max_component_leakage,
     max_spin_reached,
     sine_engine_result,
+    spin_wall_omitted_branches=0,
 ):
     """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate.
 
@@ -255,6 +256,7 @@ def closure_acceptance(
         and scalar_projection_rejected_terms == 0
         and max_component_leakage < 1e-9
         and max_spin_reached <= 3.5 + 1e-12
+        and spin_wall_omitted_branches == 0
         and isinstance(sine_engine_result, dict)
         and sine_engine_result.get("passed") is True
     )
@@ -289,6 +291,59 @@ def sparse_ordering_parts(forward_columns, adjoint_columns):
     return symmetric, antihermitian, hermitian_k_hbar1
 
 
+
+def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats):
+    """Wrap primitive hits and retain the exact nonzero branches rejected at the upper spin wall.
+
+    The widened call is diagnostic only; the returned production branches are
+    still generated with the original wall. Since one hit changes doubled spin
+    by exactly +/-1, wall+2 is sufficient to expose every upper-wall candidate.
+    """
+    def probed(branch, x, y, i, j, Jmax2):
+        edge = tuple(sorted((x, y)))
+        edge_index = edge_index_map[edge]
+        input_spins, _tensors, _input_amp = branch
+        if Jmax2 == wall and input_spins[edge_index] == wall:
+            widened = original_apply_hit_branch(branch, x, y, i, j, wall + 2)
+            for candidate in widened:
+                out_spins, _out_tensors, out_amp = candidate
+                if out_spins[edge_index] > wall and abs(out_amp) > 0.0:
+                    magnitude = float(abs(out_amp))
+                    stats["count"] += 1
+                    stats["l1"] += magnitude
+                    stats["l2_sq"] += magnitude * magnitude
+                    stats["max_abs"] = max(stats["max_abs"], magnitude)
+                    edge_label = f"{edge[0]}-{edge[1]}"
+                    stats["by_edge"][edge_label] = stats["by_edge"].get(edge_label, 0) + 1
+                    if len(stats["samples"]) < 25:
+                        stats["samples"].append({
+                            "edge": list(edge),
+                            "auxiliary_indices": [int(i), int(j)],
+                            "input_spins": list(input_spins),
+                            "omitted_output_spins": list(out_spins),
+                            "amplitude_real": float(out_amp.real),
+                            "amplitude_imag": float(out_amp.imag),
+                            "amplitude_abs": magnitude,
+                        })
+        return original_apply_hit_branch(branch, x, y, i, j, Jmax2)
+    return probed
+
+
+def _spin_wall_diagnostics(stats):
+    return {
+        "spin_wall_omitted_branch_count": int(stats["count"]),
+        "spin_wall_omitted_pathwise_l1": float(stats["l1"]),
+        "spin_wall_omitted_pathwise_l2": math.sqrt(float(stats["l2_sq"])),
+        "spin_wall_omitted_max_abs": float(stats["max_abs"]),
+        "spin_wall_omitted_by_edge": dict(stats["by_edge"]),
+        "spin_wall_omitted_samples": list(stats["samples"]),
+        "spin_wall_probe_note": (
+            "Counts nonzero primitive path branches immediately above the configured "
+            "upper doubled-spin wall before production rejection; L1/L2 are pathwise "
+            "sums and are not coherently aggregated output norms."
+        ),
+    }
+
 def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
@@ -320,6 +375,14 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     omitted_support = 0
 
     old_raw_run = RAW.run
+    old_apply_hit_branch = PW.apply_hit_branch
+    spin_wall_stats = {
+        "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
+        "by_edge": {}, "samples": [],
+    }
+    PW.apply_hit_branch = _make_spin_wall_probe(
+        old_apply_hit_branch, PW.EIDX, Jmax2, spin_wall_stats
+    )
     sine_engine_result = {}
 
     def closure_executor(_engine_node=0, a=None, b=None, c=None):
@@ -392,6 +455,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         sine_engine_result = LSINE.run(source_nodes[0])
     finally:
         RAW.run = old_raw_run
+        PW.apply_hit_branch = old_apply_hit_branch
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
     if not complete:
@@ -434,6 +498,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 "direct_adjoint_column_norms": [sparse_norm(x) for x in adjoint_columns],
                 "scalar_projection_rejected_terms": rejected_count,
                 "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
+                **_spin_wall_diagnostics(spin_wall_stats),
                 "component_leakage_by_node_and_type": leakage_max,
                 "component_leakage_max_by_type": aggregate_leakage,
             },
@@ -504,6 +569,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         max_component_leakage=max_leak,
         max_spin_reached=max_spin_reached,
         sine_engine_result=sine_engine_result,
+        spin_wall_omitted_branches=spin_wall_stats["count"],
     )
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
@@ -542,6 +608,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
             "max_component_leakage": max_leak,
             "max_spin_reached": max_spin_reached,
+            **_spin_wall_diagnostics(spin_wall_stats),
             "sine_engine_gate_passed": sine_engine_result.get("passed") is True,
             "sine_engine_gate_diagnostics": sine_engine_result.get("max_diagnostics", {}),
             "component_leakage_by_type": leakage_max,
