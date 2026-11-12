@@ -118,7 +118,7 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
             for K in PW.allowed_k2_t(*ls):
                 B = PW.oriented_intertwiner(v, ls, K)
                 c = np.vdot(B, X)
-                if abs(c) > 1e-13:
+                if PRUNE.keep(c,1e-13):
                     opts.append((label_gauss(K), c))
                     recon += c * B
                 else:
