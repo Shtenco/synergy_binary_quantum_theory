@@ -194,10 +194,9 @@ def add_dict(dst,src,scale=1):
         prior=dst.get(k,0j)
         incoming=scale*a
         v=prior+incoming
-        if abs(v)>1e-13: dst[k]=v
-        else:
-            PRUNE.record_merge("k5.add_dict.1e-13",k,prior,incoming,v,1e-13)
-            if k in dst: del dst[k]
+        PRUNE.record_merge("k5.add_dict.1e-13",k,prior,incoming,v,1e-13)
+        if PRUNE.keep(v,1e-13): dst[k]=v
+        elif k in dst: del dst[k]
 
 def adjoint_path(path,iout,iin):
     return tuple(reversed(path)), iin, iout
