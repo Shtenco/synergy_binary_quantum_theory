@@ -11,6 +11,22 @@ import peter_weyl_lorentzian_ordered_triple_gate as RAW
 
 
 class TestPruningAuditOperatorWiring(unittest.TestCase):
+    def test_prune_state_and_complete_to_covariant_projection_are_observed(self):
+        spins = (4,) * 10
+        with audit.capture() as collector:
+            pruned = PW.prune_state({"small": 0.5e-8}, 1e-8)
+            source_label = ("C", 0, 0, 0, 0)
+            labels = (source_label,) + tuple(("G", 0) for _ in range(4))
+            projected = COMP.complete_to_covariant(
+                {(spins, labels): 0.5e-11}, 0, tol=1e-11
+            )
+
+        self.assertEqual(pruned, {})
+        self.assertEqual(projected, {})
+        sites = collector.snapshot()["by_site"]
+        self.assertIn("k5.prune_state", sites)
+        self.assertIn("covariant_composition.complete_to_covariant", sites)
+
     def test_core_operator_merge_sites_are_observed_without_semantic_change(self):
         with audit.capture() as collector:
             a = {}
