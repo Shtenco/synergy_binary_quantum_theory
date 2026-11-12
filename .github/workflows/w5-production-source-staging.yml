@@ -45,6 +45,24 @@ jobs:
           python -m unittest discover -s tests -p 'test_bqg_pruning_audit_wiring.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_amp_tol_shadow_compare.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
+      - name: Compile the complete instrumented W5 dependency chain
+        run: |
+          python -m py_compile \
+            scripts/bqg_pruning_audit.py \
+            scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
+            scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
+            scripts/k5_peter_weyl_safe_hda_column.py \
+            scripts/peter_weyl_covariant_volume_leg_gate.py \
+            scripts/peter_weyl_covariant_K_leg_gate.py \
+            scripts/peter_weyl_covariant_composition_gate.py \
+            scripts/peter_weyl_covariant_K_composition_gate.py \
+            scripts/peter_weyl_covariant_K_composition_cached_gate.py \
+            scripts/peter_weyl_covariant_K_sine_composition_gate.py \
+            scripts/peter_weyl_lorentzian_K_block_gate.py \
+            scripts/peter_weyl_lorentzian_ordered_triple_gate.py \
+            scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py \
+            scripts/peter_weyl_euclidean_sine_ordering_gate.py \
+            scripts/peter_weyl_covariant_K_projection_audit_gate.py
       - name: Package complete tracked source tree with provenance
         shell: bash
         run: |
