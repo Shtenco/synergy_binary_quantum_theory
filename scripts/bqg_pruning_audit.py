@@ -114,9 +114,12 @@ def keep(value: complex, threshold: float) -> bool:
 
 def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -> None:
     collector = _ACTIVE.get()
-    if collector is not None and abs(value) <= threshold:
+    z = complex(value)
+    # Structural zeros are not amplitude-pruning losses. They remain absent
+    # even in the shadow mode and are accounted only for merge cancellations.
+    if collector is not None and z != 0j and abs(z) <= threshold:
         collector.record(
-            site_id, key, value, threshold,
+            site_id, key, z, threshold,
             kind="would_prune_bypassed" if _BYPASS.get() else "coefficient_threshold",
         )
 
@@ -124,9 +127,14 @@ def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -
 def record_merge(site_id: str, key: Any, prior: complex, incoming: complex,
                  result: complex, threshold: float) -> None:
     collector = _ACTIVE.get()
-    if collector is not None and abs(result) <= threshold:
+    z = complex(result)
+    if collector is not None and (z == 0j or abs(z) <= threshold):
+        kind = (
+            "exact_cancellation" if z == 0j else
+            "would_prune_bypassed" if _BYPASS.get() else
+            "incremental_merge_result"
+        )
         collector.record(
-            site_id, key, result, threshold,
-            kind="would_prune_bypassed" if _BYPASS.get() else "incremental_merge_result",
+            site_id, key, z, threshold, kind=kind,
             prior=prior, incoming=incoming,
         )
