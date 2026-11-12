@@ -249,6 +249,9 @@ def run(v=0, w=1):
             if i == j:
                 PW.add_dict(out, Vcov, +1)
             PW.add_dict(out, hVh, -1)
+            for key, value in out.items():
+                if abs(value) <= 1e-10:
+                    PRUNE.record_threshold("covariant_volume_leg.C_matrix_output.1e-10",key,value,1e-10)
             C[i][j] = {k: a for k, a in out.items() if abs(a) > 1e-10}
 
     Cnorm = matrix_state_norm(C)
