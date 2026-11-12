@@ -14,6 +14,7 @@ from typing import Any
 _ACTIVE: ContextVar["PruningCollector | None"] = ContextVar(
     "bqg_pruning_collector", default=None
 )
+_BYPASS: ContextVar[bool] = ContextVar("bqg_pruning_bypass", default=False)
 
 
 class PruningCollector:
@@ -90,10 +91,34 @@ class capture:
         return False
 
 
+class bypass:
+    """Temporarily bypass only explicitly instrumented numerical amplitude thresholds."""
+    def __init__(self) -> None:
+        self._token = None
+
+    def __enter__(self):
+        self._token = _BYPASS.set(True)
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        if self._token is not None:
+            _BYPASS.reset(self._token)
+        return False
+
+
+def keep(value: complex, threshold: float) -> bool:
+    """Preserve the production rule unless an explicit shadow bypass is active."""
+    z = complex(value)
+    return z != 0j if _BYPASS.get() else abs(z) > threshold
+
+
 def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -> None:
     collector = _ACTIVE.get()
     if collector is not None and abs(value) <= threshold:
-        collector.record(site_id, key, value, threshold, kind="coefficient_threshold")
+        collector.record(
+            site_id, key, value, threshold,
+            kind="would_prune_bypassed" if _BYPASS.get() else "coefficient_threshold",
+        )
 
 
 def record_merge(site_id: str, key: Any, prior: complex, incoming: complex,
@@ -101,6 +126,7 @@ def record_merge(site_id: str, key: Any, prior: complex, incoming: complex,
     collector = _ACTIVE.get()
     if collector is not None and abs(result) <= threshold:
         collector.record(
-            site_id, key, result, threshold, kind="incremental_merge_result",
+            site_id, key, result, threshold,
+            kind="would_prune_bypassed" if _BYPASS.get() else "incremental_merge_result",
             prior=prior, incoming=incoming,
         )
