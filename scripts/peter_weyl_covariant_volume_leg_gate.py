@@ -42,6 +42,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_lorentzian_K_block_gate as KG
 
@@ -116,6 +117,8 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                 c = np.vdot(PW.oriented_intertwiner(u, ls, K), tensors[u])
                 if abs(c) > 1e-13:
                     opts.append((K, c))
+                else:
+                    PRUNE.record_threshold("covariant_volume_leg.gauss_projection.1e-13",(spins,u,K),c,1e-13)
             if not opts:
                 ok = False
                 break
@@ -133,6 +136,8 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                     c = np.vdot(B, X0)
                     if abs(c) > 1e-13:
                         src_opts.append((J2, M2, K12, K34, c))
+                    else:
+                        PRUNE.record_threshold("covariant_volume_leg.charged_projection.1e-13",(spins,u,J2,M2,K12,K34),c,1e-13)
 
         for chosen in itertools.product(*other_opts):
             base_amp = amp
@@ -145,9 +150,14 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                     base_amp *= c
             for J2, M2, K12, K34, cs in src_opts:
                 val = base_amp * cs
+                key = (spins, tuple(Kother), J2, M2, K12, K34)
                 if abs(val) > tol:
-                    key = (spins, tuple(Kother), J2, M2, K12, K34)
                     out[key] = out.get(key, 0j) + val
+                else:
+                    PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
+    for key, value in out.items():
+        if abs(value) <= tol:
+            PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
     return {k: v for k, v in out.items() if abs(v) > tol}
 
 
@@ -172,6 +182,9 @@ def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
             closed.extend(PW.apply_hit_branch(br, v, w, i, k, Jmax2))
         projected = project_covariant_branches(closed, v)
         PW.add_dict(total, projected, +1)
+    for key, value in total.items():
+        if abs(value) <= 1e-10:
+            PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
     return {k: a for k, a in total.items() if abs(a) > 1e-10}, max_charged_projection_leak
 
 
