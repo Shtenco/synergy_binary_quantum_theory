@@ -225,6 +225,23 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertEqual(stats["max_intermediate_spin_reached"], 4.0)
         self.assertEqual(stats["intermediate_above_3_5_count"], 1)
 
+
+    def test_factorized_branch_metrics_include_tensor_coefficients(self):
+        import numpy as np
+
+        metrics = gate._factorized_branch_metrics(
+            (np.array([1.0 + 0j, 0.0 + 2j]),),
+            2.0 + 0j,
+            include_payload=True,
+        )
+        self.assertAlmostEqual(metrics["branch_l1"], 6.0)
+        self.assertAlmostEqual(metrics["branch_l2"], 2.0 * np.sqrt(5.0))
+        self.assertAlmostEqual(metrics["branch_max_abs"], 4.0)
+        self.assertEqual(metrics["tensor_shapes"], [[2]])
+        self.assertEqual(len(metrics["tensor_sha256"]), 64)
+        self.assertEqual(metrics["tensor_payload"][0]["real"], [1.0, 0.0])
+        self.assertEqual(metrics["tensor_payload"][0]["imag"], [0.0, 2.0])
+
     def test_epsilon_orbit_contains_24_unique_terms(self):
         triples = gate.epsilon_triples((1, 2, 3, 4))
         self.assertEqual(len(triples), 24)

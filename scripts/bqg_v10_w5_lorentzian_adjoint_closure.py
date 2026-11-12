@@ -294,6 +294,48 @@ def sparse_ordering_parts(forward_columns, adjoint_columns):
 
 
 
+
+def _factorized_branch_metrics(tensors, scalar_amp, include_payload=False):
+    """Measure a factorized spin-network branch, not merely its scalar prefactor."""
+    import hashlib
+    import numpy as np
+
+    digest = hashlib.sha256()
+    branch_l1 = float(abs(scalar_amp))
+    branch_l2 = float(abs(scalar_amp))
+    branch_max = float(abs(scalar_amp))
+    shapes = []
+    payload = []
+    for tensor in tensors:
+        arr = np.ascontiguousarray(np.asarray(tensor))
+        digest.update(repr(tuple(arr.shape)).encode("ascii"))
+        digest.update(arr.dtype.str.encode("ascii"))
+        digest.update(arr.tobytes(order="C"))
+        absolute = np.abs(arr)
+        local_l1 = float(absolute.sum())
+        local_l2 = float(np.linalg.norm(absolute.reshape(-1)))
+        local_max = float(absolute.max()) if absolute.size else 0.0
+        branch_l1 *= local_l1
+        branch_l2 *= local_l2
+        branch_max *= local_max
+        shapes.append(list(arr.shape))
+        if include_payload:
+            payload.append({
+                "shape": list(arr.shape),
+                "dtype": arr.dtype.str,
+                "real": np.asarray(arr.real).reshape(-1).astype(float).tolist(),
+                "imag": np.asarray(arr.imag).reshape(-1).astype(float).tolist(),
+            })
+    return {
+        "branch_l1": branch_l1,
+        "branch_l2": branch_l2,
+        "branch_max_abs": branch_max,
+        "tensor_sha256": digest.hexdigest(),
+        "tensor_shapes": shapes,
+        "tensor_payload": payload if include_payload else None,
+    }
+
+
 def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats):
     """Wrap primitive hits and retain the exact nonzero branches rejected at the upper spin wall.
 
@@ -310,11 +352,14 @@ def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats
             for candidate in widened:
                 out_spins, _out_tensors, out_amp = candidate
                 if out_spins[edge_index] > wall and abs(out_amp) > 0.0:
-                    magnitude = float(abs(out_amp))
+                    metrics = _factorized_branch_metrics(
+                        _out_tensors, out_amp, include_payload=len(stats["samples"]) < 5
+                    )
+                    magnitude = metrics["branch_l2"]
                     stats["count"] += 1
-                    stats["l1"] += magnitude
+                    stats["l1"] += metrics["branch_l1"]
                     stats["l2_sq"] += magnitude * magnitude
-                    stats["max_abs"] = max(stats["max_abs"], magnitude)
+                    stats["max_abs"] = max(stats["max_abs"], metrics["branch_max_abs"])
                     edge_label = f"{edge[0]}-{edge[1]}"
                     stats["by_edge"][edge_label] = stats["by_edge"].get(edge_label, 0) + 1
                     if len(stats["samples"]) < 25:
@@ -323,9 +368,14 @@ def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats
                             "auxiliary_indices": [int(i), int(j)],
                             "input_spins": list(input_spins),
                             "omitted_output_spins": list(out_spins),
-                            "amplitude_real": float(out_amp.real),
-                            "amplitude_imag": float(out_amp.imag),
-                            "amplitude_abs": magnitude,
+                            "scalar_factor_real": float(out_amp.real),
+                            "scalar_factor_imag": float(out_amp.imag),
+                            "branch_l1": metrics["branch_l1"],
+                            "branch_l2": metrics["branch_l2"],
+                            "branch_max_abs": metrics["branch_max_abs"],
+                            "tensor_sha256": metrics["tensor_sha256"],
+                            "tensor_shapes": metrics["tensor_shapes"],
+                            "tensor_payload": metrics["tensor_payload"],
                         })
         actual = original_apply_hit_branch(branch, x, y, i, j, Jmax2)
         for candidate in actual:
@@ -335,18 +385,28 @@ def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats
                 stats["max_intermediate_spin_reached"], float(reached)
             )
             if max(out_spins, default=0) > 7 and abs(out_amp) > 0.0:
-                magnitude = float(abs(out_amp))
+                metrics = _factorized_branch_metrics(
+                    _out_tensors,
+                    out_amp,
+                    include_payload=len(stats["intermediate_samples"]) < 5,
+                )
+                magnitude = metrics["branch_l2"]
                 stats["intermediate_above_3_5_count"] += 1
-                stats["intermediate_above_3_5_l1"] += magnitude
+                stats["intermediate_above_3_5_l1"] += metrics["branch_l1"]
                 stats["intermediate_above_3_5_l2_sq"] += magnitude * magnitude
                 if len(stats["intermediate_samples"]) < 25:
                     stats["intermediate_samples"].append({
                         "edge": list(edge),
                         "auxiliary_indices": [int(i), int(j)],
                         "output_spins": list(out_spins),
-                        "amplitude_real": float(out_amp.real),
-                        "amplitude_imag": float(out_amp.imag),
-                        "amplitude_abs": magnitude,
+                        "scalar_factor_real": float(out_amp.real),
+                        "scalar_factor_imag": float(out_amp.imag),
+                        "branch_l1": metrics["branch_l1"],
+                        "branch_l2": metrics["branch_l2"],
+                        "branch_max_abs": metrics["branch_max_abs"],
+                        "tensor_sha256": metrics["tensor_sha256"],
+                        "tensor_shapes": metrics["tensor_shapes"],
+                        "tensor_payload": metrics["tensor_payload"],
                     })
         return actual
     return probed
