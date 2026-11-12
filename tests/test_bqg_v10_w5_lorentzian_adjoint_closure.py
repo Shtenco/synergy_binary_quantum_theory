@@ -111,6 +111,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             scalar_projection_rejected_terms=0,
             max_component_leakage=0.0,
             max_spin_reached=3.5,
+            spin_wall_omitted_branches=0,
         )
         self.assertTrue(gate.closure_acceptance(
             **common, sine_engine_result={"passed": True}
@@ -134,6 +135,47 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertFalse(gate.closure_acceptance(
             **common, max_spin_reached=3.5000001
         ))
+
+
+    def test_final_closure_gate_rejects_unobserved_spin_wall_branches(self):
+        common = dict(
+            forward_norm=1.0,
+            adjoint_norm=1.0,
+            adjoint_relative_residual=0.0,
+            scalar_projection_rejected_terms=0,
+            max_component_leakage=0.0,
+            max_spin_reached=3.5,
+            sine_engine_result={"passed": True},
+        )
+        self.assertFalse(gate.closure_acceptance(
+            **common, spin_wall_omitted_branches=1
+        ))
+
+    def test_spin_wall_probe_records_complex_amplitude_before_rejection(self):
+        stats = {
+            "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
+            "by_edge": {}, "samples": [],
+        }
+
+        def primitive(branch, x, y, i, j, wall):
+            spins, tensors, amp = branch
+            edge_spin = spins[0]
+            candidates = []
+            for next_spin in (edge_spin - 1, edge_spin + 1):
+                if 0 <= next_spin <= wall:
+                    next_spins = (next_spin,)
+                    candidates.append((next_spins, tensors, amp * (1 + 1j)))
+            return candidates
+
+        probe = gate._make_spin_wall_probe(
+            primitive, {(0, 1): 0}, 4, stats
+        )
+        actual = probe(((4,), (), 2 + 0j), 0, 1, 0, 1, 4)
+        self.assertEqual([item[0] for item in actual], [(3,)])
+        self.assertEqual(stats["count"], 1)
+        self.assertAlmostEqual(stats["l1"], abs(2 + 2j))
+        self.assertAlmostEqual(stats["l2_sq"], abs(2 + 2j) ** 2)
+        self.assertEqual(stats["samples"][0]["omitted_output_spins"], [5])
 
     def test_epsilon_orbit_contains_24_unique_terms(self):
         triples = gate.epsilon_triples((1, 2, 3, 4))
