@@ -50,10 +50,9 @@ def local_volume_column(key, v: int):
     for Kout in PW.allowed_k2_t(*ls):
         c = np.vdot(PW.oriented_intertwiner(v, ls, Kout), Tout)
         ko = (spins, tuple(Kout if u == v else Ks[u] for u in PW.VERT))
+        PRUNE.record_threshold("lorentzian_K_block.local_volume.1e-12",(key,v,Kout),c,1e-12)
         if PRUNE.keep(c,1e-12):
             out[ko] = complex(c)
-        else:
-            PRUNE.record_threshold("lorentzian_K_block.local_volume.1e-12",(key,v,Kout),c,1e-12)
     return tuple(out.items())
 
 
