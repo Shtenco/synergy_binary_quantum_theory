@@ -257,15 +257,20 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
                 if abs(c)>1e-12: opts.append((K,c))
+                else: PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12)
             if not opts: ok=False;break
             local_opts.append(opts)
         if not ok: continue
         for ch in itertools.product(*local_opts):
             val=amp
             for _,c in ch: val*=c
+            ko=(spins,tuple(k for k,_ in ch))
             if abs(val)>1e-12:
-                ko=(spins,tuple(k for k,_ in ch))
                 out[ko]=out.get(ko,0j)+val
+            else:
+                PRUNE.record_threshold("k5.primitive.product_coefficient.1e-12",ko,val,1e-12)
+    for k,v in out.items():
+        if abs(v)<=1e-11: PRUNE.record_threshold("k5.primitive.output.1e-11",k,v,1e-11)
     return {k:v for k,v in out.items() if abs(v)>1e-11}
 
 def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False):
@@ -284,6 +289,8 @@ def apply_T_cached_state(state,spec,Jmax2,adj=False):
     for key,amp0 in state.items():
         for ko,c in T_cached(key,*spec,Jmax2,adj):
             out[ko]=out.get(ko,0j)+amp0*c
+    for k,v in out.items():
+        if abs(v)<=1e-10: PRUNE.record_threshold("k5.cached_T_state.1e-10",k,v,1e-10)
     return {k:v for k,v in out.items() if abs(v)>1e-10}
 
 def apply_H_cached_state(state,v,Jmax2):
@@ -295,6 +302,8 @@ def apply_H_cached_state(state,v,Jmax2):
     return out
 
 def prune_state(st,tol=1e-8):
+    for k,v in st.items():
+        if abs(v)<=tol: PRUNE.record_threshold("k5.prune_state",k,v,tol)
     return {k:v for k,v in st.items() if abs(v)>tol}
 
 def prev_intertwiners():
