@@ -41,8 +41,8 @@ def project_gauss_branch(branch,tol=1e-11):
         ls=PW.local_spins(spins,v); row=[]
         for K in PW.allowed_k2_t(*ls):
             c=np.vdot(PW.oriented_intertwiner(v,ls,K),tensors[v])
+            PRUNE.record_threshold("covariant_K_projection_audit.gauss_projection.1e-13",(spins,v,K),c,1e-13)
             if PRUNE.keep(c,1e-13): row.append((K,c))
-            else: PRUNE.record_threshold("covariant_K_projection_audit.gauss_projection.1e-13",(spins,v,K),c,1e-13)
         if not row: return {}
         opts.append(tuple(row))
     out={}
@@ -50,10 +50,9 @@ def project_gauss_branch(branch,tol=1e-11):
         val=amp; Ks=[]
         for K,c in choice: Ks.append(K); val*=c
         key=(spins,tuple(Ks))
+        PRUNE.record_threshold("covariant_K_projection_audit.branch_projection",key,val,tol)
         if PRUNE.keep(val,tol):
             out[key]=out.get(key,0j)+val
-        else:
-            PRUNE.record_threshold("covariant_K_projection_audit.branch_projection",key,val,tol)
     for key,value in out.items():
         if abs(value)<=tol: PRUNE.record_threshold("covariant_K_projection_audit.branch_output",key,value,tol)
     return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}
