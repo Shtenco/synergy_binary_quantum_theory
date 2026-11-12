@@ -545,11 +545,15 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         for stage in ("amp_tol", "closure_caps"):
             for direction in ("forward", "adjoint"):
                 rows = coefficient_ledger[stage][direction]
+                actual = [row for row in rows if row.get("actual_discarded", True)]
                 summary[f"{stage}.{direction}"] = {
-                    "coefficient_count": len(rows),
-                    "pathwise_l1": float(sum(row["abs"] for row in rows)),
-                    "pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in rows)),
-                    "max_abs": max((row["abs"] for row in rows), default=0.0),
+                    "candidate_coefficient_count": len(rows),
+                    "candidate_pathwise_l1": float(sum(row["abs"] for row in rows)),
+                    "candidate_pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in rows)),
+                    "actual_discarded_coefficient_count": len(actual),
+                    "actual_discarded_pathwise_l1": float(sum(row["abs"] for row in actual)),
+                    "actual_discarded_pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in actual)),
+                    "max_candidate_abs": max((row["abs"] for row in rows), default=0.0),
                 }
         coefficient_ledger["summary"] = summary
         return coefficient_ledger
