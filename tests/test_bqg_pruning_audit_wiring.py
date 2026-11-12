@@ -8,6 +8,7 @@ import k5_peter_weyl_safe_hda_column as PW
 import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_covariant_composition_gate as COMP
 import peter_weyl_lorentzian_ordered_triple_gate as RAW
+import peter_weyl_covariant_K_projection_audit_gate as KPA
 
 
 class TestPruningAuditOperatorWiring(unittest.TestCase):
@@ -54,6 +55,22 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         events = collector.snapshot()["events"]
         self.assertEqual(len(events), 6)
         self.assertTrue(all(x["kind"] == "would_prune_bypassed" for x in events))
+
+    def test_independent_K_projection_ladder_prune_is_instrumented(self):
+        source = {"small": 0.5e-12, "large": 2e-12}
+        with audit.capture() as collector:
+            production = KPA.prune(source, 1e-12)
+            with audit.bypass():
+                shadow = KPA.prune(source, 1e-12)
+        self.assertEqual(production, {"large": 2e-12})
+        self.assertEqual(shadow, source)
+        events = collector.snapshot()["events"]
+        self.assertEqual(len(events), 2)
+        self.assertTrue(all(x["site_id"] == "covariant_K_projection_audit.ladder_prune" for x in events))
+        self.assertEqual(
+            [x["kind"] for x in events],
+            ["coefficient_threshold", "would_prune_bypassed"],
+        )
 
     def test_core_operator_merge_sites_are_observed_without_semantic_change(self):
         with audit.capture() as collector:
