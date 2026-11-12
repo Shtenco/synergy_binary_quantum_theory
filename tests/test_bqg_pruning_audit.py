@@ -28,6 +28,7 @@ class TestPruningAuditCollector(unittest.TestCase):
         result = collector.snapshot()
         self.assertEqual(result["event_count"], 1)
         self.assertEqual(result["events"][0]["abs"], 0.0)
+        self.assertEqual(result["events"][0]["kind"], "exact_cancellation")
         self.assertEqual(result["by_site"]["test.cancel"]["pathwise_l1"], 0.0)
 
     def test_threshold_records_only_discarded_values(self):
@@ -37,6 +38,20 @@ class TestPruningAuditCollector(unittest.TestCase):
         result = collector.snapshot()
         self.assertEqual(result["event_count"], 1)
         self.assertEqual(result["events"][0]["key_repr"], "'small'")
+
+    def test_structural_zero_is_not_counted_as_amplitude_loss(self):
+        with audit.capture() as collector:
+            audit.record_threshold("test.zero", "zero", 0j, 1e-12)
+        self.assertEqual(collector.snapshot()["event_count"], 0)
+
+    def test_shadow_bypass_keeps_nonzero_subthreshold_values(self):
+        with audit.capture() as collector:
+            with audit.bypass():
+                self.assertTrue(audit.keep(0.5e-12, 1e-12))
+                self.assertFalse(audit.keep(0j, 1e-12))
+                audit.record_threshold("test.shadow", "small", 0.5e-12, 1e-12)
+        event = collector.snapshot()["events"][0]
+        self.assertEqual(event["kind"], "would_prune_bypassed")
 
     def test_collector_is_disabled_outside_capture(self):
         audit.record_merge("test.inactive", "k", 1, -1, 0, 1e-11)
