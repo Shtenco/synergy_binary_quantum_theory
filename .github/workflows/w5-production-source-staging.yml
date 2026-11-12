@@ -18,6 +18,12 @@ on:
 permissions:
   contents: read
 
+# Keep only the newest exact-source staging run for this branch. Rapid audit
+# commits must not leave a backlog of obsolete source-bundle jobs.
+concurrency:
+  group: w5-production-source-staging-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   package-production-sources:
     runs-on: ubuntu-latest
