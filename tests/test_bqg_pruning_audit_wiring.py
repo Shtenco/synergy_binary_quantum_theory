@@ -27,6 +27,28 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         self.assertIn("k5.prune_state", sites)
         self.assertIn("covariant_composition.complete_to_covariant", sites)
 
+    def test_shadow_mode_preserves_subthreshold_coefficients_at_wired_sites(self):
+        with audit.capture() as collector:
+            with audit.bypass():
+                a = {}
+                PW.add_dict(a, {"k": 0.5e-13})
+                b = {}
+                CK.add_state(b, {"k": 0.5e-11})
+                c = {}
+                COMP.add(c, {"k": 0.5e-11})
+                d = {}
+                RAW.add(d, {"k": 0.5e-11})
+                e = PW.prune_state({"k": 0.5e-8}, 1e-8)
+
+        self.assertEqual(a, {"k": 0.5e-13})
+        self.assertEqual(b, {"k": 0.5e-11})
+        self.assertEqual(c, {"k": 0.5e-11})
+        self.assertEqual(d, {"k": 0.5e-11})
+        self.assertEqual(e, {"k": 0.5e-8})
+        events = collector.snapshot()["events"]
+        self.assertEqual(len(events), 5)
+        self.assertTrue(all(x["kind"] == "would_prune_bypassed" for x in events))
+
     def test_core_operator_merge_sites_are_observed_without_semantic_change(self):
         with audit.capture() as collector:
             a = {}
