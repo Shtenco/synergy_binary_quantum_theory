@@ -450,6 +450,18 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
     import bqg_pruning_audit as PRUNE
 
+    # A lower-level pruning ledger must not depend on whether a prior caller
+    # warmed an lru_cache before capture. Clear every imported operator cache
+    # in this dependency family before the audited execution.
+    cleared_cache_functions = 0
+    for module_name, module in list(sys.modules.items()):
+        if module_name == "k5_peter_weyl_safe_hda_column" or module_name.startswith("peter_weyl_"):
+            for candidate in vars(module).values():
+                clear = getattr(candidate, "cache_clear", None)
+                if callable(clear):
+                    clear()
+                    cleared_cache_functions += 1
+
     seeds = [w5_input_key(K) for K in W5_K]
     closure_keys = list(seeds)
     seen = set(closure_keys)
@@ -664,6 +676,11 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             RAW.run = old_raw_run
             PW.apply_hit_branch = old_apply_hit_branch
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
+    lower_level_pruning_ledger["cache_policy"] = {
+        "cleared_lru_cache_function_count": int(cleared_cache_functions),
+        "cleared_before_capture": True,
+        "policy": "all imported k5_peter_weyl_safe_hda_column and peter_weyl_* module lru caches cleared before the audited closure",
+    }
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
     if not complete:
