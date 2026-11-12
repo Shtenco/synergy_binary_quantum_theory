@@ -112,6 +112,16 @@ def keep(value: complex, threshold: float) -> bool:
     return z != 0j if _BYPASS.get() else abs(z) > threshold
 
 
+def filter_state(site_id: str, state: dict, threshold: float) -> dict:
+    """Apply one sparse-state amplitude threshold, or retain all exact nonzeros in shadow mode."""
+    kept = {}
+    for key, value in state.items():
+        record_threshold(site_id, key, value, threshold)
+        if keep(value, threshold):
+            kept[key] = value
+    return kept
+
+
 def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -> None:
     collector = _ACTIVE.get()
     z = complex(value)
