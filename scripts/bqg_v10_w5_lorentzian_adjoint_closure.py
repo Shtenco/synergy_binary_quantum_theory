@@ -470,6 +470,37 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         "closure_caps": {"forward": [], "adjoint": []},
         "summary": {},
     }
+    coherent_sum_ledger = []
+
+    def node_contribution_rows(direction, source_v, input_key, state):
+        rows = []
+        for output_key, amplitude in state.items():
+            z = complex(amplitude)
+            rows.append({
+                "source_node": int(source_v),
+                "direction": direction,
+                "input_key": repr(input_key),
+                "output_key": repr(output_key),
+                "real": float(z.real),
+                "imag": float(z.imag),
+                "abs": float(abs(z)),
+            })
+        return rows
+
+    def coherent_metrics(rows, state):
+        path_l1 = sum(row["abs"] for row in rows)
+        path_l2 = math.sqrt(sum(row["abs"] ** 2 for row in rows))
+        coherent_l1 = sum(abs(z) for z in state.values())
+        coherent_l2 = sparse_norm(state)
+        return {
+            "pre_sum_branch_coefficient_count": len(rows),
+            "pre_sum_pathwise_l1": float(path_l1),
+            "pre_sum_pathwise_l2": float(path_l2),
+            "post_sum_coherent_support": len(state),
+            "post_sum_coherent_l1": float(coherent_l1),
+            "post_sum_coherent_l2": float(coherent_l2),
+            "l1_cancellation_gap": float(path_l1 - coherent_l1),
+        }
 
     def record_dropped(stage, direction, input_key, output_key, amplitude,
                        threshold=None, depth_value=None, cap=None):
@@ -526,6 +557,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         while queue:
             key = queue.popleft()
             f_total, ad_total = {}, {}
+            f_node_rows, ad_node_rows = [], []
             for source_v in source_nodes:
                 f_cov, a_cov, diag = node_kkv_maps(
                     {key: 1.0 + 0j}, source_v, Jmax2, PW, CV, RAW
@@ -534,6 +566,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 ad, na, nanorm = covariant_to_gauss_map(a_cov, source_v)
                 rejected_count += nf + na
                 rejected_norm2 += nfnorm**2 + nanorm**2
+                f_node_rows.extend(node_contribution_rows("forward", source_v, key, f))
+                ad_node_rows.extend(node_contribution_rows("adjoint", source_v, key, ad))
                 add_sparse(f_total, f)
                 add_sparse(ad_total, ad)
                 for name, value in diag.items():
@@ -544,6 +578,21 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     aggregate_leakage[name] = max(
                         aggregate_leakage.get(name, 0.0), float(value)
                     )
+
+            # Preserve the pre-sum node coefficients and post-sum coherent
+            # vectors as distinct evidence. Pathwise and coherent norms are
+            # intentionally never merged into one loss number.
+            coherent_sum_ledger.append({
+                "input_key": repr(key),
+                "forward": {
+                    "node_contributions": f_node_rows,
+                    **coherent_metrics(f_node_rows, f_total),
+                },
+                "adjoint": {
+                    "node_contributions": ad_node_rows,
+                    **coherent_metrics(ad_node_rows, ad_total),
+                },
+            })
 
             # Record every coefficient removed after coherent node summation.
             # Forward and direct-adjoint ledgers are kept strictly separate.
@@ -646,6 +695,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "max_depth": max_depth,
             "omitted_new_support_keys": omitted_support,
             "coefficient_loss_ledger": summarize_ledger(),
+            "coherent_node_sum_ledger": coherent_sum_ledger,
             "partial_diagnostics": {
                 "forward_frobenius_norm": sparse_frobenius(forward_columns),
                 "direct_adjoint_frobenius_norm": sparse_frobenius(adjoint_columns),
@@ -759,6 +809,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
         },
         "coefficient_loss_ledger": summarize_ledger(),
+        "coherent_node_sum_ledger": coherent_sum_ledger,
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
             "direct_adjoint_absolute_residual": err,
