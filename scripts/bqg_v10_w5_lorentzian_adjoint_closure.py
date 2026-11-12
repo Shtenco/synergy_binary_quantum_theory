@@ -432,7 +432,7 @@ def _spin_wall_diagnostics(stats):
         ),
     }
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production"):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
@@ -440,6 +440,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
     if max_states < len(W5_K) or max_depth < 0 or amp_tol < 0:
         raise ValueError("invalid closure limits")
+    if pruning_mode not in ("production", "shadow_no_prune"):
+        raise ValueError("pruning_mode must be production or shadow_no_prune")
 
     HERE = Path(__file__).resolve().parent
     if str(HERE) not in sys.path:
@@ -534,6 +536,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             row["input_depth"] = int(depth_value)
         if cap is not None:
             row["cap"] = int(cap)
+        row["actual_discarded"] = bool(not PRUNE.keep(z, threshold or 0.0)) if stage == "amp_tol" else True
+        row["pruning_mode"] = pruning_mode
         coefficient_ledger[stage][direction].append(row)
 
     def summarize_ledger():
@@ -618,8 +622,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 if abs(amplitude) <= amp_tol:
                     record_dropped("amp_tol", "adjoint", key, output, amplitude,
                                    threshold=amp_tol)
-            f_total = {k: z for k, z in f_total.items() if abs(z) > amp_tol}
-            ad_total = {k: z for k, z in ad_total.items() if abs(z) > amp_tol}
+            f_total = {k: z for k, z in f_total.items() if PRUNE.keep(z, amp_tol)}
+            ad_total = {k: z for k, z in ad_total.items() if PRUNE.keep(z, amp_tol)}
             forward_columns.append(f_total)
             adjoint_columns.append(ad_total)
 
@@ -666,17 +670,21 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         }
 
     RAW.run = closure_executor
+    from contextlib import nullcontext
     with PRUNE.capture() as lower_level_pruning:
-        try:
-            # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
-            # cache wrappers once for the entire closure walk.
-            # One invocation installs the sine K engine once; the intercepted
-            # executor coherently sums the selected node maps on every basis key.
-            sine_engine_result = LSINE.run(source_nodes[0])
-        finally:
-            RAW.run = old_raw_run
-            PW.apply_hit_branch = old_apply_hit_branch
+        pruning_context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else nullcontext()
+        with pruning_context:
+            try:
+                # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
+                # cache wrappers once for the entire closure walk.
+                # One invocation installs the sine K engine once; the intercepted
+                # executor coherently sums the selected node maps on every basis key.
+                sine_engine_result = LSINE.run(source_nodes[0])
+            finally:
+                RAW.run = old_raw_run
+                PW.apply_hit_branch = old_apply_hit_branch
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
+    lower_level_pruning_ledger["mode"] = pruning_mode
     lower_level_pruning_ledger["cache_policy"] = {
         "cleared_lru_cache_function_count": int(cleared_cache_functions),
         "cleared_before_capture": True,
@@ -707,6 +715,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         return {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "source_nodes": list(source_nodes),
+            "pruning_mode": pruning_mode,
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
@@ -807,6 +816,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     return {
         "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
         "source_nodes": list(source_nodes),
+        "pruning_mode": pruning_mode,
         "Jmax2": Jmax2,
         "Jmax": Jmax2 / 2,
         "seed_count": len(seeds),
@@ -869,9 +879,13 @@ def main():
     ap.add_argument("--max-states", type=int, default=500)
     ap.add_argument("--max-depth", type=int, default=8)
     ap.add_argument("--amp-tol", type=float, default=1e-12)
+    ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    result = run_closure(args.nodes, args.Jmax2, args.max_states, args.max_depth, args.amp_tol)
+    result = run_closure(
+        args.nodes, args.Jmax2, args.max_states, args.max_depth,
+        args.amp_tol, args.pruning_mode,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
