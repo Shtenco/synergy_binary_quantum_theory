@@ -226,3 +226,34 @@ The lower-level ledger must retain both (a) branch coefficients removed before c
 - Jmax2/amp_tol convergence ladder: OPEN; must run only after staging archive and complete coefficient instrumentation are verified.
 - All cap-hit results remain `INCOMPLETE`; no partial matrix can be accepted as PASS.
 - Production ZERO_LOSS remains OPEN.
+
+
+## 2026-11-12 lower-level audit collector implementation increment
+
+A context-local collector now exists in `scripts/bqg_pruning_audit.py`. It is disabled outside an explicit capture context and does not change threshold decisions. At each wired site it records the exact complex discarded aggregate, complete key representation, threshold, site identifier, and (for incremental merges) prior value plus incoming contribution. Exact-zero cancellation/deletion events are retained with zero norm so they are distinguishable from missing instrumentation.
+
+The collector is currently wired into:
+- `k5_peter_weyl_safe_hda_column.py`: incremental `add_dict`, primitive intertwiner/product projection, primitive output, cached T-state output, and `prune_state`;
+- `peter_weyl_covariant_volume_leg_gate.py`: Gauss/charged projections, branch projection/output, and closed-state output;
+- `peter_weyl_covariant_K_leg_gate.py`: incremental `add_state`, charged/Gauss projections, complete-branch projection/output, volume matrix-element/state output, and completed H_E output;
+- `peter_weyl_covariant_composition_gate.py`: incremental `add`;
+- `peter_weyl_lorentzian_ordered_triple_gate.py`: incremental `add`.
+
+V10 now captures and serializes the lower-level ledger for both complete and cap-incomplete closure results under `lower_level_pruning_ledger`. The original production numerical comparisons remain unchanged. The collector reports only events at instrumented sites; an empty ledger is not a ZERO_LOSS certificate until the coverage manifest is complete.
+
+Regression tests:
+- `tests/test_bqg_pruning_audit.py`: context isolation, nested context restoration, threshold accounting, incremental merge accounting, and exact cancellation;
+- `tests/test_bqg_pruning_audit_wiring.py`: verifies the four central merge hooks retain the original threshold behavior while emitting records.
+
+The W5 staging workflow now runs these tests, the V10 shadow-comparison tests, and the V10 closure algebra tests before packaging the exact tracked source tree.
+
+### Remaining uninstrumented sites / explicit open boundary
+
+This increment is partial instrumentation, not complete pruning coverage. In particular:
+- `peter_weyl_lorentzian_K_block_gate.py` still has its local-volume, V-state, H_E-state and K-state thresholds;
+- `peter_weyl_covariant_K_composition_gate.py`, its cached wrapper, and the sine-composition adapters need their own explicit site inventory and cached/uncached event equivalence;
+- remaining direct dictionary comprehensions and coefficient filters in the volume/K/composition dependency chain need stable site IDs;
+- the spectral zero-aware volume eigenvalue convention remains a separate operator-definition sensitivity axis and must not be counted as amplitude pruning;
+- the spin-wall probe remains a separate regulator-omission ledger.
+
+Therefore `complete_lower_level_pruning_coverage=false`, `true_no_pruning_reference=false`, and `Production ZERO_LOSS=OPEN`. The new workflow must pass on the exact final commit and its artifact must be downloaded and verified before these source-level changes are treated as executed evidence.
