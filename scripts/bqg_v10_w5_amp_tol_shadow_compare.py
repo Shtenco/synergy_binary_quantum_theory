@@ -28,8 +28,7 @@ def run_one(script: Path, output: Path, amp_tol: float, args) -> dict:
         "--amp-tol", repr(amp_tol),
         "--output", str(output),
     ]
-    for node in args.nodes:
-        command.extend(["--nodes", str(node)])
+    command.extend(["--nodes", *[str(node) for node in args.nodes]])
     completed = subprocess.run(command, capture_output=True, text=True, check=False)
     if not output.exists():
         raise RuntimeError(
