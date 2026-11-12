@@ -53,6 +53,18 @@ class TestPruningAuditCollector(unittest.TestCase):
         event = collector.snapshot()["events"][0]
         self.assertEqual(event["kind"], "would_prune_bypassed")
 
+    def test_snapshot_separates_production_shadow_and_cancellation_kinds(self):
+        with audit.capture() as collector:
+            audit.record_threshold("site", "prod", 0.5e-12, 1e-12)
+            with audit.bypass():
+                audit.record_threshold("site", "shadow", 0.5e-12, 1e-12)
+            audit.record_merge("site", "cancel", 1 + 0j, -1 + 0j, 0j, 1e-12)
+        by_kind = collector.snapshot()["by_site_and_kind"]
+        self.assertIn("site::coefficient_threshold", by_kind)
+        self.assertIn("site::would_prune_bypassed", by_kind)
+        self.assertIn("site::exact_cancellation", by_kind)
+        self.assertEqual(by_kind["site::exact_cancellation"]["pathwise_l1"], 0.0)
+
     def test_collector_is_disabled_outside_capture(self):
         audit.record_merge("test.inactive", "k", 1, -1, 0, 1e-11)
         with audit.capture() as collector:
