@@ -29,7 +29,7 @@ jobs:
           git archive --format=tar HEAD | tar -xf - -C staging/source
           git rev-parse HEAD > staging/SOURCE_COMMIT.txt
           git rev-parse 'HEAD^{tree}' > staging/SOURCE_TREE.txt
-          git rev-parse --abbrev-ref HEAD > staging/SOURCE_REF.txt
+          printf '%s\n' "$GITHUB_REF" > staging/SOURCE_REF.txt
           git ls-tree -r HEAD > staging/GIT_TREE_MANIFEST.txt
           {
             printf 'repository=%s\n' "$GITHUB_REPOSITORY"
