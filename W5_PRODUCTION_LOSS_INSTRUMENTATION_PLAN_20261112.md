@@ -160,3 +160,16 @@ Current validation boundary: workflow source was committed and reread from GitHu
 A final packaging review found a subtle completeness issue in the first correction: `git archive` honors `export-ignore` attributes and can therefore omit tracked paths. The workflow was hardened again to enumerate the Git index with `git ls-files -z` and stream those exact paths through tar, preserving symlinks and avoiding shell word-splitting. Before packaging it explicitly fails if any mode-160000 submodule gitlink exists, because a shallow checkout without recursive submodule materialization would otherwise package an empty directory and falsely claim completeness. This repository revision has no `.gitmodules` file; the runtime guard remains as a fail-closed safeguard.
 
 The SHA-256 manifest is generated from the resulting staged tree. The Git tree manifest remains the authoritative path/mode/object inventory, and the archive must be checked against it after download. This is still workflow-source verification only until the runner executes and the artifact is independently inspected.
+
+
+### 2026-11-12 intermediate spin-wall observability correction
+
+A focused review of the exact V10 execution path found a false-completeness risk that the earlier final-state spin diagnostic did not close:
+
+- `k5_peter_weyl_safe_hda_column.apply_hit_branch()` silently skips `s_out > Jmax2` before constructing the branch.
+- V10's `max_spin_reached` is calculated from the final Gauss closure basis after the three-leg KKV maps and scalar projection. It does not describe intermediate link spins inside the KKV legs. An intermediate branch can reach the configured wall, be rejected on its next raising hit, and later legs can otherwise have returned the surviving path to a lower final spin. Therefore the final-basis maximum alone cannot certify that no intermediate wall branch was omitted.
+- The V10 wrapper now probes only a primitive input edge already at the configured wall. It calls the original hit routine with a diagnostic wall of `Jmax2+2` to expose the one-step `Jmax2+1` candidate, records its full spin tuple, edge, auxiliary indices and complex amplitude, then returns the original production result computed at the original `Jmax2`. The probe does not add the omitted branch to the production state.
+- The closure acceptance predicate now requires `spin_wall_omitted_branch_count == 0`. The result reports pathwise omitted L1/L2, maximum amplitude, per-edge counts and bounded branch samples. These pathwise aggregates are not coherent output norms and must not be interpreted as such.
+- Regression tests were added for the fail-closed acceptance condition and for capturing a complex branch immediately before wall rejection.
+
+This is a source-level instrumentation correction, not a measured production result. The test suite has not yet executed on a runner, the W5 staging artifact is still unavailable, and the new diagnostic has not yet been exercised against the real production KKV closure. Numerical amplitude pruning, state/depth cap accounting, and the independent no-pruning shadow evaluator remain open. Production ZERO_LOSS remains OPEN.

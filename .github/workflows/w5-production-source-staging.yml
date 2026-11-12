@@ -7,6 +7,12 @@ on:
     paths:
       - .github/workflows/w5-production-source-staging.yml
       - W5_PRODUCTION_LOSS_INSTRUMENTATION_PLAN_20261112.md
+      - '**/*.py'
+      - 'requirements*.txt'
+      - pyproject.toml
+      - setup.py
+      - setup.cfg
+      - .gitattributes
   workflow_dispatch:
 
 permissions:
