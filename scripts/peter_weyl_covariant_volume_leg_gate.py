@@ -115,7 +115,7 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
             opts = []
             for K in PW.allowed_k2_t(*ls):
                 c = np.vdot(PW.oriented_intertwiner(u, ls, K), tensors[u])
-                if abs(c) > 1e-13:
+                if PRUNE.keep(c,1e-13):
                     opts.append((K, c))
                 else:
                     PRUNE.record_threshold("covariant_volume_leg.gauss_projection.1e-13",(spins,u,K),c,1e-13)
@@ -151,14 +151,14 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
             for J2, M2, K12, K34, cs in src_opts:
                 val = base_amp * cs
                 key = (spins, tuple(Kother), J2, M2, K12, K34)
-                if abs(val) > tol:
+                if PRUNE.keep(val,tol):
                     out[key] = out.get(key, 0j) + val
                 else:
                     PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
     for key, value in out.items():
         if abs(value) <= tol:
             PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
-    return {k: v for k, v in out.items() if abs(v) > tol}
+    return {k: v for k, v in out.items() if PRUNE.keep(v,tol)}
 
 
 def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
@@ -185,7 +185,7 @@ def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
     for key, value in total.items():
         if abs(value) <= 1e-10:
             PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
-    return {k: a for k, a in total.items() if abs(a) > 1e-10}, max_charged_projection_leak
+    return {k: a for k, a in total.items() if PRUNE.keep(a,1e-10)}, max_charged_projection_leak
 
 
 def gauss_to_covariant(state, source_v):
@@ -252,7 +252,7 @@ def run(v=0, w=1):
             for key, value in out.items():
                 if abs(value) <= 1e-10:
                     PRUNE.record_threshold("covariant_volume_leg.C_matrix_output.1e-10",key,value,1e-10)
-            C[i][j] = {k: a for k, a in out.items() if abs(a) > 1e-10}
+            C[i][j] = {k: a for k, a in out.items() if PRUNE.keep(a,1e-10)}
 
     Cnorm = matrix_state_norm(C)
     Cweights = weight_by_J(C)
