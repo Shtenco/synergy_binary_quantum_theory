@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Isolated V10 output-threshold sensitivity comparison.
+"""Isolated production-versus-bounded-no-pruning V10 comparison.
 
-This is deliberately NOT called a no-pruning reference evaluator: lower-level
-operator pruning remains active in the pinned production modules.  It runs the
-same V10 source twice in separate Python processes (fresh import namespaces and
-caches), once at the requested amp_tol and once at amp_tol=0, then compares the
-complete encoded complex sparse columns.  A full no-pruning verdict is refused
-until every lower-level pruning site has an instrumented bypass/ledger.
+Runs separate fresh processes. The shadow process sets amp_tol=0 and enables
+the context-local no-pruning bypass at every explicitly wired lower-level
+amplitude threshold. The comparison remains explicitly incomplete until the
+full site inventory, non-amplitude regulator boundaries, and closure limits
+are independently certified.
 """
 from __future__ import annotations
 
@@ -149,13 +148,16 @@ def main() -> int:
             "shadow_no_prune_status": zero_output.get("status"),
             "comparison": comparison,
             "scope": (
-                "Isolated-process comparison of V10's final coherent output "
-                "threshold only. Lower-level amplitude pruning in imported "
-                "operator modules remains active; this is not a no-pruning "
-                "reference and cannot support ZERO_LOSS."
+                "Isolated-process comparison of production thresholds against "
+                "the bounded shadow_no_prune mode. Explicitly instrumented "
+                "lower-level amplitude thresholds are bypassed in the shadow "
+                "process and record would-prune events. This remains incomplete "
+                "until every reachable threshold site and non-amplitude "
+                "regulator boundary is independently certified."
             ),
-            "lower_level_pruning_active": False,
             "lower_level_pruning_bypassed_at_instrumented_sites": True,
+            "all_lower_level_pruning_bypassed": False,
+            "unverified_lower_level_sites_may_remain": True,
             "unclosed_scope": [
                 "Any threshold site not yet wired to PRUNE.keep",
                 "The zero-aware spectral eigenvalue convention (operator-definition axis, not amplitude pruning)",
