@@ -35,6 +35,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 
 
 @functools.lru_cache(None)
@@ -48,9 +49,11 @@ def local_volume_column(key, v: int):
     out = {}
     for Kout in PW.allowed_k2_t(*ls):
         c = np.vdot(PW.oriented_intertwiner(v, ls, Kout), Tout)
+        ko = (spins, tuple(Kout if u == v else Ks[u] for u in PW.VERT))
         if abs(c) > 1e-12:
-            ko = (spins, tuple(Kout if u == v else Ks[u] for u in PW.VERT))
             out[ko] = complex(c)
+        else:
+            PRUNE.record_threshold("lorentzian_K_block.local_volume.1e-12",(key,v,Kout),c,1e-12)
     return tuple(out.items())
 
 
