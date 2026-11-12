@@ -19,13 +19,15 @@ import tempfile
 from pathlib import Path
 
 
-def run_one(script: Path, output: Path, amp_tol: float, args) -> dict:
+def run_one(script: Path, output: Path, amp_tol: float, args,
+             pruning_mode: str = "production") -> dict:
     command = [
         sys.executable, str(script),
         "--Jmax2", str(args.Jmax2),
         "--max-states", str(args.max_states),
         "--max-depth", str(args.max_depth),
         "--amp-tol", repr(amp_tol),
+        "--pruning-mode", pruning_mode,
         "--output", str(output),
     ]
     command.extend(["--nodes", *[str(node) for node in args.nodes]])
@@ -114,7 +116,10 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="bqg-v10-shadow-") as temp:
         root = Path(temp)
         production = run_one(script, root / "production.json", args.amp_tol, args)
-        zero_output = run_one(script, root / "zero-output-threshold.json", 0.0, args)
+        zero_output = run_one(
+            script, root / "shadow-no-prune.json", 0.0, args,
+            pruning_mode="shadow_no_prune",
+        )
 
     complete_statuses = {
         "PASS_ADJOINT_CONSISTENCY",
@@ -124,7 +129,7 @@ def main() -> int:
         result = {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "production_status": production.get("status"),
-            "zero_output_threshold_status": zero_output.get("status"),
+            "shadow_no_prune_status": zero_output.get("status"),
             "comparison_performed": False,
         }
         exit_code = 2
@@ -137,8 +142,11 @@ def main() -> int:
             "comparison_performed": True,
             "production_amp_tol": args.amp_tol,
             "shadow_amp_tol": 0.0,
+            "shadow_pruning_mode": zero_output.get("pruning_mode"),
+            "production_lower_level_pruning": production.get("lower_level_pruning_ledger"),
+            "shadow_lower_level_pruning": zero_output.get("lower_level_pruning_ledger"),
             "production_status": production.get("status"),
-            "zero_output_threshold_status": zero_output.get("status"),
+            "shadow_no_prune_status": zero_output.get("status"),
             "comparison": comparison,
             "scope": (
                 "Isolated-process comparison of V10's final coherent output "
@@ -146,7 +154,14 @@ def main() -> int:
                 "operator modules remains active; this is not a no-pruning "
                 "reference and cannot support ZERO_LOSS."
             ),
-            "lower_level_pruning_active": True,
+            "lower_level_pruning_active": False,
+            "lower_level_pruning_bypassed_at_instrumented_sites": True,
+            "unclosed_scope": [
+                "Any threshold site not yet wired to PRUNE.keep",
+                "The zero-aware spectral eigenvalue convention (operator-definition axis, not amplitude pruning)",
+                "Spin-wall and state/depth closure caps",
+                "Continuum and regulator convergence beyond this finite closure",
+            ],
             "fresh_processes_and_caches": True,
             "same_source_file": str(script),
             "parameters": {
