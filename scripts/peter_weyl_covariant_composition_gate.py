@@ -38,6 +38,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_lorentzian_K_block_gate as KG
@@ -47,11 +48,15 @@ TOL = 1e-11
 
 def add(dst, src, scale=1.0, tol=TOL):
     for k, a in src.items():
-        z = dst.get(k, 0j) + scale * a
+        prior = dst.get(k, 0j)
+        incoming = scale * a
+        z = prior + incoming
         if abs(z) > tol:
             dst[k] = z
-        elif k in dst:
-            del dst[k]
+        else:
+            PRUNE.record_merge("covariant_composition.add", k, prior, incoming, z, tol)
+            if k in dst:
+                del dst[k]
 
 
 def covariant_key_to_complete(key, source_v):
