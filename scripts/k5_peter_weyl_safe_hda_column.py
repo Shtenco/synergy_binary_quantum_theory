@@ -255,8 +255,8 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             ls=local_spins(spins,v);opts=[]
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
+                PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12)
                 if PRUNE.keep(c,1e-12): opts.append((K,c))
-                else: PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12)
             if not opts: ok=False;break
             local_opts.append(opts)
         if not ok: continue
@@ -264,10 +264,9 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             val=amp
             for _,c in ch: val*=c
             ko=(spins,tuple(k for k,_ in ch))
+            PRUNE.record_threshold("k5.primitive.product_coefficient.1e-12",ko,val,1e-12)
             if PRUNE.keep(val,1e-12):
                 out[ko]=out.get(ko,0j)+val
-            else:
-                PRUNE.record_threshold("k5.primitive.product_coefficient.1e-12",ko,val,1e-12)
     for k,v in out.items():
         if abs(v)<=1e-11: PRUNE.record_threshold("k5.primitive.output.1e-11",k,v,1e-11)
     return {k:v for k,v in out.items() if PRUNE.keep(v,1e-11)}
