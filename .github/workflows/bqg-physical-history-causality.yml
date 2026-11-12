@@ -45,6 +45,18 @@ jobs:
       - name: Run regression tests
         run: |
           python -m unittest discover -s tests -p 'test_bqg_physical_history_decoherence_engine.py' -v
+      - name: Validate physicalization ledger and supplemental OPEN gates
+        run: |
+          python scripts/verify_physicalization_gates.py --output physicalization_frontier.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('physicalization_frontier.json').read_text())
+          assert r['valid'] is True
+          assert r['physicalization_complete'] is False
+          assert set(r['supplemental_physical_gate_statuses'].values()) == {'open_physical'}
+          print('physicalization ledger valid; all new physical gates remain OPEN')
+          PY
       - name: Enforce fail-closed physical status
         run: |
           python - <<'PY'
