@@ -1,10 +1,20 @@
 {
   "schema_version": 2,
   "status_policy": {
-    "reference": ["proved", "tested_finite"],
-    "positive_control": ["tested_finite"],
-    "physical": ["open_physical", "frozen"],
-    "experiment": ["experimental_test"]
+    "reference": [
+      "proved",
+      "tested_finite"
+    ],
+    "positive_control": [
+      "tested_finite"
+    ],
+    "physical": [
+      "open_physical",
+      "frozen"
+    ],
+    "experiment": [
+      "experimental_test"
+    ]
   },
   "structural_status_source": "theory_gates.json",
   "required_physical_gates": [
@@ -33,7 +43,10 @@
       "status": "proved",
       "closure_role": "reference",
       "claim": "For a specified finite Hermitian constraint operator and coarse carrier, the projected resolvent, Feshbach/Schur complement and block-Krylov identities are exact.",
-      "evidence": ["FESHBACH_INTERBLOCK_EFFECTIVE_KERNEL.md", "scripts/feshbach_block_krylov_identity_gate.py"],
+      "evidence": [
+        "FESHBACH_INTERBLOCK_EFFECTIVE_KERNEL.md",
+        "scripts/feshbach_block_krylov_identity_gate.py"
+      ],
       "hard_scope": "The constraint spectral parameter z is not physical omega and this gate does not construct a graviton propagator."
     },
     {
@@ -41,7 +54,10 @@
       "status": "proved",
       "closure_role": "reference",
       "claim": "For a finite regulated constraint family C_A and every positive-definite constraint metric G, M_G=C_A^dagger G^AB C_B is positive and ker(M_G)=intersection_A ker(C_A); an isolated zero sector defines an exact finite spectral projector.",
-      "evidence": ["MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md", "scripts/master_constraint_physical_projector_gate.py"],
+      "evidence": [
+        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+        "scripts/master_constraint_physical_projector_gate.py"
+      ],
       "hard_scope": "Exact finite operator theorem only; the candidate-theory refinement/rigging-map limit and physical boundary amplitude remain open."
     },
     {
@@ -49,7 +65,10 @@
       "status": "tested_finite",
       "closure_role": "reference",
       "claim": "The current three-node graph-changing Peter-Weyl HDA control retains graph/spin-changing outputs and exhibits the frozen route/cross/pure-geometry scaling hierarchy on its finite habitat family.",
-      "evidence": ["THREE_NODE_GRAPH_HDA_RESULT.md", "scripts/peter_weyl_three_node_graph_hda_gate.py"],
+      "evidence": [
+        "THREE_NODE_GRAPH_HDA_RESULT.md",
+        "scripts/peter_weyl_three_node_graph_hda_gate.py"
+      ],
       "hard_scope": "Finite HDA consistency prerequisite only; it does not select the physical inner product, rigging map, boundary state or physical time."
     },
     {
@@ -57,7 +76,10 @@
       "status": "tested_finite",
       "closure_role": "positive_control",
       "claim": "A finite C8 Page-Wootters/rigging-map model shows exactly that a combined clock+system projector can be globally invariant while retaining nontrivial clock-conditioned system evolution.",
-      "evidence": ["Q2_RELATIONAL_HISTORY_PROJECTOR.md", "scripts/q2_relational_history_projector_gate.py"],
+      "evidence": [
+        "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
+        "scripts/q2_relational_history_projector_gate.py"
+      ],
       "hard_scope": "Positive control only: the clock factor is declared externally and R=J is not the graph-changing gravitational evolution operator."
     },
     {
@@ -65,7 +87,10 @@
       "status": "tested_finite",
       "closure_role": "positive_control",
       "claim": "On the finite relational positive control, gauge-invariant source insertions implement the legal order P_rel -> Z[J] -> W[J] -> connected metric response -> tangent Gamma^(2) pseudoinverse.",
-      "evidence": ["Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md", "scripts/q2_relational_metric_source_gate.py"],
+      "evidence": [
+        "Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md",
+        "scripts/q2_relational_metric_source_gate.py"
+      ],
       "hard_scope": "Positive control only: this Gamma^(2) is not the spacetime 1PI graviton kernel, the C8 label is not physical omega, and no physical TT Wilson coefficient is frozen."
     },
     {
@@ -73,7 +98,10 @@
       "status": "tested_finite",
       "closure_role": "reference",
       "claim": "The finite history reference reproduces coherent two-path composition, environment-overlap decoherence and zero Sorkin I3 under a quadratic Born rule.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "scripts/binary_history_interference_lensing_gate.py"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "scripts/binary_history_interference_lensing_gate.py"
+      ],
       "hard_scope": "Reference identities only; they do not derive the BQG Born rule, photon state or physical Maxwell dynamics."
     },
     {
@@ -81,7 +109,10 @@
       "status": "tested_finite",
       "closure_role": "reference",
       "claim": "A finite point-lens control uses one Fermat potential for both stationary lensing paths and their relative wave-optics phase, with a split-potential negative control.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "scripts/binary_history_interference_lensing_gate.py"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "scripts/binary_history_interference_lensing_gate.py"
+      ],
       "hard_scope": "Standard wave-optics reference only; the physical BQG Weyl potential remains open."
     },
     {
@@ -89,7 +120,10 @@
       "status": "tested_finite",
       "closure_role": "reference",
       "claim": "The finite cosmology reference verifies rho-to-w conservation identities and the mu/Sigma/slip lensing-dynamics consistency dictionary with negative controls.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "scripts/physical_cosmology_background_scalar_gate.py"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "scripts/physical_cosmology_background_scalar_gate.py"
+      ],
       "hard_scope": "Reference bookkeeping only; it does not supply a BQG dark component or observational fit."
     },
     {
@@ -97,7 +131,11 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Construct the theory-specific anomaly/refinement-compatible rigging-map or boundary-history amplitude from the actual graph-changing gravitational constraint family, with a derived clock only if the microscopic construction supplies one.",
-      "evidence": ["MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md", "Q2_RELATIONAL_HISTORY_PROJECTOR.md", "CORE_FALSIFICATION_TESTS.md"],
+      "evidence": [
+        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+        "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
+        "CORE_FALSIFICATION_TESTS.md"
+      ],
       "hard_scope": "The exact finite master-projector theorem and the C8 relational positive control do not close this theory-specific physical gate."
     },
     {
@@ -105,7 +143,10 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Compute connected multi-block/refinement metric cumulants with the theory-specific physical projector/history amplitude and remove vacuum-disconnected pieces through the generating functional.",
-      "evidence": ["Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md", "CORE_FALSIFICATION_TESTS.md"],
+      "evidence": [
+        "Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md",
+        "CORE_FALSIFICATION_TESTS.md"
+      ],
       "hard_scope": "A local finite shape-source Hessian is not a connected spacetime interblock correlator."
     },
     {
@@ -113,7 +154,11 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Derive the continuum/IR physical metric 1PI Hessian and its TT projection K_TT(omega,k) from the theory-specific physical generating functional, recovering the leading massless Einstein/Fierz-Pauli pole before reading quartic corrections.",
-      "evidence": ["MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md", "Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md", "TT_PROPAGATOR_FIRST_PASS.md"],
+      "evidence": [
+        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+        "Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md",
+        "TT_PROPAGATOR_FIRST_PASS.md"
+      ],
       "hard_scope": "Constraint-resolvent z, finite C8 character angle and reduced TT positive-control frequency are not promoted to the physical omega of the interacting gravity theory."
     },
     {
@@ -121,7 +166,11 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Freeze the six microscopic on-shell quartic TT Wilson coefficients from the derived physical TT pole without post-hoc reduction to a lower-dimensional ansatz.",
-      "evidence": ["S4_TT_QUARTIC_COMPLETE_BASIS.md", "C6_TO_TT_WILSON_COEFFICIENTS.md", "scripts/s4_tt_six_wilson_predictor.py"],
+      "evidence": [
+        "S4_TT_QUARTIC_COMPLETE_BASIS.md",
+        "C6_TO_TT_WILSON_COEFFICIENTS.md",
+        "scripts/s4_tt_six_wilson_predictor.py"
+      ],
       "hard_scope": "The six-dimensional observable dictionary and extractor are closed algebraically, but the interacting physical six-vector itself is not yet derived."
     },
     {
@@ -129,7 +178,12 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "After the dimensionless physical outputs are frozen, derive one common physical scale internally or calibrate exactly one declared datum and hold that scale fixed for all remaining observables.",
-      "evidence": ["PHYSICALIZATION_SCALE_OBSERVABLE_PREDICTION.md", "CONSTANTS_ZERO_FIT_LEDGER.md", "CORE_FALSIFICATION_TESTS.md", "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"],
+      "evidence": [
+        "PHYSICALIZATION_SCALE_OBSERVABLE_PREDICTION.md",
+        "CONSTANTS_ZERO_FIT_LEDGER.md",
+        "CORE_FALSIFICATION_TESTS.md",
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"
+      ],
       "hard_scope": "The algebraic unit translator is available, but no common physical calibration is declared complete here and separate sector-by-sector scales are forbidden."
     },
     {
@@ -137,7 +191,10 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Derive the theory-specific transverse photon 1PI kernel Gamma_AA^(2), Maxwell stiffness Z_A, massless deconfined photon pole and IR causal cone from the same connected physical history generating functional.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"
+      ],
       "hard_scope": "Compact U(1) phase topology, Chern number and finite interference identities are not a physical Maxwell derivation."
     },
     {
@@ -145,7 +202,10 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Derive the physical homogeneous Gamma_FLRW and its rho_hist(a), p_hist(a), H(a) and w_hist(a) from the same connected history measure, with w inferred only after rho is derived.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"
+      ],
       "hard_scope": "The rho-to-w reference map is solved, but no BQG background dark component is currently derived and no evolving-dark-energy ansatz is selected from data."
     },
     {
@@ -153,7 +213,10 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Derive the physical scalar metric kernel and stable Phi/Psi, growth, effective sound-speed and anisotropic-stress response from the same theory-specific effective action.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md"
+      ],
       "hard_scope": "No TT coefficient, E/T2 split, constraint eigenvalue or fitted mu/Sigma function is promoted to physical dark matter."
     },
     {
@@ -161,7 +224,12 @@
       "status": "open_physical",
       "closure_role": "physical",
       "claim": "Show that one derived scalar metric response simultaneously predicts massive-body dynamics, weak/strong/CMB lensing, Fermat/time-delay phase and coherent gravitational wave-optics, with no independent lensing or interference potential.",
-      "evidence": ["UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md", "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md", "scripts/binary_history_interference_lensing_gate.py", "scripts/physical_cosmology_background_scalar_gate.py"],
+      "evidence": [
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md",
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md",
+        "scripts/binary_history_interference_lensing_gate.py",
+        "scripts/physical_cosmology_background_scalar_gate.py"
+      ],
       "hard_scope": "Finite lensing/interference and mu/Sigma controls are prerequisites only; joint observed BQG lensing-dynamics closure remains uncomputed."
     },
     {
@@ -169,7 +237,10 @@
       "status": "experimental_test",
       "closure_role": "experiment",
       "claim": "Only after the physical TT kernel, six-vector and one-scale rule are frozen, preregister and open a held-out gravitational-wave dispersion/birefringence likelihood comparison.",
-      "evidence": ["PREDICTIONS_AND_EXPERIMENTAL_TESTS.md", "TT_TO_REAL_PHYSICS_OBSERVABLES.md"],
+      "evidence": [
+        "PREDICTIONS_AND_EXPERIMENTAL_TESTS.md",
+        "TT_TO_REAL_PHYSICS_OBSERVABLES.md"
+      ],
       "hard_scope": "No current internal regression constitutes experimental confirmation of the theory."
     },
     {
@@ -177,8 +248,65 @@
       "status": "experimental_test",
       "closure_role": "experiment",
       "claim": "After background, scalar, photon, lensing-dynamics and one-scale outputs are frozen, compare jointly against preregistered expansion, growth and lensing datasets without retuning.",
-      "evidence": ["COSMOLOGY_INTERFERENCE_PREREGISTRATION.md", "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md"],
+      "evidence": [
+        "COSMOLOGY_INTERFERENCE_PREREGISTRATION.md",
+        "UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md"
+      ],
       "hard_scope": "DESI, CMB, lensing and dark-matter observations are external tests, not selectors for the microscopic BQG output."
+    },
+    {
+      "id": "PHYSICAL_ENVIRONMENT_OVERLAP",
+      "status": "open_physical",
+      "closure_role": "physical",
+      "claim": "Derive the gauge-invariant physical environment algebra/factorization and compute environment-record overlaps using the rigging-map physical inner product after quotienting null states.",
+      "evidence": [
+        "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
+        "scripts/bqg_physical_history_decoherence_engine.py",
+        "tests/test_bqg_physical_history_decoherence_engine.py"
+      ],
+      "hard_scope": "A positive Gram matrix from a supplied finite metric is only a conditional mathematical theorem; no actual BQG physical environment states, factorization or rigging-map metric have been derived."
+    },
+    {
+      "id": "PHYSICAL_BORN_MEASURE",
+      "status": "open_physical",
+      "closure_role": "physical",
+      "claim": "Derive the physical history decoherence functional and establish whether the quadratic probability measure follows from the BQG physical Hilbert/measurement structure under explicit Gleason-type assumptions or must remain an additional axiom.",
+      "evidence": [
+        "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
+        "scripts/bqg_physical_history_decoherence_engine.py",
+        "tests/test_bqg_physical_history_decoherence_engine.py"
+      ],
+      "hard_scope": "Quadraticity and I3=0 in finite reference controls do not derive the Born rule from full BQG; physical class operators, inner product and measurement assumptions remain open."
+    },
+    {
+      "id": "PHYSICAL_RELATIONAL_CLOCK_RESPONSE",
+      "status": "open_physical",
+      "closure_role": "physical",
+      "claim": "Derive a physical clock or boundary-history ordering from the actual graph-changing constraints, construct the rigging-map projector and relational observables, and compute physical retarded commutators.",
+      "evidence": [
+        "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
+        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+        "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
+        "scripts/q2_relational_history_projector_gate.py"
+      ],
+      "hard_scope": "The finite master projector selects a constraint kernel but is not time; the C8 Page-Wootters clock and R=J remain external positive controls, not physical BQG evolution."
+    },
+    {
+      "id": "PHYSICAL_COMMON_CAUSAL_CONE",
+      "status": "open_physical",
+      "closure_role": "physical",
+      "claim": "Compute photon, matter, scalar, vector and tensor physical retarded fronts with a common relational clock and physical distance across graph refinements, and establish a common continuum cone.",
+      "evidence": [
+        "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
+        "scripts/bqg_physical_history_decoherence_engine.py",
+        "tests/test_bqg_physical_history_decoherence_engine.py",
+        "BQG_CAUSAL_CONE_AND_W5_SPECTRAL_CERTIFICATE.md"
+      ],
+      "hard_scope": "Synthetic finite threshold fronts are diagnostics only; no physical retarded kernels, exact microcausality proof, calibrated physical distance or regulator-independent common cone are available."
     }
-  ]
+  ],
+  "physical_environment_overlap_closed_declared": false,
+  "physical_born_measure_closed_declared": false,
+  "physical_relational_clock_response_closed_declared": false,
+  "physical_common_causal_cone_closed_declared": false
 }
