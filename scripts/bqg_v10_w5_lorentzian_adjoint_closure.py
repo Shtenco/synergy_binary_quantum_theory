@@ -462,6 +462,49 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     truncated = False
     omitted_support = 0
 
+    # Full coefficient-level loss ledger.  Records are intentionally not
+    # sample-capped: every coefficient removed by the V10 output threshold or
+    # by a reachable-support cap is retained with its complex value and keys.
+    coefficient_ledger = {
+        "amp_tol": {"forward": [], "adjoint": []},
+        "closure_caps": {"forward": [], "adjoint": []},
+        "summary": {},
+    }
+
+    def record_dropped(stage, direction, input_key, output_key, amplitude,
+                       threshold=None, depth_value=None, cap=None):
+        z = complex(amplitude)
+        row = {
+            "stage": stage,
+            "direction": direction,
+            "input_key": repr(input_key),
+            "output_key": repr(output_key),
+            "real": float(z.real),
+            "imag": float(z.imag),
+            "abs": float(abs(z)),
+        }
+        if threshold is not None:
+            row["threshold"] = float(threshold)
+        if depth_value is not None:
+            row["input_depth"] = int(depth_value)
+        if cap is not None:
+            row["cap"] = int(cap)
+        coefficient_ledger[stage][direction].append(row)
+
+    def summarize_ledger():
+        summary = {}
+        for stage in ("amp_tol", "closure_caps"):
+            for direction in ("forward", "adjoint"):
+                rows = coefficient_ledger[stage][direction]
+                summary[f"{stage}.{direction}"] = {
+                    "coefficient_count": len(rows),
+                    "pathwise_l1": float(sum(row["abs"] for row in rows)),
+                    "pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in rows)),
+                    "max_abs": max((row["abs"] for row in rows), default=0.0),
+                }
+        coefficient_ledger["summary"] = summary
+        return coefficient_ledger
+
     old_raw_run = RAW.run
     old_apply_hit_branch = PW.apply_hit_branch
     spin_wall_stats = {
@@ -502,17 +545,36 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                         aggregate_leakage.get(name, 0.0), float(value)
                     )
 
-            # Store only amplitudes above the declared support tolerance.
+            # Record every coefficient removed after coherent node summation.
+            # Forward and direct-adjoint ledgers are kept strictly separate.
+            for output, amplitude in f_total.items():
+                if abs(amplitude) <= amp_tol:
+                    record_dropped("amp_tol", "forward", key, output, amplitude,
+                                   threshold=amp_tol)
+            for output, amplitude in ad_total.items():
+                if abs(amplitude) <= amp_tol:
+                    record_dropped("amp_tol", "adjoint", key, output, amplitude,
+                                   threshold=amp_tol)
             f_total = {k: z for k, z in f_total.items() if abs(z) > amp_tol}
             ad_total = {k: z for k, z in ad_total.items() if abs(z) > amp_tol}
             forward_columns.append(f_total)
             adjoint_columns.append(ad_total)
 
+            # A state-cap/depth-cap rejection is recorded coefficient by
+            # coefficient, not merely as a count of omitted support keys.
             for output in set(f_total) | set(ad_total):
                 if output not in seen:
                     if len(closure_keys) >= max_states or depth[key] >= max_depth:
                         truncated = True
                         omitted_support += 1
+                        if output in f_total:
+                            record_dropped("closure_caps", "forward", key, output,
+                                           f_total[output], depth_value=depth[key],
+                                           cap=max_states if len(closure_keys) >= max_states else max_depth)
+                        if output in ad_total:
+                            record_dropped("closure_caps", "adjoint", key, output,
+                                           ad_total[output], depth_value=depth[key],
+                                           cap=max_states if len(closure_keys) >= max_states else max_depth)
                         continue
                     seen.add(output)
                     depth[output] = depth[key] + 1
@@ -583,6 +645,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "max_states": max_states,
             "max_depth": max_depth,
             "omitted_new_support_keys": omitted_support,
+            "coefficient_loss_ledger": summarize_ledger(),
             "partial_diagnostics": {
                 "forward_frobenius_norm": sparse_frobenius(forward_columns),
                 "direct_adjoint_frobenius_norm": sparse_frobenius(adjoint_columns),
@@ -695,6 +758,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "external_beta_kappa_planck_trace_regulator_prefactor_fixed": False,
             "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
         },
+        "coefficient_loss_ledger": summarize_ledger(),
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
             "direct_adjoint_absolute_residual": err,
