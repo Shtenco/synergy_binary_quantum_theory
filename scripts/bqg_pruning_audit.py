@@ -28,8 +28,8 @@ class PruningCollector:
                *, kind: str, prior: complex | None = None,
                incoming: complex | None = None) -> None:
         z = complex(value)
-        if z == 0j:
-            return
+        # Keep exact-zero cancellations as events too: they carry no lost
+        # norm, but prove that a previously accumulated key was deleted.
         row = {
             "site_id": str(site_id),
             "kind": str(kind),
