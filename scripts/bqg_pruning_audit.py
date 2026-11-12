@@ -24,6 +24,10 @@ class PruningCollector:
             lambda: {"count": 0, "pathwise_l1": 0.0, "pathwise_l2_sq": 0.0,
                      "max_abs": 0.0}
         )
+        self._by_site_kind: dict[tuple[str, str], dict[str, float | int]] = defaultdict(
+            lambda: {"count": 0, "pathwise_l1": 0.0, "pathwise_l2_sq": 0.0,
+                     "max_abs": 0.0}
+        )
 
     def record(self, site_id: str, key: Any, value: complex, threshold: float,
                *, kind: str, prior: complex | None = None,
@@ -52,25 +56,38 @@ class PruningCollector:
         stats["pathwise_l1"] += abs(z)
         stats["pathwise_l2_sq"] += abs(z) ** 2
         stats["max_abs"] = max(float(stats["max_abs"]), abs(z))
+        kind_stats = self._by_site_kind[(str(site_id), str(kind))]
+        kind_stats["count"] += 1
+        kind_stats["pathwise_l1"] += abs(z)
+        kind_stats["pathwise_l2_sq"] += abs(z) ** 2
+        kind_stats["max_abs"] = max(float(kind_stats["max_abs"]), abs(z))
 
     def snapshot(self) -> dict[str, Any]:
-        summary = {}
-        for site, raw in sorted(self._by_site.items()):
-            summary[site] = {
+        def encode(raw):
+            return {
                 "coefficient_count": int(raw["count"]),
                 "pathwise_l1": float(raw["pathwise_l1"]),
                 "pathwise_l2": math.sqrt(float(raw["pathwise_l2_sq"])),
                 "max_abs": float(raw["max_abs"]),
             }
+        summary = {
+            site: encode(raw) for site, raw in sorted(self._by_site.items())
+        }
+        by_kind = {
+            f"{site}::{kind}": encode(raw)
+            for (site, kind), raw in sorted(self._by_site_kind.items())
+        }
         return {
             "schema": "bqg-pruning-audit-v1",
             "event_count": len(self.events),
             "events": list(self.events),
             "by_site": summary,
+            "by_site_and_kind": by_kind,
             "semantics": (
-                "Records actual discarded aggregate coefficients at instrumented "
-                "sites. Pathwise totals are not coherent output norms and do not "
-                "include uninstrumented sites."
+                "Event kinds distinguish production threshold removals, shadow-mode "
+                "would-prune candidates, and exact merge cancellations. Pathwise "
+                "totals are not coherent output norms and do not include "
+                "uninstrumented sites."
             ),
         }
 
