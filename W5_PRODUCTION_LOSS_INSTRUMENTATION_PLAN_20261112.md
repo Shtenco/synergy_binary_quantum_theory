@@ -153,3 +153,10 @@ The research-branch staging workflow has now been corrected to package `git arch
 This is a packaging/provenance correction only. It does not alter the physical operators or establish numerical loss values. The corrected workflow's run must complete and its artifact must be downloaded and independently verified before the source-transfer gate can be marked closed. The older scripts-only run is not an acceptable substitute.
 
 Current validation boundary: workflow source was committed and reread from GitHub; no runner has yet executed the corrected packaging steps, so archive contents, hashes, and artifact availability remain unverified. Production ZERO_LOSS remains OPEN.
+
+
+### Tracked-path completeness hardening
+
+A final packaging review found a subtle completeness issue in the first correction: `git archive` honors `export-ignore` attributes and can therefore omit tracked paths. The workflow was hardened again to enumerate the Git index with `git ls-files -z` and stream those exact paths through tar, preserving symlinks and avoiding shell word-splitting. Before packaging it explicitly fails if any mode-160000 submodule gitlink exists, because a shallow checkout without recursive submodule materialization would otherwise package an empty directory and falsely claim completeness. This repository revision has no `.gitmodules` file; the runtime guard remains as a fail-closed safeguard.
+
+The SHA-256 manifest is generated from the resulting staged tree. The Git tree manifest remains the authoritative path/mode/object inventory, and the archive must be checked against it after download. This is still workflow-source verification only until the runner executes and the artifact is independently inspected.
