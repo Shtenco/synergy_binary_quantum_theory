@@ -45,6 +45,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_lorentzian_K_block_gate as KG
@@ -52,11 +53,15 @@ import peter_weyl_lorentzian_K_block_gate as KG
 
 def add_state(dst, src, scale=1.0, tol=1e-11):
     for key, amp in src.items():
-        z = dst.get(key, 0j) + scale * amp
+        prior = dst.get(key, 0j)
+        incoming = scale * amp
+        z = prior + incoming
         if abs(z) > tol:
             dst[key] = z
-        elif key in dst:
-            del dst[key]
+        else:
+            PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tol)
+            if key in dst:
+                del dst[key]
 
 
 def label_gauss(K):
