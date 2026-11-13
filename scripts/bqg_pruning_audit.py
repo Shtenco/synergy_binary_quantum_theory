@@ -200,7 +200,9 @@ def audit_lru_cache(maxsize=None):
     """
     def decorate(function: Callable):
         @functools.lru_cache(maxsize=maxsize)
-        def cached(*args, **kwargs):
+        def cached(bypass_enabled, *args, **kwargs):
+            # Bypass changes numerical semantics and event classification, so
+            # it is part of the cache key rather than ambient hidden state.
             local = PruningCollector()
             token = _ACTIVE.set(local)
             try:
@@ -211,7 +213,7 @@ def audit_lru_cache(maxsize=None):
 
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
-            value, rows = cached(*args, **kwargs)
+            value, rows = cached(_BYPASS.get(), *args, **kwargs)
             active = _ACTIVE.get()
             if active is not None:
                 active.replay(rows)
