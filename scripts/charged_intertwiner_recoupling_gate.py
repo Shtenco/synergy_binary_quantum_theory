@@ -44,6 +44,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 
 
 def allowed_pair2(sa, sb):
@@ -60,7 +61,7 @@ def allowed_charged_labels(spins, J2):
     return tuple(out)
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def charged_tensor(spins, K12, K34, J2, M2):
     spins = tuple(spins)
     dims = tuple(s + 1 for s in spins)
@@ -93,7 +94,7 @@ def close_with_external_half(TJM, J2, M2):
     return out
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def q123_matrix(spins3):
     spins3 = tuple(spins3)
     mats = [PW.spin_mats_cached(s) for s in spins3]
