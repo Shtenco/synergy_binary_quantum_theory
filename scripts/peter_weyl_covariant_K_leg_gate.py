@@ -147,11 +147,13 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
 @PRUNE.audit_lru_cache(None)
 def canonical_volume_block_general(spins_local, J2):
     spins_local = tuple(spins_local)
-    qblocks = []
-    for M2 in PW.m2vals_t(J2):
-        _, Qb, _, _ = CH.q_block(spins_local, J2, M2)
-        qblocks.append(Qb)
-    Q = sum(qblocks) / len(qblocks)
+    # Q=J1.(J2 x J3) is an SU(2) scalar. In the standard CG-coupled
+    # basis its reduced matrix is M-independent, so the highest-weight
+    # representative M=J fixes the entire irreducible multiplet. The
+    # one-hit charged-sector gate separately checks this identity for both
+    # magnetic sectors; recomputing and averaging every M here only repeats
+    # the same expensive magnetic contraction.
+    _, Q, _, _ = CH.q_block(spins_local, J2, J2)
     Q = 0.5 * (Q + Q.conj().T)
     return CH.canonical_volume_block(Q)
 
