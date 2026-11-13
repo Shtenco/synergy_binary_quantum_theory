@@ -356,3 +356,29 @@ Current execution status:
 - Production ZERO_LOSS: **NOT PROVED / OPEN**.
 
 Do not upgrade any of these scientific gates from CI success, static inventory, unit fixtures, or a partial timeout profile. A future closure claim still requires completed real matrices, a genuinely independent reference, exact cache-on/off ledger/matrix comparison, and complete pathwise/coherent forward-and-adjoint loss accounting.
+
+
+## 2026-11-13 latest exact-source replay and 300-second production pilot
+
+The latest branch head at this checkpoint is `43970dd2d457fd7516a40b6bc4a4af6a94c7d85e`. Both required GitHub workflows completed successfully for that exact PR head:
+- W5 source staging: run [43445461224](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/43445461224), success;
+- physical-history/reference gates: run [43445461071](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/43445461071), success.
+
+The W5 artifact was downloaded and independently verified. It contains source commit `dd87ab8dea68cc800b1acbc336d298835d19c26b`, source tree `2a2ecd27044b001646c3d2784bdf017947af4ce1`, and 760 tracked source files. All 767 entries in the outer `SHA256SUMS.txt` verified; all 760 per-file manifest hashes and byte counts verified. The five W5-focused suites were rerun from that exact artifact: **61 passed, 8 subtests passed**.
+
+The cache comparison acceptance logic was tightened after review. It now refuses a full-ledger PASS unless both runs contain every required ledger payload, the observed substantive ledgers match, and both lower-level coverage flags are explicitly `coverage.complete=true`. Missing ledgers produce an INCOMPLETE status; a matrix or observed-ledger mismatch produces FAIL; incomplete coverage cannot be promoted to PASS. The static transitive-import audit also now checks that every sparse threshold/filter decision is connected to an audit record, and that the shared sparse-state filter records each nonzero coefficient before applying its threshold. This is stronger static wiring evidence, not runtime path coverage.
+
+A further production attempt on the exact staged source was run locally with `Jmax2=10`, source node `[0]`, `max_depth=0`, `max_states=500`, `amp_tol=1e-12`, and cache enabled. The process did not complete within 300 seconds and was terminated by the execution timeout; it produced no complete matrix or ledger. This is a compute timeout, not a numerical FAIL and not a bound on omitted loss.
+
+Updated gate status remains:
+- Production V10 full matrix: **OPEN — 300-second minimal pilot timed out**.
+- Independent full no-pruning reference: **OPEN — shadow uses the same operator implementation and is not an independent derivation**.
+- Cache-on/off full forward and direct-adjoint matrix equality: **OPEN — harness exists; no complete real pair**.
+- Cache-on/off full ordered-ledger equality: **OPEN — fail-closed coverage gate now prevents false PASS; no complete real pair**.
+- Full `Jmax2 × amp_tol` grid and sparse-support convergence: **OPEN — forward and direct-adjoint grid comparisons are implemented; no complete grid**.
+- Spin-wall omissions: **OPEN — instrumentation and separate diagnostics exist; no completed unbounded measurement**.
+- State/depth caps: **OPEN — independently recorded and a cap-free mode exists; no completed cap-free run**.
+- Spectral sensitivity: **OPEN — eigenvalue diagnostics and factor-ladder runner exist; no completed full-matrix ladder**.
+- Production ZERO_LOSS: **NOT PROVED / OPEN**.
+
+The next engineering priority is now computational scaling in `project_branch_complete_charges` and its charged-basis contractions. Optimizations must preserve the exact coefficient/event ordering and be checked against the current implementation before promotion. Do not weaken the thresholds, spin wall, or closure criteria to obtain a nominal completion.
