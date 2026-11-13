@@ -134,7 +134,10 @@ class PruningCollector:
                 "Event kinds distinguish production threshold removals, shadow-mode "
                 "would-prune candidates, and exact merge cancellations. Pathwise "
                 "totals are not coherent output norms and do not include "
-                "uninstrumented sites."
+                "uninstrumented sites. Propagated totals are immediate incoming-"
+                "amplitude times local-coefficient diagnostics only; they are not "
+                "end-to-end output-loss bounds because later operators may amplify "
+                "or coherently recombine the omitted branch."
             ),
         }
 
