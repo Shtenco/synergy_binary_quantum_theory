@@ -68,10 +68,16 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
             and site["function"] == "sparsify_matrix_columns"
         ]
         self.assertEqual(len(fixed_masks), 2)
-        self.assertTrue(all(
-            site["classification"] == "post_assembly_fixed_operator_mask_requires_error_bound"
-            for site in fixed_masks
-        ))
+        classifications = {
+            site["expression"]: site["classification"] for site in fixed_masks
+        }
+        self.assertEqual(
+            classifications,
+            {
+                "tol < 0": "input_tolerance_parameter_validation",
+                "abs(z) > tol": "post_assembly_fixed_operator_mask_requires_error_bound",
+            },
+        )
         self.assertEqual(result["unclassified_sites"], [])
         self.assertTrue(result["complete"])
         self.assertGreaterEqual(result["threshold_site_count"], 20)
