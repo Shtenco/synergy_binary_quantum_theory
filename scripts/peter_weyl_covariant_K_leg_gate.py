@@ -235,7 +235,7 @@ def apply_HE_complete_key(key, source_v, Jmax2, charged_nodes=(0,1)):
     return out,max_v_leak,max_basis_leak
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def HE_complete_cached(key,source_v,Jmax2):
     out,vleak,bleak=apply_HE_complete_key(key,source_v,Jmax2)
     return tuple(out.items()),vleak,bleak
