@@ -25,6 +25,55 @@ W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 
+def build_pruning_coverage(static_inventory):
+    """Separate static site classification from runtime zero-loss evidence."""
+    inventory_complete = bool(static_inventory.get("complete", False))
+    fixed_masks = [
+        site for site in static_inventory.get("threshold_sites", [])
+        if site.get("classification") == "post_assembly_fixed_operator_mask_requires_error_bound"
+    ]
+    return {
+        # Overall coverage intentionally remains false until runtime loss,
+        # cache-equivalence, support-cap and convergence controls are closed.
+        "complete": False,
+        "status": (
+            "STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING"
+            if inventory_complete else
+            "STATIC_THRESHOLD_INVENTORY_INCOMPLETE"
+        ),
+        "static_threshold_inventory_complete": inventory_complete,
+        "static_inventory": {
+            "module_count": int(static_inventory.get("module_count", 0)),
+            "threshold_site_count": int(static_inventory.get("threshold_site_count", 0)),
+            "unclassified_sites": list(static_inventory.get("unclassified_sites", [])),
+            "plain_lru_caches": list(static_inventory.get("plain_lru_caches", [])),
+            "audited_lru_caches": list(static_inventory.get("audited_lru_caches", [])),
+            "post_assembly_fixed_operator_masks": fixed_masks,
+        },
+        "runtime_loss_controls_complete": False,
+        "fixed_operator_mask_error_bound_complete": False,
+        "remaining_checks": [
+            "certified operator-norm or induced-norm error bound for each post-assembly fixed matrix mask",
+            "cache-on/cache-off pruning-ledger equality for the full composition chain",
+            "complete spin-wall and state/depth-cap loss separation",
+            "full complex support convergence across Jmax2 and amplitude-threshold ladders",
+        ],
+        "excluded_from_amplitude_bypass": [
+            "exact SU(2) representation and parity selection rules",
+            "spin-wall truncation and state/depth caps",
+            "zero-aware spectral volume/nullspace convention",
+            "post-assembly fixed operator matrix masks",
+        ],
+        "shadow_no_prune_interpretation": (
+            "shadow_no_prune bypasses only wired nonzero amplitude thresholds. "
+            "A passing static inventory proves site classification, not zero runtime loss. "
+            "Post-assembly fixed matrix masks and support caps are not removed by this bypass. "
+            "The shadow result remains partial until runtime loss, cache-equivalence, "
+            "cap-accounting, fixed-mask error-bound and support-convergence controls pass."
+        ),
+    }
+
+
 def epsilon_triples(neighbors):
     import itertools
     out = []
@@ -465,6 +514,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
     import peter_weyl_zeroaware_volume_migration_experiment as ZVM
     import bqg_pruning_audit as PRUNE
+    import bqg_pruning_coverage_inventory as PRUNE_INVENTORY
+    static_pruning_inventory = PRUNE_INVENTORY.run_inventory()
     ZVM.ZERO_FACTOR = float(spectral_zero_factor)
 
     # A lower-level pruning ledger must not depend on whether a prior caller
@@ -727,37 +778,20 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     PW.apply_hit_branch = old_apply_hit_branch
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
     lower_level_pruning_ledger["mode"] = pruning_mode
-    lower_level_pruning_ledger["coverage"] = {
-        "complete": False,
-        "status": "PARTIAL_INSTRUMENTATION_NOT_A_ZERO_LOSS_CERTIFICATE",
-        "instrumented_modules": [
-            "k5_peter_weyl_safe_hda_column.py",
-            "peter_weyl_covariant_volume_leg_gate.py",
-            "peter_weyl_covariant_K_leg_gate.py",
-            "peter_weyl_covariant_composition_gate.py",
-            "peter_weyl_lorentzian_K_block_gate.py",
-            "peter_weyl_lorentzian_ordered_triple_gate.py",
-            "peter_weyl_euclidean_sine_ordering_gate.py",
-            "peter_weyl_covariant_K_projection_audit_gate.py",
-            "bqg_v10_w5_lorentzian_adjoint_closure.py",
-        ],
-        "remaining_checks": [
-            "independent transitive threshold-site inventory and coverage proof",
-            "cache-on/cache-off pruning-ledger equality for the full composition chain",
-            "complete spin-wall and state/depth-cap loss separation",
-            "full complex support convergence across Jmax2 and amplitude-threshold ladders",
-        ],
-        "excluded_from_amplitude_bypass": [
-            "exact SU(2) representation and parity selection rules",
-            "spin-wall truncation and state/depth caps",
-            "zero-aware spectral volume/nullspace convention",
-        ],
-        "shadow_no_prune_interpretation": (
-            "shadow_no_prune bypasses only wired nonzero amplitude thresholds. "
-            "Until coverage.complete is true, it is a partial diagnostic and "
-            "must never be reported as a true no-pruning reference."
-        ),
-    }
+    lower_level_pruning_ledger["coverage"] = build_pruning_coverage(
+        static_pruning_inventory
+    )
+    lower_level_pruning_ledger["coverage"]["instrumented_modules"] = [
+        "k5_peter_weyl_safe_hda_column.py",
+        "peter_weyl_covariant_volume_leg_gate.py",
+        "peter_weyl_covariant_K_leg_gate.py",
+        "peter_weyl_covariant_composition_gate.py",
+        "peter_weyl_lorentzian_K_block_gate.py",
+        "peter_weyl_lorentzian_ordered_triple_gate.py",
+        "peter_weyl_euclidean_sine_ordering_gate.py",
+        "peter_weyl_covariant_K_projection_audit_gate.py",
+        "bqg_v10_w5_lorentzian_adjoint_closure.py",
+    ]
     lower_level_pruning_ledger["cache_policy"] = {
         "cleared_lru_cache_function_count": int(cleared_cache_functions),
         "cleared_before_capture": True,
