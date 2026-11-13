@@ -14,6 +14,18 @@ from bqg_v10_w5_amp_tol_shadow_compare import (
 )
 
 
+def summarize_run(result: dict) -> dict:
+    ledger = result.get("lower_level_pruning_ledger") or {}
+    return {
+        "status": result.get("status"),
+        "closure_size": result.get("closure_size"),
+        "basis_id_sha256": result.get("basis_id_sha256"),
+        "cache_policy": ledger.get("cache_policy"),
+        "event_count": ledger.get("event_count"),
+        "process": result.get("_process"),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nodes", type=int, nargs="+", default=[0])
@@ -80,22 +92,8 @@ def main() -> int:
     result = {
         "status": status,
         "comparison_performed": comparison_performed,
-        "cache_on": {
-            "status": cache_on.get("status"),
-            "closure_size": cache_on.get("closure_size"),
-            "basis_id_sha256": cache_on.get("basis_id_sha256"),
-            "cache_policy": (cache_on.get("lower_level_pruning_ledger") or {}).get("cache_policy"),
-            "event_count": (cache_on.get("lower_level_pruning_ledger") or {}).get("event_count"),
-            "process": cache_on.get("_process"),
-        },
-        "cache_off": {
-            "status": cache_off.get("status"),
-            "closure_size": cache_off.get("closure_size"),
-            "basis_id_sha256": cache_off.get("basis_id_sha256"),
-            "cache_policy": (cache_off.get("lower_level_pruning_ledger") or {}).get("cache_policy"),
-            "event_count": (cache_off.get("lower_level_pruning_ledger") or {}).get("event_count"),
-            "process": cache_off.get("_process"),
-        },
+        "cache_on": summarize_run(cache_on),
+        "cache_off": summarize_run(cache_off),
         "comparison": comparison,
         "parameters": {
             "nodes": args.nodes,
