@@ -300,3 +300,32 @@ This commit intentionally updates the plan file because the W5 staging workflow 
 The artifact is acceptable only if its embedded `SOURCE_COMMIT.txt` equals the workflow event SHA, the source-tree manifest matches the exact tracked Git tree, every per-file SHA-256 and `SHA256SUMS.txt` entry verifies, and the submodule guard passes. A passing artifact upload without these checks is not sufficient.
 
 The staging run is not itself the production closure experiment. It validates source transfer, regression wiring, and syntax only. Complete transitive threshold coverage, unbounded production/shadow execution, cache equivalence, regulator-wall convergence, and production ZERO_LOSS remain separate gates. No gate is upgraded by this trigger commit alone.
+
+
+## 2026-11-13 transitive threshold-site static guard
+
+A new regression in `tests/test_bqg_pruning_audit_wiring.py` now walks the repository-local Python import closure starting from the V10 production entry point. At the current source head the closure is 18 modules, including the sine engine, cached K-composition adapter, charged-intertwiner rules, and the zero-aware volume audits.
+
+The guard checks that every threshold-looking `abs(...)` / `np.abs(...)` comparison in that closure is either:
+- in a function that routes the actual amplitude decision through `PRUNE.keep`;
+- delegated to the instrumented `PW.prune_state`; or
+- explicitly classified as a non-amplitude operation.
+
+The explicit non-amplitude classifications are narrow and documented in the test:
+- V10 `add_sparse` uses `tol=0` at every call site and removes exact zeros only;
+- spin-wall probes test exact nonzero branch existence, while wall omissions are recorded separately;
+- source-J and charged-label comparisons are exact SU(2) selection rules;
+- zero-aware eigenvalue masks are a spectral operator-definition convention, not sparse-amplitude pruning;
+- the audit collector's own threshold comparisons implement the policy being tested.
+
+Local execution of the exact same scanner against the staged source tree passed: 18 local modules discovered, zero unclassified threshold comparisons. The new test is committed at `6017327569c87f2cd77dc02475dea61efe71c968`; CI must still execute on that commit before the guard is accepted as runner evidence.
+
+**Important boundary:** this closes a static source-inventory blind spot, not the full pruning proof. AST scanning cannot prove dynamic dispatch, all runtime branches, cache replay semantics, or that every branch amplitude is propagated correctly. It also does not close the spin-wall, state/depth cap, or spectral sensitivity studies. The acceptance flag `complete_lower_level_pruning_coverage` remains false until runtime branch coverage and ledger consistency are demonstrated.
+
+## 2026-11-13 execution and cache status
+
+A fresh V10 production pilot was attempted with one source node, the minimum five W5 seed states, `Jmax2=10`, `max_depth=0`, and `amp_tol=1e-12`; it did not complete within 240 seconds and produced no result JSON. A standalone sine-ordered triple pilot also did not complete within 120 seconds. These are timeouts, not PASS or numerical FAIL results.
+
+No cache-on/cache-off full-matrix comparison has yet completed. The existing sine engine installs local memoization wrappers and restores monkey-patched functions in `finally`, while V10 clears module-level LRU caches before its audited walk. This is good isolation hygiene, but it is not an equivalence proof. The required next test must execute the same pinned operator columns with caches enabled and disabled, compare complete complex dictionaries and diagnostics, and compare threshold events with explicit accounting for cache-hit replay versus unique operator-column construction.
+
+Production V10 closure, independent no-pruning reference, cache equivalence, `Jmax2 × amp_tol` convergence, and Production ZERO_LOSS remain OPEN.
