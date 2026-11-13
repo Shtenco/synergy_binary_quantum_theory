@@ -2,7 +2,7 @@ name: BQG physical history and causal response reference gates
 
 on:
   push:
-    branches: [research/physical-history-causality-20261112]
+    branches: [research/physical-history-causality-20261112, research/bqg-causal-cone-audit-hardening-20261113]
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
