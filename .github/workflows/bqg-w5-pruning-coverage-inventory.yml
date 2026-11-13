@@ -48,6 +48,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install W5 numerical test dependencies
+        run: python -m pip install numpy sympy
       - name: Run transitive threshold inventory
         run: |
           python -m py_compile scripts/bqg_pruning_coverage_inventory.py
