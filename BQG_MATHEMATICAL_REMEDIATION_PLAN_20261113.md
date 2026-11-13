@@ -69,6 +69,22 @@ Required controls: full complex matrix comparison, common basis hash, direct-adj
 - D. Marolf, **Group Averaging and Refined Algebraic Quantization: Where are we now?** (2000): https://escholarship.org/uc/item/1dw733w0
 - K. Giesel and T. Thiemann, **Algebraic Quantum Gravity (AQG)** / Master Constraint Programme literature (see the repository's existing master-constraint references; select the exact operator implementation only after constraint algebra audit).
 
+### Existing BQG work that must be preserved
+
+The repository already has `MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md` and `scripts/master_constraint_physical_projector_gate.py`. They prove the finite-regulator theorem
+[
+\ker \mathbb M_G=\bigcap_A\ker C_A
+\]
+for strictly positive constraint metric (G), define the exact isolated-zero spectral projector, and bound the heat-kernel approximation by (e^{-T\Delta_M}). The finite master-projector control passed in the expanded causal workflow. Do not rebuild this finite theorem from scratch.
+
+What remains is to assemble the **actual complete BQG regulated constraint family** on the physicalization habitat, prove domain/self-adjointness and anomaly control, compute the real zero-sector, and establish normalized refinement/continuum convergence. The exact finite projector is not yet the physical continuum rigging map or physical graviton amplitude.
+
+Relevant journal sources:
+- T. Thiemann, **Quantum spin dynamics: VIII. The master constraint**, Class. Quantum Grav. 23 (2006) 2249–2265, DOI: 10.1088/0264-9381/23/7/003.
+- B. Dittrich and T. Thiemann, **Testing the master constraint programme for loop quantum gravity: I. General framework**, Class. Quantum Grav. 23 (2006) 1025–1065, DOI: 10.1088/0264-9381/23/4/001.
+- M. Han and Y. Ma, **Master constraint operators in loop quantum gravity**, Phys. Lett. B 635 (2006) 225–231, DOI: 10.1016/j.physletb.2006.03.004.
+- D. Giulini and D. Marolf, **A uniqueness theorem for constraint quantization**, Class. Quantum Grav. 16 (1999) 2489–2498, DOI: 10.1088/0264-9381/16/7/322.
+
 ### Construction
 
 For a positive master constraint (\hat M=\sum_I \hat C_I^\dagger\hat C_I\), if zero is an isolated eigenvalue, the physical projector is the spectral projector (P_{phys}=E_{\hat M}(\{0\})). Numerically, heat-kernel filters (e^{-t\hat M}) may approximate this projector only with a controlled spectral gap/limit study. If zero lies in continuous spectrum, the naive strong limit need not yield a nontrivial normalized projector; use a distributional rigging map/group averaging with a specified test space and convergence prescription.
@@ -83,11 +99,19 @@ The physical inner product must be induced by the rigging map, be positive semid
 - P. A. Höhn, A. R. H. Smith, M. P. E. Lock, **Trinity of relational quantum dynamics**, Phys. Rev. D 104, 066001 (2021), DOI: 10.1103/PhysRevD.104.066001.
 - Altaie, Hodgson, Beige, **Time and Quantum Clocks: A Review of Recent Developments**, Front. Phys. 10 (2022), DOI: 10.3389/fphy.2022.897305.
 
+### Existing BQG work that must be preserved
+
+The repository already has `Q2_RELATIONAL_HISTORY_PROJECTOR.md` and `scripts/q2_relational_history_projector_gate.py`. The C8 combined clock-system projector is an exact finite positive control and passed CI. It correctly distinguishes clock-only averaging (which erases nontrivial phase) from averaging the combined clock+system constraint. But its system step (R=J) is an externally selected positive control, not a graph-derived gravitational clock evolution.
+
 ### Construction
 
 Choose a graph observable (T_G) only if its classical/semiclassical flow is monotonic on the target sector and its quantum POVM has controlled resolution/backreaction. Construct complete observables (O_{|T_G=\tau}) or a quantum reduction map. Cross-check the clock-neutral Dirac, Page–Wootters conditional, and reduced relational-Heisenberg descriptions (the Höhn–Smith–Lock trinity) on the same finite model. Include multiple-clock patches where no single global monotonic clock exists.
 
 ## 6. Physical retarded kernel
+
+### Existing BQG work that must be preserved
+
+The repository already has `BQG_PHYSICAL_GRAPH_TRANSITION_KERNEL.md` and a finite projector bridge. It defines graph-sector transition amplitudes as (\Pi_{\Gamma'}P_{phys}\Pi_\Gamma), and distinguishes regulated constraint support from physical transition probability. Separately, `C6_PHYSICAL_KERNEL_CLOSURE.md` concerns a Euclidean/source-derived metric/TT kernel and its six Wilson structures; it is not yet a physical retarded response kernel. Do not rename either object as retarded.
 
 ### Literature
 
