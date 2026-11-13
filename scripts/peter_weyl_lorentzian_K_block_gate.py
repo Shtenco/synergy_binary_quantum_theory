@@ -39,27 +39,51 @@ import bqg_pruning_audit as PRUNE
 
 
 @PRUNE.audit_lru_cache(None)
-def local_volume_column(key, v: int):
-    """Return exact V_v|key> projected in the Gauss recoupling basis."""
+def _local_volume_column_full(key, v: int):
+    """Return retained and threshold-candidate coefficients for one V column."""
     spins, Ks = key
     ls = PW.local_spins(spins, v)
     Kin = Ks[v]
     Tin = PW.oriented_intertwiner(v, ls, Kin)
     Tout = PW.apply_volume_tensor_oriented(Tin, ls, v)
     out = {}
+    candidates = []
     for Kout in PW.allowed_k2_t(*ls):
         c = np.vdot(PW.oriented_intertwiner(v, ls, Kout), Tout)
         ko = (spins, tuple(Kout if u == v else Ks[u] for u in PW.VERT))
         PRUNE.record_threshold("lorentzian_K_block.local_volume.1e-12",(key,v,Kout),c,1e-12)
+        if abs(c) <= 1e-12 and c != 0:
+            candidates.append((ko, complex(c)))
         if PRUNE.keep(c,1e-12):
             out[ko] = complex(c)
-    return tuple(out.items())
+    return tuple(out.items()), tuple(candidates)
+
+
+def local_volume_column(key, v: int, incoming: complex = 1.0 + 0j):
+    """Return the retained column and audit each removed coefficient after input propagation."""
+    retained, candidates = _local_volume_column_full(key, v)
+    for output_key, coefficient in candidates:
+        PRUNE.record_threshold(
+            "lorentzian_K_block.local_volume.propagated_loss",
+            (key, output_key), coefficient, 1e-12, incoming=incoming,
+        )
+    return retained
+
+
+# Preserve the cache-control/introspection surface used by the audit harness.
+local_volume_column.cache_clear = _local_volume_column_full.cache_clear
+local_volume_column.cache_info = _local_volume_column_full.cache_info
+local_volume_column.cache_parameters = _local_volume_column_full.cache_parameters
+local_volume_column.__wrapped__ = (
+    lambda key, v, incoming=1.0 + 0j:
+    _local_volume_column_full.__wrapped__(key, v)[0]
+)
 
 
 def apply_V_local(state, v: int):
     out = {}
     for key, amp in state.items():
-        for ko, c in local_volume_column(key, v):
+        for ko, c in local_volume_column(key, v, incoming=amp):
             out[ko] = out.get(ko, 0j) + amp * c
     return PW.prune_state(out, 1e-10)
 
