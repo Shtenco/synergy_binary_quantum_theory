@@ -62,39 +62,42 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
 
     def test_run_closure_memoizes_exact_repeated_CV_calls_and_replays_events(self):
         import bqg_pruning_audit as audit
+        import peter_weyl_covariant_volume_leg_gate as CV
         import peter_weyl_lorentzian_ordered_triple_gate as raw
         import peter_weyl_lorentzian_sine_ordered_triple_gate as lsine
 
         original_component = raw.COMP.C_volume_component
-        original_node_map = gate.node_kkv_maps
+        original_forward = gate.triple_forward
+        original_adjoint = gate.triple_adjoint
+        original_epsilon = gate.epsilon_triples
+        original_gauss_to_covariant = CV.gauss_to_covariant
         original_lsine_run = lsine.run
         component_calls = []
         component_results = []
+        base_state = {("base",): 1.0 + 0j}
 
         def fake_component(state, source_v, target_v, i, j, cutoff):
-            component_calls.append((tuple(sorted(state.items(), key=lambda kv: repr(kv[0]))),
-                                    source_v, target_v, i, j, cutoff))
+            component_calls.append((
+                tuple(sorted(state.items(), key=lambda kv: repr(kv[0]))),
+                source_v, target_v, i, j, cutoff,
+            ))
             audit.record_threshold(
                 "test.memoized_CV", (source_v, target_v, i, j),
                 1e-15 + 0j, 1e-14,
             )
             return ({("memo", source_v, target_v, i, j): 0.5 + 0.25j}, 0.0)
 
-        def fake_node_map(state, source_v, Jmax2, PW, CV, RAW):
-            token = gate._ACTIVE_CV_BASE_STATE.set(gate._freeze_sparse_state(state))
-            try:
-                first = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
-                second = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
-            finally:
-                gate._ACTIVE_CV_BASE_STATE.reset(token)
+        def fake_forward(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
+            first = cv_component(psi_cov, source_v, c, 0, 0, Jmax2)
+            second = cv_component(psi_cov, source_v, c, 0, 0, Jmax2)
             self.assertEqual(first, second)
             component_results.append(first)
-            return {}, {}, {
-                "CV_complete_basis_leakage": 0.0,
-                "CK_outer_complete_basis_leakage": 0.0,
-                "CK_internal_volume_sector_leakage": 0.0,
-                "CK_complete_charge_basis_leakage": 0.0,
-            }
+            return {}, 0.0, {}
+
+        def fake_adjoint(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
+            intermediate = {("adjoint-intermediate", a, b, c): 1.0 + 0j}
+            cv_component(intermediate, source_v, c, 0, 0, Jmax2)
+            return {}, 0.0, {}
 
         def fake_lsine_run(source_v):
             raw.run()
@@ -102,36 +105,43 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
 
         try:
             raw.COMP.C_volume_component = fake_component
-            with mock.patch.object(gate, "node_kkv_maps", fake_node_map), \
+            with mock.patch.object(CV, "gauss_to_covariant", lambda state, v: dict(base_state)), \
+                 mock.patch.object(gate, "epsilon_triples", lambda neighbors: [(1, (1, 2, 3)), (-1, (2, 1, 3))]), \
+                 mock.patch.object(gate, "triple_forward", fake_forward), \
+                 mock.patch.object(gate, "triple_adjoint", fake_adjoint), \
                  mock.patch.object(lsine, "run", fake_lsine_run):
-                result = gate.run_closure(
+                cached = gate.run_closure(
                     source_nodes=(0,), Jmax2=10, max_states=500,
                     max_depth=0, amp_tol=1e-12, cache_mode="on",
                 )
         finally:
             raw.COMP.C_volume_component = original_component
-            gate.node_kkv_maps = original_node_map
+            gate.triple_forward = original_forward
+            gate.triple_adjoint = original_adjoint
+            gate.epsilon_triples = original_epsilon
+            CV.gauss_to_covariant = original_gauss_to_covariant
             lsine.run = original_lsine_run
 
-        cache = result["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
+        cache = cached["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
         self.assertEqual(cache["maxsize"], 16)
-        self.assertEqual(cache["misses"], 5)
-        self.assertEqual(cache["hits"], 5)
-        self.assertEqual(len(component_calls), 5)
-        events = result["lower_level_pruning_ledger"]["events"]
-        replayed = [e for e in events if e["site_id"] == "test.memoized_CV"]
-        self.assertEqual(len(replayed), 10)
-        for i in range(0, len(replayed), 2):
-            self.assertEqual(replayed[i], replayed[i + 1])
-
-        # The same wrapper must become a transparent pass-through when the
-        # caller selects cache_mode=off.
+        self.assertEqual(cache["misses"], 1)
+        self.assertEqual(cache["hits"], 19)
+        self.assertEqual(len(component_calls), 11)
         cached_results = list(component_results)
-        component_results.clear()
+        cached_events = [
+            e for e in cached["lower_level_pruning_ledger"]["events"]
+            if e["site_id"] == "test.memoized_CV"
+        ]
+        self.assertEqual(len(cached_events), 30)
+
         component_calls.clear()
+        component_results.clear()
         try:
             raw.COMP.C_volume_component = fake_component
-            with mock.patch.object(gate, "node_kkv_maps", fake_node_map), \
+            with mock.patch.object(CV, "gauss_to_covariant", lambda state, v: dict(base_state)), \
+                 mock.patch.object(gate, "epsilon_triples", lambda neighbors: [(1, (1, 2, 3)), (-1, (2, 1, 3))]), \
+                 mock.patch.object(gate, "triple_forward", fake_forward), \
+                 mock.patch.object(gate, "triple_adjoint", fake_adjoint), \
                  mock.patch.object(lsine, "run", fake_lsine_run):
                 uncached = gate.run_closure(
                     source_nodes=(0,), Jmax2=10, max_states=500,
@@ -139,20 +149,22 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 )
         finally:
             raw.COMP.C_volume_component = original_component
-            gate.node_kkv_maps = original_node_map
+            gate.triple_forward = original_forward
+            gate.triple_adjoint = original_adjoint
+            gate.epsilon_triples = original_epsilon
+            CV.gauss_to_covariant = original_gauss_to_covariant
             lsine.run = original_lsine_run
 
         off_cache = uncached["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
         self.assertEqual(off_cache["hits"], 0)
         self.assertEqual(off_cache["misses"], 0)
-        self.assertEqual(len(component_calls), 10)
+        self.assertEqual(len(component_calls), 30)
         self.assertEqual(component_results, cached_results)
         off_events = [
             e for e in uncached["lower_level_pruning_ledger"]["events"]
             if e["site_id"] == "test.memoized_CV"
         ]
-        self.assertEqual(len(off_events), 10)
-        self.assertEqual(replayed, off_events)
+        self.assertEqual(off_events, cached_events)
 
     def test_single_triple_direct_adjoint_matches_conjugate_transpose(self):
         forward, _, _ = gate.triple_forward(
