@@ -77,6 +77,9 @@ Required controls: full complex matrix comparison, common basis hash, direct-adj
 
 - D. Giulini and D. Marolf, **On the generality of refined algebraic quantization**, Class. Quantum Grav. 16 (1999) 2479–2488, DOI: 10.1088/0264-9381/16/7/321.
 - D. Giulini and D. Marolf, **A uniqueness theorem for constraint quantization**, Class. Quantum Grav. 16 (1999) 2489–2498, DOI: 10.1088/0264-9381/16/7/322.
+- D. Giulini and D. Marolf, **On the generality of refined algebraic quantization**, Class. Quantum Grav. 16 (1999) 2479–2488, DOI: 10.1088/0264-9381/16/7/321.
+
+Important scope: the Giulini–Marolf uniqueness result is conditional and covers finite-dimensional Lie groups/constraint algebras with structure constants under its hypotheses. It must not be applied as if it directly solved the full hypersurface-deformation algebra with structure functions. That is why the BQG finite master-constraint route and its continuum spectral/rigging limit remain separate gates.
 - D. Marolf, **Group Averaging and Refined Algebraic Quantization: Where are we now?** (2000): https://escholarship.org/uc/item/1dw733w0
 - K. Giesel and T. Thiemann, **Algebraic Quantum Gravity (AQG)** / Master Constraint Programme literature (see the repository's existing master-constraint references; select the exact operator implementation only after constraint algebra audit).
 
