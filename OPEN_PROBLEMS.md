@@ -3,13 +3,16 @@
 This filename is retained for compatibility with historical links.  The repository now distinguishes three logically different layers that must not be collapsed into one Boolean:
 
 ```text
-structural_candidate_closed              = true
+structural_candidate_closed              = false
+candidate_mathematical_framework         = true
 physical_projector_history_closed        = false
 physical_TT_kernel_frozen                = false
 IR_six_wilson_vector_frozen              = false
 common_physical_scale_calibrated         = false
 experimentally_confirmed                 = false
 ```
+
+The 2026-09-29 declaration of `structural_candidate_closed=true` below is a historical snapshot. It is superseded by the 2026-11-13 machine validation: the 55-gate structural ledger still contains the core `PURE_ANCILLA_NODE_REFINEMENT` no-go, so the current verifier reports `structural_candidate_closed=false`. The bilinear refinement route passes its finite gate, but the rejected pure-ancilla construction has not been silently reclassified.
 
 The first statement refers only to the declared exact/finite/conditional **structural candidate** recorded in `theory_gates.json`.  The remaining statements describe the stronger physicalization and experimental frontier recorded in `physicalization_gates.json`.
 
