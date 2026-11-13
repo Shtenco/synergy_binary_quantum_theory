@@ -115,7 +115,14 @@ Derive a graph-distance commutator/response bound for the regulated BQG operator
 
 ## 8. Independent experimental falsification
 
-No current finite BQG computation is an experimental confirmation. Define falsifiable observables before fitting parameters:
+No current finite BQG computation is an experimental confirmation. Published independent datasets already constrain particular Lorentz-violating propagation models, but those limits are not a direct confirmation or refutation of BQG until its physical retarded kernel predicts the same observables. Useful reference datasets include:
+
+- GW170817/GRB 170817A multimessenger arrival-time comparison; the event was used to constrain the relative speed of gravity and light, with source-emission timing assumptions explicitly controlling the bound: https://doi.org/10.1103/PhysRevLett.119.161101 and https://doi.org/10.1103/PhysRevD.97.083013.
+- LHAASO observation of GRB 221009A; the collaboration published stringent photon-dispersion/LIV constraints: https://doi.org/10.1103/PhysRevLett.133.071501.
+- Vardanyan et al., **Revisiting tests of Lorentz invariance with gamma-ray bursts: Effects of intrinsic lags**, Phys. Rev. D 108, 123023 (2023), DOI: 10.1103/PhysRevD.108.123023. The intrinsic source lag can change limits by factors of a few: https://doi.org/10.1103/PhysRevD.108.123023.
+- Addazi et al., **Quantum gravity phenomenology at the dawn of the multi-messenger era—A review**, Prog. Part. Nucl. Phys. 125 (2022) 103948, DOI: 10.1016/j.ppnp.2022.103948: https://doi.org/10.1016/j.ppnp.2022.103948.
+
+Define falsifiable observables before fitting parameters:
 
 - relative arrival-time dispersion/birefringence for photons from distant transients;
 - gravitational-wave versus electromagnetic arrival and polarization constraints;
@@ -138,4 +145,4 @@ Map the BQG prediction to an effective-field-theory parameterization with explic
 
 ## Current status
 
-This is a literature-grounded remediation plan. It is not a claim that the remaining physical gates have closed. The production probe is a concrete numerical finding; the no-prune diagnostic and direct all-M commutator test remain necessary before promoting the SU(2) repair.
+This is a literature-grounded remediation plan. It is not a claim that the remaining physical gates have closed. The production probe is a concrete numerical finding. The cached scalar restore guard has been changed to a per-node wrong-(J,M) squared-weight contract of `1e-18`, matching the existing downstream acceptance criterion, while retaining fail-closed behavior and recording the discarded norm. Seven unit tests were added; the first CI run found a missing `math` import, now fixed, and the rerun is pending. An independent direct all-M commutator gate now evaluates the actual sine-ordered `H_E` on a J=1 multiplet and checks `[J_+,H_E]=[J_-,H_E]=0` in production and instrumented-shadow modes. The no-prune diagnostic and direct all-M gate remain necessary before promoting the SU(2) repair.
