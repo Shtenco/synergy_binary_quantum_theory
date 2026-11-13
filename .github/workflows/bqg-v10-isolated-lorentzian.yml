@@ -1,0 +1,40 @@
+name: BQG v1.0 Lorentzian isolated real-term probes
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v08_lorentzian_24term_raw_column.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - '.github/workflows/bqg-v10-isolated-lorentzian.yml'
+  workflow_dispatch:
+
+jobs:
+  isolated-term:
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [0, 1, 6, 12, 18, 23]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install numpy scipy sympy
+      - name: Genuine sine KKV term with intermediate support diagnostics
+        run: |
+          mkdir -p verification_results
+          timeout --signal=TERM 720s python -u scripts/bqg_v08_lorentzian_24term_raw_column.py \
+            --v 0 --input 0 --Jmax2 7 --start ${{ matrix.index }} --count 1 \
+            --output verification_results/BQG_V10_AMP_${{ matrix.index }}.json
+      - name: Confirm provenance of result
+        if: always()
+        run: |
+          if test -f verification_results/BQG_V10_AMP_${{ matrix.index }}.json; then
+            python -c "import json; d=json.load(open('verification_results/BQG_V10_AMP_${{ matrix.index }}.json')); assert d['count']==1; print('REAL-PETER-WEYL-PASS',d['terms'])"
+          else
+            echo "UNRESOLVED: no full numerical amplitude produced; do not interpret as zero."
+          fi

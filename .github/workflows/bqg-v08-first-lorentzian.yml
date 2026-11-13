@@ -1,0 +1,33 @@
+name: BQG v0.8 real Lorentzian first oriented triple
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v08_lorentzian_24term_raw_column.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - '.github/workflows/bqg-v08-first-lorentzian.yml'
+  workflow_dispatch:
+
+jobs:
+  first-ordered-term:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install numpy scipy sympy
+      - name: First actual sine-K-K-V triple, Jmax=7/2
+        run: |
+          python -u scripts/bqg_v08_lorentzian_24term_raw_column.py \
+            --v 0 --input 0 --Jmax2 7 --start 0 --count 1 \
+            --output verification_results/BQG_V08_FIRST_TRIPLE.json
+      - name: Print output summary (no artifact upload: repository quota exceeded)
+        if: always()
+        run: |
+          if test -f verification_results/BQG_V08_FIRST_TRIPLE.json; then
+            python -c "import json; d=json.load(open('verification_results/BQG_V08_FIRST_TRIPLE.json')); print({k:v for k,v in d.items() if k!='states'})"
+          fi
