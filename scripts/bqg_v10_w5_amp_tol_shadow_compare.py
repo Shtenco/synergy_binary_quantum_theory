@@ -50,7 +50,7 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
         "--pruning-mode", pruning_mode,
         "--output", str(output),
     ]
-    if args.unbounded_closure:
+    if getattr(args, "unbounded_closure", False):
         command.append("--unbounded-closure")
     command.extend(["--nodes", *[str(node) for node in args.nodes]])
     output.unlink(missing_ok=True)
@@ -237,8 +237,8 @@ def main() -> int:
                 "nodes": args.nodes,
                 "Jmax2": args.Jmax2,
                 "max_states": args.max_states,
-                "max_depth": None if args.unbounded_closure else args.max_depth,
-                "unbounded_closure": bool(args.unbounded_closure),
+                "max_depth": None if getattr(args, "unbounded_closure", False) else args.max_depth,
+                "unbounded_closure": bool(getattr(args, "unbounded_closure", False)),
             },
         }
         exit_code = 2
