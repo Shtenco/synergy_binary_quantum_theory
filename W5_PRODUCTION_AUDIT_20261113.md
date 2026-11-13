@@ -79,6 +79,8 @@ Seven regression tests were added in `tests/test_peter_weyl_scalar_sector_restor
 
 A second independent gate, `scripts/peter_weyl_w5_direct_all_M_su2_gate.py`, now evaluates the actual sine-ordered (H_E) on all three magnetic components of a fixed charged (J=1) seed and measures ([J_+,H_E]) and ([J_-,H_E]). It runs both production and instrumented-shadow modes, bypasses memoization, and keeps the representation test independent of the highest-weight cache. Its CI result is pending.
 
+The norm-bounded restore regression suite completed successfully in both matrix jobs of run `43448695465`: 7 tests passed in each job after adding the missing `math` import. The heavier context-probe step was then cancelled in the shadow job by runner shutdown; the production probe was still running at the latest check. A later direct all-M workflow run is queued/running; no covariance conclusion is claimed yet.
+
 ## 4. Discriminating diagnostics launched
 
 Two diagnostics were launched on this isolated branch:
