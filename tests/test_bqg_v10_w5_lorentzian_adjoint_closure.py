@@ -118,6 +118,33 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         for i in range(0, len(replayed), 2):
             self.assertEqual(replayed[i], replayed[i + 1])
 
+        # The same wrapper must become a transparent pass-through when the
+        # caller selects cache_mode=off.
+        component_calls.clear()
+        try:
+            raw.COMP.C_volume_component = fake_component
+            with mock.patch.object(gate, "node_kkv_maps", fake_node_map), \\
+                 mock.patch.object(lsine, "run", fake_lsine_run):
+                uncached = gate.run_closure(
+                    source_nodes=(0,), Jmax2=10, max_states=500,
+                    max_depth=0, amp_tol=1e-12, cache_mode="off",
+                )
+        finally:
+            raw.COMP.C_volume_component = original_component
+            gate.node_kkv_maps = original_node_map
+            lsine.run = original_lsine_run
+
+        off_cache = uncached["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
+        self.assertEqual(off_cache["hits"], 0)
+        self.assertEqual(off_cache["misses"], 0)
+        self.assertEqual(len(component_calls), 10)
+        off_events = [
+            e for e in uncached["lower_level_pruning_ledger"]["events"]
+            if e["site_id"] == "test.memoized_CV"
+        ]
+        self.assertEqual(len(off_events), 10)
+        self.assertEqual(replayed, off_events)
+
     def test_single_triple_direct_adjoint_matches_conjugate_transpose(self):
         forward, _, _ = gate.triple_forward(
             self.psi, 0, 1, 2, 3, 10, self.cv, self.ck
