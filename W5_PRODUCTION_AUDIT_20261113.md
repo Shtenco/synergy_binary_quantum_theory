@@ -90,7 +90,15 @@ Two diagnostics were launched on this isolated branch:
 
 The production probe is the next artifact to inspect. If the wrong-sector weight appears before pruning or persists in a completed shadow run, the representation/canonicalization or operator construction must be corrected. If it appears only after thresholded accumulation, the exact sequence trace will identify the first asymmetric pruning site. No conclusion is drawn from the cancelled shadow job.
 
-## 5. Required repair sequence
+## 5. Transitive pruning coverage inventory added
+
+The prior W5 runner hard-coded `lower_level_pruning_ledger.coverage.complete=false`. The V10 import closure and every threshold-looking branch are now being independently inventoried by `scripts/bqg_pruning_coverage_inventory.py`. It walks the transitive local Python import graph, lists threshold comparisons with source lines, verifies each amplitude-pruning site uses the shared `PRUNE`/loss-ledger path, rejects unclassified sites and non-audit LRU caches, and separately classifies exact SU(2) rules, spectral zero-mode conventions, support caps, and residual-acceptance thresholds.
+
+Seven existing modules already contain instrumentation for the important intermediate sites: primitive intertwiner projection, product coefficients, cached T-state outputs, complete charge projection, volume matrix/state outputs, Euclidean sine outputs, and Lorentzian local-volume columns. The new inventory makes that coverage auditable rather than inferred from a hand-maintained list.
+
+The standalone CI run `43450087875` is queued. Only after it passes will the V10 runtime ledger be allowed to report static threshold-site coverage complete. Cache-on/off ledger equality, spin-wall/state/depth-cap accounting, and full complex support convergence remain separate open controls; even a complete static inventory is not a zero-loss theorem.
+
+## 6. Required repair sequence
 
 1. Inspect both artifacts from run `43446220696` and the shadow result from `43445958758`.
 2. Derive the correct SU(2) action on the full charged state, including external holonomy/matrix indices. Decide whether the operator is rank-0 on the total coupled charge or a nontrivial tensor on the local charge label.
