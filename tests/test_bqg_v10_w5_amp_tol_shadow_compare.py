@@ -60,6 +60,29 @@ if __name__ == "__main__":
 
 
 class TestV10ShadowTimeoutHandling(unittest.TestCase):
+    def test_unbounded_closure_flag_is_forwarded_to_both_processes(self):
+        import tempfile
+
+        args = SimpleNamespace(
+            Jmax2=10, max_states=500, max_depth=8, nodes=[0],
+            timeout_seconds=1.0, unbounded_closure=True,
+        )
+        completed = Mock(returncode=0, stdout="", stderr="")
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "result.json"
+
+            def fake_run(command, **kwargs):
+                self.assertIn("--unbounded-closure", command)
+                output.write_text('{"status": "INCOMPLETE_CLOSURE_LIMIT_REACHED"}', encoding="utf-8")
+                return completed
+
+            with patch(
+                "bqg_v10_w5_amp_tol_shadow_compare.subprocess.run",
+                side_effect=fake_run,
+            ):
+                result = run_one(Path(temp) / "v10.py", output, 1e-12, args)
+        self.assertIn("--unbounded-closure", result["_process"]["command"])
+
     def test_timeout_is_incomplete_and_partial_json_is_discarded(self):
         import tempfile
 
