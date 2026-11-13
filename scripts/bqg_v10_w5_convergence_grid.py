@@ -49,7 +49,9 @@ def run_grid(args) -> dict:
 
     grid_rows = []
     production_matrices = {}
+    production_adjoint_matrices = {}
     shadow_matrices = {}
+    shadow_adjoint_matrices = {}
     with tempfile.TemporaryDirectory(prefix="bqg-v10-convergence-grid-") as temp:
         root = Path(temp)
         script = Path(__file__).with_name("bqg_v10_w5_lorentzian_adjoint_closure.py")
@@ -63,6 +65,9 @@ def run_grid(args) -> dict:
             shadow_ok = closure_matrix_available(shadow, shadow=True)
             if shadow_ok:
                 shadow_matrices[wall] = unpack_columns(shadow)
+                shadow_adjoint_matrices[wall] = unpack_columns(
+                    shadow, "direct_Bdag_columns_sparse"
+                )
 
             for tol in tolerances:
                 production = run_one(
@@ -79,25 +84,37 @@ def run_grid(args) -> dict:
                     "shadow_matrix_complete": shadow_ok,
                     "production_process": production.get("_process"),
                     "shadow_process": shadow.get("_process"),
+                    "production_loss_summary": production.get("coefficient_loss_ledger", {}).get("summary"),
+                    "shadow_loss_summary": shadow.get("coefficient_loss_ledger", {}).get("summary"),
+                    "production_diagnostics": production.get("diagnostics", production.get("partial_diagnostics")),
+                    "shadow_diagnostics": shadow.get("diagnostics", shadow.get("partial_diagnostics")),
+                    "production_spectral_sensitivity": production.get("spectral_sensitivity"),
+                    "shadow_spectral_sensitivity": shadow.get("spectral_sensitivity"),
                 }
                 if production_ok:
                     matrix = unpack_columns(production)
+                    adjoint_matrix = unpack_columns(production, "direct_Bdag_columns_sparse")
                     production_matrices[(wall, tol)] = matrix
+                    production_adjoint_matrices[(wall, tol)] = adjoint_matrix
                     row["production_matrix_sha256"] = matrix_digest(matrix)
+                    row["production_adjoint_matrix_sha256"] = matrix_digest(adjoint_matrix)
                     row["production_closure_size"] = production.get("closure_size")
                     row["production_basis_id_sha256"] = production.get("basis_id_sha256")
-                    row["production_spectral_sensitivity"] = production.get("spectral_sensitivity")
                 if shadow_ok:
                     row["shadow_matrix_sha256"] = matrix_digest(shadow_matrices[wall])
+                    row["shadow_adjoint_matrix_sha256"] = matrix_digest(shadow_adjoint_matrices[wall])
                     row["shadow_closure_size"] = shadow.get("closure_size")
                     row["shadow_basis_id_sha256"] = shadow.get("basis_id_sha256")
-                    row["shadow_spectral_sensitivity"] = shadow.get("spectral_sensitivity")
                 if production_ok and shadow_ok:
-                    row["production_vs_shadow"] = compare_vectors(
+                    row["production_vs_shadow_forward"] = compare_vectors(
                         shadow_matrices[wall], production_matrices[(wall, tol)]
                     )
+                    row["production_vs_shadow_direct_adjoint"] = compare_vectors(
+                        shadow_adjoint_matrices[wall], production_adjoint_matrices[(wall, tol)]
+                    )
                 else:
-                    row["production_vs_shadow"] = None
+                    row["production_vs_shadow_forward"] = None
+                    row["production_vs_shadow_direct_adjoint"] = None
                 grid_rows.append(row)
 
     amp_convergence = []
@@ -111,7 +128,11 @@ def run_grid(args) -> dict:
                     "Jmax2": wall,
                     "baseline_amp_tol": baseline_tol,
                     "candidate_amp_tol": tol,
-                    "comparison": compare_vectors(baseline, matrix),
+                    "forward_comparison": compare_vectors(baseline, matrix),
+                    "direct_adjoint_comparison": compare_vectors(
+                        production_adjoint_matrices[(wall, baseline_tol)],
+                        production_adjoint_matrices[(wall, tol)],
+                    ),
                 })
 
     wall_convergence = []
@@ -124,9 +145,13 @@ def run_grid(args) -> dict:
                 "amp_tol": tol,
                 "lower_Jmax2": wall_a,
                 "higher_Jmax2": wall_b,
-                "comparison": compare_vectors(
+                "forward_comparison": compare_vectors(
                     production_matrices[(wall_a, tol)],
                     production_matrices[(wall_b, tol)],
+                ),
+                "direct_adjoint_comparison": compare_vectors(
+                    production_adjoint_matrices[(wall_a, tol)],
+                    production_adjoint_matrices[(wall_b, tol)],
                 ),
             })
 
