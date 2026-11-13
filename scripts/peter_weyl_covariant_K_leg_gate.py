@@ -144,7 +144,7 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
     return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}, max_basis_leak
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def canonical_volume_block_general(spins_local, J2):
     spins_local = tuple(spins_local)
     # Q=J1.(J2 x J3) is an SU(2) scalar. In the standard CG-coupled
