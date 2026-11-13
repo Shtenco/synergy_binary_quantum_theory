@@ -13,11 +13,11 @@ This document maps peer-reviewed mathematical methods to the nine active BQG blo
 
 ### Representation-theory distinction to test explicitly
 
-For an open (n)-valent intertwiner, the coupled basis carries a total representation label (J,M) and multiplicity labels \\(\\alpha\\) (here represented by the recoupling channels such as (K_{12},K_{34})). If the **complete** operator is rank zero under the gauge action at that node, then
-[
+For an open (n)-valent intertwiner, the coupled basis carries a total representation label (J,M) and multiplicity labels \(\\alpha\) (here represented by the recoupling channels such as (K_{12},K_{34})). If the **complete** operator is rank zero under the gauge action at that node, then
+$
 \langle J'M';\alpha'|O^{(0)}|JM;\alpha\rangle
 =\delta_{J'J}\delta_{M'M}\,O^J_{\alpha'\alpha}.
-]
+$
 The operator may mix multiplicity/recoupling channels; it may not mix the total (J,M) labels. But an individual open holonomy matrix index transforms at both edge endpoints. If the relevant endpoint index has not yet been contracted into the full gauge-invariant operator, the local operator is a tensor operator there, not automatically rank zero. The code must therefore prove the transformation law of the *fully contracted* (H_E^{sine}), not infer it from a local label name.
 
 A particularly relevant peer-reviewed source is J. Yang and Y. Ma, **Graphical calculus of volume, inverse volume and Hamiltonian operators in loop quantum gravity**, Eur. Phys. J. C 77, 235 (2017), DOI: 10.1140/epjc/s10052-017-4713-0. It explicitly decomposes multi-edge states into total-(J) intertwiners and shows how open holonomy indices transform at edge endpoints; it also derives Hamiltonian matrix elements by graphical recoupling. This is a direct mathematical reference for auditing the charged endpoint and its external holonomy indices: https://doi.org/10.1140/epjc/s10052-017-4713-0
@@ -43,7 +43,7 @@ The guard currently throws on the mere presence of any wrong-sector key. This is
 - Reject if the fraction exceeds tolerance; do not relabel wrong-J states as correct-J states.
 - Only after the bound passes, remove the residual wrong-sector rows and restore the original M label for the retained J,M block.
 - Add unit tests for below-tolerance residual, above-tolerance leakage, wrong-M leakage, empty output, and multiple charged endpoints.
-- Compare the cached highest-weight result against a direct all-M computation on a frozen finite W5 seed/node. Verify the covariance identity (U(g)H_E=H_EU(g)) at matrix level and report \\([J_a,H_E]\\) residuals for all three generators.
+- Compare the cached highest-weight result against a direct all-M computation on a frozen finite W5 seed/node. Verify the covariance identity (U(g)H_E=H_EU(g)) at matrix level and report \([J_a,H_E]\) residuals for all three generators.
 - Keep the scalar assertion active as a norm-bounded theorem check; do not disable it.
 
 This is a proposed numerical contract correction. It does not prove the representation assignment until the direct all-M commutator test passes.
