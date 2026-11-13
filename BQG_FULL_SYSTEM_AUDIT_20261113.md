@@ -122,7 +122,9 @@ Local execution on the extracted source snapshot:
 
 The full local V10 W5 production closure did not complete within the 300-second execution limit, even for a one-seed/one-node probe. This is recorded as `NOT RUN TO COMPLETION`, not as a scientific failure or a successful result.
 
-A bounded GitHub Actions production closure study was launched separately on branch `research/bqg-w5-production-audit-20261113`: run `43444229133`, all five W5 seeds and all five K5 source nodes, with `Jmax2=10,12,14`, `max_states=500`, `max_depth=8`, `amp_tol=1e-12`. At the time of this checkpoint the three matrix jobs were still executing. No numerical conclusion is claimed until their artifacts are inspected.
+The bounded GitHub Actions production closure study on `research/bqg-w5-production-audit-20261113` (run `43444229133`) completed with **all three cutoff jobs failing** at `Jmax2=10,12,14`. They failed before writing closure JSON, at the same fail-closed invariant in `restore_scalar_charge_M`: the sine-ordered `H_E` path was expected to preserve the charged endpoint's `J,M`, but at node 0 an input `J2=0, M2=0` produced an output label `(J2,M2)=(2,0)`. The stack passes through `complete_HE_sine` and the cached Wigner–Eckart reduction. This is a concrete production blocker: either the charged-sector scalar-selection assumption/cache reduction is invalid for this operator, or the finite operator/pruning/cutoff path violates the claimed scalar Ward identity. It is **not** a physical no-go theorem about BQG; it is a failed internal production invariant that must be resolved before accepting V10 closure. No closure artifact was produced.
+
+To discriminate between a pruning-induced symmetry leak and a deeper operator/canonicalization issue, a one-node `shadow_no_prune` diagnostic was launched separately (run `43445958758`, `Jmax2=10`, source node 0, all five seed labels with a five-state/depth-zero closure cap). Its artifact must be inspected before choosing the repair.
 
 ## 6. Input-integrity hardening in the causal-response reference engine
 
@@ -158,9 +160,11 @@ The production `ZERO_LOSS` claim remains **NOT CERTIFIED**.
 
 ## 8. Required next sequence
 
-1. Finish and inspect the Jmax2=10/12/14 W5 production artifacts; compare full complex supports, norms, spin-wall omissions, amplitude losses, closure caps, and direct-adjoint residuals.
-2. Run cache-on/cache-off and production-vs-shadow comparisons on the same frozen source, spectral convention, input basis, and node ordering.
-3. Complete a transitive threshold-site inventory; close the `lower_level_pruning_coverage_complete` gap before interpreting any no-pruning result.
+1. Resolve the failed charged-sector `H_E^sine` scalar-selection/Wigner–Eckart invariant. Compare the exact full-M implementation with the highest-weight cache path; do not delete or weaken the assertion until the Ward identity is independently established.
+2. Inspect the one-node `shadow_no_prune` diagnostic to determine whether intermediate pruning causes the `J=0 -> J=1` residue; if it does, trace each threshold site and restore coherent accumulation before thresholding.
+3. After the scalar-selection invariant is repaired, rerun the full `Jmax2=10/12/14` W5 production study and compare full complex supports, norms, spin-wall omissions, amplitude losses, closure caps, and direct-adjoint residuals.
+4. Run cache-on/cache-off and production-vs-shadow comparisons on the same frozen source, spectral convention, input basis, and node ordering.
+5. Complete a transitive threshold-site inventory; close the `lower_level_pruning_coverage_complete` gap before interpreting any no-pruning result.
 4. Derive the physical clock or boundary-history ordering from the actual graph-changing constraints and construct the positive physical inner product/rigging map.
 5. Build physical history class operators and gauge-invariant relational observables; only then compute intervention-based physical retarded kernels.
 6. Compare photon, matter, scalar, vector, and TT fronts on one physical carrier and background; independently reconstruct the spectral metric and test regulator/volume/clock/state convergence.
