@@ -72,6 +72,86 @@ def sparsify_matrix_columns(
     return result
 
 
+def _stable_l2_norm(values: Sequence[float]) -> float:
+    """Compute an L2 norm without squaring large finite values directly."""
+    norm = 0.0
+    for value in values:
+        norm = math.hypot(norm, float(value))
+    return norm
+
+
+def sparsify_matrix_columns_with_error_bound(
+    columns: Sequence[Mapping[Hashable, complex]], tolerance: float
+) -> tuple[list[dict[Hashable, complex]], dict[str, object]]:
+    """Sparsify an assembled matrix and certify an absolute spectral-error bound.
+
+    For the discarded matrix E, the report uses ||E||_2 <= ||E||_F.
+    This is a rigorous absolute operator-norm bound for the supplied finite
+    matrix. It is not a relative spectral-norm bound and says nothing about
+    truncation performed before this matrix was assembled.
+    """
+    tol = float(tolerance)
+    if not math.isfinite(tol) or tol < 0:
+        raise ValueError("tolerance must be finite and nonnegative")
+
+    result: list[dict[Hashable, complex]] = []
+    all_abs: list[float] = []
+    kept_abs: list[float] = []
+    discarded_abs: list[float] = []
+    per_column: list[dict[str, float | int]] = []
+
+    for column in columns:
+        kept: dict[Hashable, complex] = {}
+        column_all: list[float] = []
+        column_kept: list[float] = []
+        column_discarded: list[float] = []
+        for key, value in column.items():
+            z = _finite_complex(value, name="matrix element")
+            magnitude = abs(z)
+            column_all.append(magnitude)
+            all_abs.append(magnitude)
+            if magnitude > tol:
+                kept[key] = z
+                column_kept.append(magnitude)
+                kept_abs.append(magnitude)
+            else:
+                column_discarded.append(magnitude)
+                discarded_abs.append(magnitude)
+        result.append(kept)
+        per_column.append({
+            "column_index": len(per_column),
+            "input_nonzero_count": len(column_all),
+            "retained_count": len(column_kept),
+            "discarded_count": len(column_discarded),
+            "discarded_frobenius_norm": _stable_l2_norm(column_discarded),
+        })
+
+    matrix_fro = _stable_l2_norm(all_abs)
+    retained_fro = _stable_l2_norm(kept_abs)
+    discarded_fro = _stable_l2_norm(discarded_abs)
+    report: dict[str, object] = {
+        "tolerance": tol,
+        "column_count": len(columns),
+        "input_nonzero_count": len(all_abs),
+        "retained_count": len(kept_abs),
+        "discarded_count": len(discarded_abs),
+        "matrix_frobenius_norm": matrix_fro,
+        "retained_frobenius_norm": retained_fro,
+        "discarded_frobenius_norm": discarded_fro,
+        "spectral_norm_error_upper_bound": discarded_fro,
+        "relative_frobenius_error_bound": (
+            discarded_fro / matrix_fro if matrix_fro else 0.0
+        ),
+        "bound": "||A-A_tau||_2 <= ||A-A_tau||_F",
+        "scope": (
+            "post-assembly elementwise matrix mask only; excludes all "
+            "pre-assembly pruning, spin-wall truncation, and support caps"
+        ),
+        "per_column": per_column,
+    }
+    return result, report
+
+
 def apply_sparse_matrix_columns(
     columns: Sequence[Mapping[Hashable, complex]],
     coefficients: Sequence[complex],
