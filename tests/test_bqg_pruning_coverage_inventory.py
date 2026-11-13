@@ -32,10 +32,10 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "bqg_v10_w5_lorentzian_adjoint_closure.py").write_text(
-                "import functools\\n"
-                "@functools.lru_cache(None)\\n"
-                "def cached_basis():\\n"
-                "    return (1, 2, 3)\\n",
+                "import functools\n"
+                "@functools.lru_cache(None)\n"
+                "def cached_basis():\n"
+                "    return (1, 2, 3)\n",
                 encoding="utf-8",
             )
             with patch.object(inventory, "SCRIPTS", root), patch.object(
