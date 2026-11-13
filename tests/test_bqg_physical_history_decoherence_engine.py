@@ -5,6 +5,37 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import bqg_physical_history_decoherence_engine as e
 
+class InputIntegrity(unittest.TestCase):
+    def test_reject_nonfinite_physical_metric(self):
+        for bad in (np.array([[1., np.nan], [np.nan, 1.]]),
+                    np.array([[1., np.inf], [np.inf, 1.]])):
+            with self.assertRaises(ValueError):
+                e.physical_overlap_matrix([np.array([1., 0.])], bad)
+
+    def test_reject_nonfinite_class_operator(self):
+        rho=np.eye(2, dtype=complex)/2
+        bad=np.array([[1., np.nan], [0., 1.]], dtype=complex)
+        with self.assertRaises(ValueError):
+            e.decoherence_functional({"bad":bad}, rho)
+
+    def test_reject_noninteger_or_boolean_history_depth(self):
+        for depth in (1.5, True):
+            with self.assertRaises(ValueError):
+                e.history_sector_report([(depth, "s", 1.0)])
+
+    def test_reject_nonfinite_history_amplitude_and_tolerance(self):
+        with self.assertRaises(ValueError):
+            e.history_sector_report([(1, "s", complex(float("nan"), 0))])
+        with self.assertRaises(ValueError):
+            e.history_sector_report([(1, "s", 1.0)], relative_zero_tol=float("nan"))
+
+    def test_reject_nonfinite_front_samples_and_floor(self):
+        with self.assertRaises(ValueError):
+            e.channel_frontier_report({"photon":[(1.0, 1.0, complex(float("inf"), 0))]}, 0.0)
+        with self.assertRaises(ValueError):
+            e.channel_frontier_report({"photon":[(1.0, 1.0, 1.0)]}, float("nan"))
+
+
 class PhysicalOverlap(unittest.TestCase):
     def test_positive_physical_gram(self):
         eta=np.array([[2,.2j,0],[-.2j,1.5,.1],[0,.1,1]],complex)

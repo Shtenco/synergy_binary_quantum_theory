@@ -7,7 +7,9 @@ import numpy as np
 
 
 def vmax(m: float) -> float:
-    return math.sqrt(4*m*m + 9.0) - 2*abs(m)
+    # Rationalized form avoids catastrophic cancellation for large |m|.
+    a = 2.0 * abs(m)
+    return 9.0 / (math.hypot(a, 3.0) + a)
 
 
 def mu_c(m: float) -> float:
@@ -26,10 +28,14 @@ def imag_energy_sup_exact(m: float, mu: float) -> float:
 
 
 def critical_cone_velocity(mu: float) -> float:
+    if mu == 0.0:
+        return 3.0
     return 3.0 * math.sinh(mu) / mu
 
 
 def gapped_cone_velocity(m: float, mu: float) -> float:
+    if mu == 0.0:
+        return vmax(m)
     return vmax(m) * math.sinh(2*mu) / (2*mu)
 
 
@@ -57,7 +63,11 @@ def run():
 
     for mu in (0.01, 0.05, 0.1, 0.2):
         assert critical_cone_velocity(mu) > 3.0
+    assert critical_cone_velocity(0.0) == 3.0
     assert abs(critical_cone_velocity(1e-6) - 3.0) < 1e-9
+    for m in masses:
+        assert gapped_cone_velocity(m, 0.0) == vmax(m)
+    assert vmax(1e16) > 0.0
 
     print("gapped contour checks =", checks)
     print("critical front =", 3.0)

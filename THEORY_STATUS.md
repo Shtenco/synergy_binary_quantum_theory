@@ -1,6 +1,6 @@
-# Текущий статус BQG — 12 октября 2026
+# Текущий статус BQG — 13 ноября 2026
 
-**structural_candidate_closed=false; physicalization_complete=false; experimentally_confirmed=false.** Девять обязательных физических условий остаются открытыми. Исторические декларации `true` ниже сохраняются только как архив и не являются актуальным заключением.
+**structural_candidate_closed=false; physicalization_complete=false; experimentally_confirmed=false.** Девять обязательных физических условий и четыре дополнительных физических gate остаются открытыми. Машинный реестр содержит 55 структурных gates: 23 `proved`, 21 `tested_finite`, 4 `conditional`, 4 `external_extension`, 2 `experimental_test`, 1 `no_go`. Причина текущего `structural_candidate_closed=false` — core gate `PURE_ANCILLA_NODE_REFINEMENT` со статусом `no_go`; точная билинейная альтернатива имеет отдельное конечное доказательство, но не переписывает исторический no-go. Исторические декларации `true` ниже сохраняются только как архив и не являются актуальным заключением.
 
 Главный обзор: [README](README.md). [Пути доказательства](PROOF_ROADMAP_RU.md). [Текущий аудит](AUDIT_CURRENT.md). [Инфотон, обе размерностные гипотезы и история](docs/information_infoton_review/REVIEW_RU.md). [Компактные голономии](docs/compact_holonomies/INTEGRATION_RU.md).
 
