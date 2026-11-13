@@ -65,6 +65,18 @@ A robust approach is a fixed matrix-level sparsity mask chosen independently of 
 5. Inventory every direct comparison against an amplitude threshold transitively, including helper functions and cache wrappers. The gate remains blocked while `lower_level_pruning_coverage_complete=false`.
 6. Audit cache keys and replayed pruning traces; cached and uncached runs must produce identical outputs and loss ledgers.
 
+### V10 strict complex accumulation: partial production integration
+
+The dependency-free `SparseLinearAccumulator` is no longer only a standalone prototype. Commit `45b476d3e22d4223cd7b5856a3ff292d96395477` wires it into the active V10 epsilon-traced KKV operator at three coherent-sum boundaries:
+
+- all eight auxiliary-index paths in each forward triple;
+- all eight auxiliary-index paths in each independently ordered adjoint triple;
+- the complete 24-term epsilon-orbit sum for both forward and adjoint node maps.
+
+This uses complex `math.fsum` on real and imaginary components and does not apply a threshold during those sums. New production tests exercise subthreshold complex path accumulation in both forward and adjoint maps. The L1 workflow now runs those tests, and the transitive import inventory includes the strict accumulator module.
+
+**Scope limit:** this does not yet remove thresholding inside lower-level K/V component builders or every V09/V10/V11 state merge. The active K-leg and composition helpers still contain incremental threshold decisions. Therefore strict accumulation integration remains PARTIAL, and P0 must not be marked closed until all amplitude-pruning sites are either moved after coherent operator accumulation or justified by a fixed operator-level mask with a certified error bound.
+
 ## 3. V10/V11 W5 common carrier
 
 The common carrier must be assembled only after V10 has a closed, finite, adjoint-consistent operator on a frozen basis. V11's common carrier is a shared domain/codomain construction, not evidence that the underlying operator is physical.
