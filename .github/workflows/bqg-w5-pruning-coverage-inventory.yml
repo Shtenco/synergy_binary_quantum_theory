@@ -8,6 +8,7 @@ on:
       - '.github/workflows/bqg-w5-pruning-coverage-inventory.yml'
       - 'scripts/bqg_pruning_coverage_inventory.py'
       - 'tests/test_bqg_pruning_coverage_inventory.py'
+      - 'tests/test_bqg_pruning_audit.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'scripts/bqg_pruning_audit.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
@@ -49,6 +50,7 @@ jobs:
           python -m py_compile scripts/bqg_pruning_coverage_inventory.py
           python scripts/bqg_pruning_coverage_inventory.py --output verification_results/pruning_coverage_inventory.json
           python -m unittest discover -s tests -p 'test_bqg_pruning_coverage_inventory.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_pruning_audit.py' -v
       - name: Upload coverage inventory
         if: always()
         uses: actions/upload-artifact@v4
