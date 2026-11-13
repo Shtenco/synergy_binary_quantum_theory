@@ -38,7 +38,7 @@ import k5_peter_weyl_safe_hda_column as PW
 import bqg_pruning_audit as PRUNE
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def local_volume_column(key, v: int):
     """Return exact V_v|key> projected in the Gauss recoupling basis."""
     spins, Ks = key
