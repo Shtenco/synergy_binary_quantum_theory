@@ -81,8 +81,12 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             return ({("memo", source_v, target_v, i, j): 0.5 + 0.25j}, 0.0)
 
         def fake_node_map(state, source_v, Jmax2, PW, CV, RAW):
-            first = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
-            second = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
+            token = gate._ACTIVE_CV_BASE_STATE.set(gate._freeze_sparse_state(state))
+            try:
+                first = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
+                second = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
+            finally:
+                gate._ACTIVE_CV_BASE_STATE.reset(token)
             self.assertEqual(first, second)
             component_results.append(first)
             return {}, {}, {
