@@ -39,6 +39,22 @@ class TestPruningAuditCollector(unittest.TestCase):
         self.assertEqual(result["event_count"], 1)
         self.assertEqual(result["events"][0]["key_repr"], "'small'")
 
+    def test_threshold_event_records_incoming_and_propagated_complex_amplitude(self):
+        incoming = 2 - 3j
+        coefficient = 0.5e-12 + 0.25e-12j
+        with audit.capture() as collector:
+            audit.record_threshold(
+                "test.propagated", "branch", coefficient, 1e-12,
+                incoming=incoming,
+            )
+        event = collector.snapshot()["events"][0]
+        propagated = incoming * coefficient
+        self.assertAlmostEqual(event["incoming_real"], incoming.real)
+        self.assertAlmostEqual(event["incoming_imag"], incoming.imag)
+        self.assertAlmostEqual(event["propagated_real"], propagated.real)
+        self.assertAlmostEqual(event["propagated_imag"], propagated.imag)
+        self.assertAlmostEqual(event["propagated_abs"], abs(propagated))
+
     def test_structural_zero_is_not_counted_as_amplitude_loss(self):
         with audit.capture() as collector:
             audit.record_threshold("test.zero", "zero", 0j, 1e-12)
