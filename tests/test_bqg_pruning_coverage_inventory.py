@@ -70,6 +70,8 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         self.assertFalse(coverage["complete"])
         self.assertFalse(coverage["runtime_loss_controls_complete"])
         self.assertFalse(coverage["fixed_operator_mask_error_bound_complete"])
+        self.assertFalse(coverage["fixed_operator_mask_bound_api_available"])
+        self.assertFalse(coverage["fixed_operator_mask_bound_applied_in_production"])
         self.assertEqual(
             coverage["status"],
             "STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING",
