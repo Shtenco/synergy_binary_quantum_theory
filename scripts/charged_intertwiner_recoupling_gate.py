@@ -181,20 +181,31 @@ def q_block(spins, J2, M2):
     basis_matrix = charged_basis_matrix(spins, J2, M2)
     basis = [row.reshape(dims) for row in basis_matrix]
     n = len(basis)
-    Qb = np.zeros((n, n), complex)
-    max_abs_leak = 0.0
-    max_rel_leak = 0.0
-    for j, B in enumerate(basis):
-        QB = apply_q_four(B, spins)
-        coeff = basis_matrix.conj() @ QB.reshape(-1)
-        recon = (coeff @ basis_matrix).reshape(QB.shape)
-        Qb[:, j] = coeff
-        abs_leak = float(np.linalg.norm(QB - recon))
-        rel_leak = abs_leak / max(float(np.linalg.norm(QB)), 1e-30)
-        max_abs_leak = max(max_abs_leak, abs_leak)
-        max_rel_leak = max(max_rel_leak, rel_leak)
-    Qb = 0.5 * (Qb + Qb.conj().T)
-    return basis, Qb, max_abs_leak, max_rel_leak
+    if n == 0:
+        return basis, np.zeros((0, 0), complex), 0.0, 0.0
+
+    # Apply the same Q123 operator to every charged basis vector in one
+    # batched matrix multiplication. Each row of basis_matrix is one
+    # flattened (J,M) intertwiner; the first three magnetic axes are the
+    # operator domain and the fourth is the spectator axis.
+    d123 = int(np.prod(dims[:3]))
+    d4 = dims[3]
+    Q = q123_matrix(tuple(spins[:3]))
+    basis_batch = basis_matrix.reshape(n, d123, d4).transpose(1, 2, 0)
+    QB_batch = (Q @ basis_batch.reshape(d123, d4 * n))
+    QB_rows = QB_batch.reshape(d123, d4, n).transpose(2, 0, 1).reshape(n, -1)
+    coeff = basis_matrix.conj() @ QB_rows.T
+    recon_rows = coeff.T @ basis_matrix
+    residual_rows = QB_rows - recon_rows
+    abs_leaks = np.linalg.norm(residual_rows, axis=1)
+    q_norms = np.linalg.norm(QB_rows, axis=1)
+    rel_leaks = abs_leaks / np.maximum(q_norms, 1e-30)
+    Qb = 0.5 * (coeff + coeff.conj().T)
+    return (
+        basis, Qb,
+        float(np.max(abs_leaks, initial=0.0)),
+        float(np.max(rel_leaks, initial=0.0)),
+    )
 
 
 def canonical_volume_block(Qb):
