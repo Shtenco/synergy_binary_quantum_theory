@@ -6,6 +6,7 @@ from unittest.mock import patch, Mock
 import subprocess
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import bqg_v10_w5_amp_tol_shadow_compare as shadow_compare
 from bqg_v10_w5_amp_tol_shadow_compare import (
     closure_matrix_available, compare_vectors, unpack_columns, run_one,
 )
@@ -110,6 +111,39 @@ class TestV10ShadowTimeoutHandling(unittest.TestCase):
             self.assertEqual(result["status"], "INCOMPLETE_TIMEOUT")
             self.assertTrue(result["_process"]["partial_output_discarded"])
             self.assertFalse(output.exists())
+
+    def test_secondary_audits_are_skipped_when_baseline_matrix_times_out(self):
+        import contextlib
+        import io
+        import tempfile
+
+        calls = []
+        def incomplete_run_one(script, output, amp_tol, args, pruning_mode="production"):
+            calls.append((amp_tol, pruning_mode, args.cache_mode))
+            return {"status": "INCOMPLETE_TIMEOUT", "_process": {"timeout_seconds": 0.01}}
+
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "comparison.json"
+            argv = [
+                "bqg_v10_w5_amp_tol_shadow_compare.py",
+                "--compare-cache-modes",
+                "--spectral-sensitivity-factors", "2000",
+                "--timeout-seconds", "0.01",
+                "--nodes", "0",
+                "--output", str(output),
+            ]
+            with patch("sys.argv", argv), patch.object(
+                shadow_compare, "run_one", side_effect=incomplete_run_one
+            ), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = shadow_compare.main()
+
+            result = __import__("json").loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(len(calls), 2)  # production and shadow only
+        self.assertEqual(result["cache_equivalence"]["status"], "SKIPPED_BASELINE_MATRIX_INCOMPLETE")
+        self.assertEqual(result["spectral_sensitivity"]["status"], "SKIPPED_BASELINE_MATRIX_INCOMPLETE")
+        self.assertFalse(result["comparison_performed"])
 
     def test_completed_process_without_json_is_fail_closed(self):
         import tempfile
