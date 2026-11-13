@@ -196,20 +196,25 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
             == cache_off.get("spectral_sensitivity")
         ),
     }
+    matrix_exactly_equal = (
+        forward["support_symmetric_difference_total"] == 0
+        and forward["max_coefficient_absolute_residual"] == 0.0
+        and adjoint["support_symmetric_difference_total"] == 0
+        and adjoint["max_coefficient_absolute_residual"] == 0.0
+    )
+    full_ledger_exactly_equal = all(ledger_comparison.values())
+    equivalent = matrix_exactly_equal and full_ledger_exactly_equal
     return {
-        "status": "COMPLETED_CACHE_EQUIVALENCE",
+        "status": "PASS_CACHE_EQUIVALENCE" if equivalent else "FAIL_CACHE_EQUIVALENCE",
+        "comparison_completed": True,
         "cache_on_status": production.get("status"),
         "cache_off_status": cache_off.get("status"),
         "forward_matrix_comparison": forward,
         "direct_adjoint_matrix_comparison": adjoint,
-        "matrix_exactly_equal": (
-            forward["support_symmetric_difference_total"] == 0
-            and forward["max_coefficient_absolute_residual"] == 0.0
-            and adjoint["support_symmetric_difference_total"] == 0
-            and adjoint["max_coefficient_absolute_residual"] == 0.0
-        ),
+        "matrix_exactly_equal": matrix_exactly_equal,
         "ledger_comparison": ledger_comparison,
-        "full_ledger_exactly_equal": all(ledger_comparison.values()),
+        "full_ledger_exactly_equal": full_ledger_exactly_equal,
+        "equivalence_passed": equivalent,
         "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
         "ledger_scope": [
             "all ordered lower-level pruning events and aggregates",
