@@ -158,6 +158,20 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
         }
         self.assertEqual(modules, expected_modules)
 
+        plain_lru_caches = []
+        for module_name in sorted(modules):
+            source_path = scripts / (module_name + ".py")
+            tree = ast.parse(source_path.read_text(encoding="utf-8"))
+            for function in (
+                node for node in ast.walk(tree)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ):
+                for decorator in function.decorator_list:
+                    name = ast.unparse(decorator)
+                    if "lru_cache" in name and "audit_lru_cache" not in name:
+                        plain_lru_caches.append((module_name, function.name, name))
+        self.assertEqual(plain_lru_caches, [])
+
         # V10's sparse accumulator is allowed to be uninstrumented only
         # because its default tolerance is exactly zero (exact-zero removal).
         v10_path = scripts / "bqg_v10_w5_lorentzian_adjoint_closure.py"
