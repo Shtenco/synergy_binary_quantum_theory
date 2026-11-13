@@ -155,3 +155,17 @@ The new status is `STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING
 The `shadow_no_prune` result remains marked incomplete. Its bypass removes only wired nonzero amplitude thresholds; it does not remove the post-assembly matrix mask or support caps. This prevents a static inventory PASS from being misreported as a full no-pruning reference.
 
 This integration is committed, but its new runtime output is awaiting the W5 closure and shadow diagnostic workflows triggered by the latest code changes. No closure or physical covariance result is inferred from the static inventory tests.
+
+
+### Latest inventory after runtime-ledger integration
+
+Run `43493076092` completed successfully on inventory commit `743a8825afdf76e0e3f73a1a0e2f65551cf2c9eb`, after the W5 closure runner began importing the inventory module. The closure now includes the auditor in its own declared dependency set:
+
+- transitive modules: 20;
+- threshold-like sites: 78;
+- unclassified sites: 0;
+- ordinary unclassified LRU caches: 0;
+- inventory tests: 5 passed;
+- pruning collector/cache replay tests: 11 passed.
+
+This confirms the static inventory remains complete when the inventory itself is part of the W5 dependency closure, and confirms the ledger-builder's separation between static classification and overall runtime completeness. The W5 cutoff-closure run triggered by the same integration is still pending; its numerical closure result is not inferred from this inventory PASS.
