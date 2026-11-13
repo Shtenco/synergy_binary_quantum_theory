@@ -9,6 +9,7 @@ import bqg_pruning_audit as audit
 import charged_intertwiner_recoupling_gate as CHARGED
 import k5_peter_weyl_safe_hda_column as PW
 import peter_weyl_covariant_K_leg_gate as CK
+import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_covariant_composition_gate as COMP
 import peter_weyl_lorentzian_ordered_triple_gate as RAW
 import peter_weyl_covariant_K_projection_audit_gate as KPA
