@@ -297,6 +297,20 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
         np.testing.assert_allclose(actual_coeff, expected_coeff, rtol=0.0, atol=1e-14)
         np.testing.assert_allclose(actual_recon, expected_recon, rtol=0.0, atol=1e-14)
 
+    def test_cached_flattened_basis_matches_charged_tensor_stack(self):
+        spins = (1, 1, 1, 1)
+        for J2 in CV.all_total_J2(spins):
+            for M2 in PW.m2vals_t(J2):
+                labels = CHARGED.allowed_charged_labels(spins, J2)
+                expected = np.stack([
+                    CHARGED.charged_tensor(spins, a, b, J2, M2).reshape(-1)
+                    for a, b in labels
+                ], axis=0)
+                actual = CHARGED.charged_basis_matrix(spins, J2, M2)
+                np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1e-14)
+                self.assertFalse(actual.flags.writeable)
+        CHARGED.charged_basis_matrix.cache_clear()
+
     def test_highest_weight_volume_block_matches_all_magnetic_sectors(self):
         spins = (1, 1, 1, 1)
         for J2 in CV.all_total_J2(spins):
