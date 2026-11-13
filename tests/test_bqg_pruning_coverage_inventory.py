@@ -53,6 +53,25 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         result = inventory.run_inventory()
         self.assertTrue(result["expected_module_set_matches"], result["module_set_mismatch"])
         self.assertEqual(result["plain_lru_caches"], [])
+        self.assertEqual(
+            result["audited_lru_caches"],
+            [{
+                "module": "bqg_pruning_audit",
+                "function": "cached",
+                "decorator": "functools.lru_cache(maxsize=maxsize)",
+                "classification": "audit_lru_cache_internal_value_and_trace_cache",
+            }],
+        )
+        fixed_masks = [
+            site for site in result["threshold_sites"]
+            if site["module"] == "bqg_sparse_linear_accumulator"
+            and site["function"] == "sparsify_matrix_columns"
+        ]
+        self.assertEqual(len(fixed_masks), 2)
+        self.assertTrue(all(
+            site["classification"] == "post_assembly_fixed_operator_mask_requires_error_bound"
+            for site in fixed_masks
+        ))
         self.assertEqual(result["unclassified_sites"], [])
         self.assertTrue(result["complete"])
         self.assertGreaterEqual(result["threshold_site_count"], 20)
