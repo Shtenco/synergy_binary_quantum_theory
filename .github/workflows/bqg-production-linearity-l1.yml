@@ -13,6 +13,10 @@ on:
       - 'tests/test_bqg_production_linearity.py'
       - '.github/workflows/bqg-production-linearity-l1.yml'
 
+concurrency:
+  group: bqg-production-l1-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
