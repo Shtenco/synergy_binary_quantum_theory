@@ -329,3 +329,30 @@ A fresh V10 production pilot was attempted with one source node, the minimum fiv
 No cache-on/cache-off full-matrix comparison has yet completed. The existing sine engine installs local memoization wrappers and restores monkey-patched functions in `finally`, while V10 clears module-level LRU caches before its audited walk. This is good isolation hygiene, but it is not an equivalence proof. The required next test must execute the same pinned operator columns with caches enabled and disabled, compare complete complex dictionaries and diagnostics, and compare threshold events with explicit accounting for cache-hit replay versus unique operator-column construction.
 
 Production V10 closure, independent no-pruning reference, cache equivalence, `Jmax2 × amp_tol` convergence, and Production ZERO_LOSS remain OPEN.
+
+
+## 2026-11-13 follow-up: exact staging evidence, fail-closed comparison, and runtime bottleneck
+
+The W5 staging and physical-history/reference workflows both completed successfully for branch head `8f79f75c64d216de387b19bd731eaeb14046860a`. The W5 staging artifact was downloaded and unpacked independently. Its embedded source commit is the PR merge-source commit `e7f6b983e2990b1c268d9164f7f2e438f54e9e6e`; the embedded per-file SHA-256 manifest verified. Five W5-focused test files were rerun directly from that artifact: **59 passed, 8 subtests passed**. This is source/regression evidence only, not a production closure result.
+
+The cache comparison helper now has fail-closed result semantics:
+- `PASS_CACHE_EQUIVALENCE` requires exact equality of forward and direct-adjoint complex sparse matrices (zero support symmetric difference and zero coefficient residual) and exact equality of every substantive ledger/diagnostic group;
+- `FAIL_CACHE_EQUIVALENCE` is returned for either a matrix mismatch or any ledger mismatch;
+- `COMPLETED_CACHE_EQUIVALENCE` is no longer used as a status that could be mistaken for a pass when the comparison itself found a difference.
+
+Regression tests cover successful equality, spin-wall/spectral-ledger mismatches, and a numerical matrix mismatch. The W5 runner now has an explicit context-local cache-off execution mode; it is implemented but has not yet completed a real full-matrix comparison.
+
+A fresh local execution of the staged V10 source was attempted with `Jmax2=10`, one source node `[0]`, the five W5 seed states, `max_depth=0`, and `amp_tol=1e-12`. It did not complete within 260 seconds. A separate local-only timing probe (not committed and not used as scientific output) sampled the hot path: `project_branch_complete_charges` consumed approximately 23.5 seconds of a 25-second interval over 4,074 calls; the projection path made approximately 2.58 million charged-tensor/projection calls in that interval. This identifies a computational scaling bottleneck, not a mathematical failure or a loss bound. A vectorized projection prototype was explored locally, but its first end-to-end timing did not establish a material speedup; it was not promoted into the production branch.
+
+Current execution status:
+- Production V10 full matrix: **OPEN**; minimal real run timed out.
+- Independent full no-pruning reference: **OPEN**; current shadow shares the production operator implementation and remains partial.
+- Cache-on/off full forward and direct-adjoint matrix equality: **OPEN**; harness and fail-closed comparison are implemented, but no full pair completed.
+- Cache-on/off complete ordered ledger equality: **OPEN**; same reason.
+- Full `Jmax2 × amp_tol` grid and sparse-support convergence: **OPEN**; runner compares forward and direct-adjoint support, but no full grid completed.
+- Spin-wall omissions: instrumentation exists; complete production measurement remains **OPEN**.
+- State/depth caps: independently classified and reported; cap-free run remains **OPEN**.
+- Spectral sensitivity: factor ladder and diagnostics exist; full matrix ladder remains **OPEN**.
+- Production ZERO_LOSS: **NOT PROVED / OPEN**.
+
+Do not upgrade any of these scientific gates from CI success, static inventory, unit fixtures, or a partial timeout profile. A future closure claim still requires completed real matrices, a genuinely independent reference, exact cache-on/off ledger/matrix comparison, and complete pathwise/coherent forward-and-adjoint loss accounting.
