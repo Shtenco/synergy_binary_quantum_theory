@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import functools
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -63,25 +64,74 @@ def canonicalize_scalar_charge_M(key,charged_nodes):
     return (spins,tuple(labs)),original
 
 
-def restore_scalar_charge_M(state,charged_nodes,original):
+def scalar_sector_leakage(state,charged_nodes,original):
+    """Measure wrong (J,M) weight before any numerical cleanup."""
+    result={}
+    for v in charged_nodes:
+        total=0.0
+        wrong=0.0
+        for (_,labels),amp in state.items():
+            lab=labels[v]
+            if lab[0] != 'C':
+                raise RuntimeError(f'scalar H_E lost charged endpoint label at node {v}')
+            _,J2,M2,_,_=lab
+            weight=float(abs(amp)**2)
+            total += weight
+            Jin,_Min=original[v]
+            if int(J2) != Jin or int(M2) != Jin:
+                wrong += weight
+        fraction=wrong/total if total>0.0 else 0.0
+        result[str(v)]={
+            'input_JM':list(original[v]),
+            'total_weight':total,
+            'wrong_JM_weight':wrong,
+            'wrong_JM_weight_fraction':fraction,
+            'wrong_JM_relative_amplitude':fraction**0.5,
+        }
+    return result
+
+
+def restore_scalar_charge_M(
+    state,charged_nodes,original,*,wrong_weight_fraction_tolerance=1e-18,
+    diagnostics=None,
+):
+    """Restore M only after a norm-bounded scalar selection-rule check.
+
+    Floating-point sums of complete oriented H_E terms can leave tiny forbidden
+    sectors even when the exact operator is scalar.  The tolerance is the same
+    squared-weight contract used by the downstream wrong-charge acceptance
+    gate.  Significant J or M leakage still fails closed; forbidden rows are
+    never relabelled as allowed rows.
+    """
+    if not math.isfinite(wrong_weight_fraction_tolerance) or wrong_weight_fraction_tolerance < 0.0:
+        raise ValueError('wrong_weight_fraction_tolerance must be finite and nonnegative')
+    leakage=scalar_sector_leakage(state,charged_nodes,original)
+    for v,entry in leakage.items():
+        if entry['wrong_JM_weight_fraction'] > wrong_weight_fraction_tolerance:
+            raise RuntimeError(
+                f'scalar H_E violated canonical J,M preservation at node {v}: '
+                f"input J2={entry['input_JM'][0]}, canonical M2={entry['input_JM'][0]}, "
+                f"wrong_weight_fraction={entry['wrong_JM_weight_fraction']:.6e}, "
+                f"tolerance={wrong_weight_fraction_tolerance:.6e}"
+            )
+    if diagnostics is not None:
+        diagnostics.append(leakage)
     out={}
     for key,amp in state.items():
         spins,labels=key
         labs=list(labels)
+        keep=True
         for v in charged_nodes:
             lab=labs[v]
-            if lab[0] != 'C':
-                raise RuntimeError('scalar H_E lost charged endpoint label')
             _,J2,M2,K12,K34=lab
             Jin,Min=original[v]
             if int(J2) != Jin or int(M2) != Jin:
-                raise RuntimeError(
-                    f'scalar H_E violated canonical J,M preservation at node {v}: '
-                    f'input J2={Jin}, canonical M2={Jin}, output={(J2,M2)}'
-                )
+                keep=False
+                break
             labs[v]=CKCOMP.CK.label_charge(J2,Min,K12,K34)
-        ko=(spins,tuple(labs))
-        out[ko]=out.get(ko,0j)+amp
+        if keep:
+            ko=(spins,tuple(labs))
+            out[ko]=out.get(ko,0j)+amp
     return out
 
 
@@ -130,7 +180,7 @@ def run(v=0,w=1):
             canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
         )
 
-    he_calls={'magnetic_requests':0,'reduced_requests':0}
+    he_calls={'magnetic_requests':0,'reduced_requests':0,'scalar_sector_restore_diagnostics':[]}
 
     def reduced_he(key,source_v,Jmax2,charged_nodes=(0,1)):
         charged_nodes=tuple(charged_nodes)
@@ -142,7 +192,12 @@ def run(v=0,w=1):
         )
         after=cached_he_reduced.cache_info().misses
         he_calls['reduced_requests'] += int(after>before)
-        return restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
+        restored=restore_scalar_charge_M(
+            state,charged_nodes,original,
+            wrong_weight_fraction_tolerance=1e-18,
+            diagnostics=he_calls['scalar_sector_restore_diagnostics'],
+        )
+        return restored,vleak,bleak
 
     @PRUNE.audit_lru_cache(None)
     def cached_k_frozen(frozen,source_v,Jmax2,charged_nodes):
@@ -236,6 +291,8 @@ def run(v=0,w=1):
         'close_complete_state':{'hits':ci.hits,'misses':ci.misses,'currsize':ci.currsize},
         'cache_keys_use_full_exact_sparse_states':True,
         'magnetic_reduction_is_exact_SU2_scalar_identity':True,
+        'scalar_sector_restore_diagnostics':he_calls['scalar_sector_restore_diagnostics'],
+        'scalar_sector_wrong_weight_fraction_tolerance':1e-18,
         'physics_changed':False,
     }
     return out

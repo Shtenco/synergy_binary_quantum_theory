@@ -1,0 +1,59 @@
+name: BQG W5 transitive pruning coverage inventory
+
+on:
+  push:
+    branches:
+      - research/bqg-w5-production-audit-20261113
+    paths:
+      - '.github/workflows/bqg-w5-pruning-coverage-inventory.yml'
+      - 'scripts/bqg_pruning_coverage_inventory.py'
+      - 'tests/test_bqg_pruning_coverage_inventory.py'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/bqg_pruning_audit.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/charged_intertwiner_recoupling_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_K_projection_audit_gate.py'
+      - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+      - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
+      - 'scripts/peter_weyl_lorentzian_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_q_block_gauge_audit.py'
+      - 'scripts/peter_weyl_volume_cross_rep_audit.py'
+      - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
+  workflow_dispatch:
+
+concurrency:
+  group: bqg-w5-pruning-inventory-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run transitive threshold inventory
+        run: |
+          python -m py_compile scripts/bqg_pruning_coverage_inventory.py
+          python scripts/bqg_pruning_coverage_inventory.py --output verification_results/pruning_coverage_inventory.json
+          python -m unittest discover -s tests -p 'test_bqg_pruning_coverage_inventory.py' -v
+      - name: Upload coverage inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-v10-pruning-coverage-inventory-${{ github.run_id }}
+          path: verification_results/pruning_coverage_inventory.json
+          if-no-files-found: warn
+          retention-days: 30
