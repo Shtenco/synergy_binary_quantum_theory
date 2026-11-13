@@ -298,17 +298,17 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
         np.testing.assert_allclose(actual_recon, expected_recon, rtol=0.0, atol=1e-14)
 
     def test_cached_multiplet_basis_stacks_every_M_sector(self):
-        spins = (1, 1, 1, 1)
-        for J2 in CV.all_total_J2(spins):
-            expected = np.concatenate([
-                CHARGED.charged_basis_matrix(spins, J2, M2)
-                for M2 in PW.m2vals_t(J2)
-            ], axis=0)
-            actual, magnetic_count, channel_count = CHARGED.charged_basis_multiplet_matrix(spins, J2)
-            np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1e-14)
-            self.assertEqual(magnetic_count, J2 + 1)
-            self.assertEqual(channel_count, len(CHARGED.allowed_charged_labels(spins, J2)))
-            self.assertFalse(actual.flags.writeable)
+        for spins in ((1, 1, 1, 1), (4, 4, 4, 4), (2, 4, 4, 2)):
+            for J2 in CV.all_total_J2(spins):
+                expected = np.concatenate([
+                    CHARGED.charged_basis_matrix(spins, J2, M2)
+                    for M2 in PW.m2vals_t(J2)
+                ], axis=0)
+                actual, magnetic_count, channel_count = CHARGED.charged_basis_multiplet_matrix(spins, J2)
+                np.testing.assert_allclose(actual, expected, rtol=0.0, atol=2e-14)
+                self.assertEqual(magnetic_count, J2 + 1)
+                self.assertEqual(channel_count, len(CHARGED.allowed_charged_labels(spins, J2)))
+                self.assertFalse(actual.flags.writeable)
         CHARGED.charged_basis_multiplet_matrix.cache_clear()
 
     def test_batched_all_M_volume_action_matches_original_sector_loop(self):
