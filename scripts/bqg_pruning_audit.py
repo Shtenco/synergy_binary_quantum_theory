@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 from contextvars import ContextVar
+import functools
 import math
-from typing import Any
+from typing import Any, Callable
 
 _ACTIVE: ContextVar["PruningCollector | None"] = ContextVar(
     "bqg_pruning_collector", default=None
@@ -61,6 +62,24 @@ class PruningCollector:
         kind_stats["pathwise_l1"] += abs(z)
         kind_stats["pathwise_l2_sq"] += abs(z) ** 2
         kind_stats["max_abs"] = max(float(kind_stats["max_abs"]), abs(z))
+
+    def replay(self, rows: list[dict[str, Any]] | tuple[dict[str, Any], ...]) -> None:
+        """Replay a cached call's exact audit rows into this collector.
+
+        Rows are already encoded, so replay preserves key_repr and event order
+        without rerunning the numerical operator body.
+        """
+        for source in rows:
+            row = dict(source)
+            self.events.append(row)
+            site = str(row["site_id"])
+            kind = str(row["kind"])
+            magnitude = float(row["abs"])
+            for stats in (self._by_site[site], self._by_site_kind[(site, kind)]):
+                stats["count"] += 1
+                stats["pathwise_l1"] += magnitude
+                stats["pathwise_l2_sq"] += magnitude ** 2
+                stats["max_abs"] = max(float(stats["max_abs"]), magnitude)
 
     def snapshot(self) -> dict[str, Any]:
         def encode(raw):
@@ -168,3 +187,38 @@ def record_merge(site_id: str, key: Any, prior: complex, incoming: complex,
             site_id, key, z, threshold, kind=kind,
             prior=p, incoming=inc,
         )
+
+
+def audit_lru_cache(maxsize=None):
+    """LRU-cache a numerical function while replaying its audit trace on hits.
+
+    The cached value is paired with the exact ordered PRUNE event rows emitted
+    by the function and all nested instrumented calls. A private collector is
+    active even when the caller is not auditing, so a later warm-cache audited
+    call receives the same trace as a cold call. Context-local bypass semantics
+    are inherited while computing the cache entry.
+    """
+    def decorate(function: Callable):
+        @functools.lru_cache(maxsize=maxsize)
+        def cached(*args, **kwargs):
+            local = PruningCollector()
+            token = _ACTIVE.set(local)
+            try:
+                value = function(*args, **kwargs)
+            finally:
+                _ACTIVE.reset(token)
+            return value, tuple(dict(row) for row in local.events)
+
+        @functools.wraps(function)
+        def wrapped(*args, **kwargs):
+            value, rows = cached(*args, **kwargs)
+            active = _ACTIVE.get()
+            if active is not None:
+                active.replay(rows)
+            return value
+
+        wrapped.cache_clear = cached.cache_clear
+        wrapped.cache_info = cached.cache_info
+        wrapped.cache_parameters = cached.cache_parameters
+        return wrapped
+    return decorate
