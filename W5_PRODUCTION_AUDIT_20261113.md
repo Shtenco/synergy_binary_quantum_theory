@@ -138,4 +138,20 @@ GitHub Actions run `43492745470` completed successfully on commit `26e1bd75bc824
 - the internal audit-aware cache was explicitly identified;
 - all four then-current inventory regression tests passed.
 
-This is a **static inventory PASS only**. It establishes coverage of the declared V10 local import closure and classification of discovered sites; it does not establish zero runtime loss, a bound for the post-assembly matrix mask, convergence, W5 closure, or physical SU(2) covariance. The follow-up workflow on the latest branch head additionally runs the strengthened classification assertions and the runtime cache trace-replay tests; those results must be read from their own completed run before being marked passed.
+This is a **static inventory PASS only**. It establishes coverage of the declared V10 local import closure and classification of discovered sites; it does not establish zero runtime loss, a bound for the post-assembly matrix mask, convergence, W5 closure, or physical SU(2) covariance. The strengthened follow-up run `43492874165` completed successfully on code commit `3fe0e9e83499d85be78af7c989df99a9b285973f`: all four inventory tests and all eleven pruning-audit collector tests passed. The run reports 78 threshold-like comparisons, zero unclassified sites, zero ordinary unclassified LRU caches, and one explicitly classified audit-aware internal cache. The subsequent precision refinement separated tolerance validation from the fixed matrix mask and is covered by that run's four inventory tests.
+
+
+## 9. Runtime W5 ledger now reports static inventory without overstating completeness
+
+The W5 closure runner now imports and executes the transitive inventory and embeds a compact result under `lower_level_pruning_ledger.coverage.static_inventory`. It deliberately keeps the legacy overall `coverage.complete=false` and top-level `lower_level_pruning_coverage_complete=false`: static classification is not a runtime zero-loss certificate.
+
+The new status is `STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING` when the inventory is complete. The remaining runtime controls are explicitly enumerated:
+
+1. A certified operator-norm or induced-norm error bound for the post-assembly fixed matrix mask.
+2. Cache-on/cache-off pruning-ledger equality across the full composition chain.
+3. Separate, complete accounting for spin-wall and state/depth-cap omissions.
+4. Full complex-support convergence across spin cutoffs and amplitude-threshold ladders.
+
+The `shadow_no_prune` result remains marked incomplete. Its bypass removes only wired nonzero amplitude thresholds; it does not remove the post-assembly matrix mask or support caps. This prevents a static inventory PASS from being misreported as a full no-pruning reference.
+
+This integration is committed, but its new runtime output is awaiting the W5 closure and shadow diagnostic workflows triggered by the latest code changes. No closure or physical covariance result is inferred from the static inventory tests.
