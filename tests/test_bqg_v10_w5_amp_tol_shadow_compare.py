@@ -66,7 +66,7 @@ class TestV10ShadowTimeoutHandling(unittest.TestCase):
         args = SimpleNamespace(
             Jmax2=10, max_states=500, max_depth=8, nodes=[0],
             timeout_seconds=1.0, unbounded_closure=True,
-            spectral_zero_factor=2000.0,
+            spectral_zero_factor=2000.0, cache_mode="off",
         )
         completed = Mock(returncode=0, stdout="", stderr="")
         with tempfile.TemporaryDirectory() as temp:
@@ -76,6 +76,8 @@ class TestV10ShadowTimeoutHandling(unittest.TestCase):
                 self.assertIn("--unbounded-closure", command)
                 self.assertIn("--spectral-zero-factor", command)
                 self.assertIn("2000.0", command)
+                self.assertIn("--cache-mode", command)
+                self.assertIn("off", command)
                 output.write_text('{"status": "INCOMPLETE_CLOSURE_LIMIT_REACHED"}', encoding="utf-8")
                 return completed
 
