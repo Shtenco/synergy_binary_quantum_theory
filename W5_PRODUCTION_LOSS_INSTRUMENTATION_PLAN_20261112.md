@@ -428,3 +428,15 @@ Regressions now verify that an actual complete H_E cache eviction recomputes to 
 A fresh cache-on pilot is running with the exact previous production settings (nodes=[0], Jmax2=10, max_depth=0, max_states=500, amp_tol=1e-12) and one BLAS/OpenMP thread. At the latest checkpoint it had run for about 4.5 minutes, used about 360 MiB RSS for the Python process, and had not triggered another OOM; it had not yet written a complete result JSON. This is a resource-control improvement only, not a completed matrix. The run must finish and its matrix/ledger be inspected before any gate status changes.
 
 All ten scientific closure gates remain OPEN. Production ZERO_LOSS remains NOT PROVED.
+
+## 2026-11-13 KKV epsilon-orbit repeated C(V) memoization
+
+The bounded-cache production pilot from the previous checkpoint remained CPU-bound for approximately 40 minutes (one worker thread, about 1.8 GiB RSS, no cgroup OOM events) and had not written its result JSON. It was stopped deliberately to avoid leaving a non-terminating resource experiment running; it produced no matrix, ledger, or numerical verdict. This is recorded as an incomplete runtime attempt, not as a numerical failure.
+
+Inspection of the actual KKV contraction loop found a deterministic repeated subproblem: the 24-term epsilon orbit revisits identical C_volume_component requests for the same exact sparse input, source/target leg and auxiliary indices. In each node_kkv_maps call the source covariant state is fixed, and the same volume component is requested repeatedly as the first operator in different epsilon permutations.
+
+The V10 closure runner now wraps this exact component with PRUNE.audit_lru_cache(16). The key contains the complete sorted sparse state (including exact complex amplitudes) and all operator indices. The cached value retains the original output insertion order and leakage diagnostic. On hits, the audit wrapper replays the exact nested pruning-event rows in their original call order. cache_mode=off still bypasses this cache through the existing context-local policy. The original component function is restored in the runner's finally block. A cache hit/miss/capacity report is attached to the lower-level audit metadata.
+
+No operator formula, coefficient, threshold, spin wall, state/depth cap, or physical selection rule changed. The five W5-focused suites pass **66 tests** and the complete instrumented dependency chain passes py_compile on the updated local source snapshot. This is an implementation-level memoization change; the full component-level cache-on/off equality and full ledger comparison still require a real production run.
+
+The previous 40-minute pilot did not complete, so no scientific gate status changes. All ten W5 scientific gates remain OPEN and production ZERO_LOSS remains NOT PROVED. The next run must use the exact production settings and verify that the new C(V) cache actually records hits, reduces wall time, and preserves the complete ordered lower-level ledger.
