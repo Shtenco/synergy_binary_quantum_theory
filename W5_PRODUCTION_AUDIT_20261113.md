@@ -215,3 +215,21 @@ The corrected CI run `43498364038` completed successfully on the branch HEAD com
 The separate production L1 audit `43498254862` also completed successfully on the implementation commit `0744524e459e42d7b3907effd5196c02d259fd6c`; both module compilation and the L1 characterization/strict-reference test step passed.
 
 The helper's bound is now numerically regression-tested, but remains a standalone utility. No claim is made that the actual W5 production closure currently applies this matrix mask or uses its error report.
+
+
+## 11. Dedicated cache-on/cache-off equivalence runner
+
+Added `scripts/bqg_v10_w5_cache_equivalence.py` and workflow `.github/workflows/bqg-w5-cache-equivalence.yml`. The runner launches two isolated fresh Python processes with identical W5 parameters, changing only the context-local cache mode (`on` versus `off`). It refuses to claim equivalence unless both processes produce complete finite closure matrices.
+
+The comparison checks exact support and complex coefficients for:
+- the forward W5 matrix;
+- the independently ordered direct-adjoint matrix;
+- the ordered lower-level pruning-event ledger (excluding only cache-policy metadata);
+- the coefficient threshold and closure-cap loss ledger;
+- the coherent node-sum ledger;
+- spin-wall and closure diagnostics;
+- the spectral sensitivity ledger.
+
+A timeout or capped closure yields `INCOMPLETE_CACHE_EQUIVALENCE`, not PASS. Any exact matrix or ledger mismatch yields `FAIL_CACHE_EQUIVALENCE`. The workflow is currently running as Actions run `43498621358`; no result is claimed until its uploaded JSON and completed job are inspected.
+
+The full-node closure study and shadow no-prune diagnostic remain separate gates. Their currently queued/running jobs are not interchangeable with the cache comparison and do not yet establish a no-pruning reference or physical SU(2) result.
