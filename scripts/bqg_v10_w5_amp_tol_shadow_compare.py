@@ -165,6 +165,10 @@ def main() -> int:
     )
     parser.add_argument("--amp-tol", type=float, default=1e-12)
     parser.add_argument("--spectral-zero-factor", type=float, default=1000.0)
+    parser.add_argument(
+        "--spectral-sensitivity-factors", type=float, nargs="*", default=[],
+        help="additional zero-aware eigenvalue threshold factors to compare as full sparse matrices",
+    )
     parser.add_argument("--nodes", type=int, nargs="+", default=[0, 1, 2, 3, 4])
     parser.add_argument("--timeout-seconds", type=float, default=300.0)
     parser.add_argument("--output", type=Path, required=True)
@@ -175,7 +179,10 @@ def main() -> int:
         parser.error("--amp-tol must be positive; zero is reserved for the shadow run")
     if not math.isfinite(args.spectral_zero_factor) or args.spectral_zero_factor <= 0:
         parser.error("--spectral-zero-factor must be finite and positive")
+    if any(not math.isfinite(value) or value <= 0 for value in args.spectral_sensitivity_factors):
+        parser.error("all --spectral-sensitivity-factors must be finite and positive")
     script = Path(__file__).with_name("bqg_v10_w5_lorentzian_adjoint_closure.py")
+    spectral_sensitivity = None
     with tempfile.TemporaryDirectory(prefix="bqg-v10-shadow-") as temp:
         root = Path(temp)
         production = run_one(script, root / "production.json", args.amp_tol, args)
@@ -183,6 +190,52 @@ def main() -> int:
             script, root / "shadow-no-prune.json", 0.0, args,
             pruning_mode="shadow_no_prune",
         )
+        if args.spectral_sensitivity_factors:
+            factors = list(dict.fromkeys(
+                [float(args.spectral_zero_factor)]
+                + [float(value) for value in args.spectral_sensitivity_factors]
+            ))
+            spectral_runs = []
+            for index, factor in enumerate(factors):
+                if factor == float(args.spectral_zero_factor):
+                    result_row = production
+                else:
+                    factor_args = argparse.Namespace(**vars(args))
+                    factor_args.spectral_zero_factor = factor
+                    result_row = run_one(
+                        script, root / f"spectral-{index}.json",
+                        args.amp_tol, factor_args,
+                    )
+                spectral_runs.append((factor, result_row))
+            if all(closure_matrix_available(row) for _, row in spectral_runs):
+                baseline = unpack_columns(spectral_runs[0][1])
+                spectral_sensitivity = {
+                    "status": "COMPLETED_FULL_MATRIX_SPECTRAL_LADDER",
+                    "baseline_zero_factor": factors[0],
+                    "runs": [
+                        {
+                            "zero_factor": factor,
+                            "matrix_status": row.get("status"),
+                            "spectral_diagnostics": row.get("spectral_sensitivity"),
+                            "comparison_to_baseline": compare_vectors(
+                                baseline, unpack_columns(row)
+                            ),
+                        }
+                        for factor, row in spectral_runs
+                    ],
+                    "scope": "Full complex sparse-matrix and support comparison at fixed Jmax2, amp_tol, source nodes, and closure caps; only the zero-aware spectral eigenvalue threshold factor varies.",
+                }
+            else:
+                spectral_sensitivity = {
+                    "status": "INCOMPLETE_SPECTRAL_LADDER",
+                    "baseline_zero_factor": factors[0],
+                    "runs": [
+                        {"zero_factor": factor, "matrix_status": row.get("status"),
+                         "process": row.get("_process")}
+                        for factor, row in spectral_runs
+                    ],
+                    "comparison_performed": False,
+                }
 
     if not closure_matrix_available(production) or not closure_matrix_available(zero_output, shadow=True):
         timed_out = any(
@@ -200,6 +253,7 @@ def main() -> int:
             "shadow_process": zero_output.get("_process"),
             "timeout_seconds_per_process": args.timeout_seconds,
             "comparison_performed": False,
+            "spectral_sensitivity": spectral_sensitivity,
         }
         exit_code = 2
     else:
@@ -237,6 +291,7 @@ def main() -> int:
             ],
             "fresh_processes_and_caches": True,
             "same_source_file": str(script),
+            "spectral_sensitivity": spectral_sensitivity,
             "parameters": {
                 "nodes": args.nodes,
                 "Jmax2": args.Jmax2,
