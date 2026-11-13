@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact finite-C8 relational-history / combined-projector positive control.
+r"""Exact finite-C8 relational-history / combined-projector positive control.
 
 The repository already proved a no-go for treating the history shift alone as
 pure gauge: untwisted averaging over U kills every nontrivial history character.
