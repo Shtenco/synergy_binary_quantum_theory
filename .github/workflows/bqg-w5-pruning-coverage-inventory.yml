@@ -30,7 +30,7 @@ on:
 
 concurrency:
   group: bqg-w5-pruning-inventory-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
