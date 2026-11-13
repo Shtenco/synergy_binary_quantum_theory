@@ -86,10 +86,12 @@ def run_grid(args) -> dict:
                     row["production_matrix_sha256"] = matrix_digest(matrix)
                     row["production_closure_size"] = production.get("closure_size")
                     row["production_basis_id_sha256"] = production.get("basis_id_sha256")
+                    row["production_spectral_sensitivity"] = production.get("spectral_sensitivity")
                 if shadow_ok:
                     row["shadow_matrix_sha256"] = matrix_digest(shadow_matrices[wall])
                     row["shadow_closure_size"] = shadow.get("closure_size")
                     row["shadow_basis_id_sha256"] = shadow.get("basis_id_sha256")
+                    row["shadow_spectral_sensitivity"] = shadow.get("spectral_sensitivity")
                 if production_ok and shadow_ok:
                     row["production_vs_shadow"] = compare_vectors(
                         shadow_matrices[wall], production_matrices[(wall, tol)]
@@ -114,14 +116,18 @@ def run_grid(args) -> dict:
 
     wall_convergence = []
     for tol in tolerances:
-        available = [(wall, production_matrices[(wall, tol)])
-                     for wall in walls if (wall, tol) in production_matrices]
-        for (wall_a, matrix_a), (wall_b, matrix_b) in zip(available, available[1:]):
+        for wall_a, wall_b in zip(walls, walls[1:]):
+            if ((wall_a, tol) not in production_matrices
+                    or (wall_b, tol) not in production_matrices):
+                continue
             wall_convergence.append({
                 "amp_tol": tol,
                 "lower_Jmax2": wall_a,
                 "higher_Jmax2": wall_b,
-                "comparison": compare_vectors(matrix_a, matrix_b),
+                "comparison": compare_vectors(
+                    production_matrices[(wall_a, tol)],
+                    production_matrices[(wall_b, tol)],
+                ),
             })
 
     expected_cells = len(walls) * len(tolerances)
@@ -184,7 +190,7 @@ def main() -> int:
     except ValueError as exc:
         parser.error(str(exc))
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2) + "\\n", encoding="utf-8")
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": result["status"],
         "expected_cells": result["expected_cells"],
