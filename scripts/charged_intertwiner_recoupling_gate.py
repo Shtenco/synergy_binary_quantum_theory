@@ -35,6 +35,7 @@ import argparse
 import functools
 import itertools
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -116,18 +117,35 @@ def charged_basis_matrix(spins, J2, M2):
 
 @PRUNE.audit_lru_cache(None)
 def charged_basis_multiplet_matrix(spins, J2):
-    """Stack all magnetic sectors of one scalar charged-J multiplet."""
+    """Generate every M sector from the highest-weight CG basis by J_-."""
     spins = tuple(spins)
-    sectors = [
-        charged_basis_matrix(spins, J2, M2)
-        for M2 in PW.m2vals_t(J2)
-    ]
+    labels = allowed_charged_labels(spins, J2)
     dimension = int(np.prod([s + 1 for s in spins]))
-    channel_count = len(allowed_charged_labels(spins, J2))
-    matrix = (
-        np.concatenate(sectors, axis=0)
-        if sectors else np.zeros((0, dimension), dtype=complex)
-    )
+    channel_count = len(labels)
+    if channel_count == 0:
+        return np.zeros((0, dimension), dtype=complex), len(PW.m2vals_t(J2)), 0
+
+    dims = tuple(s + 1 for s in spins)
+    current = charged_basis_matrix(spins, J2, J2).reshape((channel_count,) + dims)
+    sectors = [current.reshape(channel_count, dimension)]
+    lowering = [
+        PW.spin_mats_cached(s)[0] - 1j * PW.spin_mats_cached(s)[1]
+        for s in spins
+    ]
+    m_values = PW.m2vals_t(J2)
+    for previous_M2, _next_M2 in zip(m_values, m_values[1:]):
+        j = J2 / 2.0
+        m = previous_M2 / 2.0
+        factor = math.sqrt((j + m) * (j - m + 1.0))
+        lowered = np.zeros_like(current)
+        for axis, operator in enumerate(lowering):
+            moved = np.moveaxis(current, axis + 1, 1)
+            acted = np.tensordot(operator, moved, axes=(1, 1))
+            lowered += np.moveaxis(acted, 0, axis + 1)
+        current = lowered / factor
+        sectors.append(current.reshape(channel_count, dimension))
+
+    matrix = np.concatenate(sectors, axis=0)
     matrix.setflags(write=False)
     return matrix, len(sectors), channel_count
 
