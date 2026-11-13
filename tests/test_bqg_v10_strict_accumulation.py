@@ -10,7 +10,7 @@ import bqg_v10_w5_lorentzian_adjoint_closure as V10
 
 class TestV10StrictComplexAccumulation(unittest.TestCase):
     def setUp(self):
-        self.key = ((4,) * 10, (-1, 0, 0, 0, 0, 0))
+        self.key = ((4,) * 10, (0, 0, 0, 0, 0), 0, 0, 0, 0)
         self.value = 0.6e-12 + 0.6e-12j
 
     def cv(self, state, source_v, c, k, i, Jmax2):
