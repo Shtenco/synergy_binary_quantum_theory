@@ -132,9 +132,16 @@ def apply_q_four(T, spins):
 
 
 def project_to_basis(X, basis):
-    coeff = np.asarray([np.vdot(B, X) for B in basis], complex)
-    recon = sum((c * B for c, B in zip(coeff, basis)), np.zeros_like(X))
-    return coeff, recon
+    if not basis:
+        return np.zeros(0, dtype=complex), np.zeros_like(X)
+    # Row-major basis storage turns the magnetic-index projection and
+    # reconstruction into two BLAS-backed contractions instead of Python
+    # loops over every recoupling channel.
+    basis_matrix = np.stack([np.asarray(B).reshape(-1) for B in basis], axis=0)
+    flat = np.asarray(X).reshape(-1)
+    coeff = basis_matrix.conj() @ flat
+    recon = (coeff @ basis_matrix).reshape(np.asarray(X).shape)
+    return np.asarray(coeff, dtype=complex), recon
 
 
 def q_block(spins, J2, M2):
