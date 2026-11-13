@@ -63,24 +63,42 @@ def allowed_charged_labels(spins, J2):
 
 @PRUNE.audit_lru_cache(None)
 def charged_tensor(spins, K12, K34, J2, M2):
+    """Build the coupled four-leg tensor by a separable CG contraction.
+
+    The previous implementation evaluated the same three Clebsch-Gordan
+    factors inside every magnetic-index quadruple.  Precomputing the two
+    pair-coupling tensors and the final (K12,K34)->J coupling turns that
+    repeated Python loop into one small optimized tensor contraction.
+    """
     spins = tuple(spins)
-    dims = tuple(s + 1 for s in spins)
-    T = np.zeros(dims, complex)
-    msets = [PW.m2vals_t(s) for s in spins]
-    for inds in itertools.product(*[range(d) for d in dims]):
-        m1, m2, m3, m4 = [msets[a][inds[a]] for a in range(4)]
-        val = 0.0
-        for MK in PW.m2vals_t(K12):
-            ML = M2 - MK
-            if ML not in PW.m2vals_t(K34):
-                continue
-            val += (
-                PW.cg2(spins[0], spins[1], K12, m1, m2, MK)
-                * PW.cg2(spins[2], spins[3], K34, m3, m4, ML)
-                * PW.cg2(K12, K34, J2, MK, ML, M2)
-            )
-        T[inds] = val
-    return T
+    s1, s2, s3, s4 = spins
+    m1, m2, m3, m4 = (PW.m2vals_t(s) for s in spins)
+    mk, ml = PW.m2vals_t(K12), PW.m2vals_t(K34)
+
+    c12 = np.zeros((len(m1), len(m2), len(mk)), dtype=float)
+    c34 = np.zeros((len(m3), len(m4), len(ml)), dtype=float)
+    ctotal = np.zeros((len(mk), len(ml)), dtype=float)
+
+    for i, a in enumerate(m1):
+        for j, b in enumerate(m2):
+            for k, x in enumerate(mk):
+                if a + b == x:
+                    c12[i, j, k] = PW.cg2(s1, s2, K12, a, b, x)
+
+    for i, a in enumerate(m3):
+        for j, b in enumerate(m4):
+            for k, x in enumerate(ml):
+                if a + b == x:
+                    c34[i, j, k] = PW.cg2(s3, s4, K34, a, b, x)
+
+    for i, x in enumerate(mk):
+        for j, y in enumerate(ml):
+            if x + y == M2:
+                ctotal[i, j] = PW.cg2(K12, K34, J2, x, y, M2)
+
+    return np.einsum(
+        "ijx,kly,xy->ijkl", c12, c34, ctotal, optimize=True
+    ).astype(complex, copy=False)
 
 
 def close_with_external_half(TJM, J2, M2):
