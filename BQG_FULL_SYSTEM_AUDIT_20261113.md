@@ -58,6 +58,16 @@ This is a **dimensionless consistency check only**. The external work uses a mas
 
 ## 3. Physical history / causal response layer
 
+Additional local controls were executed after the first draft of this checkpoint:
+
+- The finite master-projector control passed with Hilbert dimension 8, four constraints, a two-dimensional common kernel, common-kernel residual \(1.35\\times10^{-15}\), and projector agreement across four positive metric choices at approximately \(10^{-15}\).
+- The C8 relational-history positive control passed for the externally supplied clock shift and \(R=J\); all eight conditional states matched \(R^t|\\psi_0\\rangle\).
+- The relational metric-source positive control passed: \(Z(j_x,j_z)=\\cosh\\sqrt{j_x^2+j_z^2}\), with a rank-2 finite shape Hessian.
+- The projector-only causality NO-GO passed: two positive master operators have the same full physical projector but different support-graph distances (1 versus 2). Therefore the physical projector alone cannot determine causal order.
+- The graph-changing causal-order theorem gate passed 1,392 master-sector-pair checks, 1,392 generic lower-bound saturations, and 120 relational-locality zero checks. Under its declared one-move locality assumption it establishes \(d_M\\ge\\lceil d_C/2\\rceil\) and master-flow locality.
+
+These are valuable exact finite structural controls. The master heat-kernel parameter is still not physical spacetime time; the C8 clock and \(R=J\) are external positive controls; the projector no-go shows why the zero-projector limit alone loses the causal support information. None of these results constructs the BQG physical retarded kernel.
+
 The physical-history reference engine now covers:
 
 - physical-environment Gram positivity for a supplied metric;
