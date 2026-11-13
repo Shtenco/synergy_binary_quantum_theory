@@ -155,6 +155,74 @@ def compare_vectors(reference: dict, candidate: dict) -> dict:
     }
 
 
+def compare_cache_runs(production: dict, cache_off: dict) -> dict:
+    """Compare full forward/adjoint matrices and every persisted W5 audit ledger."""
+    forward = compare_vectors(
+        unpack_columns(production), unpack_columns(cache_off)
+    )
+    adjoint = compare_vectors(
+        unpack_columns(production, "direct_Bdag_columns_sparse"),
+        unpack_columns(cache_off, "direct_Bdag_columns_sparse"),
+    )
+    production_lower = dict(production.get("lower_level_pruning_ledger") or {})
+    cache_off_lower = dict(cache_off.get("lower_level_pruning_ledger") or {})
+    production_lower.pop("cache_policy", None)
+    cache_off_lower.pop("cache_policy", None)
+    production_diagnostics = (
+        production.get("diagnostics")
+        if production.get("diagnostics") is not None
+        else production.get("partial_diagnostics")
+    )
+    cache_off_diagnostics = (
+        cache_off.get("diagnostics")
+        if cache_off.get("diagnostics") is not None
+        else cache_off.get("partial_diagnostics")
+    )
+    ledger_comparison = {
+        "lower_level_pruning_ledger": production_lower == cache_off_lower,
+        "coefficient_loss_ledger": (
+            production.get("coefficient_loss_ledger")
+            == cache_off.get("coefficient_loss_ledger")
+        ),
+        "coherent_node_sum_ledger": (
+            production.get("coherent_node_sum_ledger")
+            == cache_off.get("coherent_node_sum_ledger")
+        ),
+        "spin_wall_and_closure_diagnostics": (
+            production_diagnostics == cache_off_diagnostics
+        ),
+        "spectral_sensitivity_ledger": (
+            production.get("spectral_sensitivity")
+            == cache_off.get("spectral_sensitivity")
+        ),
+    }
+    return {
+        "status": "COMPLETED_CACHE_EQUIVALENCE",
+        "cache_on_status": production.get("status"),
+        "cache_off_status": cache_off.get("status"),
+        "forward_matrix_comparison": forward,
+        "direct_adjoint_matrix_comparison": adjoint,
+        "matrix_exactly_equal": (
+            forward["support_symmetric_difference_total"] == 0
+            and forward["max_coefficient_absolute_residual"] == 0.0
+            and adjoint["support_symmetric_difference_total"] == 0
+            and adjoint["max_coefficient_absolute_residual"] == 0.0
+        ),
+        "ledger_comparison": ledger_comparison,
+        "full_ledger_exactly_equal": all(ledger_comparison.values()),
+        "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
+        "ledger_scope": [
+            "all ordered lower-level pruning events and aggregates",
+            "all coefficient threshold and closure-cap rows",
+            "all pre-sum node contributions and post-sum coherent ledgers",
+            "spin-wall omissions, intermediate-spin excursions, closure diagnostics",
+            "spectral zero-eigenvalue threshold diagnostics",
+        ],
+        "cache_on_event_count": production.get("lower_level_pruning_ledger", {}).get("event_count"),
+        "cache_off_event_count": cache_off.get("lower_level_pruning_ledger", {}).get("event_count"),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--Jmax2", type=int, default=10)
@@ -212,75 +280,7 @@ def main() -> int:
                 args.amp_tol, cache_off_args,
             )
             if closure_matrix_available(production) and closure_matrix_available(cache_off):
-                matrix_comparison = compare_vectors(
-                    unpack_columns(production), unpack_columns(cache_off)
-                )
-                adjoint_matrix_comparison = compare_vectors(
-                    unpack_columns(production, "direct_Bdag_columns_sparse"),
-                    unpack_columns(cache_off, "direct_Bdag_columns_sparse"),
-                )
-                ledger_fields = (
-                    "lower_level_pruning_ledger",
-                    "coefficient_loss_ledger",
-                    "coherent_node_sum_ledger",
-                )
-                production_lower = dict(production.get("lower_level_pruning_ledger") or {})
-                cache_off_lower = dict(cache_off.get("lower_level_pruning_ledger") or {})
-                production_lower.pop("cache_policy", None)
-                cache_off_lower.pop("cache_policy", None)
-                production_diagnostics = (
-                    production.get("diagnostics")
-                    if production.get("diagnostics") is not None
-                    else production.get("partial_diagnostics")
-                )
-                cache_off_diagnostics = (
-                    cache_off.get("diagnostics")
-                    if cache_off.get("diagnostics") is not None
-                    else cache_off.get("partial_diagnostics")
-                )
-                ledger_comparison = {
-                    "lower_level_pruning_ledger": production_lower == cache_off_lower,
-                    "coefficient_loss_ledger": (
-                        production.get("coefficient_loss_ledger")
-                        == cache_off.get("coefficient_loss_ledger")
-                    ),
-                    "coherent_node_sum_ledger": (
-                        production.get("coherent_node_sum_ledger")
-                        == cache_off.get("coherent_node_sum_ledger")
-                    ),
-                    "spin_wall_and_closure_diagnostics": (
-                        production_diagnostics == cache_off_diagnostics
-                    ),
-                    "spectral_sensitivity_ledger": (
-                        production.get("spectral_sensitivity")
-                        == cache_off.get("spectral_sensitivity")
-                    ),
-                }
-                cache_equivalence = {
-                    "status": "COMPLETED_CACHE_EQUIVALENCE",
-                    "cache_on_status": production.get("status"),
-                    "cache_off_status": cache_off.get("status"),
-                    "forward_matrix_comparison": matrix_comparison,
-                    "direct_adjoint_matrix_comparison": adjoint_matrix_comparison,
-                    "matrix_exactly_equal": (
-                        matrix_comparison["support_symmetric_difference_total"] == 0
-                        and matrix_comparison["max_coefficient_absolute_residual"] == 0.0
-                        and adjoint_matrix_comparison["support_symmetric_difference_total"] == 0
-                        and adjoint_matrix_comparison["max_coefficient_absolute_residual"] == 0.0
-                    ),
-                    "ledger_comparison": ledger_comparison,
-                    "full_ledger_exactly_equal": all(ledger_comparison.values()),
-                    "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
-                    "ledger_scope": [
-                        "all ordered lower-level pruning events and aggregates",
-                        "all coefficient threshold and closure-cap rows",
-                        "all pre-sum node contributions and post-sum coherent ledgers",
-                        "spin-wall omissions, intermediate-spin excursions, closure diagnostics",
-                        "spectral zero-eigenvalue threshold diagnostics",
-                    ],
-                    "cache_on_event_count": production.get("lower_level_pruning_ledger", {}).get("event_count"),
-                    "cache_off_event_count": cache_off.get("lower_level_pruning_ledger", {}).get("event_count"),
-                }
+                cache_equivalence = compare_cache_runs(production, cache_off)
             else:
                 cache_equivalence = {
                     "status": "INCOMPLETE_CACHE_EQUIVALENCE",
