@@ -222,6 +222,19 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
         self.assertIn("PRUNE.record_threshold", prune_calls)
         self.assertIn("PRUNE.keep", prune_calls)
 
+        audit_tree = ast.parse((scripts / "bqg_pruning_audit.py").read_text(encoding="utf-8"))
+        filter_defs = [
+            node for node in ast.walk(audit_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "filter_state"
+        ]
+        self.assertEqual(len(filter_defs), 1)
+        filter_calls = {
+            ast.unparse(node.func)
+            for node in ast.walk(filter_defs[0]) if isinstance(node, ast.Call)
+        }
+        self.assertIn("record_threshold", filter_calls)
+        self.assertIn("keep", filter_calls)
+
         # V10's sparse accumulator is allowed to be uninstrumented only
         # because its default tolerance is exactly zero (exact-zero removal).
         v10_path = scripts / "bqg_v10_w5_lorentzian_adjoint_closure.py"
