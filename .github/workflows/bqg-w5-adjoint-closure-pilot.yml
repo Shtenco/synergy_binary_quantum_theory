@@ -10,6 +10,7 @@ on:
       - '.github/workflows/bqg-w5-adjoint-closure-pilot.yml'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'scripts/bqg_pruning_coverage_inventory.py'
+      - 'scripts/bqg_sparse_linear_accumulator.py'
       - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
       - 'scripts/peter_weyl_lorentzian_ordered_triple_gate.py'
       - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
