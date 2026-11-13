@@ -36,7 +36,7 @@ jobs:
       - name: Test norm-bounded scalar-sector restoration
         run: |
           python -m py_compile scripts/peter_weyl_covariant_K_composition_cached_gate.py
-          python -m unittest tests/test_peter_weyl_scalar_sector_restore.py -v
+          python -m unittest discover -s tests -p 'test_peter_weyl_scalar_sector_restore.py' -v
       - name: Capture exact scalar-selection failure context
         run: |
           python scripts/peter_weyl_w5_scalar_failure_context_probe.py \
