@@ -54,6 +54,11 @@ class TestPruningAuditCollector(unittest.TestCase):
         self.assertAlmostEqual(event["propagated_real"], propagated.real)
         self.assertAlmostEqual(event["propagated_imag"], propagated.imag)
         self.assertAlmostEqual(event["propagated_abs"], abs(propagated))
+        site = collector.snapshot()["by_site"]["test.propagated"]
+        self.assertEqual(site["propagated_count"], 1)
+        self.assertAlmostEqual(site["propagated_pathwise_l1"], abs(propagated))
+        self.assertAlmostEqual(site["propagated_pathwise_l2"], abs(propagated))
+        self.assertAlmostEqual(site["propagated_max_abs"], abs(propagated))
 
     def test_structural_zero_is_not_counted_as_amplitude_loss(self):
         with audit.capture() as collector:
