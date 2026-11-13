@@ -124,7 +124,7 @@ def run(v=0,w=1):
     original_direct=CKCOMP.direct_K_covariant
     original_close=CKCOMP.COMP.close_complete
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def cached_he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
         return original_he(
             canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
