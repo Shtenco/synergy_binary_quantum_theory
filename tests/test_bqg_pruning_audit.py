@@ -94,6 +94,44 @@ class TestPruningAuditCollector(unittest.TestCase):
         self.assertIn("site::exact_cancellation", by_kind)
         self.assertEqual(by_kind["site::exact_cancellation"]["pathwise_l1"], 0.0)
 
+    def test_audit_lru_cache_replays_pruning_trace_on_cache_hit(self):
+        calls = {"count": 0}
+
+        @audit.audit_lru_cache(maxsize=4)
+        def cached_operator(value):
+            calls["count"] += 1
+            audit.record_threshold(
+                "test.cached_operator", value, 0.5e-12, 1e-12
+            )
+            return value * 2
+
+        with audit.capture() as cold:
+            self.assertEqual(cached_operator(7), 14)
+        with audit.capture() as warm:
+            self.assertEqual(cached_operator(7), 14)
+
+        self.assertEqual(calls["count"], 1)
+        self.assertEqual(cold.snapshot()["events"], warm.snapshot()["events"])
+        self.assertEqual(warm.snapshot()["event_count"], 1)
+
+    def test_audit_lru_cache_bypass_recomputes_and_records_trace(self):
+        calls = {"count": 0}
+
+        @audit.audit_lru_cache(maxsize=4)
+        def cached_operator(value):
+            calls["count"] += 1
+            audit.record_threshold(
+                "test.cached_operator_bypass", value, 0.5e-12, 1e-12
+            )
+            return value * 3
+
+        self.assertEqual(cached_operator(5), 15)
+        with audit.cache_bypass(), audit.capture() as collector:
+            self.assertEqual(cached_operator(5), 15)
+
+        self.assertEqual(calls["count"], 2)
+        self.assertEqual(collector.snapshot()["event_count"], 1)
+
     def test_collector_is_disabled_outside_capture(self):
         audit.record_merge("test.inactive", "k", 1, -1, 0, 1e-11)
         with audit.capture() as collector:
