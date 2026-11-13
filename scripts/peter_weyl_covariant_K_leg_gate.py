@@ -164,16 +164,19 @@ def apply_volume_allJ_oriented(T, spins_local, v):
     recon = np.zeros_like(X)
     xflat = X.reshape(-1)
     for J2 in CV.all_total_J2(spins_local):
-        rec = CH.allowed_charged_labels(tuple(spins_local), J2)
-        if not rec:
-            continue
         Vb = canonical_volume_block_general(tuple(spins_local), J2)
-        for M2 in PW.m2vals_t(J2):
-            basis_matrix = CH.charged_basis_matrix(tuple(spins_local), J2, M2)
-            coeff = basis_matrix.conj() @ xflat
-            recon += (coeff @ basis_matrix).reshape(X.shape)
-            outc = Vb @ coeff
-            Y += (outc @ basis_matrix).reshape(X.shape)
+        basis_matrix, magnetic_sector_count, channel_count = (
+            CH.charged_basis_multiplet_matrix(tuple(spins_local), J2)
+        )
+        if channel_count == 0:
+            continue
+        # Each M block carries the same reduced scalar V_J. Stack all M
+        # sectors and apply V_J to every row in one batched contraction.
+        coeff = basis_matrix.conj() @ xflat
+        recon += (coeff @ basis_matrix).reshape(X.shape)
+        coeff_by_M = coeff.reshape(magnetic_sector_count, channel_count)
+        output_by_M = coeff_by_M @ Vb.T
+        Y += (output_by_M.reshape(-1) @ basis_matrix).reshape(X.shape)
     leak = float(np.linalg.norm(X-recon)/max(np.linalg.norm(X),1e-30))
     return CV.orient_local(Y, spins_local, v), leak
 
