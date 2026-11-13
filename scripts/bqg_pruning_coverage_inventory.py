@@ -106,6 +106,15 @@ def local_import_closure(root="bqg_v10_w5_lorentzian_adjoint_closure"):
     return modules
 
 
+def _plain_lru_cache_decorators(function: ast.AST) -> list[str]:
+    """Return non-audited lru_cache decorators regardless of function body."""
+    names = [ast.unparse(item) for item in getattr(function, "decorator_list", [])]
+    return [
+        name for name in names
+        if "lru_cache" in name and "audit_lru_cache" not in name
+    ]
+
+
 def _threshold_like(compare: ast.Compare) -> bool:
     source = ast.unparse(compare).lower()
     needles = (
@@ -185,14 +194,12 @@ def run_inventory() -> dict:
                     "classification": classification,
                 })
 
-            for decorator in function.decorator_list:
-                name = ast.unparse(decorator)
-                if "lru_cache" in name and "audit_lru_cache" not in name:
-                    plain_lru_caches.append({
-                        "module": module,
-                        "function": function.name,
-                        "decorator": name,
-                    })
+            for name in _plain_lru_cache_decorators(function):
+                plain_lru_caches.append({
+                    "module": module,
+                    "function": function.name,
+                    "decorator": name,
+                })
 
     complete = not module_mismatch and not unclassified and not plain_lru_caches
     return {
