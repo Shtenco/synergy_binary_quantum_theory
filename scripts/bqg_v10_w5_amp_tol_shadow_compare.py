@@ -202,10 +202,46 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
         and adjoint["support_symmetric_difference_total"] == 0
         and adjoint["max_coefficient_absolute_residual"] == 0.0
     )
-    full_ledger_exactly_equal = all(ledger_comparison.values())
-    equivalent = matrix_exactly_equal and full_ledger_exactly_equal
+    required_ledgers = {
+        "lower_level_pruning_ledger": dict,
+        "coefficient_loss_ledger": dict,
+        "coherent_node_sum_ledger": list,
+        "spectral_sensitivity": dict,
+    }
+    missing_ledgers = {
+        side: [
+            name for name, expected_type in required_ledgers.items()
+            if not isinstance(result.get(name), expected_type)
+        ]
+        for side, result in (("cache_on", production), ("cache_off", cache_off))
+    }
+    missing_ledgers = {side: names for side, names in missing_ledgers.items() if names}
+    ledger_payloads_present = not missing_ledgers and (
+        isinstance(production_diagnostics, dict)
+        and isinstance(cache_off_diagnostics, dict)
+    )
+    observed_ledger_exactly_equal = (
+        ledger_payloads_present and all(ledger_comparison.values())
+    )
+    cache_on_coverage_complete = (
+        production.get("lower_level_pruning_ledger", {}).get("coverage", {}).get("complete") is True
+    )
+    cache_off_coverage_complete = (
+        cache_off.get("lower_level_pruning_ledger", {}).get("coverage", {}).get("complete") is True
+    )
+    coverage_complete = cache_on_coverage_complete and cache_off_coverage_complete
+    full_ledger_exactly_equal = observed_ledger_exactly_equal and coverage_complete
+    if not ledger_payloads_present:
+        status = "INCOMPLETE_CACHE_EQUIVALENCE_LEDGER_MISSING"
+    elif not matrix_exactly_equal or not observed_ledger_exactly_equal:
+        status = "FAIL_CACHE_EQUIVALENCE"
+    elif not coverage_complete:
+        status = "INCOMPLETE_CACHE_EQUIVALENCE_COVERAGE"
+    else:
+        status = "PASS_CACHE_EQUIVALENCE"
+    equivalent = status == "PASS_CACHE_EQUIVALENCE"
     return {
-        "status": "PASS_CACHE_EQUIVALENCE" if equivalent else "FAIL_CACHE_EQUIVALENCE",
+        "status": status,
         "comparison_completed": True,
         "cache_on_status": production.get("status"),
         "cache_off_status": cache_off.get("status"),
@@ -213,6 +249,12 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
         "direct_adjoint_matrix_comparison": adjoint,
         "matrix_exactly_equal": matrix_exactly_equal,
         "ledger_comparison": ledger_comparison,
+        "observed_ledger_exactly_equal": observed_ledger_exactly_equal,
+        "ledger_payloads_present": ledger_payloads_present,
+        "missing_ledgers": missing_ledgers,
+        "cache_on_coverage_complete": cache_on_coverage_complete,
+        "cache_off_coverage_complete": cache_off_coverage_complete,
+        "coverage_complete": coverage_complete,
         "full_ledger_exactly_equal": full_ledger_exactly_equal,
         "equivalence_passed": equivalent,
         "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
