@@ -36,8 +36,8 @@ class TestV10StrictComplexAccumulation(unittest.TestCase):
         self.assertEqual(leakage, 0.0)
 
     def test_strict_accumulator_is_used_by_production_v10_module(self):
-        self.assertIs(V10.SparseLinearAccumulator.__module__ and V10.SparseLinearAccumulator.__name__,
-                      "SparseLinearAccumulator")
+        self.assertEqual(V10.SparseLinearAccumulator.__name__, "SparseLinearAccumulator")
+        self.assertEqual(V10.SparseLinearAccumulator.__module__, "bqg_sparse_linear_accumulator")
         self.assertEqual(V10.TOL, 0.0)
 
 
