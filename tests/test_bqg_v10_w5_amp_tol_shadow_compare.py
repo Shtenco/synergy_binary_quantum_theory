@@ -89,6 +89,8 @@ class TestV10CacheEquivalence(unittest.TestCase):
         cache_off["lower_level_pruning_ledger"]["cache_policy"] = "cache-off"
 
         result = compare_cache_runs(cache_on, cache_off)
+        self.assertEqual(result["status"], "PASS_CACHE_EQUIVALENCE")
+        self.assertTrue(result["equivalence_passed"])
         self.assertTrue(result["matrix_exactly_equal"])
         self.assertTrue(result["full_ledger_exactly_equal"])
         self.assertTrue(all(result["ledger_comparison"].values()))
@@ -106,6 +108,19 @@ class TestV10CacheEquivalence(unittest.TestCase):
         self.assertFalse(result["ledger_comparison"]["spin_wall_and_closure_diagnostics"])
         self.assertFalse(result["ledger_comparison"]["spectral_sensitivity_ledger"])
         self.assertFalse(result["full_ledger_exactly_equal"])
+        self.assertEqual(result["status"], "FAIL_CACHE_EQUIVALENCE")
+        self.assertFalse(result["equivalence_passed"])
+
+    def test_cache_comparison_status_fails_on_matrix_mismatch(self):
+        cache_on = self.result_fixture()
+        cache_off = self.result_fixture()
+        cache_off["forward_B_columns_sparse"][0][0][1] += 1e-14
+
+        result = compare_cache_runs(cache_on, cache_off)
+        self.assertFalse(result["matrix_exactly_equal"])
+        self.assertTrue(result["full_ledger_exactly_equal"])
+        self.assertEqual(result["status"], "FAIL_CACHE_EQUIVALENCE")
+        self.assertFalse(result["equivalence_passed"])
 
 
 class TestV10ShadowTimeoutHandling(unittest.TestCase):
