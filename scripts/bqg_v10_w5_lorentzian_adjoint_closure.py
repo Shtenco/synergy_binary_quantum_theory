@@ -432,13 +432,24 @@ def _spin_wall_diagnostics(stats):
         ),
     }
 
+def _closure_cap_reasons(closure_size, input_depth, max_states, max_depth):
+    """Return every active support cap independently; None means unbounded."""
+    reasons = {}
+    if max_states is not None and closure_size >= max_states:
+        reasons["max_states"] = int(max_states)
+    if max_depth is not None and input_depth >= max_depth:
+        reasons["max_depth"] = int(max_depth)
+    return reasons
+
+
 def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production"):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if max_states < len(W5_K) or max_depth < 0 or amp_tol < 0:
+    if ((max_states is not None and max_states < len(W5_K))
+            or (max_depth is not None and max_depth < 0) or amp_tol < 0):
         raise ValueError("invalid closure limits")
     if pruning_mode not in ("production", "shadow_no_prune"):
         raise ValueError("pruning_mode must be production or shadow_no_prune")
@@ -519,7 +530,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         }
 
     def record_dropped(stage, direction, input_key, output_key, amplitude,
-                       threshold=None, depth_value=None, cap=None):
+                       threshold=None, depth_value=None, cap=None, cap_reasons=None):
         z = complex(amplitude)
         row = {
             "stage": stage,
@@ -535,7 +546,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         if depth_value is not None:
             row["input_depth"] = int(depth_value)
         if cap is not None:
-            row["cap"] = int(cap)
+            row["cap"] = cap
+        if cap_reasons:
+            row["cap_reasons"] = dict(cap_reasons)
         row["actual_discarded"] = bool(not PRUNE.keep(z, threshold or 0.0)) if stage == "amp_tol" else True
         row["pruning_mode"] = pruning_mode
         coefficient_ledger[stage][direction].append(row)
@@ -635,17 +648,24 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             # coefficient, not merely as a count of omitted support keys.
             for output in set(f_total) | set(ad_total):
                 if output not in seen:
-                    if len(closure_keys) >= max_states or depth[key] >= max_depth:
+                    cap_reasons = _closure_cap_reasons(
+                        len(closure_keys), depth[key], max_states, max_depth
+                    )
+                    if cap_reasons:
                         truncated = True
                         omitted_support += 1
+                        cap_payload = {
+                            "max_states": max_states,
+                            "max_depth": max_depth,
+                        }
                         if output in f_total:
                             record_dropped("closure_caps", "forward", key, output,
                                            f_total[output], depth_value=depth[key],
-                                           cap=max_states if len(closure_keys) >= max_states else max_depth)
+                                           cap=cap_payload, cap_reasons=cap_reasons)
                         if output in ad_total:
                             record_dropped("closure_caps", "adjoint", key, output,
                                            ad_total[output], depth_value=depth[key],
-                                           cap=max_states if len(closure_keys) >= max_states else max_depth)
+                                           cap=cap_payload, cap_reasons=cap_reasons)
                         continue
                     seen.add(output)
                     depth[output] = depth[key] + 1
