@@ -96,6 +96,8 @@ Local execution on the staged source snapshot:
 
 The single core `no_go` is `PURE_ANCILLA_NODE_REFINEMENT`: a fixed pure four-qubit Gauss-singlet ancilla cannot induce the canonical S4-equivariant map. This is a no-go for that specific shortcut, not a refutation of the replacement bilinear construction. The bilinear refinement gate locally passes with S4 covariance error \(9.996\times10^{-16}\), projection leakage \(3.43\times10^{-31}\), and rank 2. Whether this no-go should remain classified as a core gate or be recorded as a rejected construction route is a theory-governance decision; do not silently reclassify it.
 
+A documentation inconsistency was found and corrected in this draft branch: the current top of `OPEN_PROBLEMS.md` declared `structural_candidate_closed=true`, while the executable verifier returned false. `OPEN_PROBLEMS.md` and the dated header of `THEORY_STATUS.md` now agree with the 2026-11-13 machine ledger; the 2026-09-29 true declaration is explicitly retained as historical rather than silently erased.
+
 ## 5. Production W5 source staging and reproducibility
 
 The W5 staging artifact from workflow run `43442708226` was downloaded and inspected as data, not executed as an archive.
@@ -130,7 +132,13 @@ Draft PR #82 adds fail-closed validation for:
 
 Five regression tests cover malformed inputs. The workflow was expanded to execute both the reduced analytic cone gate and the LeMaitre finite-reference comparison in addition to the physical-history tests and fail-closed physicalization ledger.
 
-GitHub Actions run `43443370864` completed successfully, including compile/run, analytic cone and independent reference comparison, regression tests, physicalization ledger validation, and fail-closed status enforcement.
+GitHub Actions run `43443370864` completed successfully, including compile/run, analytic cone and independent reference comparison, regression tests, physicalization ledger validation, and fail-closed status enforcement. A numerical edge-case hardening then rationalized the massive front formula to avoid cancellation for large mass and defined the exact \(\\mu=0\) limits; run `43444799790` also completed successfully.
+
+The separate L1 accumulator audit completed successfully in run `43444754151`; its 9 tests include 3 expected failures that characterize legacy `COMP.add` / `CK.add_state` sub-threshold nonlinearity. The L1 strict reference accumulator passes, but it is not yet wired into the production V09/V10/V11 path.
+
+The L2 real-production-primitive audit completed successfully in run `43444729954`: 12 tests in 92.8 seconds, with 3 expected failures for threshold-boundary additivity and passing safe-domain homogeneity/additivity checks on independent basis states. These expected failures are evidence of known state-dependent threshold behavior, not green acceptance of full linearity.
+
+The full five-node/five-seed V10 closure study remains in progress in run `43444229133` at `Jmax2=10,12,14`; its artifacts have not yet been inspected.
 
 PR #82 is deliberately draft and unmerged.
 
