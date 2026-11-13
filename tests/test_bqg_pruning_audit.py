@@ -62,6 +62,11 @@ class TestPruningAuditCollector(unittest.TestCase):
         by_kind = collector.snapshot()["by_site_and_kind"]["test.propagated::coefficient_threshold"]
         self.assertEqual(by_kind["propagated_count"], 1)
         self.assertAlmostEqual(by_kind["propagated_pathwise_l1"], abs(propagated))
+        replayed = audit.PruningCollector()
+        replayed.replay(collector.snapshot()["events"])
+        replayed_summary = replayed.snapshot()
+        self.assertEqual(replayed_summary["by_site"], collector.snapshot()["by_site"])
+        self.assertEqual(replayed_summary["by_site_and_kind"], collector.snapshot()["by_site_and_kind"])
 
     def test_structural_zero_is_not_counted_as_amplitude_loss(self):
         with audit.capture() as collector:
