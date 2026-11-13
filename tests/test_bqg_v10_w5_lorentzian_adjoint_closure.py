@@ -69,6 +69,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         original_node_map = gate.node_kkv_maps
         original_lsine_run = lsine.run
         component_calls = []
+        component_results = []
 
         def fake_component(state, source_v, target_v, i, j, cutoff):
             component_calls.append((tuple(sorted(state.items(), key=lambda kv: repr(kv[0]))),
@@ -83,6 +84,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             first = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
             second = RAW.COMP.C_volume_component(state, source_v, 1, 0, 0, Jmax2)
             self.assertEqual(first, second)
+            component_results.append(first)
             return {}, {}, {
                 "CV_complete_basis_leakage": 0.0,
                 "CK_outer_complete_basis_leakage": 0.0,
@@ -120,6 +122,8 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
 
         # The same wrapper must become a transparent pass-through when the
         # caller selects cache_mode=off.
+        cached_results = list(component_results)
+        component_results.clear()
         component_calls.clear()
         try:
             raw.COMP.C_volume_component = fake_component
@@ -138,6 +142,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         self.assertEqual(off_cache["hits"], 0)
         self.assertEqual(off_cache["misses"], 0)
         self.assertEqual(len(component_calls), 10)
+        self.assertEqual(component_results, cached_results)
         off_events = [
             e for e in uncached["lower_level_pruning_ledger"]["events"]
             if e["site_id"] == "test.memoized_CV"
