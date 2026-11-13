@@ -285,3 +285,18 @@ This is now a **bounded shadow evaluator for the explicitly instrumented amplitu
 6. Continuum/refinement convergence and physical regulator removal remain separate obligations beyond this finite W5 calculation.
 
 Current gates therefore remain: `complete_lower_level_pruning_coverage=false`, `certified_true_no_pruning_reference=false`, and `Production ZERO_LOSS=OPEN` until the above evidence is produced. The earlier finite causal-order theorem, reduced analytic cone, and finite interference/decoherence results remain unchanged; this W5 instrumentation work does not upgrade those mathematical results into a full physical BQG proof.
+
+
+## 2026-11-13 exact-head staging trigger and acceptance guard
+
+This commit intentionally updates the plan file because the W5 staging workflow watches this path. The push must therefore produce a new staging run for this exact commit. The staging job is required to run, before packaging:
+
+1. `test_bqg_pruning_audit.py`;
+2. `test_bqg_pruning_audit_wiring.py`;
+3. `test_bqg_v10_w5_amp_tol_shadow_compare.py`;
+4. `test_bqg_v10_w5_lorentzian_adjoint_closure.py`;
+5. `py_compile` over the complete W5 production dependency chain.
+
+The artifact is acceptable only if its embedded `SOURCE_COMMIT.txt` equals the workflow event SHA, the source-tree manifest matches the exact tracked Git tree, every per-file SHA-256 and `SHA256SUMS.txt` entry verifies, and the submodule guard passes. A passing artifact upload without these checks is not sufficient.
+
+The staging run is not itself the production closure experiment. It validates source transfer, regression wiring, and syntax only. Complete transitive threshold coverage, unbounded production/shadow execution, cache equivalence, regulator-wall convergence, and production ZERO_LOSS remain separate gates. No gate is upgraded by this trigger commit alone.
