@@ -59,14 +59,24 @@ def _local_volume_column_full(key, v: int):
     return tuple(out.items()), tuple(candidates)
 
 
-def local_volume_column(key, v: int, incoming: complex = 1.0 + 0j):
-    """Return the retained column and audit each removed coefficient after input propagation."""
-    retained, candidates = _local_volume_column_full(key, v)
+def _record_propagated_volume_losses(key, candidates, incoming):
     for output_key, coefficient in candidates:
         PRUNE.record_threshold(
             "lorentzian_K_block.local_volume.propagated_loss",
             (key, output_key), coefficient, 1e-12, incoming=incoming,
         )
+
+
+def local_volume_column(key, v: int, incoming: complex = 1.0 + 0j):
+    """Return the retained column and audit each removed coefficient after input propagation."""
+    retained, candidates = _local_volume_column_full(key, v)
+    _record_propagated_volume_losses(key, candidates, incoming)
+    return retained
+
+
+def _local_volume_column_uncached(key, v: int, incoming: complex = 1.0 + 0j):
+    retained, candidates = _local_volume_column_full.__wrapped__(key, v)
+    _record_propagated_volume_losses(key, candidates, incoming)
     return retained
 
 
@@ -74,10 +84,7 @@ def local_volume_column(key, v: int, incoming: complex = 1.0 + 0j):
 local_volume_column.cache_clear = _local_volume_column_full.cache_clear
 local_volume_column.cache_info = _local_volume_column_full.cache_info
 local_volume_column.cache_parameters = _local_volume_column_full.cache_parameters
-local_volume_column.__wrapped__ = (
-    lambda key, v, incoming=1.0 + 0j:
-    _local_volume_column_full.__wrapped__(key, v)[0]
-)
+local_volume_column.__wrapped__ = _local_volume_column_uncached
 
 
 def apply_V_local(state, v: int):
