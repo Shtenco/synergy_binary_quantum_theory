@@ -61,6 +61,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--K", type=int, choices=(0, 2, 4, 6, 8), default=0)
     ap.add_argument("--Jmax2", type=int, default=10)
+    ap.add_argument("--amp-tol", type=float, default=1e-12)
+    ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
 
@@ -98,6 +100,8 @@ def main():
                 "status": "CAPTURED_SCALAR_COVARIANCE_FAILURE",
                 "K_seed": args.K,
                 "Jmax2": args.Jmax2,
+                "amp_tol": args.amp_tol,
+                "pruning_mode": args.pruning_mode,
                 **context,
                 "source_v": context.get("source_v"),
                 "he_stage": context.get("he_stage"),
@@ -271,12 +275,15 @@ def main():
             Jmax2=args.Jmax2,
             max_states=1,
             max_depth=0,
-            amp_tol=1e-12,
+            amp_tol=args.amp_tol,
+            pruning_mode=args.pruning_mode,
         )
         detail = {
             "status": "NO_SCALAR_COVARIANCE_FAILURE_REPRODUCED",
             "K_seed": args.K,
             "Jmax2": args.Jmax2,
+            "amp_tol": args.amp_tol,
+            "pruning_mode": args.pruning_mode,
             "pilot_status": result.get("status"),
             "operator_changed": False,
             "projection_changed": False,
