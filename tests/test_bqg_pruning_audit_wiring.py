@@ -354,6 +354,34 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
                 self.assertFalse(actual.flags.writeable)
         CHARGED.charged_basis_matrix.cache_clear()
 
+    def test_batched_q_block_matches_original_per_basis_action(self):
+        cases = (((4, 4, 4, 4), 0, 0), ((4, 4, 4, 4), 4, 4), ((2, 4, 4, 2), 2, 2))
+        for spins, J2, M2 in cases:
+            with self.subTest(spins=spins, J2=J2, M2=M2):
+                basis = [
+                    CHARGED.charged_tensor(spins, a, b, J2, M2)
+                    for a, b in CHARGED.allowed_charged_labels(spins, J2)
+                ]
+                expected = np.zeros((len(basis), len(basis)), complex)
+                abs_leak = rel_leak = 0.0
+                for j, vector in enumerate(basis):
+                    q_vector = CHARGED.apply_q_four(vector, spins)
+                    coeff = np.asarray([np.vdot(item, q_vector) for item in basis], complex)
+                    expected[:, j] = coeff
+                    recon = sum(
+                        (value * item for value, item in zip(coeff, basis)),
+                        np.zeros_like(q_vector),
+                    )
+                    local_abs = float(np.linalg.norm(q_vector - recon))
+                    local_rel = local_abs / max(float(np.linalg.norm(q_vector)), 1e-30)
+                    abs_leak = max(abs_leak, local_abs)
+                    rel_leak = max(rel_leak, local_rel)
+                expected = 0.5 * (expected + expected.conj().T)
+                _, actual, actual_abs, actual_rel = CHARGED.q_block(spins, J2, M2)
+                np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1e-12)
+                self.assertAlmostEqual(actual_abs, abs_leak, delta=1e-12)
+                self.assertAlmostEqual(actual_rel, rel_leak, delta=1e-12)
+
     def test_highest_weight_volume_block_matches_all_magnetic_sectors(self):
         spins = (1, 1, 1, 1)
         for J2 in CV.all_total_J2(spins):
