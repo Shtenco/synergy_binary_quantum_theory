@@ -49,6 +49,36 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
             result["plain_lru_caches"][0]["function"], "cached_basis"
         )
 
+    def test_runtime_coverage_keeps_static_pass_separate_from_zero_loss(self):
+        import bqg_v10_w5_lorentzian_adjoint_closure as closure
+        static = {
+            "complete": True,
+            "module_count": 19,
+            "threshold_site_count": 78,
+            "unclassified_sites": [],
+            "plain_lru_caches": [],
+            "audited_lru_caches": [{"function": "cached"}],
+            "threshold_sites": [{
+                "classification": "post_assembly_fixed_operator_mask_requires_error_bound",
+                "module": "bqg_sparse_linear_accumulator",
+                "function": "sparsify_matrix_columns",
+                "expression": "abs(z) > tol",
+            }],
+        }
+        coverage = closure.build_pruning_coverage(static)
+        self.assertTrue(coverage["static_threshold_inventory_complete"])
+        self.assertFalse(coverage["complete"])
+        self.assertFalse(coverage["runtime_loss_controls_complete"])
+        self.assertFalse(coverage["fixed_operator_mask_error_bound_complete"])
+        self.assertEqual(
+            coverage["status"],
+            "STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING",
+        )
+        self.assertEqual(
+            len(coverage["static_inventory"]["post_assembly_fixed_operator_masks"]),
+            1,
+        )
+
     def test_every_threshold_site_is_instrumented_or_explicitly_classified(self):
         result = inventory.run_inventory()
         self.assertTrue(result["expected_module_set_matches"], result["module_set_mismatch"])
