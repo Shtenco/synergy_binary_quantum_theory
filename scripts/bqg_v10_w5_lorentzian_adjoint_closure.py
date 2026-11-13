@@ -546,7 +546,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         if depth_value is not None:
             row["input_depth"] = int(depth_value)
         if cap is not None:
-            row["cap"] = cap
+            if isinstance(cap, dict):
+                row["cap_limits"] = dict(cap)
+            else:
+                row["cap"] = int(cap)
         if cap_reasons:
             row["cap_reasons"] = dict(cap_reasons)
         row["actual_discarded"] = bool(not PRUNE.keep(z, threshold or 0.0)) if stage == "amp_tol" else True
@@ -567,6 +570,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     "actual_discarded_pathwise_l1": float(sum(row["abs"] for row in actual)),
                     "actual_discarded_pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in actual)),
                     "max_candidate_abs": max((row["abs"] for row in rows), default=0.0),
+                    "cap_reason_counts": {
+                        reason: sum(reason in row.get("cap_reasons", {}) for row in rows)
+                        for reason in ("max_states", "max_depth")
+                    } if stage == "closure_caps" else {},
                 }
         coefficient_ledger["summary"] = summary
         return coefficient_ledger
