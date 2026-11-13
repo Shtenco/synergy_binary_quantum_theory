@@ -29,6 +29,7 @@ import peter_weyl_covariant_K_composition_gate as KC
 import peter_weyl_covariant_K_composition_cached_gate as CACHE
 import peter_weyl_covariant_K_sine_composition_gate as SINEK
 import peter_weyl_lorentzian_ordered_triple_gate as RAW
+import bqg_pruning_audit as PRUNE
 
 
 def freeze(state):
@@ -55,7 +56,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
     old_ck=KC.C_K_component
     old_cv=RAW.COMP.C_volume_component
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
         return SINEK.complete_HE_sine(
             canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
@@ -67,7 +68,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
         state,vleak,bleak=he_reduced(canonical,source_v,Jmax2,charged_nodes)
         return CACHE.restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def k_cached(frozen,source_v,Jmax2,charged_nodes):
         out,vleak,bleak=old_k(dict(frozen),source_v,Jmax2,tuple(charged_nodes))
         return tuple(out.items()),float(vleak),float(bleak)
@@ -75,7 +76,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
         items,vleak,bleak=k_cached(freeze(state),source_v,Jmax2,tuple(charged_nodes))
         return dict(items),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def inv_cached(frozen,source_v,target_v,k,j,Jmax2):
         out,leak=old_inv(dict(frozen),source_v,target_v,k,j,Jmax2)
         return tuple(out.items()),float(leak)
@@ -83,7 +84,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
         items,leak=inv_cached(freeze(state),source_v,target_v,k,j,Jmax2)
         return dict(items),leak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def direct_cached(frozen,source_v,Jmax2):
         out,vleak,bleak=old_direct(dict(frozen),source_v,Jmax2)
         return tuple(out.items()),float(vleak),float(bleak)
@@ -91,13 +92,13 @@ def run(v=0,a=None,b=None,c=None,executor=None):
         items,vleak,bleak=direct_cached(freeze(state),source_v,Jmax2)
         return dict(items),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def close_cached(frozen,source_v,target_v,i,k,Jmax2):
         return tuple(old_close(dict(frozen),source_v,target_v,i,k,Jmax2).items())
     def close_wrap(state,source_v,target_v,i,k,Jmax2):
         return dict(close_cached(freeze(state),source_v,target_v,i,k,Jmax2))
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def ck_cached(frozen,source_v,target_v,i,j,Jmax2):
         out,diag=old_ck(dict(frozen),source_v,target_v,i,j,Jmax2)
         return tuple(out.items()),tuple(sorted(diag.items()))
@@ -105,7 +106,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
         items,diag=ck_cached(freeze(state),source_v,target_v,i,j,Jmax2)
         return dict(items),dict(diag)
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(None)
     def cv_cached(frozen,source_v,target_v,i,j,Jmax2):
         out,leak=old_cv(dict(frozen),source_v,target_v,i,j,Jmax2)
         return tuple(out.items()),float(leak)
