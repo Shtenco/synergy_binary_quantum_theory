@@ -102,3 +102,110 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestW5TransitivePruningCoverage(unittest.TestCase):
+    """Static guard over every repository-local import reachable from V10.
+
+    Threshold-looking comparisons must either use the shared PRUNE policy (or
+    delegate to PW.prune_state), or be explicitly classified as an exact
+    selection rule, exact-nonzero bookkeeping, or spectral operator convention.
+    A newly imported local module automatically enters this audit.
+    """
+
+    def test_v10_local_import_closure_and_threshold_classification(self):
+        import ast
+
+        scripts = Path(__file__).resolve().parents[1] / "scripts"
+        pending = ["bqg_v10_w5_lorentzian_adjoint_closure"]
+        modules = set()
+        while pending:
+            module_name = pending.pop()
+            if module_name in modules:
+                continue
+            source_path = scripts / (module_name + ".py")
+            if not source_path.is_file():
+                continue
+            modules.add(module_name)
+            tree = ast.parse(source_path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    pending.extend(
+                        alias.name for alias in node.names
+                        if (scripts / (alias.name.split(".")[0] + ".py")).is_file()
+                    )
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    local_name = node.module.split(".")[0]
+                    if (scripts / (local_name + ".py")).is_file():
+                        pending.append(local_name)
+
+        expected_modules = {
+            "bqg_pruning_audit",
+            "bqg_v10_w5_lorentzian_adjoint_closure",
+            "charged_intertwiner_recoupling_gate",
+            "k5_peter_weyl_safe_hda_column",
+            "peter_weyl_covariant_K_composition_cached_gate",
+            "peter_weyl_covariant_K_composition_gate",
+            "peter_weyl_covariant_K_leg_gate",
+            "peter_weyl_covariant_K_projection_audit_gate",
+            "peter_weyl_covariant_K_sine_composition_gate",
+            "peter_weyl_covariant_composition_gate",
+            "peter_weyl_covariant_volume_leg_gate",
+            "peter_weyl_euclidean_sine_ordering_gate",
+            "peter_weyl_lorentzian_K_block_gate",
+            "peter_weyl_lorentzian_ordered_triple_gate",
+            "peter_weyl_lorentzian_sine_ordered_triple_gate",
+            "peter_weyl_q_block_gauge_audit",
+            "peter_weyl_volume_cross_rep_audit",
+            "peter_weyl_zeroaware_volume_migration_experiment",
+        }
+        self.assertEqual(modules, expected_modules)
+
+        # These are deliberately not amplitude pruning:
+        # - add_sparse has tol=0 at every V10 call site: exact-zero cancellation;
+        # - spin probes test exact nonzero branch existence before wall accounting;
+        # - source-J and charged-label bounds are exact SU(2) selection rules;
+        # - zero-aware eigenvalue masks define the volume operator and are a
+        #   separate spectral sensitivity axis, not sparse-amplitude deletion.
+        exact_or_separate = {
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "add_sparse"),
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"),
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"),
+            ("peter_weyl_lorentzian_ordered_triple_gate", "run"),
+            ("charged_intertwiner_recoupling_gate", "allowed_charged_labels"),
+            ("peter_weyl_zeroaware_volume_migration_experiment", "zeroaware_sqrt_abs"),
+            ("peter_weyl_volume_cross_rep_audit", "stable_zeroaware_volume"),
+            ("peter_weyl_q_block_gauge_audit", "sqrt_abs"),
+            ("bqg_pruning_audit", "keep"),
+            ("bqg_pruning_audit", "record_threshold"),
+            ("bqg_pruning_audit", "record_merge"),
+        }
+
+        unclassified = []
+        for module_name in sorted(modules):
+            source_path = scripts / (module_name + ".py")
+            source_text = source_path.read_text(encoding="utf-8")
+            tree = ast.parse(source_text)
+            for function in (
+                node for node in ast.walk(tree)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ):
+                function_text = ast.get_source_segment(source_text, function) or ""
+                threshold_comparisons = []
+                for node in ast.walk(function):
+                    if not isinstance(node, ast.Compare):
+                        continue
+                    left = ast.unparse(node.left)
+                    if ("abs(" in left or "np.abs(" in left):
+                        threshold_comparisons.append(ast.unparse(node))
+                if (
+                    threshold_comparisons
+                    and "PRUNE.keep" not in function_text
+                    and "prune_state" not in function_text
+                    and (module_name, function.name) not in exact_or_separate
+                ):
+                    unclassified.append(
+                        (module_name, function.name, function.lineno, threshold_comparisons)
+                    )
+
+        self.assertEqual(unclassified, [])
