@@ -25,6 +25,8 @@ W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 TOL = 0.0
 
+from bqg_sparse_linear_accumulator import SparseLinearAccumulator
+
 
 def epsilon_triples(neighbors):
     import itertools
@@ -71,7 +73,7 @@ def prune_scalar_channel(state):
 
 def triple_forward(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
     """Tr_aux[C_a(K) C_b(K) C_c(V)] acting right-to-left."""
-    out = {}
+    out = SparseLinearAccumulator()
     max_leak = 0.0
     max_diag = {}
     for i in range(2):
@@ -90,8 +92,8 @@ def triple_forward(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component
                     continue
                 q, d2 = ck_component(q, source_v, a, i, j, Jmax2)
                 _merge_diag(max_diag, d2)
-                add_sparse(out, q)
-    return out, max_leak, max_diag
+                out.add(q)
+    return out.finish(), max_leak, max_diag
 
 
 def triple_adjoint(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
@@ -102,7 +104,7 @@ def triple_adjoint(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component
       K_a[j,i] -> K_b[k,j] -> V_c[i,k]
     in right-to-left action order.
     """
-    out = {}
+    out = SparseLinearAccumulator()
     max_leak = 0.0
     max_diag = {}
     for i in range(2):
@@ -121,15 +123,15 @@ def triple_adjoint(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component
                     continue
                 q, leak = cv_component(q, source_v, c, i, k, Jmax2)
                 max_leak = max(max_leak, float(leak))
-                add_sparse(out, q)
-    return out, max_leak, max_diag
+                out.add(q)
+    return out.finish(), max_leak, max_diag
 
 
 def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
     """Compute forward B_v and direct reversed-order B_v^dagger on one input."""
     psi_cov = CV.gauss_to_covariant(gauss_state, source_v)
     triples = epsilon_triples(PW.NEIG[source_v])
-    B, Bdag = {}, {}
+    B_acc, Bdag_acc = SparseLinearAccumulator(), SparseLinearAccumulator()
     diagnostics = {
         "CV_complete_basis_leakage": 0.0,
         "CK_outer_complete_basis_leakage": 0.0,
@@ -145,8 +147,8 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
             psi_cov, source_v, a, b, c, Jmax2,
             RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
         )
-        add_sparse(B, forward, epsilon)
-        add_sparse(Bdag, adjoint, epsilon)
+        B_acc.add(forward, epsilon)
+        Bdag_acc.add(adjoint, epsilon)
         diagnostics["CV_complete_basis_leakage"] = max(
             diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
         )
@@ -164,7 +166,7 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
         float(diagnostics.get("complete_charge_basis_leakage", 0.0)),
         float(diagnostics.get("CK_complete_charge_basis_leakage", 0.0)),
     )
-    return B, Bdag, diagnostics
+    return B_acc.finish(), Bdag_acc.finish(), diagnostics
 
 
 def _merge_diag(dst, src):
