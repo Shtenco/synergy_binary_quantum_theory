@@ -47,6 +47,7 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
         "--max-states", str(args.max_states),
         "--max-depth", str(args.max_depth),
         "--amp-tol", repr(amp_tol),
+        "--spectral-zero-factor", repr(getattr(args, "spectral_zero_factor", 1000.0)),
         "--pruning-mode", pruning_mode,
         "--output", str(output),
     ]
@@ -163,6 +164,7 @@ def main() -> int:
         help="disable both state and depth caps in both fresh processes",
     )
     parser.add_argument("--amp-tol", type=float, default=1e-12)
+    parser.add_argument("--spectral-zero-factor", type=float, default=1000.0)
     parser.add_argument("--nodes", type=int, nargs="+", default=[0, 1, 2, 3, 4])
     parser.add_argument("--timeout-seconds", type=float, default=300.0)
     parser.add_argument("--output", type=Path, required=True)
@@ -171,6 +173,8 @@ def main() -> int:
         parser.error("--timeout-seconds must be positive")
     if args.amp_tol <= 0:
         parser.error("--amp-tol must be positive; zero is reserved for the shadow run")
+    if not math.isfinite(args.spectral_zero_factor) or args.spectral_zero_factor <= 0:
+        parser.error("--spectral-zero-factor must be finite and positive")
     script = Path(__file__).with_name("bqg_v10_w5_lorentzian_adjoint_closure.py")
     with tempfile.TemporaryDirectory(prefix="bqg-v10-shadow-") as temp:
         root = Path(temp)
@@ -239,6 +243,7 @@ def main() -> int:
                 "max_states": args.max_states,
                 "max_depth": None if getattr(args, "unbounded_closure", False) else args.max_depth,
                 "unbounded_closure": bool(getattr(args, "unbounded_closure", False)),
+                "spectral_zero_factor": float(getattr(args, "spectral_zero_factor", 1000.0)),
             },
         }
         exit_code = 2
