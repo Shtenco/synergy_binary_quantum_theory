@@ -77,6 +77,11 @@ def _stable_l2_norm(values: Sequence[float]) -> float:
     norm = 0.0
     for value in values:
         norm = math.hypot(norm, float(value))
+        if not math.isfinite(norm):
+            raise ValueError(
+                "matrix Frobenius norm exceeds finite floating-point range; "
+                "no finite error certificate can be emitted"
+            )
     return norm
 
 
