@@ -50,6 +50,8 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
         "--pruning-mode", pruning_mode,
         "--output", str(output),
     ]
+    if args.unbounded_closure:
+        command.append("--unbounded-closure")
     command.extend(["--nodes", *[str(node) for node in args.nodes]])
     output.unlink(missing_ok=True)
     try:
@@ -156,6 +158,10 @@ def main() -> int:
     parser.add_argument("--Jmax2", type=int, default=10)
     parser.add_argument("--max-states", type=int, default=500)
     parser.add_argument("--max-depth", type=int, default=8)
+    parser.add_argument(
+        "--unbounded-closure", action="store_true",
+        help="disable both state and depth caps in both fresh processes",
+    )
     parser.add_argument("--amp-tol", type=float, default=1e-12)
     parser.add_argument("--nodes", type=int, nargs="+", default=[0, 1, 2, 3, 4])
     parser.add_argument("--timeout-seconds", type=float, default=300.0)
@@ -231,7 +237,8 @@ def main() -> int:
                 "nodes": args.nodes,
                 "Jmax2": args.Jmax2,
                 "max_states": args.max_states,
-                "max_depth": args.max_depth,
+                "max_depth": None if args.unbounded_closure else args.max_depth,
+                "unbounded_closure": bool(args.unbounded_closure),
             },
         }
         exit_code = 2
