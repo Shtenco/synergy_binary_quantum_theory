@@ -270,7 +270,6 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
             ("peter_weyl_volume_cross_rep_audit", "stable_zeroaware_volume"),
             ("peter_weyl_q_block_gauge_audit", "sqrt_abs"),
             ("bqg_pruning_audit", "keep"),
-            ("bqg_pruning_audit", "keep_many"),
             ("bqg_pruning_audit", "record_threshold"),
             ("bqg_pruning_audit", "record_merge"),
         }
