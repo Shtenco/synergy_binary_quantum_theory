@@ -80,7 +80,24 @@ def spin_mats_cached(s):
     Jm=Jp.conj().T
     return ((Jp+Jm)/2,(Jp-Jm)/(2j) if j>0 else np.zeros((1,1),complex),Jz)
 
+_AXIS4_EINSUM = (
+    "xa,abcd->xbcd",
+    "xb,abcd->axcd",
+    "xc,abcd->abxd",
+    "xd,abcd->abcx",
+)
+
+
 def apply_axis_np(T,axis,M):
+    """Apply a one-leg matrix without materializing two moveaxis views.
+
+    K5 node tensors are rank four.  The fixed einsum contractions avoid the
+    pair of axis permutations in the former moveaxis/tensordot/moveaxis path.
+    Keep the generic reference path for any other tensor rank.
+    """
+    if T.ndim == 4:
+        axis = axis % 4
+        return np.einsum(_AXIS4_EINSUM[axis], M, T, optimize=False)
     return np.moveaxis(np.tensordot(M,np.moveaxis(T,axis,0),axes=(1,0)),0,axis)
 
 def local_spins(spins,v):
