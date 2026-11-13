@@ -19,7 +19,7 @@ if str(HERE) not in sys.path:
 
 import bqg_pruning_audit as PRUNE
 import peter_weyl_covariant_K_leg_gate as CK
-import peter_weyl_covariant_K_composition_cached_gate as CACHE
+import peter_weyl_covariant_K_sine_composition_gate as SINE
 
 
 def apply_local_ladder(state, node, direction):
@@ -95,18 +95,22 @@ def run(Jmax2=10, pruning_mode="production"):
                     raise AssertionError("ladder action should produce one adjacent M sector")
                 raised_key, ladder_factor = next(iter(raised_input.items()))
                 with PRUNE.capture() as collector:
-                    H_input, v_leak, basis_leak = CK.apply_HE_complete_key(
+                    H_input, v_leak, basis_leak = SINE.complete_HE_sine(
                         input_key, 0, Jmax2, charged_nodes=(0,)
                     )
-                    H_raised, v_leak_2, basis_leak_2 = CK.apply_HE_complete_key(
+                    H_raised, v_leak_2, basis_leak_2 = SINE.complete_HE_sine(
                         raised_key, 0, Jmax2, charged_nodes=(0,)
                     )
                 lhs = apply_local_ladder(H_input, 0, direction)
                 rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
                 rel, abs_err, scale = relative_error(lhs, rhs)
-                leakage = CACHE.scalar_sector_leakage(
-                    H_input, (0,), {0: (2, M2)}
+                total_weight = sum(abs(amp) ** 2 for (_, labels), amp in H_input.items()
+                                    if labels[0][0] == "C")
+                wrong_weight = sum(
+                    abs(amp) ** 2 for (_, labels), amp in H_input.items()
+                    if labels[0][0] != "C" or labels[0][1] != 2 or labels[0][2] != M2
                 )
+                wrong_fraction = wrong_weight / total_weight if total_weight > 0.0 else 0.0
                 cases.append({
                     "direction": "J_plus" if direction > 0 else "J_minus",
                     "input_M2": M2,
@@ -117,17 +121,18 @@ def run(Jmax2=10, pruning_mode="production"):
                     "commutator_relative_residual": rel,
                     "commutator_absolute_residual": abs_err,
                     "comparison_scale": scale,
-                    "wrong_JM_weight_fraction": leakage["0"]["wrong_JM_weight_fraction"],
-                    "wrong_JM_relative_amplitude": leakage["0"]["wrong_JM_relative_amplitude"],
+                    "wrong_JM_weight_fraction": wrong_fraction,
+                    "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
                     "volume_leakage": max(float(v_leak), float(v_leak_2)),
                     "basis_leakage": max(float(basis_leak), float(basis_leak_2)),
                     "pruning_events": collector.snapshot()["event_count"],
                 })
 
     if context is None:
-        evaluate()
+        with PRUNE.cache_bypass():
+            evaluate()
     else:
-        with context:
+        with PRUNE.cache_bypass(), context:
             evaluate()
 
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
