@@ -127,6 +127,11 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         self.assertTrue(result["complete"])
         self.assertGreaterEqual(result["threshold_site_count"], 20)
         self.assertEqual(result["status"], "PASS_TRANSITIVE_THRESHOLD_INVENTORY")
+        import bqg_v10_w5_lorentzian_adjoint_closure as closure
+        coverage = closure.build_pruning_coverage(result)
+        self.assertTrue(coverage["fixed_operator_mask_bound_api_available"])
+        self.assertFalse(coverage["fixed_operator_mask_bound_applied_in_production"])
+        self.assertFalse(coverage["fixed_operator_mask_error_bound_complete"])
 
 
 if __name__ == "__main__":
