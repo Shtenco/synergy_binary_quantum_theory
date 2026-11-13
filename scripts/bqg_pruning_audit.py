@@ -23,7 +23,9 @@ class PruningCollector:
         self.events: list[dict[str, Any]] = []
         self._by_site: dict[str, dict[str, float | int]] = defaultdict(
             lambda: {"count": 0, "pathwise_l1": 0.0, "pathwise_l2_sq": 0.0,
-                     "max_abs": 0.0}
+                     "max_abs": 0.0, "propagated_count": 0,
+                     "propagated_l1": 0.0, "propagated_l2_sq": 0.0,
+                     "propagated_max_abs": 0.0}
         )
         self._by_site_kind: dict[tuple[str, str], dict[str, float | int]] = defaultdict(
             lambda: {"count": 0, "pathwise_l1": 0.0, "pathwise_l2_sq": 0.0,
@@ -67,6 +69,15 @@ class PruningCollector:
         kind_stats["pathwise_l1"] += abs(z)
         kind_stats["pathwise_l2_sq"] += abs(z) ** 2
         kind_stats["max_abs"] = max(float(kind_stats["max_abs"]), abs(z))
+        if "propagated_abs" in row:
+            propagated_abs = float(row["propagated_abs"])
+            for aggregate in (stats, kind_stats):
+                aggregate["propagated_count"] += 1
+                aggregate["propagated_l1"] += propagated_abs
+                aggregate["propagated_l2_sq"] += propagated_abs ** 2
+                aggregate["propagated_max_abs"] = max(
+                    float(aggregate["propagated_max_abs"]), propagated_abs
+                )
 
     def replay(self, rows: list[dict[str, Any]] | tuple[dict[str, Any], ...]) -> None:
         """Replay a cached call's exact audit rows into this collector.
@@ -85,6 +96,14 @@ class PruningCollector:
                 stats["pathwise_l1"] += magnitude
                 stats["pathwise_l2_sq"] += magnitude ** 2
                 stats["max_abs"] = max(float(stats["max_abs"]), magnitude)
+                if "propagated_abs" in row:
+                    propagated_abs = float(row["propagated_abs"])
+                    stats["propagated_count"] += 1
+                    stats["propagated_l1"] += propagated_abs
+                    stats["propagated_l2_sq"] += propagated_abs ** 2
+                    stats["propagated_max_abs"] = max(
+                        float(stats["propagated_max_abs"]), propagated_abs
+                    )
 
     def snapshot(self) -> dict[str, Any]:
         def encode(raw):
@@ -93,6 +112,10 @@ class PruningCollector:
                 "pathwise_l1": float(raw["pathwise_l1"]),
                 "pathwise_l2": math.sqrt(float(raw["pathwise_l2_sq"])),
                 "max_abs": float(raw["max_abs"]),
+                "propagated_count": int(raw["propagated_count"]),
+                "propagated_pathwise_l1": float(raw["propagated_l1"]),
+                "propagated_pathwise_l2": math.sqrt(float(raw["propagated_l2_sq"])),
+                "propagated_max_abs": float(raw["propagated_max_abs"]),
             }
         summary = {
             site: encode(raw) for site, raw in sorted(self._by_site.items())
