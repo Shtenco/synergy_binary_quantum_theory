@@ -257,12 +257,44 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(cached_again, uncached)
         self.assertEqual(cold.snapshot()["events"], warm_miss.snapshot()["events"])
         self.assertEqual(warm_miss.snapshot()["events"], warm_hit.snapshot()["events"])
-        self.assertEqual(cold.snapshot()["event_count"], 1)
-        self.assertEqual(warm_hit.snapshot()["event_count"], 1)
+        self.assertEqual(cold.snapshot()["event_count"], 2)
+        self.assertEqual(warm_hit.snapshot()["event_count"], 2)
+        self.assertEqual(
+            [row["site_id"] for row in warm_hit.snapshot()["events"]],
+            [
+                "lorentzian_K_block.local_volume.1e-12",
+                "lorentzian_K_block.local_volume.propagated_loss",
+            ],
+        )
         info = KG.local_volume_column.cache_info()
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
         KG.local_volume_column.cache_clear()
+
+    def test_local_volume_loss_is_scaled_by_actual_incoming_branch_amplitude(self):
+        import peter_weyl_lorentzian_K_block_gate as KG
+        from unittest.mock import patch
+
+        key = PW.basis_full_jhalf()[0]
+        output_key = ("omitted-volume-output",)
+        coefficient = 0.5e-12 - 0.25e-12j
+        incoming = -2.0 + 3.0j
+        with patch.object(
+            KG, "_local_volume_column_full",
+            return_value=((), ((output_key, coefficient),)),
+        ), patch.object(PW, "prune_state", side_effect=lambda state, tol: state):
+            with audit.capture() as collector:
+                result = KG.apply_V_local({key: incoming}, 0)
+
+        self.assertEqual(result, {})
+        event = collector.snapshot()["events"][0]
+        propagated = incoming * coefficient
+        self.assertEqual(event["site_id"], "lorentzian_K_block.local_volume.propagated_loss")
+        self.assertAlmostEqual(event["incoming_real"], incoming.real)
+        self.assertAlmostEqual(event["incoming_imag"], incoming.imag)
+        self.assertAlmostEqual(event["propagated_real"], propagated.real)
+        self.assertAlmostEqual(event["propagated_imag"], propagated.imag)
+        self.assertAlmostEqual(event["propagated_abs"], abs(propagated))
 
     def test_complete_HE_cache_preserves_full_complex_state_and_diagnostics(self):
         import peter_weyl_covariant_K_leg_gate as KLEG
