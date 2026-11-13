@@ -144,7 +144,7 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
     return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}, max_basis_leak
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def canonical_volume_block_general(spins_local, J2):
     spins_local = tuple(spins_local)
     qblocks = []
