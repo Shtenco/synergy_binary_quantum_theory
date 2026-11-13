@@ -240,3 +240,12 @@ The full-node closure study and shadow no-prune diagnostic remain separate gates
 The first cache-equivalence run `43498621358` compiled the comparison runner successfully and entered the two-process matrix comparison step; it has not yet produced a completed report. The follow-up workflow revision that adds explicit regression tests for incomplete-run summaries is queued as run `43498807251`.
 
 The shadow diagnostic run `43498254640` ended with its numerical step marked `cancelled`; its upload step was skipped, so no diagnostic JSON exists for inspection. This is **not** a numerical or physical FAIL. The full-node closure run `43498254658` remains pending and has not yet exposed matrix jobs. Consequently, neither the full closure nor the no-pruning reference has a confirmed numerical result at this point.
+
+
+### 10.2. Explicitly scoped W5 seed subsets
+
+The W5 closure runner now accepts `--seed-K` as an explicit subset of the canonical labels `(0, 2, 4, 6, 8)`. Omitting the option retains the complete five-seed production run. Every result records both `seed_count` and `seed_Ks`; bounded one-seed diagnostics therefore cannot be confused with the full W5 seed family.
+
+The shadow smoke workflow now requests only `--seed-K 0`, with `max_states=1) and `max_depth=0`, and asserts that the result reports exactly `[0]`. This is deliberately a scoped execution diagnostic, not a five-seed W5 closure or a physical validation.
+
+The closure workflow additionally runs the dedicated algebra/closure-control unit-test module before launching its full five-seed, five-source-node matrix over (J_{max 2}=10,12,14). This ensures the new seed-subset validation and existing direct-adjoint algebra tests execute in CI.
