@@ -29,7 +29,9 @@ class PruningCollector:
         )
         self._by_site_kind: dict[tuple[str, str], dict[str, float | int]] = defaultdict(
             lambda: {"count": 0, "pathwise_l1": 0.0, "pathwise_l2_sq": 0.0,
-                     "max_abs": 0.0}
+                     "max_abs": 0.0, "propagated_count": 0,
+                     "propagated_l1": 0.0, "propagated_l2_sq": 0.0,
+                     "propagated_max_abs": 0.0}
         )
 
     def record(self, site_id: str, key: Any, value: complex, threshold: float,
