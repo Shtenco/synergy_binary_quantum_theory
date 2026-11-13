@@ -18,6 +18,7 @@ SCRIPTS = Path(__file__).resolve().parent
 
 EXPECTED_MODULES = {
     "bqg_pruning_audit",
+    "bqg_sparse_linear_accumulator",
     "bqg_v10_w5_lorentzian_adjoint_closure",
     "charged_intertwiner_recoupling_gate",
     "k5_peter_weyl_safe_hda_column",
