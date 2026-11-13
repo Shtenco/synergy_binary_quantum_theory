@@ -1,10 +1,13 @@
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch, Mock
+import subprocess
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from bqg_v10_w5_amp_tol_shadow_compare import (
-    closure_matrix_available, compare_vectors, unpack_columns,
+    closure_matrix_available, compare_vectors, unpack_columns, run_one,
 )
 
 
@@ -50,6 +53,53 @@ class TestV10ShadowVectorComparison(unittest.TestCase):
         decoded = unpack_columns(result)
         self.assertEqual(decoded["input"]["output"], 0.25 - 0.5j)
         self.assertEqual(decoded["output"]["input"], 1.0 + 2.0j)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class TestV10ShadowTimeoutHandling(unittest.TestCase):
+    def test_timeout_is_incomplete_and_partial_json_is_discarded(self):
+        import tempfile
+
+        args = SimpleNamespace(
+            Jmax2=10, max_states=5, max_depth=0, nodes=[0],
+            timeout_seconds=0.01,
+        )
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "partial.json"
+            output.write_text('{"partial": true}', encoding="utf-8")
+            with patch(
+                "bqg_v10_w5_amp_tol_shadow_compare.subprocess.run",
+                side_effect=subprocess.TimeoutExpired(
+                    cmd=["python"], timeout=0.01,
+                    output=b"partial stdout", stderr=b"partial stderr",
+                ),
+            ):
+                result = run_one(Path(temp) / "v10.py", output, 1e-12, args)
+
+            self.assertEqual(result["status"], "INCOMPLETE_TIMEOUT")
+            self.assertTrue(result["_process"]["partial_output_discarded"])
+            self.assertFalse(output.exists())
+
+    def test_completed_process_without_json_is_fail_closed(self):
+        import tempfile
+
+        args = SimpleNamespace(
+            Jmax2=10, max_states=5, max_depth=0, nodes=[0],
+            timeout_seconds=1.0,
+        )
+        completed = Mock(returncode=1, stdout="", stderr="crash")
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "missing.json"
+            with patch(
+                "bqg_v10_w5_amp_tol_shadow_compare.subprocess.run",
+                return_value=completed,
+            ):
+                result = run_one(Path(temp) / "v10.py", output, 1e-12, args)
+        self.assertEqual(result["status"], "INCOMPLETE_NO_RESULT_JSON")
+        self.assertEqual(result["_process"]["returncode"], 1)
 
 
 if __name__ == "__main__":
