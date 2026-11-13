@@ -34,21 +34,21 @@ for p in itertools.permutations(range(3)):
     EPS3[p]=(-1)**inv
 EPS2=np.array([[0,1],[-1,0]],complex)
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def cg2(s1,s2,S,m1,m2,M):
     vals=[sp.Rational(x,2) for x in (s1,s2,S,m1,m2,M)]
     return float(clebsch_gordan(*vals).evalf())
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def m2vals_t(s):
     return tuple(range(s,-s-1,-2))
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def allowed_k2_t(s1,s2,s3,s4):
     return tuple(sorted(set(range(abs(s1-s2),s1+s2+1,2)) &
                         set(range(abs(s3-s4),s3+s4+1,2))))
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def intertwiner_tensor_cached(spins,K):
     spins=tuple(spins)
     dims=[s+1 for s in spins]
@@ -65,7 +65,7 @@ def intertwiner_tensor_cached(spins,K):
         T[idxs]=val
     return T
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def spin_mats_cached(s):
     j=s/2
     ms=np.array(m2vals_t(s),float)/2
@@ -86,7 +86,7 @@ def apply_axis_np(T,axis,M):
 def local_spins(spins,v):
     return tuple(spins[EIDX[tuple(sorted((v,w)))]] for w in NEIG[v])
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def cg_leg_matrix(s_in,s_out,a2):
     Mi=m2vals_t(s_in); Mo=m2vals_t(s_out)
     M=np.zeros((s_out+1,s_in+1),complex)
@@ -106,7 +106,7 @@ def hit_mats(s_in,s_out,x,y,i,j):
         norm=math.sqrt((s_out+1)/(s_in+1))
     return Ml,Mr,norm
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def epsilon_j(s):
     ms=m2vals_t(s);d=s+1
     E=np.zeros((d,d),complex)
@@ -115,7 +115,7 @@ def epsilon_j(s):
         E[idx[m],idx[-m]]=(-1)**((s-m)//2)
     return E
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def oriented_intertwiner(v,spins_local,K):
     T=intertwiner_tensor_cached(tuple(spins_local),K).copy()
     for leg,w in enumerate(NEIG[v]):
@@ -159,7 +159,7 @@ def apply_path_branch(branch,path,iout,iin,Jmax2):
         outs.extend(branches)
     return outs
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def volume123_matrix(s1,s2,s3):
     mats=[spin_mats_cached(s) for s in (s1,s2,s3)]
     d=(s1+1)*(s2+1)*(s3+1)
@@ -221,7 +221,7 @@ def T_sequences(v,a,b,c):
                  (-1,base2+(pf,)),(+1,base2+(pr,))]
     return tuple(seqs)
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def oriented_specs(v):
     neigh=NEIG[v]
     specs=[]
@@ -278,7 +278,7 @@ def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False):
         add_dict(out,apply_primitive_oriented(input_key,seq,Jmax2),coef)
     return out
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def T_cached(key,v,a,b,c,Jmax2,adj):
     return tuple(apply_T_oriented_basis(key,v,a,b,c,Jmax2,adj).items())
 
