@@ -332,16 +332,17 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(normal, normal_again)
         self.assertEqual(cold.snapshot()["events"], warm.snapshot()["events"])
 
-        cached_operator.cache_clear()
-        with audit.capture() as shadow_cold:
+        with audit.capture() as shadow_mode:
             with audit.bypass():
-                shadow = cached_operator("y")
+                shadow = cached_operator("x")
         with audit.capture() as shadow_warm:
             with audit.bypass():
-                shadow_again = cached_operator("y")
+                shadow_again = cached_operator("x")
         self.assertEqual(shadow, shadow_again)
-        self.assertEqual(shadow_cold.snapshot()["events"], shadow_warm.snapshot()["events"])
-        self.assertEqual(shadow_warm.snapshot()["events"][0]["kind"], "would_prune_bypassed")
+        self.assertEqual(shadow_mode.snapshot()["events"], shadow_warm.snapshot()["events"])
+        self.assertEqual(shadow_mode.snapshot()["events"][0]["kind"], "would_prune_bypassed")
+        self.assertEqual(cached_operator.cache_info().misses, 2)
+        self.assertEqual(cached_operator.cache_info().hits, 2)
 
 
 
