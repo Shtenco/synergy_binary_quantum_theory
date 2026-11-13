@@ -347,6 +347,22 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(cached_operator.cache_info().hits, 2)
 
 
+    def test_nested_cached_operator_wrappers_replay_pruning_audit(self):
+        scripts = Path(__file__).resolve().parents[1] / "scripts"
+        wrappers = {
+            "peter_weyl_covariant_K_composition_cached_gate.py": 5,
+            "peter_weyl_lorentzian_sine_ordered_triple_gate.py": 7,
+        }
+        for filename, expected in wrappers.items():
+            source = (scripts / filename).read_text(encoding="utf-8")
+            self.assertIn("import bqg_pruning_audit as PRUNE", source)
+            self.assertEqual(
+                source.count("@PRUNE.audit_lru_cache(None)"), expected,
+                msg=f"every nested numerical cache in {filename} must replay audit rows",
+            )
+            self.assertNotIn("@functools.lru_cache(maxsize=None)", source)
+
+
 
 if __name__ == "__main__":
     unittest.main()
