@@ -228,6 +228,16 @@ def main() -> int:
                 cache_off_lower = dict(cache_off.get("lower_level_pruning_ledger") or {})
                 production_lower.pop("cache_policy", None)
                 cache_off_lower.pop("cache_policy", None)
+                production_diagnostics = (
+                    production.get("diagnostics")
+                    if production.get("diagnostics") is not None
+                    else production.get("partial_diagnostics")
+                )
+                cache_off_diagnostics = (
+                    cache_off.get("diagnostics")
+                    if cache_off.get("diagnostics") is not None
+                    else cache_off.get("partial_diagnostics")
+                )
                 ledger_comparison = {
                     "lower_level_pruning_ledger": production_lower == cache_off_lower,
                     "coefficient_loss_ledger": (
@@ -237,6 +247,13 @@ def main() -> int:
                     "coherent_node_sum_ledger": (
                         production.get("coherent_node_sum_ledger")
                         == cache_off.get("coherent_node_sum_ledger")
+                    ),
+                    "spin_wall_and_closure_diagnostics": (
+                        production_diagnostics == cache_off_diagnostics
+                    ),
+                    "spectral_sensitivity_ledger": (
+                        production.get("spectral_sensitivity")
+                        == cache_off.get("spectral_sensitivity")
                     ),
                 }
                 cache_equivalence = {
@@ -254,6 +271,13 @@ def main() -> int:
                     "ledger_comparison": ledger_comparison,
                     "full_ledger_exactly_equal": all(ledger_comparison.values()),
                     "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
+                    "ledger_scope": [
+                        "all ordered lower-level pruning events and aggregates",
+                        "all coefficient threshold and closure-cap rows",
+                        "all pre-sum node contributions and post-sum coherent ledgers",
+                        "spin-wall omissions, intermediate-spin excursions, closure diagnostics",
+                        "spectral zero-eigenvalue threshold diagnostics",
+                    ],
                     "cache_on_event_count": production.get("lower_level_pruning_ledger", {}).get("event_count"),
                     "cache_off_event_count": cache_off.get("lower_level_pruning_ledger", {}).get("event_count"),
                 }
