@@ -167,6 +167,16 @@ def run_inventory() -> dict:
                 node for node in ast.walk(function)
                 if isinstance(node, ast.Compare) and _threshold_like(node)
             ]
+            # Cache decorators are independent of threshold comparisons.
+            # Inspect them before the early continue so a cached function with
+            # no local comparison cannot evade the transitive cache audit.
+            for name in _plain_lru_cache_decorators(function):
+                plain_lru_caches.append({
+                    "module": module,
+                    "function": function.name,
+                    "decorator": name,
+                })
+
             if not compares:
                 continue
 
@@ -192,13 +202,6 @@ def run_inventory() -> dict:
                     "line": compare.lineno,
                     "expression": ast.unparse(compare),
                     "classification": classification,
-                })
-
-            for name in _plain_lru_cache_decorators(function):
-                plain_lru_caches.append({
-                    "module": module,
-                    "function": function.name,
-                    "decorator": name,
                 })
 
     complete = not module_mismatch and not unclassified and not plain_lru_caches
