@@ -474,6 +474,66 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
         CHARGED.charged_tensor.cache_clear()
 
 
+class TestK5AxisContraction(unittest.TestCase):
+    @staticmethod
+    def reference_apply_axis(T, axis, M):
+        return np.moveaxis(
+            np.tensordot(M, np.moveaxis(T, axis, 0), axes=(1, 0)), 0, axis
+        )
+
+    @staticmethod
+    def clear_operator_caches():
+        import peter_weyl_lorentzian_K_block_gate as KG
+        for module in (PW, CK, CV, CHARGED, KG):
+            for value in vars(module).values():
+                if callable(value) and hasattr(value, "cache_clear"):
+                    value.cache_clear()
+
+    def test_rank_four_einsum_matches_reference_for_every_axis(self):
+        rng = np.random.default_rng(20261113)
+        shape = (2, 3, 4, 2)
+        tensor = rng.normal(size=shape) + 1j * rng.normal(size=shape)
+        for axis, input_dim in enumerate(shape):
+            matrix = (
+                rng.normal(size=(input_dim + 1, input_dim))
+                + 1j * rng.normal(size=(input_dim + 1, input_dim))
+            )
+            expected = self.reference_apply_axis(tensor, axis, matrix)
+            actual = PW.apply_axis_np(tensor, axis, matrix)
+            np.testing.assert_allclose(actual, expected, rtol=2e-14, atol=2e-14)
+        np.testing.assert_allclose(
+            PW.apply_axis_np(tensor, -1, np.eye(shape[-1])),
+            tensor,
+            rtol=0.0,
+            atol=0.0,
+        )
+
+    def test_full_HE_operator_and_ordered_audit_are_unchanged(self):
+        raw = PW.basis_full_jhalf()[2]
+        key = (raw[0], tuple(CK.label_gauss(k) for k in raw[1]))
+        optimized = PW.apply_axis_np
+        try:
+            PW.apply_axis_np = self.reference_apply_axis
+            self.clear_operator_caches()
+            with audit.capture() as reference_collector:
+                reference = CK.apply_HE_complete_key(key, 0, 1)
+            reference_events = reference_collector.snapshot()["events"]
+
+            PW.apply_axis_np = optimized
+            self.clear_operator_caches()
+            with audit.capture() as optimized_collector:
+                actual = CK.apply_HE_complete_key(key, 0, 1)
+            actual_events = optimized_collector.snapshot()["events"]
+        finally:
+            PW.apply_axis_np = optimized
+            self.clear_operator_caches()
+
+        self.assertEqual(reference[0].keys(), actual[0].keys())
+        self.assertEqual(reference[0], actual[0])
+        self.assertEqual(reference[1:], actual[1:])
+        self.assertEqual(reference_events, actual_events)
+
+
 class TestW5CacheTransparency(unittest.TestCase):
     def test_context_local_cache_bypass_reexecutes_operator_and_keeps_audit(self):
         calls = []
