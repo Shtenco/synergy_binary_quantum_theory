@@ -51,12 +51,42 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
         "--output", str(output),
     ]
     command.extend(["--nodes", *[str(node) for node in args.nodes]])
-    completed = subprocess.run(command, capture_output=True, text=True, check=False)
-    if not output.exists():
-        raise RuntimeError(
-            f"V10 subprocess produced no JSON (exit={completed.returncode}): "
-            f"{completed.stderr[-4000:]}"
+    output.unlink(missing_ok=True)
+    try:
+        completed = subprocess.run(
+            command, capture_output=True, text=True, check=False,
+            timeout=args.timeout_seconds,
         )
+    except subprocess.TimeoutExpired as exc:
+        # A timed-out process may have left a partial JSON file. Never treat
+        # that file as a completed sparse matrix.
+        output.unlink(missing_ok=True)
+        stderr = exc.stderr or ""
+        stdout = exc.stdout or ""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        return {
+            "status": "INCOMPLETE_TIMEOUT",
+            "_process": {
+                "command": command,
+                "timeout_seconds": args.timeout_seconds,
+                "stdout_tail": stdout[-2000:],
+                "stderr_tail": stderr[-4000:],
+                "partial_output_discarded": True,
+            },
+        }
+    if not output.exists():
+        return {
+            "status": "INCOMPLETE_NO_RESULT_JSON",
+            "_process": {
+                "returncode": completed.returncode,
+                "command": command,
+                "stderr_tail": completed.stderr[-4000:],
+                "stdout_tail": completed.stdout[-2000:],
+            },
+        }
     result = json.loads(output.read_text(encoding="utf-8"))
     result["_process"] = {
         "returncode": completed.returncode,
@@ -128,8 +158,11 @@ def main() -> int:
     parser.add_argument("--max-depth", type=int, default=8)
     parser.add_argument("--amp-tol", type=float, default=1e-12)
     parser.add_argument("--nodes", type=int, nargs="+", default=[0, 1, 2, 3, 4])
+    parser.add_argument("--timeout-seconds", type=float, default=300.0)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.timeout_seconds <= 0:
+        parser.error("--timeout-seconds must be positive")
     if args.amp_tol <= 0:
         parser.error("--amp-tol must be positive; zero is reserved for the shadow run")
     script = Path(__file__).with_name("bqg_v10_w5_lorentzian_adjoint_closure.py")
@@ -142,10 +175,20 @@ def main() -> int:
         )
 
     if not closure_matrix_available(production) or not closure_matrix_available(zero_output, shadow=True):
+        timed_out = any(
+            row.get("status") == "INCOMPLETE_TIMEOUT"
+            for row in (production, zero_output)
+        )
         result = {
-            "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
+            "status": (
+                "INCOMPLETE_TIMEOUT" if timed_out
+                else "INCOMPLETE_CLOSURE_LIMIT_REACHED"
+            ),
             "production_status": production.get("status"),
             "shadow_no_prune_status": zero_output.get("status"),
+            "production_process": production.get("_process"),
+            "shadow_process": zero_output.get("_process"),
+            "timeout_seconds_per_process": args.timeout_seconds,
             "comparison_performed": False,
         }
         exit_code = 2
