@@ -62,7 +62,7 @@ def allowed_charged_labels(spins, J2):
     return tuple(out)
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(32)
 def charged_tensor(spins, K12, K34, J2, M2):
     """Build the coupled four-leg tensor by a separable CG contraction.
 
@@ -102,7 +102,7 @@ def charged_tensor(spins, K12, K34, J2, M2):
     ).astype(complex, copy=False)
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(8)
 def charged_basis_matrix(spins, J2, M2):
     """Cached row-major CG basis for one charged (J,M) sector."""
     spins = tuple(spins)
@@ -115,7 +115,7 @@ def charged_basis_matrix(spins, J2, M2):
     return matrix
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(4)
 def charged_basis_multiplet_matrix(spins, J2):
     """Generate every M sector from the highest-weight CG basis by J_-."""
     spins = tuple(spins)
@@ -161,7 +161,7 @@ def close_with_external_half(TJM, J2, M2):
     return out
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def q123_matrix(spins3):
     spins3 = tuple(spins3)
     mats = [PW.spin_mats_cached(s) for s in spins3]
