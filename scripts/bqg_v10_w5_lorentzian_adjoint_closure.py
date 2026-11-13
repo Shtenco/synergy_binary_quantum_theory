@@ -501,13 +501,16 @@ def _closure_cap_reasons(closure_size, input_depth, max_states, max_depth):
     return reasons
 
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0, cache_mode="on"):
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0, cache_mode="on", seed_Ks=None):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
+    selected_seed_Ks = tuple(W5_K if seed_Ks is None else sorted(set(seed_Ks)))
+    if not selected_seed_Ks or any(K not in W5_K for K in selected_seed_Ks):
+        raise ValueError(f"seed_Ks must be a nonempty subset of {W5_K}")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if ((max_states is not None and max_states < len(W5_K))
+    if ((max_states is not None and max_states < len(selected_seed_Ks))
             or (max_depth is not None and max_depth < 0) or amp_tol < 0):
         raise ValueError("invalid closure limits")
     if pruning_mode not in ("production", "shadow_no_prune"):
@@ -543,7 +546,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     clear()
                     cleared_cache_functions += 1
 
-    seeds = [w5_input_key(K) for K in W5_K]
+    seeds = [w5_input_key(K) for K in selected_seed_Ks]
     closure_keys = list(seeds)
     seen = set(closure_keys)
     depth = {key: 0 for key in seeds}
@@ -845,6 +848,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
+        "seed_Ks": list(selected_seed_Ks),
+            "seed_Ks": list(selected_seed_Ks),
             "closure_size_discovered": len(closure_keys),
             "columns_computed": len(forward_columns),
             "max_states": max_states,
@@ -1022,6 +1027,8 @@ def main():
     ap.add_argument("--amp-tol", type=float, default=1e-12)
     ap.add_argument("--spectral-zero-factor", type=float, default=1000.0)
     ap.add_argument("--cache-mode", choices=("on", "off"), default="on")
+    ap.add_argument("--seed-K", type=int, nargs="+", choices=W5_K, default=list(W5_K),
+                    help="W5 seed labels to include; default runs all five")
     ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
@@ -1030,13 +1037,14 @@ def main():
     result = run_closure(
         args.nodes, args.Jmax2, max_states, max_depth,
         args.amp_tol, args.pruning_mode, args.spectral_zero_factor,
-        args.cache_mode,
+        args.cache_mode, args.seed_K,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": result["status"],
         "source_nodes": result["source_nodes"],
+        "seed_Ks": result.get("seed_Ks"),
         "Jmax2": result["Jmax2"],
         "closure_size": result.get("closure_size", result.get("closure_size_discovered")),
         "direct_adjoint_relative_residual": result.get("diagnostics", {}).get("direct_adjoint_relative_residual"),
