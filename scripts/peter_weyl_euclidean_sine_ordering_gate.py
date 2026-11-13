@@ -139,7 +139,7 @@ def project_gauss_branch(branch,tol=1e-11):
         row=[]
         for K in PW.allowed_k2_t(*ls):
             c=np.vdot(PW.oriented_intertwiner(v,ls,K),tensors[v])
-            PRUNE.record_threshold("euclidean_sine.gauss_projection.1e-13",(spins,v,K),c,1e-13)
+            PRUNE.record_threshold("euclidean_sine.gauss_projection.1e-13",(spins,v,K),c,1e-13,incoming=amp)
             if PRUNE.keep(c,1e-13):
                 row.append((K,c))
         if not row:
