@@ -60,11 +60,11 @@ This is a **dimensionless consistency check only**. The external work uses a mas
 
 Additional local controls were executed after the first draft of this checkpoint:
 
-- The finite master-projector control passed with Hilbert dimension 8, four constraints, a two-dimensional common kernel, common-kernel residual \(1.35\\times10^{-15}\), and projector agreement across four positive metric choices at approximately \(10^{-15}\).
-- The C8 relational-history positive control passed for the externally supplied clock shift and \(R=J\); all eight conditional states matched \(R^t|\\psi_0\\rangle\).
+- The finite master-projector control passed with Hilbert dimension 8, four constraints, a two-dimensional common kernel, common-kernel residual \(1.35\times10^{-15}\), and projector agreement across four positive metric choices at approximately \(10^{-15}\).
+- The C8 relational-history positive control passed for the externally supplied clock shift and \(R=J\); all eight conditional states matched \(R^t|\psi_0\\rangle\).
 - The relational metric-source positive control passed: \(Z(j_x,j_z)=\\cosh\\sqrt{j_x^2+j_z^2}\), with a rank-2 finite shape Hessian.
 - The projector-only causality NO-GO passed: two positive master operators have the same full physical projector but different support-graph distances (1 versus 2). Therefore the physical projector alone cannot determine causal order.
-- The graph-changing causal-order theorem gate passed 1,392 master-sector-pair checks, 1,392 generic lower-bound saturations, and 120 relational-locality zero checks. Under its declared one-move locality assumption it establishes \(d_M\\ge\\lceil d_C/2\\rceil\) and master-flow locality.
+- The graph-changing causal-order theorem gate passed 1,392 master-sector-pair checks, 1,392 generic lower-bound saturations, and 120 relational-locality zero checks. Under its declared one-move locality assumption it establishes \(d_M\\ge\lceil d_C/2\rceil\) and master-flow locality.
 
 These are valuable exact finite structural controls. The master heat-kernel parameter is still not physical spacetime time; the C8 clock and \(R=J\) are external positive controls; the projector no-go shows why the zero-projector limit alone loses the causal support information. None of these results constructs the BQG physical retarded kernel.
 
@@ -132,7 +132,7 @@ Draft PR #82 adds fail-closed validation for:
 
 Five regression tests cover malformed inputs. The workflow was expanded to execute both the reduced analytic cone gate and the LeMaitre finite-reference comparison in addition to the physical-history tests and fail-closed physicalization ledger.
 
-GitHub Actions run `43443370864` completed successfully, including compile/run, analytic cone and independent reference comparison, regression tests, physicalization ledger validation, and fail-closed status enforcement. A numerical edge-case hardening then rationalized the massive front formula to avoid cancellation for large mass and defined the exact \(\\mu=0\) limits; run `43444799790` also completed successfully.
+GitHub Actions run `43443370864` completed successfully, including compile/run, analytic cone and independent reference comparison, regression tests, physicalization ledger validation, and fail-closed status enforcement. A numerical edge-case hardening then rationalized the massive front formula to avoid cancellation for large mass and defined the exact \(\mu=0\) limits; run `43444799790` also completed successfully.
 
 The separate L1 accumulator audit completed successfully in run `43444754151`; its 9 tests include 3 expected failures that characterize legacy `COMP.add` / `CK.add_state` sub-threshold nonlinearity. The L1 strict reference accumulator passes, but it is not yet wired into the production V09/V10/V11 path.
 
