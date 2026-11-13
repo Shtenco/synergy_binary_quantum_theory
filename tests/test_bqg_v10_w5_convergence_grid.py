@@ -17,6 +17,17 @@ class TestW5ConvergenceGrid(unittest.TestCase):
                 [[0, 1.0, 0.0]],
                 [[1, 0.5, 0.25]],
             ],
+            "direct_Bdag_columns_sparse": [
+                [[0, 1.0, 0.0]],
+                [[1, 0.5, -0.25]],
+            ],
+            "diagnostics": {
+                "spin_wall_omitted_branch_count": 3,
+                "max_intermediate_spin_reached": 4.0,
+            },
+            "coefficient_loss_ledger": {
+                "summary": {"closure_caps.forward": {"cap_reason_counts": {"max_depth": 1}}}
+            },
             "closure_size": 2,
             "basis_id_sha256": "fixture-basis",
             "spectral_sensitivity": {"zero_factor": 1000.0},
@@ -64,8 +75,23 @@ class TestW5ConvergenceGrid(unittest.TestCase):
         self.assertTrue(result["all_shadow_matrices_complete"])
         self.assertFalse(result["zero_loss_proved"])
         for row in result["grid"]:
-            self.assertEqual(row["production_vs_shadow"]["support_symmetric_difference_total"], 0)
-            self.assertEqual(row["production_vs_shadow"]["max_coefficient_absolute_residual"], 0.0)
+            self.assertEqual(row["production_vs_shadow_forward"]["support_symmetric_difference_total"], 0)
+            self.assertEqual(row["production_vs_shadow_forward"]["max_coefficient_absolute_residual"], 0.0)
+            self.assertEqual(row["production_vs_shadow_direct_adjoint"]["support_symmetric_difference_total"], 0)
+            self.assertEqual(row["production_vs_shadow_direct_adjoint"]["max_coefficient_absolute_residual"], 0.0)
+            self.assertEqual(row["production_diagnostics"]["spin_wall_omitted_branch_count"], 3)
+            self.assertEqual(
+                row["production_loss_summary"]["closure_caps.forward"]["cap_reason_counts"]["max_depth"],
+                1,
+            )
+        self.assertEqual(
+            result["amp_tol_convergence"][0]["direct_adjoint_comparison"]["support_symmetric_difference_total"],
+            0,
+        )
+        self.assertEqual(
+            result["Jmax2_convergence"][0]["direct_adjoint_comparison"]["max_coefficient_absolute_residual"],
+            0.0,
+        )
 
 
 if __name__ == "__main__":
