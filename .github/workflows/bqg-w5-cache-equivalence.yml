@@ -1,0 +1,85 @@
+name: BQG W5 cache-on/cache-off equivalence
+
+on:
+  push:
+    branches:
+      - research/bqg-w5-production-audit-20261113
+    paths:
+      - '.github/workflows/bqg-w5-cache-equivalence.yml'
+      - 'scripts/bqg_v10_w5_cache_equivalence.py'
+      - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/bqg_pruning_audit.py'
+      - 'scripts/bqg_pruning_coverage_inventory.py'
+      - 'scripts/bqg_sparse_linear_accumulator.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_lorentzian_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+  workflow_dispatch:
+    inputs:
+      jmax2:
+        description: "Twice the maximum spin"
+        required: true
+        default: "10"
+      max_states:
+        description: "Reachable-state cap (ignored with unbounded closure)"
+        required: true
+        default: "500"
+      max_depth:
+        description: "Path-depth cap (ignored with unbounded closure)"
+        required: true
+        default: "8"
+      timeout_seconds:
+        description: "Timeout for each fresh process"
+        required: true
+        default: "900"
+
+concurrency:
+  group: bqg-w5-cache-equivalence-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cache-equivalence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Compile cache comparison and W5 closure
+        run: |
+          python -m py_compile scripts/bqg_v10_w5_cache_equivalence.py
+          python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
+          python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+      - name: Compare fresh-process cache-on and cache-off W5 matrices and ledgers
+        shell: bash
+        run: |
+          mkdir -p verification_results
+          JMAX2="${{ github.event.inputs.jmax2 || '10' }}"
+          MAX_STATES="${{ github.event.inputs.max_states || '500' }}"
+          MAX_DEPTH="${{ github.event.inputs.max_depth || '8' }}"
+          TIMEOUT="${{ github.event.inputs.timeout_seconds || '900' }}"
+          python scripts/bqg_v10_w5_cache_equivalence.py \
+            --nodes 0 --Jmax2 "$JMAX2" \
+            --max-states "$MAX_STATES" --max-depth "$MAX_DEPTH" \
+            --timeout-seconds "$TIMEOUT" \
+            --output verification_results/W5_CACHE_EQUIVALENCE_RUN${{ github.run_id }}.json
+      - name: Upload cache equivalence report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-cache-equivalence-${{ github.run_id }}
+          path: verification_results/W5_CACHE_EQUIVALENCE_RUN${{ github.run_id }}.json
+          if-no-files-found: warn
+          retention-days: 30
