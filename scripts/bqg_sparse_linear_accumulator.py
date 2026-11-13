@@ -98,6 +98,8 @@ def sparsify_matrix_columns_with_error_bound(
     all_abs: list[float] = []
     kept_abs: list[float] = []
     discarded_abs: list[float] = []
+    input_entry_count = 0
+    zero_entry_count = 0
     per_column: list[dict[str, float | int]] = []
 
     for column in columns:
@@ -105,9 +107,15 @@ def sparsify_matrix_columns_with_error_bound(
         column_all: list[float] = []
         column_kept: list[float] = []
         column_discarded: list[float] = []
+        column_zero_entries = 0
         for key, value in column.items():
             z = _finite_complex(value, name="matrix element")
             magnitude = abs(z)
+            input_entry_count += 1
+            if magnitude == 0.0:
+                zero_entry_count += 1
+                column_zero_entries += 1
+                continue
             column_all.append(magnitude)
             all_abs.append(magnitude)
             if magnitude > tol:
@@ -120,9 +128,11 @@ def sparsify_matrix_columns_with_error_bound(
         result.append(kept)
         per_column.append({
             "column_index": len(per_column),
+            "input_entry_count": len(column),
             "input_nonzero_count": len(column_all),
-            "retained_count": len(column_kept),
-            "discarded_count": len(column_discarded),
+            "zero_entry_count": column_zero_entries,
+            "retained_nonzero_count": len(column_kept),
+            "discarded_nonzero_count": len(column_discarded),
             "discarded_frobenius_norm": _stable_l2_norm(column_discarded),
         })
 
@@ -132,9 +142,11 @@ def sparsify_matrix_columns_with_error_bound(
     report: dict[str, object] = {
         "tolerance": tol,
         "column_count": len(columns),
+        "input_entry_count": input_entry_count,
         "input_nonzero_count": len(all_abs),
-        "retained_count": len(kept_abs),
-        "discarded_count": len(discarded_abs),
+        "zero_entry_count": zero_entry_count,
+        "retained_nonzero_count": len(kept_abs),
+        "discarded_nonzero_count": len(discarded_abs),
         "matrix_frobenius_norm": matrix_fro,
         "retained_frobenius_norm": retained_fro,
         "discarded_frobenius_norm": discarded_fro,
