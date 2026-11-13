@@ -246,12 +246,17 @@ class TestW5CacheTransparency(unittest.TestCase):
 
         key = PW.basis_full_jhalf()[0]
         KG.local_volume_column.cache_clear()
-        uncached = KG.local_volume_column.__wrapped__(key, 0)
-        cached = KG.local_volume_column(key, 0)
-        cached_again = KG.local_volume_column(key, 0)
+        with audit.capture() as cold:
+            uncached = KG.local_volume_column.__wrapped__(key, 0)
+        with audit.capture() as warm_miss:
+            cached = KG.local_volume_column(key, 0)
+        with audit.capture() as warm_hit:
+            cached_again = KG.local_volume_column(key, 0)
 
         self.assertEqual(cached, uncached)
         self.assertEqual(cached_again, uncached)
+        self.assertEqual(cold.snapshot()["events"], warm_miss.snapshot()["events"])
+        self.assertEqual(warm_miss.snapshot()["events"], warm_hit.snapshot()["events"])
         info = KG.local_volume_column.cache_info()
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
@@ -287,6 +292,57 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
         KLEG.HE_complete_cached.cache_clear()
+
+
+    def test_complete_HE_cache_replays_nested_audit_trace_on_warm_hit(self):
+        from unittest.mock import patch
+        import peter_weyl_covariant_K_leg_gate as KLEG
+
+        key = ("audit-cache-fixture", (1 + 2j,))
+        expected = ({("out",): 0.25 - 0.5j}, 0.0, 0.0)
+
+        def deterministic_operator(input_key, source_v, Jmax2):
+            audit.record_threshold("nested.fixture.threshold", input_key, 0.5e-12, 1e-12)
+            return expected
+
+        KLEG.HE_complete_cached.cache_clear()
+        with patch.object(KLEG, "apply_HE_complete_key", side_effect=deterministic_operator):
+            with audit.capture() as cold:
+                first = KLEG.HE_complete_cached(key, 1, 10)
+            with audit.capture() as warm:
+                second = KLEG.HE_complete_cached(key, 1, 10)
+
+        self.assertEqual(first, second)
+        self.assertEqual(cold.snapshot()["events"], warm.snapshot()["events"])
+        self.assertEqual(cold.snapshot()["event_count"], 1)
+        self.assertEqual(warm.snapshot()["event_count"], 1)
+        self.assertEqual(KLEG.HE_complete_cached.cache_info().hits, 1)
+        KLEG.HE_complete_cached.cache_clear()
+
+    def test_audit_lru_cache_replays_nested_and_bypass_event_kinds(self):
+        @audit.audit_lru_cache(None)
+        def cached_operator(key):
+            audit.record_threshold("nested", key, 0.25e-9, 1e-9)
+            return {key: 1 + 2j}
+
+        with audit.capture() as cold:
+            normal = cached_operator("x")
+        with audit.capture() as warm:
+            normal_again = cached_operator("x")
+        self.assertEqual(normal, normal_again)
+        self.assertEqual(cold.snapshot()["events"], warm.snapshot()["events"])
+
+        cached_operator.cache_clear()
+        with audit.capture() as shadow_cold:
+            with audit.bypass():
+                shadow = cached_operator("y")
+        with audit.capture() as shadow_warm:
+            with audit.bypass():
+                shadow_again = cached_operator("y")
+        self.assertEqual(shadow, shadow_again)
+        self.assertEqual(shadow_cold.snapshot()["events"], shadow_warm.snapshot()["events"])
+        self.assertEqual(shadow_warm.snapshot()["events"][0]["kind"], "would_prune_bypassed")
+
 
 
 if __name__ == "__main__":
