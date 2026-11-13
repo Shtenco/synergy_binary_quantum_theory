@@ -28,10 +28,19 @@ from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 def build_pruning_coverage(static_inventory):
     """Separate static site classification from runtime zero-loss evidence."""
     inventory_complete = bool(static_inventory.get("complete", False))
+    fixed_mask_classes = {
+        "post_assembly_fixed_operator_mask_requires_error_bound",
+        "post_assembly_fixed_operator_mask_with_frobenius_spectral_error_bound",
+    }
     fixed_masks = [
         site for site in static_inventory.get("threshold_sites", [])
-        if site.get("classification") == "post_assembly_fixed_operator_mask_requires_error_bound"
+        if site.get("classification") in fixed_mask_classes
     ]
+    certified_bound_api_available = any(
+        site.get("classification") ==
+        "post_assembly_fixed_operator_mask_with_frobenius_spectral_error_bound"
+        for site in fixed_masks
+    )
     return {
         # Overall coverage intentionally remains false until runtime loss,
         # cache-equivalence, support-cap and convergence controls are closed.
@@ -51,9 +60,12 @@ def build_pruning_coverage(static_inventory):
             "post_assembly_fixed_operator_masks": fixed_masks,
         },
         "runtime_loss_controls_complete": False,
+        "fixed_operator_mask_bound_api_available": certified_bound_api_available,
+        "fixed_operator_mask_bound_applied_in_production": False,
         "fixed_operator_mask_error_bound_complete": False,
         "remaining_checks": [
-            "certified operator-norm or induced-norm error bound for each post-assembly fixed matrix mask",
+            "wire the certified matrix-mask API into any production call site that uses this mask and persist its error ledger",
+            "demonstrate that the post-assembly mask is absent from or explicitly bounded in the actual W5 execution path",
             "cache-on/cache-off pruning-ledger equality for the full composition chain",
             "complete spin-wall and state/depth-cap loss separation",
             "full complex support convergence across Jmax2 and amplitude-threshold ladders",
