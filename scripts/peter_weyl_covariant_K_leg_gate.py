@@ -160,17 +160,22 @@ def apply_volume_allJ_oriented(T, spins_local, v):
     X = CV.unorient_local(T, spins_local, v)
     Y = np.zeros_like(X)
     recon = np.zeros_like(X)
+    xflat = X.reshape(-1)
     for J2 in CV.all_total_J2(spins_local):
         rec = CH.allowed_charged_labels(tuple(spins_local), J2)
         if not rec:
             continue
         Vb = canonical_volume_block_general(tuple(spins_local), J2)
         for M2 in PW.m2vals_t(J2):
-            basis = [CH.charged_tensor(tuple(spins_local), a, b, J2, M2) for a,b in rec]
-            coeff = np.asarray([np.vdot(B, X) for B in basis], complex)
-            for c,B in zip(coeff,basis): recon += c*B
+            basis = [
+                CH.charged_tensor(tuple(spins_local), a, b, J2, M2)
+                for a, b in rec
+            ]
+            basis_matrix = np.stack([B.reshape(-1) for B in basis], axis=0)
+            coeff = basis_matrix.conj() @ xflat
+            recon += (coeff @ basis_matrix).reshape(X.shape)
             outc = Vb @ coeff
-            for c,B in zip(outc,basis): Y += c*B
+            Y += (outc @ basis_matrix).reshape(X.shape)
     leak = float(np.linalg.norm(X-recon)/max(np.linalg.norm(X),1e-30))
     return CV.orient_local(Y, spins_local, v), leak
 
