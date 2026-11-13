@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - research/lemaitre-bqg-causal-cone-20261110
+      - research/bqg-w5-production-audit-20261113
     paths:
       - 'tests/test_bqg_l2_production_primitives.py'
       - 'scripts/peter_weyl_covariant_K_leg_gate.py'
