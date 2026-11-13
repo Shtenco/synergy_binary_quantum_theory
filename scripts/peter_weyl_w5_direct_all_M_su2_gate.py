@@ -58,16 +58,16 @@ def add_sparse(dst, src, scale=1.0):
 def norm(state):
     if not state:
         return 0.0
-    weights = []
+    magnitudes = []
     for amp in state.values():
         z = complex(amp)
         if not (math.isfinite(z.real) and math.isfinite(z.imag)):
             raise ValueError("operator output contains a non-finite amplitude")
-        weights.append(abs(z) ** 2)
-    total = math.fsum(weights)
-    if not math.isfinite(total):
+        magnitudes.append(abs(z))
+    value = math.hypot(*magnitudes)
+    if not math.isfinite(value):
         raise ValueError("operator output norm is non-finite")
-    return math.sqrt(total)
+    return value
 
 
 def require_nonzero_output(state, *, label):
@@ -75,7 +75,7 @@ def require_nonzero_output(state, *, label):
     if not state:
         raise AssertionError(f"{label} returned an empty sparse state")
     value = norm(state)
-    if not math.isfinite(value) or value <= 1e-30:
+    if not math.isfinite(value) or value == 0.0:
         raise AssertionError(f"{label} has no resolvable nonzero norm")
     return value
 
@@ -83,28 +83,30 @@ def require_nonzero_output(state, *, label):
 def relative_error(a, b):
     if not a or not b:
         raise AssertionError("commutator comparison cannot use an empty state")
-    err2 = math.fsum(
-        abs(a.get(key, 0j) - b.get(key, 0j)) ** 2
+    error = math.hypot(*(
+        abs(a.get(key, 0j) - b.get(key, 0j))
         for key in set(a) | set(b)
-    )
+    ))
     scale = max(norm(a), norm(b))
-    if not math.isfinite(scale) or scale <= 1e-30:
+    if not math.isfinite(error) or not math.isfinite(scale) or scale == 0.0:
         raise AssertionError("commutator comparison has a zero or invalid norm scale")
-    return math.sqrt(err2) / scale, math.sqrt(err2), scale
+    return error / scale, error, scale
 
 
 def wrong_sector_fraction(state, *, node, expected_j2, expected_m2):
     """Measure forbidden (J,M) weight against the full nonzero output norm."""
-    total = math.fsum(abs(complex(amp)) ** 2 for amp in state.values())
-    if not math.isfinite(total) or total <= 1e-60:
+    magnitudes = [abs(complex(amp)) for amp in state.values()]
+    scale = max(magnitudes, default=0.0)
+    if not math.isfinite(scale) or scale == 0.0:
         raise AssertionError("charged-sector output has zero or invalid total weight")
+    total = math.fsum((magnitude / scale) ** 2 for magnitude in magnitudes)
     wrong = 0.0
-    for (_, labels), amp in state.items():
+    for ((_, labels), amp), magnitude in zip(state.items(), magnitudes):
         label = labels[node]
         if label[0] != "C":
             raise AssertionError(f"operator output lost charged basis at node {node}")
         if int(label[1]) != expected_j2 or int(label[2]) != expected_m2:
-            wrong += abs(complex(amp)) ** 2
+            wrong += (magnitude / scale) ** 2
     fraction = wrong / total
     if not math.isfinite(fraction):
         raise AssertionError("wrong-sector fraction is non-finite")
