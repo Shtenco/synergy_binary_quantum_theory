@@ -108,6 +108,19 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
                 "abs(z) > tol": "post_assembly_fixed_operator_mask_requires_error_bound",
             },
         )
+        certified_mask_sites = [
+            site for site in result["threshold_sites"]
+            if site["module"] == "bqg_sparse_linear_accumulator"
+            and site["function"] == "sparsify_matrix_columns_with_error_bound"
+        ]
+        self.assertEqual(
+            {site["expression"]: site["classification"] for site in certified_mask_sites},
+            {
+                "tol < 0": "input_tolerance_parameter_validation",
+                "magnitude > tol":
+                    "post_assembly_fixed_operator_mask_with_frobenius_spectral_error_bound",
+            },
+        )
         self.assertEqual(result["unclassified_sites"], [])
         self.assertTrue(result["complete"])
         self.assertGreaterEqual(result["threshold_site_count"], 20)
