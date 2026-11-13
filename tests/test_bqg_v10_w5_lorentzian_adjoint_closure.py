@@ -103,6 +103,10 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 D[:, n] += sign * dense(d, self.dim)
         np.testing.assert_allclose(D, F.conj().T, rtol=5e-13, atol=5e-13)
 
+    def test_closure_rejects_unknown_cache_mode_before_operator_execution(self):
+        with self.assertRaisesRegex(ValueError, "cache_mode"):
+            gate.run_closure(cache_mode="sometimes")
+
     def test_zeroaware_spectral_factor_reports_eigenvalue_sensitivity(self):
         import peter_weyl_zeroaware_volume_migration_experiment as ZVM
 
