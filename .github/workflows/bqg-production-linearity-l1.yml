@@ -8,6 +8,8 @@ on:
       - research/bqg-w5-production-audit-20261113
     paths:
       - 'scripts/bqg_sparse_linear_accumulator.py'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'tests/test_bqg_v10_strict_accumulation.py'
       - 'tests/test_bqg_production_linearity.py'
       - '.github/workflows/bqg-production-linearity-l1.yml'
 
@@ -32,5 +34,9 @@ jobs:
           python -m py_compile scripts/bqg_sparse_linear_accumulator.py
           python -m py_compile scripts/peter_weyl_covariant_composition_gate.py
           python -m py_compile scripts/peter_weyl_covariant_K_leg_gate.py
+          python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+          python -m py_compile tests/test_bqg_v10_strict_accumulation.py
       - name: Run L1 characterization and strict-reference tests
-        run: python -m unittest discover -s tests -p 'test_bqg_production_linearity.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_bqg_production_linearity.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_strict_accumulation.py' -v
