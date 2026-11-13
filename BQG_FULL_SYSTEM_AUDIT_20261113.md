@@ -108,6 +108,8 @@ The W5 staging artifact from workflow run `43442708226` was downloaded and inspe
 - source tree: `60e32745e0fb630964714876775e8cde20e1adab`
 - all 760 manifest-listed source files passed byte-count and SHA-256 verification.
 
+The staging runner recorded Python 3.12.16 with `numpy==2.5.4`, `sympy==1.14.0`, and `mpmath==1.3.0`. The local audit container used Python 3.13.5, NumPy 2.3.5, SymPy 1.14.0, and mpmath 1.3.0; therefore local numerical execution is not bit-for-bit environment reproduction. The W5 production/L1/L2 workflows use Python 3.11 and install unpinned latest NumPy/SymPy. **Dependency/runtime pinning across staging and production workflows is a reproducibility task still open.**
+
 Local execution on the extracted source snapshot:
 
 - `python -m compileall -q scripts tests`: exit 0; one non-fatal Python 3.13 SyntaxWarning for an invalid `\o` escape in a docstring at `scripts/q2_relational_history_projector_gate.py:15`.
