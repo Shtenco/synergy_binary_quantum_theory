@@ -47,9 +47,14 @@ AUDITED_CACHE_CLASSIFICATIONS = {
     ("bqg_pruning_audit", "cached"): "audit_lru_cache_internal_value_and_trace_cache",
 }
 
-NON_PRUNING_CLASSIFICATIONS = {
-    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns"):
+NON_PRUNING_COMPARISON_CLASSIFICATIONS = {
+    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns", "tol < 0"):
+        "input_tolerance_parameter_validation",
+    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns", "abs(z) > tol"):
         "post_assembly_fixed_operator_mask_requires_error_bound",
+}
+
+NON_PRUNING_CLASSIFICATIONS = {
     ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"):
         "spin_wall_nonzero_branch_accounting",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"):
@@ -200,25 +205,32 @@ def run_inventory() -> dict:
 
             explicit_class = NON_PRUNING_CLASSIFICATIONS.get(key)
             instrumented = _function_has_prune_instrumentation(function)
-            if explicit_class:
-                classification = explicit_class
-            elif instrumented:
-                classification = "instrumented_amplitude_threshold"
-            else:
-                classification = "UNCLASSIFIED_THRESHOLD_SITE"
-                unclassified.append({
-                    "module": module,
-                    "function": function.name,
-                    "line": function.lineno,
-                    "comparisons": [ast.unparse(node) for node in compares],
-                })
 
             for compare in compares:
+                expression = ast.unparse(compare)
+                comparison_class = NON_PRUNING_COMPARISON_CLASSIFICATIONS.get(
+                    (module, function.name, expression)
+                )
+                if comparison_class:
+                    classification = comparison_class
+                elif explicit_class:
+                    classification = explicit_class
+                elif instrumented:
+                    classification = "instrumented_amplitude_threshold"
+                else:
+                    classification = "UNCLASSIFIED_THRESHOLD_SITE"
+                    unclassified.append({
+                        "module": module,
+                        "function": function.name,
+                        "line": function.lineno,
+                        "comparisons": [expression],
+                    })
+
                 sites.append({
                     "module": module,
                     "function": function.name,
                     "line": compare.lineno,
-                    "expression": ast.unparse(compare),
+                    "expression": expression,
                     "classification": classification,
                 })
 
