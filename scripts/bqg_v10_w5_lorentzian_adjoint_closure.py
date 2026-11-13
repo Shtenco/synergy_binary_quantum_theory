@@ -442,7 +442,7 @@ def _closure_cap_reasons(closure_size, input_depth, max_states, max_depth):
     return reasons
 
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0):
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0, cache_mode="on"):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
@@ -455,6 +455,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         raise ValueError("pruning_mode must be production or shadow_no_prune")
     if not math.isfinite(float(spectral_zero_factor)) or float(spectral_zero_factor) <= 0:
         raise ValueError("spectral_zero_factor must be finite and positive")
+    if cache_mode not in ("on", "off"):
+        raise ValueError("cache_mode must be on or off")
 
     HERE = Path(__file__).resolve().parent
     if str(HERE) not in sys.path:
@@ -708,17 +710,18 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     from contextlib import nullcontext
     with PRUNE.capture() as lower_level_pruning:
         pruning_context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else nullcontext()
-        with pruning_context:
-            try:
-                # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
-                # cache wrappers once for the entire closure walk.
-                # One invocation installs the sine K engine once; the intercepted
-                # executor coherently sums the selected node maps on every basis key.
-                sine_engine_result = LSINE.run(source_nodes[0])
-                spectral_sensitivity = ZVM.spectral_audit_snapshot()
-            finally:
-                RAW.run = old_raw_run
-                PW.apply_hit_branch = old_apply_hit_branch
+        cache_context = PRUNE.cache_bypass() if cache_mode == "off" else nullcontext()
+        with cache_context:
+            with pruning_context:
+                try:
+                    # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine.
+                    # The context-local cache policy applies through the complete
+                    # nested operator dependency chain.
+                    sine_engine_result = LSINE.run(source_nodes[0])
+                    spectral_sensitivity = ZVM.spectral_audit_snapshot()
+                finally:
+                    RAW.run = old_raw_run
+                    PW.apply_hit_branch = old_apply_hit_branch
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
     lower_level_pruning_ledger["mode"] = pruning_mode
     lower_level_pruning_ledger["coverage"] = {
@@ -755,7 +758,13 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     lower_level_pruning_ledger["cache_policy"] = {
         "cleared_lru_cache_function_count": int(cleared_cache_functions),
         "cleared_before_capture": True,
-        "policy": "all imported k5_peter_weyl_safe_hda_column and peter_weyl_* module lru caches cleared before the audited closure",
+        "mode": cache_mode,
+        "policy": (
+            "all W5 dependency LRU caches are audit-aware; cache_mode=off bypasses "
+            "every audit-aware cache context-locally while preserving operator bodies"
+            if cache_mode == "off" else
+            "all imported W5 dependency LRU caches are cleared before the audited closure and then enabled"
+        ),
     }
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
@@ -783,6 +792,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "source_nodes": list(source_nodes),
             "pruning_mode": pruning_mode,
+            "cache_mode": cache_mode,
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
@@ -893,6 +903,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         "lower_level_pruning_coverage_complete": False,
         "source_nodes": list(source_nodes),
         "pruning_mode": pruning_mode,
+        "cache_mode": cache_mode,
         "Jmax2": Jmax2,
         "Jmax": Jmax2 / 2,
         "seed_count": len(seeds),
@@ -961,6 +972,7 @@ def main():
     )
     ap.add_argument("--amp-tol", type=float, default=1e-12)
     ap.add_argument("--spectral-zero-factor", type=float, default=1000.0)
+    ap.add_argument("--cache-mode", choices=("on", "off"), default="on")
     ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
@@ -969,6 +981,7 @@ def main():
     result = run_closure(
         args.nodes, args.Jmax2, max_states, max_depth,
         args.amp_tol, args.pruning_mode, args.spectral_zero_factor,
+        args.cache_mode,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
