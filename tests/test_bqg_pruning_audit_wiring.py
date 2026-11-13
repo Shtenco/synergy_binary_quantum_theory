@@ -675,6 +675,44 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(KLEG.HE_complete_cached.cache_info().hits, 1)
         KLEG.HE_complete_cached.cache_clear()
 
+    def test_large_intermediate_cache_capacities_are_explicit(self):
+        import peter_weyl_lorentzian_K_block_gate as KG
+        import peter_weyl_zeroaware_volume_migration_experiment as ZVM
+        self.assertEqual(PW.T_cached.cache_info().maxsize, 16)
+        self.assertEqual(CK.HE_complete_cached.cache_info().maxsize, 2)
+        self.assertEqual(CHARGED.charged_tensor.cache_info().maxsize, 32)
+        self.assertEqual(CHARGED.charged_basis_matrix.cache_info().maxsize, 8)
+        self.assertEqual(CHARGED.charged_basis_multiplet_matrix.cache_info().maxsize, 4)
+        self.assertEqual(CHARGED.q123_matrix.cache_info().maxsize, 2)
+        self.assertEqual(KG._local_volume_column_full.cache_info().maxsize, 2)
+        self.assertEqual(ZVM.zeroaware_volume123_matrix.cache_info().maxsize, 2)
+
+    def test_bounded_lru_eviction_replays_ordered_audit_events(self):
+        calls = []
+
+        @audit.audit_lru_cache(1)
+        def operator(value):
+            calls.append(value)
+            audit.record_threshold("cache_eviction.fixture", value, 0.5e-12, 1e-12)
+            return value * 7
+
+        with audit.capture() as collector:
+            self.assertEqual(operator(1), 7)
+            self.assertEqual(operator(2), 14)
+            self.assertEqual(operator(1), 7)
+
+        self.assertEqual(calls, [1, 2, 1])
+        self.assertEqual(
+            [row["key_repr"] for row in collector.snapshot()["events"]],
+            ["1", "2", "1"],
+        )
+        info = operator.cache_info()
+        self.assertEqual(info.maxsize, 1)
+        self.assertEqual(info.currsize, 1)
+        self.assertEqual(info.misses, 3)
+        self.assertEqual(info.hits, 0)
+        operator.cache_clear()
+
     def test_audit_lru_cache_replays_nested_and_bypass_event_kinds(self):
         @audit.audit_lru_cache(None)
         def cached_operator(key):
@@ -711,7 +749,7 @@ class TestW5CacheTransparency(unittest.TestCase):
             source = (scripts / filename).read_text(encoding="utf-8")
             self.assertIn("import bqg_pruning_audit as PRUNE", source)
             self.assertEqual(
-                source.count("@PRUNE.audit_lru_cache(None)"), expected,
+                source.count("@PRUNE.audit_lru_cache(2)"), expected,
                 msg=f"every nested numerical cache in {filename} must replay audit rows",
             )
             self.assertNotIn("@functools.lru_cache(maxsize=None)", source)
