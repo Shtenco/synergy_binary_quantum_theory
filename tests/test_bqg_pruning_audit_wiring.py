@@ -1,9 +1,12 @@
 import sys
 import unittest
+import itertools
+import numpy as np
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import bqg_pruning_audit as audit
+import charged_intertwiner_recoupling_gate as CHARGED
 import k5_peter_weyl_safe_hda_column as PW
 import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_covariant_composition_gate as COMP
@@ -256,6 +259,49 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
                     )
 
         self.assertEqual(unclassified, [])
+
+
+class TestChargedIntertwinerTensorContraction(unittest.TestCase):
+    @staticmethod
+    def reference_tensor(spins, K12, K34, J2, M2):
+        spins = tuple(spins)
+        dims = tuple(s + 1 for s in spins)
+        tensor = np.zeros(dims, complex)
+        magnetic = [PW.m2vals_t(s) for s in spins]
+        for indices in itertools.product(*[range(d) for d in dims]):
+            m1, m2, m3, m4 = [magnetic[a][indices[a]] for a in range(4)]
+            value = 0.0
+            for MK in PW.m2vals_t(K12):
+                ML = M2 - MK
+                if ML not in PW.m2vals_t(K34):
+                    continue
+                value += (
+                    PW.cg2(spins[0], spins[1], K12, m1, m2, MK)
+                    * PW.cg2(spins[2], spins[3], K34, m3, m4, ML)
+                    * PW.cg2(K12, K34, J2, MK, ML, M2)
+                )
+            tensor[indices] = value
+        return tensor
+
+    def test_separable_contraction_matches_original_magnetic_sum(self):
+        cases = (
+            ((4, 4, 4, 4), 4, 4, 0, 0),
+            ((4, 4, 4, 4), 2, 2, 2, 0),
+            ((4, 4, 4, 4), 4, 2, 2, 0),
+            ((2, 4, 4, 2), 2, 4, 2, 0),
+            ((4, 2, 4, 2), 2, 2, 2, 2),
+        )
+        for case in cases:
+            with self.subTest(case=case):
+                CHARGED.charged_tensor.cache_clear()
+                actual = CHARGED.charged_tensor(*case)
+                expected = self.reference_tensor(*case)
+                np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1e-14)
+                self.assertEqual(actual.shape, expected.shape)
+                with audit.cache_bypass():
+                    uncached = CHARGED.charged_tensor.__wrapped__(*case)
+                np.testing.assert_allclose(uncached, expected, rtol=0.0, atol=1e-14)
+        CHARGED.charged_tensor.cache_clear()
 
 
 class TestW5CacheTransparency(unittest.TestCase):
