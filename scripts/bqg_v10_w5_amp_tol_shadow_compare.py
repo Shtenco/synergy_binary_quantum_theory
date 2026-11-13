@@ -100,9 +100,9 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
     return result
 
 
-def unpack_columns(result: dict) -> dict:
+def unpack_columns(result: dict, field: str = "forward_B_columns_sparse") -> dict:
     basis = result["basis_keys_repr"]
-    columns = result["forward_B_columns_sparse"]
+    columns = result[field]
     decoded = {}
     for input_index, encoded in enumerate(columns):
         input_key = basis[input_index]
@@ -207,6 +207,10 @@ def main() -> int:
                 matrix_comparison = compare_vectors(
                     unpack_columns(production), unpack_columns(cache_off)
                 )
+                adjoint_matrix_comparison = compare_vectors(
+                    unpack_columns(production, "direct_Bdag_columns_sparse"),
+                    unpack_columns(cache_off, "direct_Bdag_columns_sparse"),
+                )
                 ledger_fields = (
                     "lower_level_pruning_ledger",
                     "coefficient_loss_ledger",
@@ -231,10 +235,13 @@ def main() -> int:
                     "status": "COMPLETED_CACHE_EQUIVALENCE",
                     "cache_on_status": production.get("status"),
                     "cache_off_status": cache_off.get("status"),
-                    "matrix_comparison": matrix_comparison,
+                    "forward_matrix_comparison": matrix_comparison,
+                    "direct_adjoint_matrix_comparison": adjoint_matrix_comparison,
                     "matrix_exactly_equal": (
                         matrix_comparison["support_symmetric_difference_total"] == 0
                         and matrix_comparison["max_coefficient_absolute_residual"] == 0.0
+                        and adjoint_matrix_comparison["support_symmetric_difference_total"] == 0
+                        and adjoint_matrix_comparison["max_coefficient_absolute_residual"] == 0.0
                     ),
                     "ledger_comparison": ledger_comparison,
                     "full_ledger_exactly_equal": all(ledger_comparison.values()),
@@ -277,8 +284,12 @@ def main() -> int:
                             "zero_factor": factor,
                             "matrix_status": row.get("status"),
                             "spectral_diagnostics": row.get("spectral_sensitivity"),
-                            "comparison_to_baseline": compare_vectors(
+                            "forward_comparison_to_baseline": compare_vectors(
                                 baseline, unpack_columns(row)
+                            ),
+                            "direct_adjoint_comparison_to_baseline": compare_vectors(
+                                unpack_columns(spectral_runs[0][1], "direct_Bdag_columns_sparse"),
+                                unpack_columns(row, "direct_Bdag_columns_sparse"),
                             ),
                         }
                         for factor, row in spectral_runs
@@ -321,6 +332,10 @@ def main() -> int:
         comparison = compare_vectors(
             unpack_columns(zero_output), unpack_columns(production)
         )
+        adjoint_comparison = compare_vectors(
+            unpack_columns(zero_output, "direct_Bdag_columns_sparse"),
+            unpack_columns(production, "direct_Bdag_columns_sparse"),
+        )
         result = {
             "status": "INCOMPLETE_NO_PRUNING_REFERENCE",
             "comparison_performed": True,
@@ -332,7 +347,8 @@ def main() -> int:
             "production_status": production.get("status"),
             "shadow_no_prune_status": zero_output.get("status"),
             "shadow_algebraic_status": zero_output.get("algebraic_status"),
-            "comparison": comparison,
+            "forward_matrix_comparison": comparison,
+            "direct_adjoint_matrix_comparison": adjoint_comparison,
             "scope": (
                 "Isolated-process comparison of production thresholds against "
                 "the bounded shadow_no_prune mode. Explicitly instrumented "
