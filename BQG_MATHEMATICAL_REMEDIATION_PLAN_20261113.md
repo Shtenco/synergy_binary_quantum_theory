@@ -77,6 +77,17 @@ This uses complex `math.fsum` on real and imaginary components and does not appl
 
 **Scope limit:** this does not yet remove thresholding inside lower-level K/V component builders or every V09/V10/V11 state merge. The active K-leg and composition helpers still contain incremental threshold decisions. Therefore strict accumulation integration remains PARTIAL, and P0 must not be marked closed until all amplitude-pruning sites are either moved after coherent operator accumulation or justified by a fixed operator-level mask with a certified error bound.
 
+### Transitive pruning inventory: first real findings and correction
+
+The first static inventory run `43450087875` correctly failed closed and exposed four *unclassified threshold-like functions* in the declared import closure:
+
+- cached physical-acceptance residual comparisons;
+- sine-ordered-triple operator leakage acceptance;
+- a positive spectral-gap diagnostic guard;
+- zero-factor configuration validation.
+
+These were not all amplitude pruning. They are now explicitly classified by their mathematical role in commit `aefc05c2db3be96299071d7b272651d5fb17b766`. This is an important distinction: acceptance residuals and spectral-domain checks must be documented, not routed through an amplitude-loss ledger. The inventory is being rerun with the strict-accumulator import also included. Its PASS is still pending.
+
 ## 3. V10/V11 W5 common carrier
 
 The common carrier must be assembled only after V10 has a closed, finite, adjoint-consistent operator on a frozen basis. V11's common carrier is a shared domain/codomain construction, not evidence that the underlying operator is physical.
