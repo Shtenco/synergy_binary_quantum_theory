@@ -28,6 +28,10 @@ on:
       - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
   workflow_dispatch:
 
+concurrency:
+  group: bqg-w5-pruning-inventory-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
