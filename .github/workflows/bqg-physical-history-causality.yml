@@ -6,6 +6,10 @@ on:
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
+      - 'scripts/bqg_sharp_analytic_causal_cone_gate.py'
+      - 'scripts/lemaitre_bqg_cone_reference_gate.py'
+      - 'BQG_SHARP_ANALYTIC_CAUSAL_CONE.md'
+      - 'LEMAITRE_BQG_CAUSAL_CONE_BENCHMARK.md'
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'physicalization_gates.json'
       - 'scripts/verify_physicalization_gates.py'
@@ -42,6 +46,10 @@ jobs:
         run: |
           python -m py_compile scripts/bqg_physical_history_decoherence_engine.py
           python scripts/bqg_physical_history_decoherence_engine.py > physical_history_reference.json
+      - name: Run reduced analytic cone and independent reference comparison
+        run: |
+          python scripts/bqg_sharp_analytic_causal_cone_gate.py
+          python scripts/lemaitre_bqg_cone_reference_gate.py --output causal_cone_reference.json
       - name: Run regression tests
         run: |
           python -m unittest discover -s tests -p 'test_bqg_physical_history_decoherence_engine.py' -v
