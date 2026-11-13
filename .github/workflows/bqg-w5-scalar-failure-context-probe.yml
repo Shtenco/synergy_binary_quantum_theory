@@ -1,0 +1,48 @@
+name: BQG W5 scalar-selection failure context probe
+
+on:
+  push:
+    branches:
+      - research/bqg-w5-production-audit-20261113
+    paths:
+      - '.github/workflows/bqg-w5-scalar-failure-context-probe.yml'
+      - 'scripts/peter_weyl_w5_scalar_failure_context_probe.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/bqg_pruning_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scalar-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        pruning_mode: [production, shadow_no_prune]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Capture exact scalar-selection failure context
+        run: |
+          python scripts/peter_weyl_w5_scalar_failure_context_probe.py \
+            --K 0 --Jmax2 10 --amp-tol 1e-12 \
+            --pruning-mode ${{ matrix.pruning_mode }} \
+            --output verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}.json
+      - name: Upload scalar-selection context
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-scalar-context-${{ matrix.pruning_mode }}-${{ github.run_id }}
+          path: verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}.json
+          if-no-files-found: warn
+          retention-days: 30
