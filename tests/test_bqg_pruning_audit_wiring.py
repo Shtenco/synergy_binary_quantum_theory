@@ -100,9 +100,6 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         self.assertTrue(all(row["coefficient_count"] == 1 for row in by_site.values()))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class TestW5TransitivePruningCoverage(unittest.TestCase):
     """Static guard over every repository-local import reachable from V10.
@@ -160,6 +157,38 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
             "peter_weyl_zeroaware_volume_migration_experiment",
         }
         self.assertEqual(modules, expected_modules)
+
+        # V10's sparse accumulator is allowed to be uninstrumented only
+        # because its default tolerance is exactly zero (exact-zero removal).
+        v10_path = scripts / "bqg_v10_w5_lorentzian_adjoint_closure.py"
+        v10_text = v10_path.read_text(encoding="utf-8")
+        v10_tree = ast.parse(v10_text)
+        tol_assignments = [
+            node.value for node in ast.walk(v10_tree)
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "TOL"
+                    for target in node.targets)
+        ]
+        self.assertTrue(any(
+            isinstance(value, ast.Constant) and value.value == 0.0
+            for value in tol_assignments
+        ))
+        add_sparse_defs = [
+            node for node in ast.walk(v10_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "add_sparse"
+        ]
+        self.assertEqual(len(add_sparse_defs), 1)
+        self.assertEqual(ast.unparse(add_sparse_defs[0].args.defaults[-1]), "TOL")
+        add_sparse_calls = [
+            node for node in ast.walk(v10_tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name) and node.func.id == "add_sparse"
+        ]
+        self.assertTrue(add_sparse_calls)
+        self.assertTrue(all(
+            len(node.args) <= 3 and all(keyword.arg != "tol" for keyword in node.keywords)
+            for node in add_sparse_calls
+        ))
 
         # These are deliberately not amplitude pruning:
         # - add_sparse has tol=0 at every V10 call site: exact-zero cancellation;
@@ -258,3 +287,7 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
         KLEG.HE_complete_cached.cache_clear()
+
+
+if __name__ == "__main__":
+    unittest.main()
