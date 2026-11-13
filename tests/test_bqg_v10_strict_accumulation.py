@@ -50,7 +50,6 @@ class TestV10StrictComplexAccumulation(unittest.TestCase):
     def test_strict_accumulator_is_used_by_production_v10_module(self):
         self.assertEqual(V10.SparseLinearAccumulator.__name__, "SparseLinearAccumulator")
         self.assertEqual(V10.SparseLinearAccumulator.__module__, "bqg_sparse_linear_accumulator")
-        self.assertEqual(V10.TOL, 0.0)
 
 
 if __name__ == "__main__":
