@@ -48,6 +48,7 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
         "--max-depth", str(args.max_depth),
         "--amp-tol", repr(amp_tol),
         "--spectral-zero-factor", repr(getattr(args, "spectral_zero_factor", 1000.0)),
+        "--cache-mode", getattr(args, "cache_mode", "on"),
         "--pruning-mode", pruning_mode,
         "--output", str(output),
     ]
@@ -165,6 +166,8 @@ def main() -> int:
     )
     parser.add_argument("--amp-tol", type=float, default=1e-12)
     parser.add_argument("--spectral-zero-factor", type=float, default=1000.0)
+    parser.add_argument("--cache-mode", choices=("on", "off"), default="on")
+    parser.add_argument("--compare-cache-modes", action="store_true")
     parser.add_argument(
         "--spectral-sensitivity-factors", type=float, nargs="*", default=[],
         help="additional zero-aware eigenvalue threshold factors to compare as full sparse matrices",
@@ -181,8 +184,11 @@ def main() -> int:
         parser.error("--spectral-zero-factor must be finite and positive")
     if any(not math.isfinite(value) or value <= 0 for value in args.spectral_sensitivity_factors):
         parser.error("all --spectral-sensitivity-factors must be finite and positive")
+    if args.compare_cache_modes and args.cache_mode != "on":
+        parser.error("--compare-cache-modes requires --cache-mode on as the baseline")
     script = Path(__file__).with_name("bqg_v10_w5_lorentzian_adjoint_closure.py")
     spectral_sensitivity = None
+    cache_equivalence = None
     with tempfile.TemporaryDirectory(prefix="bqg-v10-shadow-") as temp:
         root = Path(temp)
         production = run_one(script, root / "production.json", args.amp_tol, args)
@@ -190,6 +196,48 @@ def main() -> int:
             script, root / "shadow-no-prune.json", 0.0, args,
             pruning_mode="shadow_no_prune",
         )
+        if args.compare_cache_modes:
+            cache_off_args = argparse.Namespace(**vars(args))
+            cache_off_args.cache_mode = "off"
+            cache_off = run_one(
+                script, root / "production-cache-off.json",
+                args.amp_tol, cache_off_args,
+            )
+            if closure_matrix_available(production) and closure_matrix_available(cache_off):
+                matrix_comparison = compare_vectors(
+                    unpack_columns(production), unpack_columns(cache_off)
+                )
+                ledger_fields = (
+                    "lower_level_pruning_ledger",
+                    "coefficient_loss_ledger",
+                    "coherent_node_sum_ledger",
+                )
+                ledger_comparison = {
+                    field: production.get(field) == cache_off.get(field)
+                    for field in ledger_fields
+                }
+                cache_equivalence = {
+                    "status": "COMPLETED_CACHE_EQUIVALENCE",
+                    "cache_on_status": production.get("status"),
+                    "cache_off_status": cache_off.get("status"),
+                    "matrix_comparison": matrix_comparison,
+                    "matrix_exactly_equal": (
+                        matrix_comparison["support_symmetric_difference_total"] == 0
+                        and matrix_comparison["max_coefficient_absolute_residual"] == 0.0
+                    ),
+                    "ledger_comparison": ledger_comparison,
+                    "full_ledger_exactly_equal": all(ledger_comparison.values()),
+                    "cache_on_event_count": production.get("lower_level_pruning_ledger", {}).get("event_count"),
+                    "cache_off_event_count": cache_off.get("lower_level_pruning_ledger", {}).get("event_count"),
+                }
+            else:
+                cache_equivalence = {
+                    "status": "INCOMPLETE_CACHE_EQUIVALENCE",
+                    "cache_on_status": production.get("status"),
+                    "cache_off_status": cache_off.get("status"),
+                    "cache_off_process": cache_off.get("_process"),
+                    "comparison_performed": False,
+                }
         if args.spectral_sensitivity_factors:
             factors = list(dict.fromkeys(
                 [float(args.spectral_zero_factor)]
@@ -254,6 +302,7 @@ def main() -> int:
             "timeout_seconds_per_process": args.timeout_seconds,
             "comparison_performed": False,
             "spectral_sensitivity": spectral_sensitivity,
+            "cache_equivalence": cache_equivalence,
         }
         exit_code = 2
     else:
@@ -292,6 +341,7 @@ def main() -> int:
             "fresh_processes_and_caches": True,
             "same_source_file": str(script),
             "spectral_sensitivity": spectral_sensitivity,
+            "cache_equivalence": cache_equivalence,
             "parameters": {
                 "nodes": args.nodes,
                 "Jmax2": args.Jmax2,
