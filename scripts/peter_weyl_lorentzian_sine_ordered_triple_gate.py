@@ -56,7 +56,7 @@ def run(v=0,a=None,b=None,c=None,executor=None):
     old_ck=KC.C_K_component
     old_cv=RAW.COMP.C_volume_component
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
         return SINEK.complete_HE_sine(
             canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
