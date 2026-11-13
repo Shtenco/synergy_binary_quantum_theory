@@ -49,6 +49,10 @@ AUDITED_CACHE_CLASSIFICATIONS = {
 }
 
 NON_PRUNING_COMPARISON_CLASSIFICATIONS = {
+    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns_with_error_bound", "tol < 0"):
+        "input_tolerance_parameter_validation",
+    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns_with_error_bound", "magnitude > tol"):
+        "post_assembly_fixed_operator_mask_with_frobenius_spectral_error_bound",
     ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns", "tol < 0"):
         "input_tolerance_parameter_validation",
     ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns", "abs(z) > tol"):
