@@ -15,6 +15,10 @@ on:
       - 'scripts/bqg_pruning_audit.py'
   workflow_dispatch:
 
+concurrency:
+  group: bqg-w5-scalar-context-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
