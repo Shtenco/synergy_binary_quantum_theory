@@ -40,7 +40,16 @@ EXPECTED_MODULES = {
 
 # Function-level exclusions are deliberate and documented. They are not
 # amplitude-pruning sites: each belongs to a distinct mathematical contract.
+# This is the private functools cache inside audit_lru_cache(). Its cache
+# values include both the numerical result and the complete ordered PRUNE trace;
+# the public wrapper replays that trace on cache hits.
+AUDITED_CACHE_CLASSIFICATIONS = {
+    ("bqg_pruning_audit", "cached"): "audit_lru_cache_internal_value_and_trace_cache",
+}
+
 NON_PRUNING_CLASSIFICATIONS = {
+    ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns"):
+        "post_assembly_fixed_operator_mask_requires_error_bound",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"):
         "spin_wall_nonzero_branch_accounting",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"):
@@ -144,6 +153,7 @@ def run_inventory() -> dict:
     sites = []
     unclassified = []
     plain_lru_caches = []
+    audited_lru_caches = []
 
     for module in sorted(modules):
         path = SCRIPTS / (module + ".py")
@@ -171,11 +181,19 @@ def run_inventory() -> dict:
             # Inspect them before the early continue so a cached function with
             # no local comparison cannot evade the transitive cache audit.
             for name in _plain_lru_cache_decorators(function):
-                plain_lru_caches.append({
+                cache_record = {
                     "module": module,
                     "function": function.name,
                     "decorator": name,
-                })
+                }
+                audited_class = AUDITED_CACHE_CLASSIFICATIONS.get(key)
+                if audited_class:
+                    audited_lru_caches.append({
+                        **cache_record,
+                        "classification": audited_class,
+                    })
+                else:
+                    plain_lru_caches.append(cache_record)
 
             if not compares:
                 continue
@@ -218,6 +236,7 @@ def run_inventory() -> dict:
         "threshold_sites": sites,
         "unclassified_sites": unclassified,
         "plain_lru_caches": plain_lru_caches,
+        "audited_lru_caches": audited_lru_caches,
         "semantics": (
             "Completeness means every threshold-like comparison in the transitive "
             "V10 local Python import closure is either instrumented by the shared "
