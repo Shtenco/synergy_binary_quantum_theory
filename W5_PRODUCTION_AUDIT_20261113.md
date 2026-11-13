@@ -48,6 +48,37 @@ This invalidates the current highest-weight-only scalar Wigner–Eckart reductio
 
 It is not yet a no-go theorem for BQG or proof that the full physical Hamiltonian is non-scalar. The charged label may describe only the local four-leg sector while an external holonomy index carries additional SU(2) charge. The correct total representation and tensor rank must be derived.
 
+## 4. Production trace resolves the scale of the apparent SU(2) violation
+
+The production artifact from run `43446220696` was downloaded and inspected directly (artifact SHA-256: `38405a69db9bf0de71b2f214f89ac1a436e19b8bf9a121c94a47c76237fd83d9`).
+
+For the first direct K call, K seed 0, node 0, Jmax2=10, input `J2=0,M2=0`:
+
+- complete sine-`H_E` output support: 172;
+- correct-sector weight: `6.641081547822338`;
+- wrong-sector weight: `2.9364927759944046e-20`;
+- wrong-sector fraction: approximately `4.42e-21`;
+- relative wrong-sector amplitude: approximately `6.65e-11`.
+
+The passive trace contains 780 individual sequence rows. Individual fixed-index sequences have large wrong-sector contributions, but after the full oriented-spec sum each completed spec is in the expected sector; the final accumulated wrong-sector residue is at floating-point scale. The current exact-key guard fails on the mere existence of this residue even though the downstream physical acceptance condition already allows a wrong-sector squared-weight fraction below `1e-18`.
+
+This is a concrete **guard-contract mismatch**. It is not evidence that SU(2) is physically broken. It also does not yet prove that pruning is innocent: the paired shadow job is still required.
+
+### Norm-bounded restoration patch
+
+Commit `040d038dfd62c0627efa2cd01ac7212b912279b3` changes the cached wrapper to:
+
+- compute per-charged-node total and wrong-(J,M) weights before cleanup;
+- enforce the existing `1e-18` squared-weight fraction contract;
+- raise on material leakage;
+- discard only rows in a sector already certified below that bound;
+- never relabel a wrong-J or wrong-M row as a correct row;
+- retain per-call leakage diagnostics in the runtime memoization output.
+
+Seven regression tests were added in `tests/test_peter_weyl_scalar_sector_restore.py`. The first CI attempt exposed a missing `math` import (runs `43448564400` and `43448588477`); the import was added in commit `7e4caa7a68374cac9c5f0b467118f8cf54e85d91`. The rerun result is pending.
+
+A second independent gate, `scripts/peter_weyl_w5_direct_all_M_su2_gate.py`, now evaluates the actual sine-ordered (H_E) on all three magnetic components of a fixed charged (J=1) seed and measures ([J_+,H_E]) and ([J_-,H_E]). It runs both production and instrumented-shadow modes, bypasses memoization, and keeps the representation test independent of the highest-weight cache. Its CI result is pending.
+
 ## 4. Discriminating diagnostics launched
 
 Two diagnostics were launched on this isolated branch:
