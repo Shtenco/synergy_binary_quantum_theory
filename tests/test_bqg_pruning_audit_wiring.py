@@ -283,6 +283,19 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
             tensor[indices] = value
         return tensor
 
+    def test_vectorized_basis_projection_matches_original_vdot_sum(self):
+        rng = np.random.default_rng(20261113)
+        basis = [rng.normal(size=(3, 2)) + 1j * rng.normal(size=(3, 2)) for _ in range(4)]
+        X = rng.normal(size=(3, 2)) + 1j * rng.normal(size=(3, 2))
+        expected_coeff = np.asarray([np.vdot(B, X) for B in basis], complex)
+        expected_recon = sum(
+            (coefficient * B for coefficient, B in zip(expected_coeff, basis)),
+            np.zeros_like(X),
+        )
+        actual_coeff, actual_recon = CHARGED.project_to_basis(X, basis)
+        np.testing.assert_allclose(actual_coeff, expected_coeff, rtol=0.0, atol=1e-14)
+        np.testing.assert_allclose(actual_recon, expected_recon, rtol=0.0, atol=1e-14)
+
     def test_separable_contraction_matches_original_magnetic_sum(self):
         cases = (
             ((4, 4, 4, 4), 4, 4, 0, 0),
