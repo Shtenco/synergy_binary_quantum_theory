@@ -209,3 +209,52 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
                     )
 
         self.assertEqual(unclassified, [])
+
+
+class TestW5CacheTransparency(unittest.TestCase):
+    def test_gauss_volume_column_cached_and_uncached_full_outputs_match(self):
+        import peter_weyl_lorentzian_K_block_gate as KG
+
+        key = PW.basis_full_jhalf()[0]
+        KG.local_volume_column.cache_clear()
+        uncached = KG.local_volume_column.__wrapped__(key, 0)
+        cached = KG.local_volume_column(key, 0)
+        cached_again = KG.local_volume_column(key, 0)
+
+        self.assertEqual(cached, uncached)
+        self.assertEqual(cached_again, uncached)
+        info = KG.local_volume_column.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 1)
+        KG.local_volume_column.cache_clear()
+
+    def test_complete_HE_cache_preserves_full_complex_state_and_diagnostics(self):
+        import peter_weyl_covariant_K_leg_gate as KLEG
+        from unittest.mock import patch
+
+        key = ("cache-fixture", (1 + 2j, -3 + 0.5j))
+        expected_state = {
+            ("out-a",): 0.125 - 0.75j,
+            ("out-b",): -2.0 + 1e-14j,
+        }
+        expected = (tuple(expected_state.items()), 0.125, 0.375)
+
+        def deterministic_operator(input_key, source_v, Jmax2):
+            self.assertEqual(input_key, key)
+            self.assertEqual(source_v, 2)
+            self.assertEqual(Jmax2, 10)
+            return expected_state, 0.125, 0.375
+
+        KLEG.HE_complete_cached.cache_clear()
+        with patch.object(KLEG, "apply_HE_complete_key", side_effect=deterministic_operator):
+            direct = KLEG.HE_complete_cached.__wrapped__(key, 2, 10)
+            cached = KLEG.HE_complete_cached(key, 2, 10)
+            cached_again = KLEG.HE_complete_cached(key, 2, 10)
+
+        self.assertEqual(direct, expected)
+        self.assertEqual(cached, direct)
+        self.assertEqual(cached_again, direct)
+        info = KLEG.HE_complete_cached.cache_info()
+        self.assertEqual(info.misses, 1)
+        self.assertEqual(info.hits, 1)
+        KLEG.HE_complete_cached.cache_clear()
