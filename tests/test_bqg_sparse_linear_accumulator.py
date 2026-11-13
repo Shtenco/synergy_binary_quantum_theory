@@ -64,7 +64,7 @@ class TestSparseLinearAccumulator(unittest.TestCase):
         self.assertEqual(report["relative_frobenius_error_bound"], 0.0)
 
     def test_unrepresentable_frobenius_bound_is_rejected(self):
-        columns = [{"a": 1e308}, {"b": 1e308}]
+        columns = [{"a": 1.7e308}, {"b": 1.7e308}]
         with self.assertRaisesRegex(ValueError, "no finite error certificate"):
             sparsify_matrix_columns_with_error_bound(columns, 0.0)
 
