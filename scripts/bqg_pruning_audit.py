@@ -16,6 +16,7 @@ _ACTIVE: ContextVar["PruningCollector | None"] = ContextVar(
     "bqg_pruning_collector", default=None
 )
 _BYPASS: ContextVar[bool] = ContextVar("bqg_pruning_bypass", default=False)
+_CACHE_BYPASS: ContextVar[bool] = ContextVar("bqg_pruning_cache_bypass", default=False)
 
 
 class PruningCollector:
@@ -160,6 +161,21 @@ class capture:
         return False
 
 
+class cache_bypass:
+    """Disable every audit-aware LRU cache in the current context."""
+    def __init__(self) -> None:
+        self._token = None
+
+    def __enter__(self):
+        self._token = _CACHE_BYPASS.set(True)
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        if self._token is not None:
+            _CACHE_BYPASS.reset(self._token)
+        return False
+
+
 class bypass:
     """Temporarily bypass only explicitly instrumented numerical amplitude thresholds."""
     def __init__(self) -> None:
@@ -248,6 +264,8 @@ def audit_lru_cache(maxsize=None):
 
         @functools.wraps(function)
         def wrapped(*args, **kwargs):
+            if _CACHE_BYPASS.get():
+                return function(*args, **kwargs)
             value, rows = cached(_BYPASS.get(), *args, **kwargs)
             active = _ACTIVE.get()
             if active is not None:
