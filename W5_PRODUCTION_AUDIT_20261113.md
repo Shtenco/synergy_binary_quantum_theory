@@ -50,12 +50,12 @@ It is not yet a no-go theorem for BQG or proof that the full physical Hamiltonia
 
 ## 4. Discriminating diagnostics launched
 
-Two diagnostics are running on this isolated branch:
+Two diagnostics were launched on this isolated branch:
 
-- Run `43445958758`: one-node W5 closure in `shadow_no_prune` mode, with all currently instrumented pruning sites bypassed. This tests whether the scalar-selection failure disappears when instrumented thresholds are bypassed. The ledger itself still reports incomplete threshold-site coverage, so a passing shadow run would not yet prove zero loss.
-- Run `43446220696`: paired `production` and `shadow_no_prune` executions of the existing `peter_weyl_w5_scalar_failure_context_probe.py`, restricted to the K=0 seed and source node 0. The probe preserves the guard and captures the exact input key, operator stage, per-sequence output J,M weights, support, and largest complex amplitudes.
+- Run `43445958758`: one-node W5 closure in `shadow_no_prune` mode, with all currently instrumented pruning sites bypassed. It was still executing at the latest status check; no artifact/result is available. The ledger itself still reports incomplete threshold-site coverage, so a passing shadow run would not yet prove zero loss.
+- Run `43446220696`: paired `production` and `shadow_no_prune` executions of the existing `peter_weyl_w5_scalar_failure_context_probe.py`, restricted to the K=0 seed and source node 0. The `shadow_no_prune` matrix job was cancelled after the runner received a shutdown signal before producing an artifact; this is not a numerical result. The `production` matrix job was still executing at the latest status check. The probe preserves the guard and captures the exact input key, operator stage, per-sequence output J,M weights, support, and largest complex amplitudes.
 
-The paired probe is the key next artifact. If the wrong-sector weight appears before pruning or persists in shadow mode, the representation/canonicalization or operator construction must be corrected. If it appears only after thresholded accumulation, the exact sequence trace will identify the first asymmetric pruning site.
+The production probe is the next artifact to inspect. If the wrong-sector weight appears before pruning or persists in a completed shadow run, the representation/canonicalization or operator construction must be corrected. If it appears only after thresholded accumulation, the exact sequence trace will identify the first asymmetric pruning site. No conclusion is drawn from the cancelled shadow job.
 
 ## 5. Required repair sequence
 
