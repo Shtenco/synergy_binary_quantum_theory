@@ -407,3 +407,24 @@ Added regressions check every tensor axis on a non-cubic complex rank-four tenso
 ### Interpretation and remaining gate
 
 This is a measured local-kernel improvement, not evidence that the production V10 matrix is now tractable. The gain decreases at Jmax2=2, and no Jmax2=10 full matrix has yet completed with the new kernel. The next required experiment is to rerun the same preregistered production pilot without changing amp_tol, max_depth, max_states, or any physical cutoffs, then compare wall time, state counts, support, diagnostics, and complete audit traces. All ten scientific closure gates remain OPEN until their full required evidence exists; ZERO_LOSS remains NOT PROVED.
+
+## 2026-11-13 bounded-cache memory control
+
+The unbounded cache-on production pilot was killed by the 4-GiB cgroup OOM guard. A cache-off attempt stayed memory-light but produced no complete JSON within 260 seconds. This separates two resource problems: unbounded retention causes memory exhaustion, while bypassing all caches makes the operator path too slow for the same bounded wall-time window.
+
+To preserve the numerical operator while limiting retained intermediates, the large state/tensor caches are now bounded LRU caches. The audit-aware wrapper still stores and replays the exact ordered pruning events on hits; eviction only causes the original function body to be recomputed. No threshold, branch rule, spin wall, state/depth cap, spectral convention, or physical coefficient was changed.
+
+The current limits are deliberately concentrated on large objects:
+- K-composition and sine-composition state-result wrappers: 2 entries each.
+- Complete H_E state cache and local volume-column cache: 2 entries.
+- Primitive T branch cache: 16 entries.
+- Charged tensor / charged basis / all-M basis / Q123 matrix caches: 32 / 8 / 4 / 2 entries.
+- Large K5 intertwiner, spin-matrix, CG-leg, orientation, and volume caches have explicit bounded capacities; the largest volume-matrix caches retain at most 2 entries.
+
+Regressions now verify that an actual complete H_E cache eviction recomputes to the identical complex sparse output and replays the identical ordered event ledger. Separate tests assert the configured capacities and exercise generic bounded-LRU eviction. The five W5-focused suites pass **66 tests**, and the instrumented dependency chain compiles.
+
+### Current full-pilot status
+
+A fresh cache-on pilot is running with the exact previous production settings (nodes=[0], Jmax2=10, max_depth=0, max_states=500, amp_tol=1e-12) and one BLAS/OpenMP thread. At the latest checkpoint it had run for about 4.5 minutes, used about 360 MiB RSS for the Python process, and had not triggered another OOM; it had not yet written a complete result JSON. This is a resource-control improvement only, not a completed matrix. The run must finish and its matrix/ledger be inspected before any gate status changes.
+
+All ten scientific closure gates remain OPEN. Production ZERO_LOSS remains NOT PROVED.
