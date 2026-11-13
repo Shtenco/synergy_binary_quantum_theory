@@ -59,6 +59,9 @@ class TestPruningAuditCollector(unittest.TestCase):
         self.assertAlmostEqual(site["propagated_pathwise_l1"], abs(propagated))
         self.assertAlmostEqual(site["propagated_pathwise_l2"], abs(propagated))
         self.assertAlmostEqual(site["propagated_max_abs"], abs(propagated))
+        by_kind = collector.snapshot()["by_site_and_kind"]["test.propagated::coefficient_threshold"]
+        self.assertEqual(by_kind["propagated_count"], 1)
+        self.assertAlmostEqual(by_kind["propagated_pathwise_l1"], abs(propagated))
 
     def test_structural_zero_is_not_counted_as_amplitude_loss(self):
         with audit.capture() as collector:
