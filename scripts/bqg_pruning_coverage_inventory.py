@@ -41,8 +41,6 @@ EXPECTED_MODULES = {
 # Function-level exclusions are deliberate and documented. They are not
 # amplitude-pruning sites: each belongs to a distinct mathematical contract.
 NON_PRUNING_CLASSIFICATIONS = {
-    ("bqg_v10_w5_lorentzian_adjoint_closure", "add_sparse"):
-        "exact_zero_cleanup_TOL_is_zero",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"):
         "spin_wall_nonzero_branch_accounting",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"):
