@@ -118,3 +118,24 @@ The standalone CI run `43450087875` is queued. Only after it passes will the V10
 - Physical Lorentzian W5 operator, joint kernel, and physical causal cone: **OPEN**.
 
 No physical claim is promoted by these finite computational controls.
+
+
+## 8. Follow-up: close the static cache-coverage blind spot (2026-11-13)
+
+The first end-to-end inventory execution exposed a real control-flow defect: cache decorators were inspected only after the function's threshold-comparison scan, so a cached function with no threshold comparison could bypass the cache audit through an early `continue`. The scan now inspects decorators for every function before that early exit. A dedicated fixture test constructs exactly such a function and requires the inventory to fail when it finds an ordinary, unclassified LRU cache.
+
+The next production run also identified two cases requiring semantic classification rather than blanket exclusions:
+
+- `bqg_pruning_audit.cached` is the private `functools.lru_cache` implementation inside `audit_lru_cache`. The wrapper stores the numerical result together with the ordered pruning-event trace, and replays that trace on cache hits. It is now reported separately as `audit_lru_cache_internal_value_and_trace_cache`; dedicated cold-hit, warm-hit replay, and cache-bypass regression tests were added.
+- `bqg_sparse_linear_accumulator.sparsify_matrix_columns` applies a mask only after matrix columns have been assembled, so it is not state-dependent intermediate amplitude pruning. Its `tol < 0` guard is classified separately as input validation; `abs(z) > tol` is classified as a post-assembly fixed operator mask. **This classification does not certify the approximation:** an operator-norm/error bound for the discarded matrix remains required before this mask can support a quantitative production claim.
+
+GitHub Actions run `43492745470` completed successfully on commit `26e1bd75bc8244c6feb74e1e35173f74be3ec57d`:
+
+- transitive local import closure: 19 modules;
+- threshold-like comparisons inventoried: 78;
+- unclassified sites: 0;
+- unclassified ordinary LRU caches: 0;
+- the internal audit-aware cache was explicitly identified;
+- all four then-current inventory regression tests passed.
+
+This is a **static inventory PASS only**. It establishes coverage of the declared V10 local import closure and classification of discovered sites; it does not establish zero runtime loss, a bound for the post-assembly matrix mask, convergence, W5 closure, or physical SU(2) covariance. The follow-up workflow on the latest branch head additionally runs the strengthened classification assertions and the runtime cache trace-replay tests; those results must be read from their own completed run before being marked passed.
