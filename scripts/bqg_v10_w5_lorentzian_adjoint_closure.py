@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 from collections import deque
+from contextvars import ContextVar
 from pathlib import Path
 import sys
 
@@ -24,6 +25,13 @@ import sys
 W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 TOL = 0.0
+
+_ACTIVE_CV_BASE_STATE = ContextVar("w5_active_cv_base_state", default=None)
+
+
+def _freeze_sparse_state(state):
+    return tuple(sorted(state.items(), key=lambda kv: repr(kv[0])))
+
 
 
 def epsilon_triples(neighbors):
@@ -136,22 +144,26 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
         "CK_internal_volume_sector_leakage": 0.0,
         "CK_complete_charge_basis_leakage": 0.0,
     }
-    for epsilon, (a, b, c) in triples:
-        forward, leak_f, diag_f = triple_forward(
-            psi_cov, source_v, a, b, c, Jmax2,
-            RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
-        )
-        adjoint, leak_a, diag_a = triple_adjoint(
-            psi_cov, source_v, a, b, c, Jmax2,
-            RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
-        )
-        add_sparse(B, forward, epsilon)
-        add_sparse(Bdag, adjoint, epsilon)
-        diagnostics["CV_complete_basis_leakage"] = max(
-            diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
-        )
-        _merge_diag(diagnostics, diag_f)
-        _merge_diag(diagnostics, diag_a)
+    base_token = _ACTIVE_CV_BASE_STATE.set(_freeze_sparse_state(psi_cov))
+    try:
+        for epsilon, (a, b, c) in triples:
+            forward, leak_f, diag_f = triple_forward(
+                psi_cov, source_v, a, b, c, Jmax2,
+                RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
+            )
+            adjoint, leak_a, diag_a = triple_adjoint(
+                psi_cov, source_v, a, b, c, Jmax2,
+                RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
+            )
+            add_sparse(B, forward, epsilon)
+            add_sparse(Bdag, adjoint, epsilon)
+            diagnostics["CV_complete_basis_leakage"] = max(
+                diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
+            )
+                _merge_diag(diagnostics, diag_f)
+                _merge_diag(diagnostics, diag_a)
+    finally:
+        _ACTIVE_CV_BASE_STATE.reset(base_token)
     diagnostics["CK_outer_complete_basis_leakage"] = max(
         float(diagnostics.get("outer_complete_basis_leakage", 0.0)),
         float(diagnostics.get("CK_outer_complete_basis_leakage", 0.0)),
@@ -490,9 +502,6 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     old_cv_component = RAW.COMP.C_volume_component
     old_ck_component = RAW.KCOMP.C_K_component
 
-    def freeze_sparse_state(state):
-        return tuple(sorted(state.items(), key=lambda kv: repr(kv[0])))
-
     @PRUNE.audit_lru_cache(16)
     def cached_cv_component(frozen, source_v, target_v, i, j, cutoff):
         out, leak = old_cv_component(
@@ -501,8 +510,14 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         return tuple(out.items()), float(leak)
 
     def memoized_cv_component(state, source_v, target_v, i, j, cutoff):
+        frozen = _freeze_sparse_state(state)
+        # Cache only the first C(V) leg whose input is the fixed source state.
+        # Adjoint-side C(V) requests act on distinct intermediate states and
+        # must not evict the reusable source-state entries.
+        if frozen != _ACTIVE_CV_BASE_STATE.get():
+            return old_cv_component(state, source_v, target_v, i, j, cutoff)
         items, leak = cached_cv_component(
-            freeze_sparse_state(state), source_v, target_v, i, j, cutoff
+            frozen, source_v, target_v, i, j, cutoff
         )
         return dict(items), leak
 
