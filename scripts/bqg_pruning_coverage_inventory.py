@@ -121,7 +121,7 @@ def _function_has_prune_instrumentation(function: ast.AST) -> bool:
     markers = (
         "PRUNE.record_threshold", "PRUNE.keep", "PRUNE.record_merge",
         "PRUNE.filter_state", "record_dropped(", "prune_state(",
-        "add_state(", "add_dict(", "add_sparse(",
+        "add_state(", "add_dict(",
     )
     return any(marker in text for marker in markers)
 
@@ -149,6 +149,11 @@ def run_inventory() -> dict:
         ]
         for function in functions:
             key = (module, function.name)
+            # Inspect every decorator, even when the function contains no
+            # threshold-like comparison. Otherwise an uninstrumented cache
+            # can disappear from the inventory simply because its body has
+            # no local amplitude comparison.
+
             compares = [
                 node for node in ast.walk(function)
                 if isinstance(node, ast.Compare) and _threshold_like(node)
