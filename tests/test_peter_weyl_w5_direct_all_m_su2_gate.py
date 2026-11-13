@@ -25,6 +25,14 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "nonzero norm"):
             gate.require_nonzero_output({"state": 0j}, label="synthetic H_E")
 
+    def test_tiny_but_nonzero_operator_output_is_not_misclassified_as_empty(self):
+        state = {"state": 1.0e-200 + 0j}
+        self.assertEqual(gate.require_nonzero_output(state, label="tiny H_E"), 1.0e-200)
+        rel, absolute, scale = gate.relative_error(state, state)
+        self.assertEqual(rel, 0.0)
+        self.assertEqual(absolute, 0.0)
+        self.assertEqual(scale, 1.0e-200)
+
     def test_nonfinite_output_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "non-finite amplitude"):
             gate.require_nonzero_output({"state": complex(float("inf"), 0)}, label="H_E")
