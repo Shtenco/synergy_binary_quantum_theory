@@ -233,3 +233,10 @@ The comparison checks exact support and complex coefficients for:
 A timeout or capped closure yields `INCOMPLETE_CACHE_EQUIVALENCE`, not PASS. Any exact matrix or ledger mismatch yields `FAIL_CACHE_EQUIVALENCE`. The workflow is currently running as Actions run `43498621358`; no result is claimed until its uploaded JSON and completed job are inspected.
 
 The full-node closure study and shadow no-prune diagnostic remain separate gates. Their currently queued/running jobs are not interchangeable with the cache comparison and do not yet establish a no-pruning reference or physical SU(2) result.
+
+
+### 11.1. Workflow execution status and non-results
+
+The first cache-equivalence run `43498621358` compiled the comparison runner successfully and entered the two-process matrix comparison step; it has not yet produced a completed report. The follow-up workflow revision that adds explicit regression tests for incomplete-run summaries is queued as run `43498807251`.
+
+The shadow diagnostic run `43498254640` ended with its numerical step marked `cancelled`; its upload step was skipped, so no diagnostic JSON exists for inspection. This is **not** a numerical or physical FAIL. The full-node closure run `43498254658` remains pending and has not yet exposed matrix jobs. Consequently, neither the full closure nor the no-pruning reference has a confirmed numerical result at this point.
