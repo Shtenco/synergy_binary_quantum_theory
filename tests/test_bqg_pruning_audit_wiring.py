@@ -166,6 +166,10 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
                 node for node in ast.walk(tree)
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
             ):
+                # This is the private primitive inside audit_lru_cache itself;
+                # the public wrapper explicitly bypasses it when cache_mode=off.
+                if module_name == "bqg_pruning_audit" and function.name == "cached":
+                    continue
                 for decorator in function.decorator_list:
                     name = ast.unparse(decorator)
                     if "lru_cache" in name and "audit_lru_cache" not in name:
