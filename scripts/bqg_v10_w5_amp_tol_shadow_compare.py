@@ -212,9 +212,20 @@ def main() -> int:
                     "coefficient_loss_ledger",
                     "coherent_node_sum_ledger",
                 )
+                production_lower = dict(production.get("lower_level_pruning_ledger") or {})
+                cache_off_lower = dict(cache_off.get("lower_level_pruning_ledger") or {})
+                production_lower.pop("cache_policy", None)
+                cache_off_lower.pop("cache_policy", None)
                 ledger_comparison = {
-                    field: production.get(field) == cache_off.get(field)
-                    for field in ledger_fields
+                    "lower_level_pruning_ledger": production_lower == cache_off_lower,
+                    "coefficient_loss_ledger": (
+                        production.get("coefficient_loss_ledger")
+                        == cache_off.get("coefficient_loss_ledger")
+                    ),
+                    "coherent_node_sum_ledger": (
+                        production.get("coherent_node_sum_ledger")
+                        == cache_off.get("coherent_node_sum_ledger")
+                    ),
                 }
                 cache_equivalence = {
                     "status": "COMPLETED_CACHE_EQUIVALENCE",
@@ -227,6 +238,7 @@ def main() -> int:
                     ),
                     "ledger_comparison": ledger_comparison,
                     "full_ledger_exactly_equal": all(ledger_comparison.values()),
+                    "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
                     "cache_on_event_count": production.get("lower_level_pruning_ledger", {}).get("event_count"),
                     "cache_off_event_count": cache_off.get("lower_level_pruning_ledger", {}).get("event_count"),
                 }
