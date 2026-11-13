@@ -482,6 +482,32 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     clear()
                     cleared_cache_functions += 1
 
+    # Cache repeated deterministic component maps at the KKV contraction
+    # boundary.  The epsilon orbit revisits identical C(V) requests for the
+    # same exact sparse input (same source node, target leg and auxiliary
+    # indices).  The audit-aware cache replays every nested pruning event in
+    # original call order; no amplitudes are rounded and no operator is changed.
+    old_cv_component = RAW.COMP.C_volume_component
+    old_ck_component = RAW.KCOMP.C_K_component
+
+    def freeze_sparse_state(state):
+        return tuple(sorted(state.items(), key=lambda kv: repr(kv[0])))
+
+    @PRUNE.audit_lru_cache(16)
+    def cached_cv_component(frozen, source_v, target_v, i, j, cutoff):
+        out, leak = old_cv_component(
+            dict(frozen), source_v, target_v, i, j, cutoff
+        )
+        return tuple(out.items()), float(leak)
+
+    def memoized_cv_component(state, source_v, target_v, i, j, cutoff):
+        items, leak = cached_cv_component(
+            freeze_sparse_state(state), source_v, target_v, i, j, cutoff
+        )
+        return dict(items), leak
+
+    RAW.COMP.C_volume_component = memoized_cv_component
+
     seeds = [w5_input_key(K) for K in W5_K]
     closure_keys = list(seeds)
     seen = set(closure_keys)
@@ -722,6 +748,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 finally:
                     RAW.run = old_raw_run
                     PW.apply_hit_branch = old_apply_hit_branch
+                    RAW.COMP.C_volume_component = old_cv_component
+                    RAW.KCOMP.C_K_component = old_ck_component
     lower_level_pruning_ledger = lower_level_pruning.snapshot()
     lower_level_pruning_ledger["mode"] = pruning_mode
     lower_level_pruning_ledger["coverage"] = {
@@ -754,6 +782,16 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "Until coverage.complete is true, it is a partial diagnostic and "
             "must never be reported as a true no-pruning reference."
         ),
+    }
+    lower_level_pruning_ledger["component_cache"] = {
+        "C_volume_component": {
+            "hits": cached_cv_component.cache_info().hits,
+            "misses": cached_cv_component.cache_info().misses,
+            "maxsize": cached_cv_component.cache_info().maxsize,
+            "currsize": cached_cv_component.cache_info().currsize,
+            "semantics": "exact sparse-state key; audit events replayed on hits",
+        },
+        "physics_changed": False,
     }
     lower_level_pruning_ledger["cache_policy"] = {
         "cleared_lru_cache_function_count": int(cleared_cache_functions),
