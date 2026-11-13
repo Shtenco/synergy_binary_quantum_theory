@@ -131,7 +131,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         component_calls.clear()
         try:
             raw.COMP.C_volume_component = fake_component
-            with mock.patch.object(gate, "node_kkv_maps", fake_node_map), \\
+            with mock.patch.object(gate, "node_kkv_maps", fake_node_map), \
                  mock.patch.object(lsine, "run", fake_lsine_run):
                 uncached = gate.run_closure(
                     source_nodes=(0,), Jmax2=10, max_states=500,
