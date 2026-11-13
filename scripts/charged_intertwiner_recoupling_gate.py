@@ -158,15 +158,18 @@ def project_to_basis(X, basis):
 
 
 def q_block(spins, J2, M2):
-    labels = allowed_charged_labels(spins, J2)
-    basis = [charged_tensor(tuple(spins), a, b, J2, M2) for a, b in labels]
+    spins = tuple(spins)
+    dims = tuple(s + 1 for s in spins)
+    basis_matrix = charged_basis_matrix(spins, J2, M2)
+    basis = [row.reshape(dims) for row in basis_matrix]
     n = len(basis)
     Qb = np.zeros((n, n), complex)
     max_abs_leak = 0.0
     max_rel_leak = 0.0
     for j, B in enumerate(basis):
         QB = apply_q_four(B, spins)
-        coeff, recon = project_to_basis(QB, basis)
+        coeff = basis_matrix.conj() @ QB.reshape(-1)
+        recon = (coeff @ basis_matrix).reshape(QB.shape)
         Qb[:, j] = coeff
         abs_leak = float(np.linalg.norm(QB - recon))
         rel_leak = abs_leak / max(float(np.linalg.norm(QB)), 1e-30)
