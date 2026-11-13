@@ -86,6 +86,19 @@ def run(Jmax2=10, pruning_mode="production"):
     context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else None
 
     def evaluate():
+        he_by_m = {}
+        for M2 in (-2, 0, 2):
+            with PRUNE.capture() as collector:
+                result = SINE.complete_HE_sine(
+                    make_input(M2), 0, Jmax2, charged_nodes=(0,)
+                )
+            he_by_m[M2] = {
+                "state": result[0],
+                "volume_leakage": float(result[1]),
+                "basis_leakage": float(result[2]),
+                "pruning_events": collector.snapshot()["event_count"],
+            }
+
         for direction in directions:
             source_M2_values = (-2, 0) if direction > 0 else (0, 2)
             for M2 in source_M2_values:
@@ -94,18 +107,13 @@ def run(Jmax2=10, pruning_mode="production"):
                 if len(raised_input) != 1:
                     raise AssertionError("ladder action should produce one adjacent M sector")
                 raised_key, ladder_factor = next(iter(raised_input.items()))
-                with PRUNE.capture() as collector:
-                    H_input, v_leak, basis_leak = SINE.complete_HE_sine(
-                        input_key, 0, Jmax2, charged_nodes=(0,)
-                    )
-                    H_raised, v_leak_2, basis_leak_2 = SINE.complete_HE_sine(
-                        raised_key, 0, Jmax2, charged_nodes=(0,)
-                    )
+                H_input = he_by_m[M2]["state"]
+                H_raised = he_by_m[M2 + 2 * direction]["state"]
                 lhs = apply_local_ladder(H_input, 0, direction)
                 rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
                 rel, abs_err, scale = relative_error(lhs, rhs)
                 total_weight = sum(abs(amp) ** 2 for (_, labels), amp in H_input.items()
-                                    if labels[0][0] == "C")
+                                   if labels[0][0] == "C")
                 wrong_weight = sum(
                     abs(amp) ** 2 for (_, labels), amp in H_input.items()
                     if labels[0][0] != "C" or labels[0][1] != 2 or labels[0][2] != M2
@@ -123,9 +131,18 @@ def run(Jmax2=10, pruning_mode="production"):
                     "comparison_scale": scale,
                     "wrong_JM_weight_fraction": wrong_fraction,
                     "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
-                    "volume_leakage": max(float(v_leak), float(v_leak_2)),
-                    "basis_leakage": max(float(basis_leak), float(basis_leak_2)),
-                    "pruning_events": collector.snapshot()["event_count"],
+                    "volume_leakage": max(
+                        he_by_m[M2]["volume_leakage"],
+                        he_by_m[M2 + 2 * direction]["volume_leakage"],
+                    ),
+                    "basis_leakage": max(
+                        he_by_m[M2]["basis_leakage"],
+                        he_by_m[M2 + 2 * direction]["basis_leakage"],
+                    ),
+                    "pruning_events": (
+                        he_by_m[M2]["pruning_events"]
+                        + he_by_m[M2 + 2 * direction]["pruning_events"]
+                    ),
                 })
 
     if context is None:
