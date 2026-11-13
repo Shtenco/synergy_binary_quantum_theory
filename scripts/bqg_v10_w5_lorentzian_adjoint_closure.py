@@ -442,7 +442,7 @@ def _closure_cap_reasons(closure_size, input_depth, max_states, max_depth):
     return reasons
 
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production"):
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
@@ -453,6 +453,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         raise ValueError("invalid closure limits")
     if pruning_mode not in ("production", "shadow_no_prune"):
         raise ValueError("pruning_mode must be production or shadow_no_prune")
+    if not math.isfinite(float(spectral_zero_factor)) or float(spectral_zero_factor) <= 0:
+        raise ValueError("spectral_zero_factor must be finite and positive")
 
     HERE = Path(__file__).resolve().parent
     if str(HERE) not in sys.path:
@@ -461,7 +463,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_covariant_volume_leg_gate as CV
     import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
+    import peter_weyl_zeroaware_volume_migration_experiment as ZVM
     import bqg_pruning_audit as PRUNE
+    ZVM.ZERO_FACTOR = float(spectral_zero_factor)
 
     # A lower-level pruning ledger must not depend on whether a prior caller
     # warmed an lru_cache before capture. Clear every imported operator cache
@@ -711,6 +715,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 # One invocation installs the sine K engine once; the intercepted
                 # executor coherently sums the selected node maps on every basis key.
                 sine_engine_result = LSINE.run(source_nodes[0])
+                spectral_sensitivity = ZVM.spectral_audit_snapshot()
             finally:
                 RAW.run = old_raw_run
                 PW.apply_hit_branch = old_apply_hit_branch
@@ -789,6 +794,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "coefficient_loss_ledger": summarize_ledger(),
             "lower_level_pruning_ledger": lower_level_pruning_ledger,
             "coherent_node_sum_ledger": coherent_sum_ledger,
+            "spectral_sensitivity": spectral_sensitivity,
             "partial_diagnostics": {
                 "forward_frobenius_norm": sparse_frobenius(forward_columns),
                 "direct_adjoint_frobenius_norm": sparse_frobenius(adjoint_columns),
@@ -913,6 +919,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         "coefficient_loss_ledger": summarize_ledger(),
         "lower_level_pruning_ledger": lower_level_pruning_ledger,
         "coherent_node_sum_ledger": coherent_sum_ledger,
+        "spectral_sensitivity": spectral_sensitivity,
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
             "direct_adjoint_absolute_residual": err,
@@ -953,6 +960,7 @@ def main():
         help="disable both reachable-state and path-depth caps (finite Jmax2 still applies)",
     )
     ap.add_argument("--amp-tol", type=float, default=1e-12)
+    ap.add_argument("--spectral-zero-factor", type=float, default=1000.0)
     ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
@@ -960,7 +968,7 @@ def main():
     max_depth = None if args.unbounded_closure else args.max_depth
     result = run_closure(
         args.nodes, args.Jmax2, max_states, max_depth,
-        args.amp_tol, args.pruning_mode,
+        args.amp_tol, args.pruning_mode, args.spectral_zero_factor,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
