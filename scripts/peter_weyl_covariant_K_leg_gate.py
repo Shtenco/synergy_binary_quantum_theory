@@ -169,11 +169,7 @@ def apply_volume_allJ_oriented(T, spins_local, v):
             continue
         Vb = canonical_volume_block_general(tuple(spins_local), J2)
         for M2 in PW.m2vals_t(J2):
-            basis = [
-                CH.charged_tensor(tuple(spins_local), a, b, J2, M2)
-                for a, b in rec
-            ]
-            basis_matrix = np.stack([B.reshape(-1) for B in basis], axis=0)
+            basis_matrix = CH.charged_basis_matrix(tuple(spins_local), J2, M2)
             coeff = basis_matrix.conj() @ xflat
             recon += (coeff @ basis_matrix).reshape(X.shape)
             outc = Vb @ coeff
