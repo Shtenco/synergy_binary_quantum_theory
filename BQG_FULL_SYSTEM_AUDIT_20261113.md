@@ -1,0 +1,156 @@
+# BQG full-system audit checkpoint — 2026-11-13
+
+## Executive result
+
+The repository contains a mathematically proved **reduced-model propagation cone** and a growing causal-response reference/testing layer. The reduced cone is real work and is not being dismissed. It is not yet the physical Lorentz cone of the full graph-changing BQG theory.
+
+Current machine-checked status remains:
+
+- `structural_candidate_closed = false`
+- `physicalization_complete = false`
+- `experimentally_confirmed = false`
+- all 9 required physicalization gates and all 4 supplemental physical gates remain `open_physical`.
+
+No physical gate was closed by this audit.
+
+## 1. Proven causal-cone result
+
+The reduced homogeneous free-fermion / staggered-volume model has dispersion
+
+\[
+E_\pm(k)=\pm\sqrt{4m^2+9\cos^2 k}.
+\]
+
+Its sharp asymptotic ballistic front is
+
+\[
+v_{\mathrm{front}}(m)=\sqrt{4m^2+9}-2|m|.
+\]
+
+The nearest complex-momentum branch point gives
+
+\[
+\mu_c=\operatorname{arsinh}(2|m|/3)=\xi^{-1},
+\]
+
+and the static/dynamic identity is
+
+\[
+v_{\mathrm{front}}/3=e^{-1/\xi}.
+\]
+
+At criticality, \(m=0\), the exact propagator is \(U_r(t)=i^rJ_r(3t)\), with front speed 3 in the model's own units. For every fixed positive contour displacement inside the analytic strip, the propagator has an exponential exterior bound; taking the contour displacement to zero recovers the exact group-velocity front.
+
+Local execution of `scripts/bqg_sharp_analytic_causal_cone_gate.py` passed 25 contour-grid comparisons: five masses (0.2, 0.5, 1, 2, 5) and five analytic-strip fractions per mass, plus the massless critical limit and the static/dynamic identity.
+
+**Scope:** this proves the cone in the stated reduced free-fermion model. It does not prove the continuum Lorentz cone of full physical BQG, exact microcausality for the interacting graph-changing theory, or a measured speed of light.
+
+## 2. Independent LeMaitre–Perche comparison: limited but useful
+
+The pinned external 1+1 reconstruction metric has null slopes
+
+- \(-0.9999391238985609\)
+- \(+0.9999389681654915\).
+
+The reduced BQG massless front is 3 in its own units; dividing by 3 gives a dimensionless value of 1. The reference comparison passes the declared tolerance.
+
+This is a **dimensionless consistency check only**. The external work uses a massless scalar field on an already prescribed Minkowski background, supplies physical coordinates to the agent, and reconstructs a 1+1 metric from a QMI-based objective. The stored metric was obtained using a neighbour-ridge mask and an unweighted quadratic fit with \(g_{xx}=1\). The offline gate does not rerun the external notebook or five-agent training. It therefore does not establish common microscopic dynamics, BQG geometrogenesis, photon propagation, or physical unit calibration.
+
+## 3. Physical history / causal response layer
+
+The physical-history reference engine now covers:
+
+- physical-environment Gram positivity for a supplied metric;
+- decoherence-functional positivity and interference controls;
+- support depth versus coherent depth;
+- synthetic channel-front comparisons across refinement levels.
+
+The inputs in the reference tests are supplied/synthetic. They are not actual BQG physical states or retarded kernels. A kinematical partial trace, QMI landscape, symmetric correlator, master-constraint heat-kernel parameter, or constraint-resolvent spectral variable is not a substitute for a physical retarded response.
+
+The 4 supplemental physical gates are present and correctly remain open:
+
+- `PHYSICAL_ENVIRONMENT_OVERLAP`
+- `PHYSICAL_BORN_MEASURE`
+- `PHYSICAL_RELATIONAL_CLOCK_RESPONSE`
+- `PHYSICAL_COMMON_CAUSAL_CONE`
+
+The required 9 physical gates also remain open: physical projector/history, connected inter-block history, physical TT kernel, IR six-vector, common scale calibration, dynamical Maxwell kernel, physical background cosmology, physical scalar cosmology, and lensing dynamics closure.
+
+## 4. Repository-wide truth-ledger audit
+
+Local execution on the staged source snapshot:
+
+- `scripts/verify_theory_gates.py`: valid; 55 structural gates — 23 `proved`, 21 `tested_finite`, 4 `conditional`, 4 `external_extension`, 2 `experimental_test`, 1 `no_go`. It correctly reports `structural_candidate_closed=false`.
+- `scripts/verify_physicalization_gates.py`: valid; 23 physicalization ledger entries — 2 `proved`, 6 `tested_finite`, 13 `open_physical`, 2 `experimental_test`. `physicalization_complete=false`.
+- `scripts/audit_core_scope.py`: PASS; 525 active text/code files and 221 active Python files; historical archive quarantined; no retired vocabulary or retired-module imports.
+
+The single core `no_go` is `PURE_ANCILLA_NODE_REFINEMENT`: a fixed pure four-qubit Gauss-singlet ancilla cannot induce the canonical S4-equivariant map. This is a no-go for that specific shortcut, not a refutation of the replacement bilinear construction. The bilinear refinement gate locally passes with S4 covariance error \(9.996\times10^{-16}\), projection leakage \(3.43\times10^{-31}\), and rank 2. Whether this no-go should remain classified as a core gate or be recorded as a rejected construction route is a theory-governance decision; do not silently reclassify it.
+
+## 5. Production W5 source staging and reproducibility
+
+The W5 staging artifact from workflow run `43442708226` was downloaded and inspected as data, not executed as an archive.
+
+- outer artifact SHA-256: `998a23e7d931a17dd210f9500f0164ca4713eb8c73cf0f89d16a92862203a54f`
+- nested source archive SHA-256: `fa388676eb8489756c693ad96ee956d19c2754fdd82e85812a5bc20a5dd9b6c5`
+- source commit: `e7f6b983e2990b1c268d9164f7f2e438f54e9e6e`
+- source tree: `60e32745e0fb630964714876775e8cde20e1adab`
+- all 760 manifest-listed source files passed byte-count and SHA-256 verification.
+
+Local execution on the extracted source snapshot:
+
+- `python -m compileall -q scripts tests`: exit 0; one non-fatal Python 3.13 SyntaxWarning for an invalid `\o` escape in a docstring at `scripts/q2_relational_history_projector_gate.py:15`.
+- 56 focused W5/adjoint/common-carrier/dispatch regression tests: PASS.
+- analytic reduced cone gate: PASS.
+- LeMaitre finite-reference comparison: PASS.
+- physical-history reference engine: executed successfully.
+- theory and physicalization truth validators: PASS.
+- core-scope audit: PASS.
+
+The full local V10 W5 production closure did not complete within the 300-second execution limit, even for a one-seed/one-node probe. This is recorded as `NOT RUN TO COMPLETION`, not as a scientific failure or a successful result.
+
+A bounded GitHub Actions production closure study was launched separately on branch `research/bqg-w5-production-audit-20261113`: run `43444229133`, all five W5 seeds and all five K5 source nodes, with `Jmax2=10,12,14`, `max_states=500`, `max_depth=8`, `amp_tol=1e-12`. At the time of this checkpoint the three matrix jobs were still executing. No numerical conclusion is claimed until their artifacts are inspected.
+
+## 6. Input-integrity hardening in the causal-response reference engine
+
+Draft PR #82 adds fail-closed validation for:
+
+- non-finite physical metrics, state vectors, class operators, history amplitudes, and response samples;
+- non-finite/negative thresholds;
+- fractional or boolean history depths that were previously coerced to integers.
+
+Five regression tests cover malformed inputs. The workflow was expanded to execute both the reduced analytic cone gate and the LeMaitre finite-reference comparison in addition to the physical-history tests and fail-closed physicalization ledger.
+
+GitHub Actions run `43443370864` completed successfully, including compile/run, analytic cone and independent reference comparison, regression tests, physicalization ledger validation, and fail-closed status enforcement.
+
+PR #82 is deliberately draft and unmerged.
+
+## 7. Production W5 blockers that remain
+
+The source audit identifies several independent issues that must not be collapsed into a single PASS:
+
+1. Lower-level numerical pruning is instrumented only partially; the V10 result explicitly sets `lower_level_pruning_coverage_complete=false`. `shadow_no_prune` is therefore not yet a true no-pruning reference.
+2. The incremental-pruning counterexample shows that deleting a running key after each sub-threshold addition is not equivalent to coherent accumulation followed by one final threshold. Its production frequency and magnitude must be measured from the actual path.
+3. Spin-wall omissions, amplitude-threshold omissions, spectral zero-aware regularization, and state/depth caps are distinct error channels and need separate ledgers and convergence studies.
+4. The 36x36 fixture is a two-node supplied fixture, not a five-node production W5 amplitude export.
+5. A direct-adjoint consistency result is not by itself a physical Hermitian Hamiltonian, a positive physical inner product, or a physical TT kernel.
+
+The production `ZERO_LOSS` claim remains **NOT CERTIFIED**.
+
+## 8. Required next sequence
+
+1. Finish and inspect the Jmax2=10/12/14 W5 production artifacts; compare full complex supports, norms, spin-wall omissions, amplitude losses, closure caps, and direct-adjoint residuals.
+2. Run cache-on/cache-off and production-vs-shadow comparisons on the same frozen source, spectral convention, input basis, and node ordering.
+3. Complete a transitive threshold-site inventory; close the `lower_level_pruning_coverage_complete` gap before interpreting any no-pruning result.
+4. Derive the physical clock or boundary-history ordering from the actual graph-changing constraints and construct the positive physical inner product/rigging map.
+5. Build physical history class operators and gauge-invariant relational observables; only then compute intervention-based physical retarded kernels.
+6. Compare photon, matter, scalar, vector, and TT fronts on one physical carrier and background; independently reconstruct the spectral metric and test regulator/volume/clock/state convergence.
+7. Resolve the pure-ancilla no-go's role in the canonical gate policy without hiding the counterexample.
+
+## Final audit verdict
+
+**Reduced causal cone: proved within its reduced free-fermion model.**  
+**Causal-response reference infrastructure: implemented and regression-tested.**  
+**Full physical BQG causal cone: OPEN.**  
+**Full physical BQG theory: not complete and not experimentally confirmed.**
+
+This checkpoint is an evidence ledger, not a declaration of theory completion.
