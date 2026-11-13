@@ -23,10 +23,7 @@ import sys
 
 W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
-TOL = 0.0
-
 from bqg_sparse_linear_accumulator import SparseLinearAccumulator
-
 
 def epsilon_triples(neighbors):
     import itertools
