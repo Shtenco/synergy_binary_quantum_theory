@@ -58,6 +58,10 @@ This is a **dimensionless consistency check only**. The external work uses a mas
 
 ## 3. Physical history / causal response layer
 
+The W5 exact Hermitian spectral certificate also passes. It proves the finite Euclidean Gram lower bound \(\\lambda_{\\min}(G_{EE})>32.41356\), hence \(\\sigma_{\\min}(A)>5.6932907883\). Therefore a cancellation in \(H=-(2/3)A+Q\) requires \(\\|Q\\|_{op}>3.7955271922\), while a cancellation in \(H=A+\\lambda B\) requires \(|\\lambda|\\|B\\|_{op}>5.6932907883\). The Lorentzian map \(B\) is not present in this certificate; these are necessary thresholds, not a measured cancellation or physical joint-kernel result.
+
+## 3. Physical history / causal response layer
+
 Additional local controls were executed after the first draft of this checkpoint:
 
 - The finite master-projector control passed with Hilbert dimension 8, four constraints, a two-dimensional common kernel, common-kernel residual \(1.35\times10^{-15}\), and projector agreement across four positive metric choices at approximately \(10^{-15}\).
