@@ -49,8 +49,13 @@ class PruningCollector:
             row["prior_real"] = float(complex(prior).real)
             row["prior_imag"] = float(complex(prior).imag)
         if incoming is not None:
-            row["incoming_real"] = float(complex(incoming).real)
-            row["incoming_imag"] = float(complex(incoming).imag)
+            inc = complex(incoming)
+            propagated = inc * z
+            row["incoming_real"] = float(inc.real)
+            row["incoming_imag"] = float(inc.imag)
+            row["propagated_real"] = float(propagated.real)
+            row["propagated_imag"] = float(propagated.imag)
+            row["propagated_abs"] = float(abs(propagated))
         self.events.append(row)
         stats = self._by_site[str(site_id)]
         stats["count"] += 1
@@ -158,7 +163,8 @@ def filter_state(site_id: str, state: dict, threshold: float) -> dict:
     return kept
 
 
-def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -> None:
+def record_threshold(site_id: str, key: Any, value: complex, threshold: float,
+                     *, incoming: complex | None = None) -> None:
     collector = _ACTIVE.get()
     z = complex(value)
     # Structural zeros are not amplitude-pruning losses. They remain absent
@@ -167,6 +173,7 @@ def record_threshold(site_id: str, key: Any, value: complex, threshold: float) -
         collector.record(
             site_id, key, z, threshold,
             kind="would_prune_bypassed" if _BYPASS.get() else "coefficient_threshold",
+            incoming=incoming,
         )
 
 
