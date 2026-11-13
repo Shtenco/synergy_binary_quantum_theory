@@ -650,6 +650,27 @@ class TestW5CacheTransparency(unittest.TestCase):
         KLEG.HE_complete_cached.cache_clear()
 
 
+    def test_bounded_HE_cache_eviction_preserves_full_operator_and_ledger(self):
+        CK.HE_complete_cached.cache_clear()
+        raw_keys = PW.basis_full_jhalf()[:3]
+        keys = [
+            (raw[0], tuple(CK.label_gauss(k) for k in raw[1]))
+            for raw in raw_keys
+        ]
+        results = []
+        event_rows = []
+        for key in (keys[0], keys[1], keys[2], keys[0]):
+            with audit.capture() as collector:
+                results.append(CK.HE_complete_cached(key, 0, 1))
+            event_rows.append(collector.snapshot()["events"])
+
+        self.assertEqual(CK.HE_complete_cached.cache_info().maxsize, 2)
+        self.assertEqual(CK.HE_complete_cached.cache_info().misses, 4)
+        self.assertEqual(CK.HE_complete_cached.cache_info().hits, 0)
+        self.assertEqual(results[0], results[3])
+        self.assertEqual(event_rows[0], event_rows[3])
+        CK.HE_complete_cached.cache_clear()
+
     def test_complete_HE_cache_replays_nested_audit_trace_on_warm_hit(self):
         from unittest.mock import patch
         import peter_weyl_covariant_K_leg_gate as KLEG
