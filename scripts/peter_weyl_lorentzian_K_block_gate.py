@@ -38,7 +38,7 @@ import k5_peter_weyl_safe_hda_column as PW
 import bqg_pruning_audit as PRUNE
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def _local_volume_column_full(key, v: int):
     """Return retained and threshold-candidate coefficients for one V column."""
     spins, Ks = key
