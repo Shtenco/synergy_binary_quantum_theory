@@ -35,6 +35,18 @@ class TestV10StrictComplexAccumulation(unittest.TestCase):
         self.assertEqual(result[self.key], expected)
         self.assertEqual(leakage, 0.0)
 
+    def test_complete_node_maps_are_fsum_accumulated_before_thresholds(self):
+        key = "same-output-basis-state"
+        result = V10.sum_sparse_maps([
+            {key: 1.0e16 + 1.0e16j},
+            {key: 1.0 + 2.0j},
+            {key: -1.0e16 - 1.0e16j},
+        ])
+        self.assertEqual(result[key], 1.0 + 2.0j)
+
+    def test_empty_node_maps_have_empty_sum(self):
+        self.assertEqual(V10.sum_sparse_maps([{}, {}]), {})
+
     def test_strict_accumulator_is_used_by_production_v10_module(self):
         self.assertEqual(V10.SparseLinearAccumulator.__name__, "SparseLinearAccumulator")
         self.assertEqual(V10.SparseLinearAccumulator.__module__, "bqg_sparse_linear_accumulator")
