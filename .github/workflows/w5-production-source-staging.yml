@@ -58,12 +58,14 @@ jobs:
           python -m unittest discover -s tests -p 'test_bqg_pruning_audit_wiring.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_amp_tol_shadow_compare.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_convergence_grid.py' -v
       - name: Compile the complete instrumented W5 dependency chain
         run: |
           python -m py_compile \
             scripts/bqg_pruning_audit.py \
             scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
             scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
+            scripts/bqg_v10_w5_convergence_grid.py \
             scripts/k5_peter_weyl_safe_hda_column.py \
             scripts/peter_weyl_covariant_volume_leg_gate.py \
             scripts/peter_weyl_covariant_K_leg_gate.py \
