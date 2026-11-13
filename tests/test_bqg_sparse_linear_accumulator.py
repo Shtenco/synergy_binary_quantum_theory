@@ -24,8 +24,8 @@ class TestSparseLinearAccumulator(unittest.TestCase):
         expected_discarded = math.hypot(0.5, 0.0)
         self.assertAlmostEqual(report["discarded_frobenius_norm"], expected_discarded)
         self.assertEqual(report["spectral_norm_error_upper_bound"], expected_discarded)
-        self.assertEqual(report["discarded_count"], 2)
-        self.assertEqual(report["retained_count"], 2)
+        self.assertEqual(report["discarded_nonzero_count"], 2)
+        self.assertEqual(report["retained_nonzero_count"], 2)
         self.assertEqual(report["bound"], "||A-A_tau||_2 <= ||A-A_tau||_F")
         self.assertEqual(report["scope"], (
             "post-assembly elementwise matrix mask only; excludes all "
@@ -54,7 +54,7 @@ class TestSparseLinearAccumulator(unittest.TestCase):
         expected = sparsify_matrix_columns(columns, 1e-3)
         actual, report = sparsify_matrix_columns_with_error_bound(columns, 1e-3)
         self.assertEqual(actual, expected)
-        self.assertEqual(report["discarded_count"], 2)
+        self.assertEqual(report["discarded_nonzero_count"], 2)
 
     def test_empty_and_zero_matrices_have_zero_bound(self):
         kept, report = sparsify_matrix_columns_with_error_bound([{}, {"x": 0j}], 0.0)
