@@ -160,8 +160,8 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
             diagnostics["CV_complete_basis_leakage"] = max(
                 diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
             )
-                _merge_diag(diagnostics, diag_f)
-                _merge_diag(diagnostics, diag_a)
+            _merge_diag(diagnostics, diag_f)
+            _merge_diag(diagnostics, diag_a)
     finally:
         _ACTIVE_CV_BASE_STATE.reset(base_token)
     diagnostics["CK_outer_complete_basis_leakage"] = max(
