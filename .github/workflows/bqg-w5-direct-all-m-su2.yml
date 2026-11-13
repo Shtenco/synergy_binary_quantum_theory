@@ -12,6 +12,10 @@ on:
       - 'scripts/charged_intertwiner_recoupling_gate.py'
   workflow_dispatch:
 
+concurrency:
+  group: bqg-w5-direct-all-m-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
