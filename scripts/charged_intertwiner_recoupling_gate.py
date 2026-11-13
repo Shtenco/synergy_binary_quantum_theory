@@ -101,6 +101,19 @@ def charged_tensor(spins, K12, K34, J2, M2):
     ).astype(complex, copy=False)
 
 
+@PRUNE.audit_lru_cache(None)
+def charged_basis_matrix(spins, J2, M2):
+    """Cached row-major CG basis for one charged (J,M) sector."""
+    spins = tuple(spins)
+    labels = allowed_charged_labels(spins, J2)
+    basis = [charged_tensor(spins, a, b, J2, M2) for a, b in labels]
+    if not basis:
+        return np.zeros((0, int(np.prod([s + 1 for s in spins]))), dtype=complex)
+    matrix = np.stack([tensor.reshape(-1) for tensor in basis], axis=0)
+    matrix.setflags(write=False)
+    return matrix
+
+
 def close_with_external_half(TJM, J2, M2):
     if J2 != 1:
         raise ValueError("a single external fundamental closes only J=1/2")
