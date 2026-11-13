@@ -249,3 +249,10 @@ The W5 closure runner now accepts `--seed-K` as an explicit subset of the canoni
 The shadow smoke workflow now requests only `--seed-K 0`, with `max_states=1) and `max_depth=0`, and asserts that the result reports exactly `[0]`. This is deliberately a scoped execution diagnostic, not a five-seed W5 closure or a physical validation.
 
 The closure workflow additionally runs the dedicated algebra/closure-control unit-test module before launching its full five-seed, five-source-node matrix over (J_{max 2}=10,12,14). This ensures the new seed-subset validation and existing direct-adjoint algebra tests execute in CI.
+
+
+### 10.3. CI dependency correction for the W5 algebra unit suite
+
+The first attempt to add `test_bqg_v10_w5_lorentzian_adjoint_closure.py` to the fast inventory workflow failed for an infrastructure/configuration reason: that workflow did not install NumPy, while the algebra test module imports NumPy at module load. The existing inventory, pruning-audit, and sparse-mask suites still passed in that run (5, 11, and 6 tests respectively); the newly added algebra suite did not execute.
+
+The workflow has now been corrected to install `numpy` and `sympy` before running the W5 closure unit suite. This is a test-environment fix, not a change to the test assertions or the operator implementation. The rerun is required before claiming the new suite passes.
