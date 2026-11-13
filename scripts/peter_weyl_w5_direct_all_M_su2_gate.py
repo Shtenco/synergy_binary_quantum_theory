@@ -56,15 +56,59 @@ def add_sparse(dst, src, scale=1.0):
 
 
 def norm(state):
-    return math.sqrt(sum(abs(amp) ** 2 for amp in state.values()))
+    if not state:
+        return 0.0
+    weights = []
+    for amp in state.values():
+        z = complex(amp)
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("operator output contains a non-finite amplitude")
+        weights.append(abs(z) ** 2)
+    total = math.fsum(weights)
+    if not math.isfinite(total):
+        raise ValueError("operator output norm is non-finite")
+    return math.sqrt(total)
+
+
+def require_nonzero_output(state, *, label):
+    """Reject empty, numerically zero, or non-finite operator results."""
+    if not state:
+        raise AssertionError(f"{label} returned an empty sparse state")
+    value = norm(state)
+    if not math.isfinite(value) or value <= 1e-30:
+        raise AssertionError(f"{label} has no resolvable nonzero norm")
+    return value
 
 
 def relative_error(a, b):
-    err2 = 0.0
-    for key in set(a) | set(b):
-        err2 += abs(a.get(key, 0j) - b.get(key, 0j)) ** 2
-    scale = max(norm(a), norm(b), 1e-30)
+    if not a or not b:
+        raise AssertionError("commutator comparison cannot use an empty state")
+    err2 = math.fsum(
+        abs(a.get(key, 0j) - b.get(key, 0j)) ** 2
+        for key in set(a) | set(b)
+    )
+    scale = max(norm(a), norm(b))
+    if not math.isfinite(scale) or scale <= 1e-30:
+        raise AssertionError("commutator comparison has a zero or invalid norm scale")
     return math.sqrt(err2) / scale, math.sqrt(err2), scale
+
+
+def wrong_sector_fraction(state, *, node, expected_j2, expected_m2):
+    """Measure forbidden (J,M) weight against the full nonzero output norm."""
+    total = math.fsum(abs(complex(amp)) ** 2 for amp in state.values())
+    if not math.isfinite(total) or total <= 1e-60:
+        raise AssertionError("charged-sector output has zero or invalid total weight")
+    wrong = 0.0
+    for (_, labels), amp in state.items():
+        label = labels[node]
+        if label[0] != "C":
+            raise AssertionError(f"operator output lost charged basis at node {node}")
+        if int(label[1]) != expected_j2 or int(label[2]) != expected_m2:
+            wrong += abs(complex(amp)) ** 2
+    fraction = wrong / total
+    if not math.isfinite(fraction):
+        raise AssertionError("wrong-sector fraction is non-finite")
+    return fraction
 
 
 def make_input(M2):
@@ -92,8 +136,10 @@ def run(Jmax2=10, pruning_mode="production"):
                 result = SINE.complete_HE_sine(
                     make_input(M2), 0, Jmax2, charged_nodes=(0,)
                 )
+            require_nonzero_output(result[0], label=f"H_E(M2={M2})")
             he_by_m[M2] = {
                 "state": result[0],
+                "norm": norm(result[0]),
                 "volume_leakage": float(result[1]),
                 "basis_leakage": float(result[2]),
                 "pruning_events": collector.snapshot()["event_count"],
@@ -112,13 +158,9 @@ def run(Jmax2=10, pruning_mode="production"):
                 lhs = apply_local_ladder(H_input, 0, direction)
                 rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
                 rel, abs_err, scale = relative_error(lhs, rhs)
-                total_weight = sum(abs(amp) ** 2 for (_, labels), amp in H_input.items()
-                                   if labels[0][0] == "C")
-                wrong_weight = sum(
-                    abs(amp) ** 2 for (_, labels), amp in H_input.items()
-                    if labels[0][0] != "C" or labels[0][1] != 2 or labels[0][2] != M2
+                wrong_fraction = wrong_sector_fraction(
+                    H_input, node=0, expected_j2=2, expected_m2=M2
                 )
-                wrong_fraction = wrong_weight / total_weight if total_weight > 0.0 else 0.0
                 cases.append({
                     "direction": "J_plus" if direction > 0 else "J_minus",
                     "input_M2": M2,
@@ -126,6 +168,8 @@ def run(Jmax2=10, pruning_mode="production"):
                     "ladder_factor": ladder_factor,
                     "input_HE_support": len(H_input),
                     "raised_HE_support": len(H_raised),
+                    "input_HE_norm": he_by_m[M2]["norm"],
+                    "raised_HE_norm": he_by_m[M2 + 2 * direction]["norm"],
                     "commutator_relative_residual": rel,
                     "commutator_absolute_residual": abs_err,
                     "comparison_scale": scale,
