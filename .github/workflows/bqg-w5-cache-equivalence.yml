@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/bqg-w5-cache-equivalence.yml'
       - 'scripts/bqg_v10_w5_cache_equivalence.py'
+      - 'tests/test_bqg_v10_w5_cache_equivalence.py'
       - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'scripts/bqg_pruning_audit.py'
@@ -62,6 +63,7 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_cache_equivalence.py
           python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_cache_equivalence.py' -v
       - name: Compare fresh-process cache-on and cache-off W5 matrices and ledgers
         shell: bash
         run: |
