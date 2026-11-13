@@ -255,7 +255,7 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             ls=local_spins(spins,v);opts=[]
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
-                PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12)
+                PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12,incoming=amp)
                 if PRUNE.keep(c,1e-12): opts.append((K,c))
             if not opts: ok=False;break
             local_opts.append(opts)
