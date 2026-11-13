@@ -103,6 +103,21 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 D[:, n] += sign * dense(d, self.dim)
         np.testing.assert_allclose(D, F.conj().T, rtol=5e-13, atol=5e-13)
 
+    def test_state_and_depth_caps_are_reported_independently(self):
+        self.assertEqual(
+            gate._closure_cap_reasons(500, 8, 500, 8),
+            {"max_states": 500, "max_depth": 8},
+        )
+        self.assertEqual(
+            gate._closure_cap_reasons(500, 7, 500, 8),
+            {"max_states": 500},
+        )
+        self.assertEqual(
+            gate._closure_cap_reasons(499, 8, 500, 8),
+            {"max_depth": 8},
+        )
+        self.assertEqual(gate._closure_cap_reasons(1000, 100, None, None), {})
+
     def test_final_closure_gate_requires_lsine_gate(self):
         common = dict(
             forward_norm=1.0,
