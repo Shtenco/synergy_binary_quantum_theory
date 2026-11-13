@@ -296,6 +296,22 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
         np.testing.assert_allclose(actual_coeff, expected_coeff, rtol=0.0, atol=1e-14)
         np.testing.assert_allclose(actual_recon, expected_recon, rtol=0.0, atol=1e-14)
 
+    def test_highest_weight_volume_block_matches_all_magnetic_sectors(self):
+        spins = (1, 1, 1, 1)
+        for J2 in CV.all_total_J2(spins):
+            blocks = [
+                CHARGED.q_block(spins, J2, M2)[1]
+                for M2 in PW.m2vals_t(J2)
+            ]
+            for block in blocks[1:]:
+                np.testing.assert_allclose(block, blocks[0], rtol=0.0, atol=1e-12)
+
+            averaged = sum(blocks) / len(blocks)
+            expected = CHARGED.canonical_volume_block(averaged)
+            actual = CK.canonical_volume_block_general(spins, J2)
+            np.testing.assert_allclose(actual, expected, rtol=0.0, atol=1e-12)
+            CK.canonical_volume_block_general.cache_clear()
+
     def test_separable_contraction_matches_original_magnetic_sum(self):
         cases = (
             ((4, 4, 4, 4), 4, 4, 0, 0),
