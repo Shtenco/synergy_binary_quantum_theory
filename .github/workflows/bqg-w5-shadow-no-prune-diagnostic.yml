@@ -36,7 +36,7 @@ jobs:
         run: |
           set +e
           python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
-            --nodes 0 --Jmax2 10 --max-states 5 --max-depth 0 \
+            --nodes 0 --seed-K 0 --Jmax2 10 --max-states 1 --max-depth 0 \
             --amp-tol 0 --pruning-mode shadow_no_prune \
             --output verification_results/W5_SHADOW_SCALAR_SELECTION_NODE0_J10.json
           rc=$?
