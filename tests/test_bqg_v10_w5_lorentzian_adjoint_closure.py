@@ -69,12 +69,10 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         original_component = raw.COMP.C_volume_component
         original_forward = gate.triple_forward
         original_adjoint = gate.triple_adjoint
-        original_epsilon = gate.epsilon_triples
         original_gauss_to_covariant = CV.gauss_to_covariant
         original_lsine_run = lsine.run
         component_calls = []
         component_results = []
-        base_state = {("base",): 1.0 + 0j}
 
         def fake_component(state, source_v, target_v, i, j, cutoff):
             component_calls.append((
@@ -87,11 +85,17 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             )
             return ({("memo", source_v, target_v, i, j): 0.5 + 0.25j}, 0.0)
 
+        def fake_gauss_to_covariant(state, source_v):
+            seed_key = next(iter(state))
+            return {("base", seed_key[1][0]): 1.0 + 0j}
+
         def fake_forward(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
-            first = cv_component(psi_cov, source_v, c, 0, 0, Jmax2)
-            second = cv_component(psi_cov, source_v, c, 0, 0, Jmax2)
-            self.assertEqual(first, second)
-            component_results.append(first)
+            for i in range(2):
+                for j in range(2):
+                    first = cv_component(psi_cov, source_v, c, i, j, Jmax2)
+                    second = cv_component(psi_cov, source_v, c, i, j, Jmax2)
+                    self.assertEqual(first, second)
+                    component_results.append(first)
             return {}, 0.0, {}
 
         def fake_adjoint(psi_cov, source_v, a, b, c, Jmax2, cv_component, ck_component):
@@ -105,8 +109,7 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
 
         try:
             raw.COMP.C_volume_component = fake_component
-            with mock.patch.object(CV, "gauss_to_covariant", lambda state, v: dict(base_state)), \
-                 mock.patch.object(gate, "epsilon_triples", lambda neighbors: [(1, (1, 2, 3)), (-1, (2, 1, 3))]), \
+            with mock.patch.object(CV, "gauss_to_covariant", fake_gauss_to_covariant), \
                  mock.patch.object(gate, "triple_forward", fake_forward), \
                  mock.patch.object(gate, "triple_adjoint", fake_adjoint), \
                  mock.patch.object(lsine, "run", fake_lsine_run):
@@ -118,28 +121,27 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             raw.COMP.C_volume_component = original_component
             gate.triple_forward = original_forward
             gate.triple_adjoint = original_adjoint
-            gate.epsilon_triples = original_epsilon
             CV.gauss_to_covariant = original_gauss_to_covariant
             lsine.run = original_lsine_run
 
         cache = cached["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
         self.assertEqual(cache["maxsize"], 16)
-        self.assertEqual(cache["misses"], 1)
-        self.assertEqual(cache["hits"], 19)
-        self.assertEqual(len(component_calls), 11)
+        self.assertEqual(cache["misses"], 80)
+        self.assertEqual(cache["hits"], 880)
+        self.assertEqual(len(component_calls), 200)
         cached_results = list(component_results)
         cached_events = [
             e for e in cached["lower_level_pruning_ledger"]["events"]
             if e["site_id"] == "test.memoized_CV"
         ]
-        self.assertEqual(len(cached_events), 30)
+        self.assertEqual(len(cached_results), 480)
+        self.assertEqual(len(cached_events), 1080)
 
         component_calls.clear()
         component_results.clear()
         try:
             raw.COMP.C_volume_component = fake_component
-            with mock.patch.object(CV, "gauss_to_covariant", lambda state, v: dict(base_state)), \
-                 mock.patch.object(gate, "epsilon_triples", lambda neighbors: [(1, (1, 2, 3)), (-1, (2, 1, 3))]), \
+            with mock.patch.object(CV, "gauss_to_covariant", fake_gauss_to_covariant), \
                  mock.patch.object(gate, "triple_forward", fake_forward), \
                  mock.patch.object(gate, "triple_adjoint", fake_adjoint), \
                  mock.patch.object(lsine, "run", fake_lsine_run):
@@ -151,14 +153,13 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             raw.COMP.C_volume_component = original_component
             gate.triple_forward = original_forward
             gate.triple_adjoint = original_adjoint
-            gate.epsilon_triples = original_epsilon
             CV.gauss_to_covariant = original_gauss_to_covariant
             lsine.run = original_lsine_run
 
         off_cache = uncached["lower_level_pruning_ledger"]["component_cache"]["C_volume_component"]
         self.assertEqual(off_cache["hits"], 0)
         self.assertEqual(off_cache["misses"], 0)
-        self.assertEqual(len(component_calls), 30)
+        self.assertEqual(len(component_calls), 1080)
         self.assertEqual(component_results, cached_results)
         off_events = [
             e for e in uncached["lower_level_pruning_ledger"]["events"]
