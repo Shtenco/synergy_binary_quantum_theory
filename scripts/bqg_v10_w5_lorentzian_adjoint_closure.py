@@ -52,13 +52,12 @@ def w5_input_key(K):
     return ((4,) * 10, (K, 0, 0, 0, 0))
 
 
-def add_sparse(dst, src, scale=1.0, tol=TOL):
-    for key, value in src.items():
-        z = dst.get(key, 0j) + scale * value
-        if abs(z) > tol:
-            dst[key] = z
-        elif key in dst:
-            del dst[key]
+def sum_sparse_maps(states):
+    """Coherently sum complete node maps before any state-level thresholding."""
+    accumulator = SparseLinearAccumulator()
+    for state in states:
+        accumulator.add(state)
+    return accumulator.finish()
 
 
 def sparse_norm(state):
@@ -606,7 +605,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         nonlocal rejected_count, rejected_norm2, truncated, omitted_support
         while queue:
             key = queue.popleft()
-            f_total, ad_total = {}, {}
+            f_node_maps, ad_node_maps = [], []
             f_node_rows, ad_node_rows = [], []
             for source_v in source_nodes:
                 f_cov, a_cov, diag = node_kkv_maps(
@@ -618,8 +617,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 rejected_norm2 += nfnorm**2 + nanorm**2
                 f_node_rows.extend(node_contribution_rows("forward", source_v, key, f))
                 ad_node_rows.extend(node_contribution_rows("adjoint", source_v, key, ad))
-                add_sparse(f_total, f)
-                add_sparse(ad_total, ad)
+                f_node_maps.append(f)
+                ad_node_maps.append(ad)
                 for name, value in diag.items():
                     leakage_max[f"node_{source_v}_{name}"] = max(
                         leakage_max.get(f"node_{source_v}_{name}", 0.0),
@@ -628,6 +627,11 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                     aggregate_leakage[name] = max(
                         aggregate_leakage.get(name, 0.0), float(value)
                     )
+
+            # Sum every complete node contribution with complex fsum before
+            # any downstream support or amplitude threshold is considered.
+            f_total = sum_sparse_maps(f_node_maps)
+            ad_total = sum_sparse_maps(ad_node_maps)
 
             # Preserve the pre-sum node coefficients and post-sum coherent
             # vectors as distinct evidence. Pathwise and coherent norms are
