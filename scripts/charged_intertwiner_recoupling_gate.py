@@ -114,6 +114,24 @@ def charged_basis_matrix(spins, J2, M2):
     return matrix
 
 
+@PRUNE.audit_lru_cache(None)
+def charged_basis_multiplet_matrix(spins, J2):
+    """Stack all magnetic sectors of one scalar charged-J multiplet."""
+    spins = tuple(spins)
+    sectors = [
+        charged_basis_matrix(spins, J2, M2)
+        for M2 in PW.m2vals_t(J2)
+    ]
+    dimension = int(np.prod([s + 1 for s in spins]))
+    channel_count = len(allowed_charged_labels(spins, J2))
+    matrix = (
+        np.concatenate(sectors, axis=0)
+        if sectors else np.zeros((0, dimension), dtype=complex)
+    )
+    matrix.setflags(write=False)
+    return matrix, len(sectors), channel_count
+
+
 def close_with_external_half(TJM, J2, M2):
     if J2 != 1:
         raise ValueError("a single external fundamental closes only J=1/2")
