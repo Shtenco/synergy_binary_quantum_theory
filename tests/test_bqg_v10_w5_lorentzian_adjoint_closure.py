@@ -103,6 +103,14 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 D[:, n] += sign * dense(d, self.dim)
         np.testing.assert_allclose(D, F.conj().T, rtol=5e-13, atol=5e-13)
 
+    def test_seed_subset_selection_is_validated_without_running_operators(self):
+        with self.assertRaisesRegex(ValueError, "seed_Ks"):
+            gate.run_closure(seed_Ks=())
+        with self.assertRaisesRegex(ValueError, "seed_Ks"):
+            gate.run_closure(seed_Ks=(1,))
+        with self.assertRaisesRegex(ValueError, "invalid closure limits"):
+            gate.run_closure(seed_Ks=(0,), max_states=0)
+
     def test_closure_rejects_unknown_cache_mode_before_operator_execution(self):
         with self.assertRaisesRegex(ValueError, "cache_mode"):
             gate.run_closure(cache_mode="sometimes")
