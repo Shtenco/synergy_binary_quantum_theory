@@ -257,6 +257,8 @@ class TestW5CacheTransparency(unittest.TestCase):
         self.assertEqual(cached_again, uncached)
         self.assertEqual(cold.snapshot()["events"], warm_miss.snapshot()["events"])
         self.assertEqual(warm_miss.snapshot()["events"], warm_hit.snapshot()["events"])
+        self.assertEqual(cold.snapshot()["event_count"], 1)
+        self.assertEqual(warm_hit.snapshot()["event_count"], 1)
         info = KG.local_volume_column.cache_info()
         self.assertEqual(info.misses, 1)
         self.assertEqual(info.hits, 1)
