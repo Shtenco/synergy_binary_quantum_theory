@@ -10,7 +10,7 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
     def test_plain_lru_cache_is_detected_without_threshold_comparisons(self):
         import ast
         tree = ast.parse(
-            "import functools\\n@functools.lru_cache(None)\\ndef cached():\\n    return 1\\n"
+            "import functools\n@functools.lru_cache(None)\ndef cached():\n    return 1\n"
         )
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
         self.assertEqual(
@@ -21,7 +21,7 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
     def test_audit_lru_cache_is_not_reported_as_plain(self):
         import ast
         tree = ast.parse(
-            "@audit_lru_cache(None)\\ndef cached():\\n    return 1\\n"
+            "@audit_lru_cache(None)\ndef cached():\n    return 1\n"
         )
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
         self.assertEqual(inventory._plain_lru_cache_decorators(function), [])
