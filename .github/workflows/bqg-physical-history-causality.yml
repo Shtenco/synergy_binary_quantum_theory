@@ -1,0 +1,69 @@
+name: BQG physical history and causal response reference gates
+
+on:
+  push:
+    branches: [research/physical-history-causality-20261112]
+    paths:
+      - 'scripts/bqg_physical_history_decoherence_engine.py'
+      - 'tests/test_bqg_physical_history_decoherence_engine.py'
+      - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
+      - 'physicalization_gates.json'
+      - 'scripts/verify_physicalization_gates.py'
+      - '.github/workflows/bqg-physical-history-causality.yml'
+  pull_request:
+    branches: [main, research/lemaitre-bqg-causal-cone-20261110]
+    paths:
+      - 'scripts/bqg_physical_history_decoherence_engine.py'
+      - 'tests/test_bqg_physical_history_decoherence_engine.py'
+      - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
+      - 'physicalization_gates.json'
+      - 'scripts/verify_physicalization_gates.py'
+      - '.github/workflows/bqg-physical-history-causality.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-physical-history-causality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  finite-reference-and-open-physical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependency
+        run: python -m pip install numpy
+      - name: Compile and run physical-history reference engine
+        run: |
+          python -m py_compile scripts/bqg_physical_history_decoherence_engine.py
+          python scripts/bqg_physical_history_decoherence_engine.py > physical_history_reference.json
+      - name: Run regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_bqg_physical_history_decoherence_engine.py' -v
+      - name: Validate physicalization ledger and supplemental OPEN gates
+        run: |
+          python scripts/verify_physicalization_gates.py --output physicalization_frontier.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('physicalization_frontier.json').read_text())
+          assert r['valid'] is True
+          assert r['physicalization_complete'] is False
+          assert set(r['supplemental_physical_gate_statuses'].values()) == {'open_physical'}
+          print('physicalization ledger valid; all new physical gates remain OPEN')
+          PY
+      - name: Enforce fail-closed physical status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('physical_history_reference.json').read_text())
+          assert r['status'] == 'PASS_REFERENCE_ONLY'
+          assert 'OPEN_PHYSICAL' in r['physical_gates']
+          print('reference tests PASS; physical derivation remains OPEN_PHYSICAL')
+          PY

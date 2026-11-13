@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import bqg_pruning_audit as PRUNE
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
@@ -41,6 +42,7 @@ import peter_weyl_covariant_K_projection_audit_gate as AUD
 
 EPS = np.finfo(float).eps
 ZERO_FACTOR = 1000.0
+SPECTRAL_AUDIT = {}
 
 
 def zeroaware_sqrt_abs(H):
@@ -48,12 +50,45 @@ def zeroaware_sqrt_abs(H):
     ev, U = np.linalg.eigh(H)
     scale = float(np.max(np.abs(ev))) if len(ev) else 0.0
     tau = ZERO_FACTOR * EPS * H.shape[0] * max(1.0, scale)
-    vals = np.where(np.abs(ev) > tau, np.sqrt(np.abs(ev)), 0.0)
+    zeroed = np.abs(ev) <= tau
+    retained = np.abs(ev) > tau
+    vals = np.where(retained, np.sqrt(np.abs(ev)), 0.0)
     V = (U * vals) @ U.conj().T
+    dim_key = str(int(H.shape[0]))
+    row = SPECTRAL_AUDIT.setdefault(dim_key, {
+        "dimension": int(H.shape[0]), "matrix_count": 0,
+        "eigenvalue_count": 0, "zeroed_eigenvalue_count": 0,
+        "retained_eigenvalue_count": 0, "max_zeroed_abs": 0.0,
+        "min_retained_abs_over_tau": None, "max_tau": 0.0,
+    })
+    row["matrix_count"] += 1
+    row["eigenvalue_count"] += int(len(ev))
+    row["zeroed_eigenvalue_count"] += int(np.count_nonzero(zeroed))
+    row["retained_eigenvalue_count"] += int(np.count_nonzero(retained))
+    row["max_zeroed_abs"] = max(
+        float(row["max_zeroed_abs"]),
+        float(np.max(np.abs(ev[zeroed]))) if np.any(zeroed) else 0.0,
+    )
+    if np.any(retained):
+        gap = float(np.min(np.abs(ev[retained])) / max(tau, np.finfo(float).tiny))
+        current = row["min_retained_abs_over_tau"]
+        row["min_retained_abs_over_tau"] = gap if current is None else min(float(current), gap)
+    row["max_tau"] = max(float(row["max_tau"]), float(tau))
     return 0.5 * (V + V.conj().T), tau, ev
 
 
-@functools.lru_cache(None)
+def spectral_audit_snapshot():
+    return {
+        "zero_factor": float(ZERO_FACTOR),
+        "machine_epsilon": float(EPS),
+        "by_dimension": {key: dict(value) for key, value in sorted(SPECTRAL_AUDIT.items())},
+        "matrix_count": int(sum(row["matrix_count"] for row in SPECTRAL_AUDIT.values())),
+        "zeroed_eigenvalue_count": int(sum(row["zeroed_eigenvalue_count"] for row in SPECTRAL_AUDIT.values())),
+        "retained_eigenvalue_count": int(sum(row["retained_eigenvalue_count"] for row in SPECTRAL_AUDIT.values())),
+    }
+
+
+@PRUNE.audit_lru_cache(2)
 def zeroaware_volume123_matrix(s1, s2, s3):
     mats = [PW.spin_mats_cached(s) for s in (s1, s2, s3)]
     d = (s1 + 1) * (s2 + 1) * (s3 + 1)
@@ -71,7 +106,14 @@ def zeroaware_canonical_volume_block(Qb):
     return V
 
 
-def patch_and_clear():
+def patch_and_clear(zero_factor=None):
+    global ZERO_FACTOR, SPECTRAL_AUDIT
+    if zero_factor is not None:
+        zero_factor = float(zero_factor)
+        if not math.isfinite(zero_factor) or zero_factor <= 0:
+            raise ValueError("zero_factor must be finite and positive")
+        ZERO_FACTOR = zero_factor
+    SPECTRAL_AUDIT = {}
     # Both sides of the independent equivalence test receive the same
     # mathematically defined zero-eigenspace convention.
     PW.volume123_matrix = zeroaware_volume123_matrix

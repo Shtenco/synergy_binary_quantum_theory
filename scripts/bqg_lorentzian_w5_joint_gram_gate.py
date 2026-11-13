@@ -33,6 +33,11 @@ def zscalar(value, name):
 
 
 def zmatrix(value, name):
+    # JSON encodes an empty (0, 5, 2) carrier as []; detect that semantic
+    # condition before NumPy collapses it to shape (0,) and reports a generic
+    # dimensionality error. Keep the fail-closed diagnostic stable.
+    if isinstance(value, (list, tuple)) and len(value) == 0:
+        raise ValueError(f"{name} must have at least one output row")
     arr = np.asarray(value, dtype=float)
     if arr.ndim != 3 or arr.shape[2] != 2:
         raise ValueError(f"{name} must have shape (output_rows, 5, 2) as [real, imag]")

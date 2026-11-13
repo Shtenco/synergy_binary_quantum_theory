@@ -42,6 +42,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0,str(HERE))
 
 import peter_weyl_covariant_K_composition_gate as CKCOMP
+import bqg_pruning_audit as PRUNE
 
 
 def freeze_state(state):
@@ -123,7 +124,7 @@ def run(v=0,w=1):
     original_direct=CKCOMP.direct_K_covariant
     original_close=CKCOMP.COMP.close_complete
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(2)
     def cached_he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
         return original_he(
             canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
@@ -143,7 +144,7 @@ def run(v=0,w=1):
         he_calls['reduced_requests'] += int(after>before)
         return restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(2)
     def cached_k_frozen(frozen,source_v,Jmax2,charged_nodes):
         out,vleak,bleak=original_k(dict(frozen),source_v,Jmax2,tuple(charged_nodes))
         return tuple(out.items()),float(vleak),float(bleak)
@@ -154,7 +155,7 @@ def run(v=0,w=1):
         )
         return dict(items),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(2)
     def cached_inv_frozen(frozen,source_v,target_v,k,j,Jmax2):
         out,leak=original_inv(dict(frozen),source_v,target_v,k,j,Jmax2)
         return tuple(out.items()),float(leak)
@@ -165,7 +166,7 @@ def run(v=0,w=1):
         )
         return dict(items),leak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(2)
     def cached_direct_frozen(frozen,source_v,Jmax2):
         out,vleak,bleak=original_direct(dict(frozen),source_v,Jmax2)
         return tuple(out.items()),float(vleak),float(bleak)
@@ -176,7 +177,7 @@ def run(v=0,w=1):
         )
         return dict(items),vleak,bleak
 
-    @functools.lru_cache(maxsize=None)
+    @PRUNE.audit_lru_cache(2)
     def cached_close_frozen(frozen,source_v,target_v,i,k,Jmax2):
         out=original_close(dict(frozen),source_v,target_v,i,k,Jmax2)
         return tuple(out.items())

@@ -40,6 +40,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0,str(HERE))
 
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_covariant_composition_gate as COMP
 import peter_weyl_covariant_K_composition_gate as KCOMP
@@ -50,8 +51,11 @@ TOL=1e-11
 
 def add(dst,src,scale=1.0,tol=TOL):
     for key,amp in src.items():
-        z=dst.get(key,0j)+scale*amp
-        if abs(z)>tol:
+        prior=dst.get(key,0j)
+        incoming=scale*amp
+        z=prior+incoming
+        PRUNE.record_merge("lorentzian_ordered_triple.add",key,prior,incoming,z,tol)
+        if PRUNE.keep(z,tol):
             dst[key]=z
         elif key in dst:
             del dst[key]

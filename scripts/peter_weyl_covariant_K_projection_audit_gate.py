@@ -20,6 +20,7 @@ import numpy as np
 HERE=Path(__file__).resolve().parent
 if str(HERE) not in sys.path: sys.path.insert(0,str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_volume_cross_rep_audit as VA
 import peter_weyl_q_block_gauge_audit as QGA
@@ -27,8 +28,11 @@ RAW_FLOOR=1e-10; PROD=1e-9; LADDER=(1e-12,1e-11,1e-10,1e-9,1e-8)
 
 def add(dst,src,scale=1.0,tol=1e-11):
     for k,a in src.items():
-        z=dst.get(k,0j)+scale*a
-        if abs(z)>tol: dst[k]=z
+        prior=dst.get(k,0j)
+        incoming=scale*a
+        z=prior+incoming
+        PRUNE.record_merge("covariant_K_projection_audit.add",k,prior,incoming,z,tol)
+        if PRUNE.keep(z,tol): dst[k]=z
         elif k in dst: del dst[k]
 
 def project_gauss_branch(branch,tol=1e-11):
@@ -37,16 +41,21 @@ def project_gauss_branch(branch,tol=1e-11):
         ls=PW.local_spins(spins,v); row=[]
         for K in PW.allowed_k2_t(*ls):
             c=np.vdot(PW.oriented_intertwiner(v,ls,K),tensors[v])
-            if abs(c)>1e-13: row.append((K,c))
+            PRUNE.record_threshold("covariant_K_projection_audit.gauss_projection.1e-13",(spins,v,K),c,1e-13,incoming=amp)
+            if PRUNE.keep(c,1e-13): row.append((K,c))
         if not row: return {}
         opts.append(tuple(row))
     out={}
     for choice in itertools.product(*opts):
         val=amp; Ks=[]
         for K,c in choice: Ks.append(K); val*=c
-        if abs(val)>tol:
-            key=(spins,tuple(Ks)); out[key]=out.get(key,0j)+val
-    return {k:a for k,a in out.items() if abs(a)>tol}
+        key=(spins,tuple(Ks))
+        PRUNE.record_threshold("covariant_K_projection_audit.branch_projection",key,val,tol)
+        if PRUNE.keep(val,tol):
+            out[key]=out.get(key,0j)+val
+    for key,value in out.items():
+        if abs(value)<=tol: PRUNE.record_threshold("covariant_K_projection_audit.branch_output",key,value,tol)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}
 
 def apply_HE_allJ_then_Gauss(initial,source_v,Jmax2):
     base=PW.initial_factorized_oriented(initial); out={}; max_vleak=0.0
@@ -59,10 +68,12 @@ def apply_HE_allJ_then_Gauss(initial,source_v,Jmax2):
                 branches,vleak=CK.apply_sequence_to_branch(base,seq,source_v,Jmax2)
                 max_vleak=max(max_vleak,vleak)
                 for br in branches: add(out,project_gauss_branch(br),pref*coef)
-    return {k:a for k,a in out.items() if abs(a)>RAW_FLOOR},max_vleak
+    for key,value in out.items():
+        if abs(value)<=RAW_FLOOR: PRUNE.record_threshold("covariant_K_projection_audit.raw_floor",key,value,RAW_FLOOR)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,RAW_FLOOR)},max_vleak
 
 def norm2(s): return float(sum(abs(a)**2 for a in s.values()))
-def prune(s,t): return {k:a for k,a in s.items() if abs(a)>t}
+def prune(s,t): return PRUNE.filter_state("covariant_K_projection_audit.ladder_prune",s,t)
 def relerr(a,b):
     keys=set(a)|set(b); num=math.sqrt(sum(abs(a.get(k,0j)-b.get(k,0j))**2 for k in keys)); den=math.sqrt(norm2(b)); return num/max(den,1e-30)
 

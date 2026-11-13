@@ -45,6 +45,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_lorentzian_K_block_gate as KG
@@ -52,8 +53,11 @@ import peter_weyl_lorentzian_K_block_gate as KG
 
 def add_state(dst, src, scale=1.0, tol=1e-11):
     for key, amp in src.items():
-        z = dst.get(key, 0j) + scale * amp
-        if abs(z) > tol:
+        prior = dst.get(key, 0j)
+        incoming = scale * amp
+        z = prior + incoming
+        PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tol)
+        if PRUNE.keep(z,tol):
             dst[key] = z
         elif key in dst:
             del dst[key]
@@ -104,7 +108,8 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
                     for K12, K34 in rec:
                         B = CH.charged_tensor(tuple(ls), K12, K34, J2, M2)
                         c = np.vdot(B, Xu)
-                        if abs(c) > 1e-13:
+                        PRUNE.record_threshold("covariant_K_leg.charged_projection.1e-13",(spins,v,J2,M2,K12,K34),c,1e-13,incoming=amp)
+                        if PRUNE.keep(c,1e-13):
                             opts.append((label_charge(J2, M2, K12, K34), c))
                             recon_u += c * B
             recon = CV.orient_local(recon_u, ls, v)
@@ -112,7 +117,8 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
             for K in PW.allowed_k2_t(*ls):
                 B = PW.oriented_intertwiner(v, ls, K)
                 c = np.vdot(B, X)
-                if abs(c) > 1e-13:
+                PRUNE.record_threshold("covariant_K_leg.gauss_projection.1e-13",(spins,v,K),c,1e-13,incoming=amp)
+                if PRUNE.keep(c,1e-13):
                     opts.append((label_gauss(K), c))
                     recon += c * B
         nrm = float(np.linalg.norm(X))
@@ -128,20 +134,26 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
         labels = []
         for lab, c in choice:
             labels.append(lab); val *= c
-        if abs(val) > tol:
-            key = (spins, tuple(labels))
+        key = (spins, tuple(labels))
+        PRUNE.record_threshold("covariant_K_leg.complete_branch_projection",key,val,tol)
+        if PRUNE.keep(val,tol):
             out[key] = out.get(key, 0j) + val
-    return {k:a for k,a in out.items() if abs(a)>tol}, max_basis_leak
+    for key, value in out.items():
+        if abs(value) <= tol:
+            PRUNE.record_threshold("covariant_K_leg.complete_branch_output",key,value,tol)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}, max_basis_leak
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def canonical_volume_block_general(spins_local, J2):
     spins_local = tuple(spins_local)
-    qblocks = []
-    for M2 in PW.m2vals_t(J2):
-        _, Qb, _, _ = CH.q_block(spins_local, J2, M2)
-        qblocks.append(Qb)
-    Q = sum(qblocks) / len(qblocks)
+    # Q=J1.(J2 x J3) is an SU(2) scalar. In the standard CG-coupled
+    # basis its reduced matrix is M-independent, so the highest-weight
+    # representative M=J fixes the entire irreducible multiplet. The
+    # one-hit charged-sector gate separately checks this identity for both
+    # magnetic sectors; recomputing and averaging every M here only repeats
+    # the same expensive magnetic contraction.
+    _, Q, _, _ = CH.q_block(spins_local, J2, J2)
     Q = 0.5 * (Q + Q.conj().T)
     return CH.canonical_volume_block(Q)
 
@@ -150,17 +162,21 @@ def apply_volume_allJ_oriented(T, spins_local, v):
     X = CV.unorient_local(T, spins_local, v)
     Y = np.zeros_like(X)
     recon = np.zeros_like(X)
+    xflat = X.reshape(-1)
     for J2 in CV.all_total_J2(spins_local):
-        rec = CH.allowed_charged_labels(tuple(spins_local), J2)
-        if not rec:
-            continue
         Vb = canonical_volume_block_general(tuple(spins_local), J2)
-        for M2 in PW.m2vals_t(J2):
-            basis = [CH.charged_tensor(tuple(spins_local), a, b, J2, M2) for a,b in rec]
-            coeff = np.asarray([np.vdot(B, X) for B in basis], complex)
-            for c,B in zip(coeff,basis): recon += c*B
-            outc = Vb @ coeff
-            for c,B in zip(outc,basis): Y += c*B
+        basis_matrix, magnetic_sector_count, channel_count = (
+            CH.charged_basis_multiplet_matrix(tuple(spins_local), J2)
+        )
+        if channel_count == 0:
+            continue
+        # Each M block carries the same reduced scalar V_J. Stack all M
+        # sectors and apply V_J to every row in one batched contraction.
+        coeff = basis_matrix.conj() @ xflat
+        recon += (coeff @ basis_matrix).reshape(X.shape)
+        coeff_by_M = coeff.reshape(magnetic_sector_count, channel_count)
+        output_by_M = coeff_by_M @ Vb.T
+        Y += (output_by_M.reshape(-1) @ basis_matrix).reshape(X.shape)
     leak = float(np.linalg.norm(X-recon)/max(np.linalg.norm(X),1e-30))
     return CV.orient_local(Y, spins_local, v), leak
 
@@ -178,11 +194,15 @@ def apply_volume_complete_state(state, v):
         Vb = canonical_volume_block_general(tuple(ls), J2)
         for row,(A,B) in enumerate(rec):
             c = Vb[row,idx]
-            if abs(c)>1e-13:
-                labs = list(labels); labs[v] = label_charge(J2,M2,A,B)
-                ko = (spins,tuple(labs))
+            labs = list(labels); labs[v] = label_charge(J2,M2,A,B)
+            ko = (spins,tuple(labs))
+            PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,c,1e-13,incoming=amp)
+            if PRUNE.keep(c,1e-13):
                 out[ko] = out.get(ko,0j)+amp*c
-    return {k:a for k,a in out.items() if abs(a)>1e-11}
+    for key, value in out.items():
+        if abs(value)<=1e-11:
+            PRUNE.record_threshold("covariant_K_leg.volume_state_output.1e-11",key,value,1e-11)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,1e-11)}
 
 
 def apply_sequence_to_branch(branch, seq, source_v, Jmax2):
@@ -221,7 +241,7 @@ def apply_HE_complete_key(key, source_v, Jmax2, charged_nodes=(0,1)):
     return out,max_v_leak,max_basis_leak
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def HE_complete_cached(key,source_v,Jmax2):
     out,vleak,bleak=apply_HE_complete_key(key,source_v,Jmax2)
     return tuple(out.items()),vleak,bleak
@@ -233,7 +253,10 @@ def apply_HE_complete_state(state,source_v,Jmax2):
         items,vleak,bleak=HE_complete_cached(key,source_v,Jmax2)
         max_v=max(max_v,vleak); max_b=max(max_b,bleak)
         for ko,c in items: out[ko]=out.get(ko,0j)+amp*c
-    return {k:a for k,a in out.items() if abs(a)>1e-10},max_v,max_b
+    for key, value in out.items():
+        if abs(value)<=1e-10:
+            PRUNE.record_threshold("covariant_K_leg.HE_state_output.1e-10",key,value,1e-10)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,1e-10)},max_v,max_b
 
 
 def charge_weights(state,node):

@@ -65,6 +65,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0,str(HERE))
 
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import peter_weyl_covariant_K_projection_audit_gate as AUD
 import peter_weyl_covariant_K_leg_gate as CK
 import peter_weyl_lorentzian_K_block_gate as KG
@@ -76,8 +77,11 @@ K_TOL=1e-9
 
 def add(dst,src,scale=1.0,tol=1e-11):
     for key,amp in src.items():
-        z=dst.get(key,0j)+scale*amp
-        if abs(z)>tol:
+        prior=dst.get(key,0j)
+        incoming=scale*amp
+        z=prior+incoming
+        PRUNE.record_merge("euclidean_sine.add",key,prior,incoming,z,tol)
+        if PRUNE.keep(z,tol):
             dst[key]=z
         elif key in dst:
             del dst[key]
@@ -106,7 +110,9 @@ def safe_H_sine(state,v,Jmax2=JMAX2):
         # (T-T^dagger)/(2i) = -i T/2 + i T^dagger/2.
         add(out,rr,-0.5j*sign)
         add(out,aa,+0.5j*sign)
-    return {k:a for k,a in out.items() if abs(a)>TOL}
+    for key,value in out.items():
+        if abs(value)<=TOL: PRUNE.record_threshold("euclidean_sine.safe_H_output",key,value,TOL)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,TOL)}
 
 
 def apply_HE_sine_local(state,v,Jmax2=JMAX2):
@@ -133,7 +139,8 @@ def project_gauss_branch(branch,tol=1e-11):
         row=[]
         for K in PW.allowed_k2_t(*ls):
             c=np.vdot(PW.oriented_intertwiner(v,ls,K),tensors[v])
-            if abs(c)>1e-13:
+            PRUNE.record_threshold("euclidean_sine.gauss_projection.1e-13",(spins,v,K),c,1e-13,incoming=amp)
+            if PRUNE.keep(c,1e-13):
                 row.append((K,c))
         if not row:
             return {}
@@ -143,10 +150,13 @@ def project_gauss_branch(branch,tol=1e-11):
         val=amp; Ks=[]
         for K,c in choice:
             Ks.append(K); val*=c
-        if abs(val)>tol:
-            key=(spins,tuple(Ks))
+        key=(spins,tuple(Ks))
+        PRUNE.record_threshold("euclidean_sine.gauss_branch_projection",key,val,tol)
+        if PRUNE.keep(val,tol):
             out[key]=out.get(key,0j)+val
-    return {k:a for k,a in out.items() if abs(a)>tol}
+    for key,value in out.items():
+        if abs(value)<=tol: PRUNE.record_threshold("euclidean_sine.gauss_branch_output",key,value,tol)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}
 
 
 def allJ_H_sine(initial,source_v,Jmax2=JMAX2):
@@ -164,7 +174,9 @@ def allJ_H_sine(initial,source_v,Jmax2=JMAX2):
                 max_vleak=max(max_vleak,float(vleak))
                 for br in branches:
                     add(out,project_gauss_branch(br),pref*coef)
-    return {k:a for k,a in out.items() if abs(a)>TOL},max_vleak
+    for key,value in out.items():
+        if abs(value)<=TOL: PRUNE.record_threshold("euclidean_sine.allJ_H_output",key,value,TOL)
+    return {k:a for k,a in out.items() if PRUNE.keep(a,TOL)},max_vleak
 
 
 def classical_trace_control():

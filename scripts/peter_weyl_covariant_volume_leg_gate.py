@@ -42,6 +42,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_lorentzian_K_block_gate as KG
 
@@ -114,7 +115,8 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
             opts = []
             for K in PW.allowed_k2_t(*ls):
                 c = np.vdot(PW.oriented_intertwiner(u, ls, K), tensors[u])
-                if abs(c) > 1e-13:
+                PRUNE.record_threshold("covariant_volume_leg.gauss_projection.1e-13",(spins,u,K),c,1e-13,incoming=amp)
+                if PRUNE.keep(c,1e-13):
                     opts.append((K, c))
             if not opts:
                 ok = False
@@ -131,7 +133,8 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                 for K12, K34 in CH.allowed_charged_labels(tuple(ls0), J2):
                     B = CH.charged_tensor(tuple(ls0), K12, K34, J2, M2)
                     c = np.vdot(B, X0)
-                    if abs(c) > 1e-13:
+                    PRUNE.record_threshold("covariant_volume_leg.charged_projection.1e-13",(spins,source_v,J2,M2,K12,K34),c,1e-13,incoming=amp)
+                    if PRUNE.keep(c,1e-13):
                         src_opts.append((J2, M2, K12, K34, c))
 
         for chosen in itertools.product(*other_opts):
@@ -145,10 +148,14 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                     base_amp *= c
             for J2, M2, K12, K34, cs in src_opts:
                 val = base_amp * cs
-                if abs(val) > tol:
-                    key = (spins, tuple(Kother), J2, M2, K12, K34)
+                key = (spins, tuple(Kother), J2, M2, K12, K34)
+                PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
+                if PRUNE.keep(val,tol):
                     out[key] = out.get(key, 0j) + val
-    return {k: v for k, v in out.items() if abs(v) > tol}
+    for key, value in out.items():
+        if abs(value) <= tol:
+            PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
+    return {k: v for k, v in out.items() if PRUNE.keep(v,tol)}
 
 
 def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
@@ -172,7 +179,10 @@ def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
             closed.extend(PW.apply_hit_branch(br, v, w, i, k, Jmax2))
         projected = project_covariant_branches(closed, v)
         PW.add_dict(total, projected, +1)
-    return {k: a for k, a in total.items() if abs(a) > 1e-10}, max_charged_projection_leak
+    for key, value in total.items():
+        if abs(value) <= 1e-10:
+            PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
+    return {k: a for k, a in total.items() if PRUNE.keep(a,1e-10)}, max_charged_projection_leak
 
 
 def gauss_to_covariant(state, source_v):
@@ -236,7 +246,10 @@ def run(v=0, w=1):
             if i == j:
                 PW.add_dict(out, Vcov, +1)
             PW.add_dict(out, hVh, -1)
-            C[i][j] = {k: a for k, a in out.items() if abs(a) > 1e-10}
+            for key, value in out.items():
+                if abs(value) <= 1e-10:
+                    PRUNE.record_threshold("covariant_volume_leg.C_matrix_output.1e-10",key,value,1e-10)
+            C[i][j] = {k: a for k, a in out.items() if PRUNE.keep(a,1e-10)}
 
     Cnorm = matrix_state_norm(C)
     Cweights = weight_by_J(C)

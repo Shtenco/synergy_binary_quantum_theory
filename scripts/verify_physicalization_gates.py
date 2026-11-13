@@ -34,6 +34,12 @@ EXPECTED_REQUIRED_PHYSICAL = {
     "LENSING_DYNAMICS_CLOSURE",
 }
 STRUCTURAL_CORE_ACCEPTED = {"proved", "tested_finite", "conditional"}
+EXPECTED_SUPPLEMENTAL_PHYSICAL = {
+    "PHYSICAL_ENVIRONMENT_OVERLAP",
+    "PHYSICAL_BORN_MEASURE",
+    "PHYSICAL_RELATIONAL_CLOCK_RESPONSE",
+    "PHYSICAL_COMMON_CAUSAL_CONE",
+}
 
 
 def safe_relative_path(value: str) -> bool:
@@ -131,6 +137,12 @@ def main() -> int:
     for gid in EXPECTED_REQUIRED_PHYSICAL & set(rows):
         if rows[gid].get("closure_role") != "physical":
             errors.append(f"{gid}: required gate must have role='physical'")
+    missing_supplemental = sorted(EXPECTED_SUPPLEMENTAL_PHYSICAL - set(rows))
+    if missing_supplemental:
+        errors.append(f"missing supplemental physical gates: {missing_supplemental}")
+    for gid in EXPECTED_SUPPLEMENTAL_PHYSICAL & set(rows):
+        if rows[gid].get("closure_role") != "physical":
+            errors.append(f"{gid}: supplemental gate must have role='physical'")
 
     if "CONSTRAINT_FESHBACH" in rows and "not physical omega" not in rows["CONSTRAINT_FESHBACH"]["hard_scope"].lower():
         errors.append("CONSTRAINT_FESHBACH must state that z is not physical omega")
@@ -161,12 +173,16 @@ def main() -> int:
         "physical_background_cosmology_closed_declared": frozen("PHYSICAL_BACKGROUND_COSMOLOGY"),
         "physical_scalar_cosmology_closed_declared": frozen("PHYSICAL_SCALAR_COSMOLOGY"),
         "lensing_dynamics_closure_closed_declared": frozen("LENSING_DYNAMICS_CLOSURE"),
+        "physical_environment_overlap_closed_declared": frozen("PHYSICAL_ENVIRONMENT_OVERLAP"),
+        "physical_born_measure_closed_declared": frozen("PHYSICAL_BORN_MEASURE"),
+        "physical_relational_clock_response_closed_declared": frozen("PHYSICAL_RELATIONAL_CLOCK_RESPONSE"),
+        "physical_common_causal_cone_closed_declared": frozen("PHYSICAL_COMMON_CAUSAL_CONE"),
     }
     for key, derived in declared_pairs.items():
         if data.get(key) is not derived:
             errors.append(f"{key}={data.get(key)!r} disagrees with derived value {derived!r}")
 
-    physicalization_complete = all(frozen(gid) for gid in EXPECTED_REQUIRED_PHYSICAL)
+    physicalization_complete = all(frozen(gid) for gid in (EXPECTED_REQUIRED_PHYSICAL | EXPECTED_SUPPLEMENTAL_PHYSICAL))
 
     structural_gates = structural.get("gates", []) if isinstance(structural.get("gates", []), list) else []
     structural_core = [g for g in structural_gates if isinstance(g, dict) and g.get("closure_role") == "core"]
@@ -192,6 +208,13 @@ def main() -> int:
         "physical_background_cosmology_closed": frozen("PHYSICAL_BACKGROUND_COSMOLOGY"),
         "physical_scalar_cosmology_closed": frozen("PHYSICAL_SCALAR_COSMOLOGY"),
         "lensing_dynamics_closure_closed": frozen("LENSING_DYNAMICS_CLOSURE"),
+        "physical_environment_overlap": frozen("PHYSICAL_ENVIRONMENT_OVERLAP"),
+        "physical_born_measure": frozen("PHYSICAL_BORN_MEASURE"),
+        "physical_relational_clock_response": frozen("PHYSICAL_RELATIONAL_CLOCK_RESPONSE"),
+        "physical_common_causal_cone": frozen("PHYSICAL_COMMON_CAUSAL_CONE"),
+        "supplemental_physical_gate_statuses": {
+            gid: rows.get(gid, {}).get("status") for gid in sorted(EXPECTED_SUPPLEMENTAL_PHYSICAL)
+        },
         "physicalization_complete": physicalization_complete,
         "experimentally_confirmed": False,
         "required_physical_gate_statuses": {

@@ -1,0 +1,161 @@
+name: W5 production source staging bundle
+
+on:
+  push:
+    branches:
+      - research/physical-history-causality-20261112
+    paths:
+      - .github/workflows/w5-production-source-staging.yml
+      - W5_PRODUCTION_LOSS_INSTRUMENTATION_PLAN_20261112.md
+      - '**/*.py'
+      - 'requirements*.txt'
+      - pyproject.toml
+      - setup.py
+      - setup.cfg
+      - .gitattributes
+  pull_request:
+    branches:
+      - main
+      - research/lemaitre-bqg-causal-cone-20261110
+    paths:
+      - .github/workflows/w5-production-source-staging.yml
+      - W5_PRODUCTION_LOSS_INSTRUMENTATION_PLAN_20261112.md
+      - '**/*.py'
+      - 'requirements*.txt'
+      - pyproject.toml
+      - setup.py
+      - setup.cfg
+      - .gitattributes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Keep only the newest exact-source staging run for this branch. Rapid audit
+# commits must not leave a backlog of obsolete source-bundle jobs.
+concurrency:
+  group: w5-production-source-staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-production-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout the exact event commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Set up Python for W5 audit regressions
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numerical test dependencies
+        run: python -m pip install --disable-pip-version-check numpy sympy
+      - name: Run lower-level pruning audit regressions
+        run: |
+          python -m unittest discover -s tests -p 'test_bqg_pruning_audit.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_pruning_audit_wiring.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_amp_tol_shadow_compare.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_convergence_grid.py' -v
+      - name: Compile the complete instrumented W5 dependency chain
+        run: |
+          python -m py_compile \
+            scripts/bqg_pruning_audit.py \
+            scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
+            scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
+            scripts/bqg_v10_w5_convergence_grid.py \
+            scripts/k5_peter_weyl_safe_hda_column.py \
+            scripts/peter_weyl_covariant_volume_leg_gate.py \
+            scripts/peter_weyl_covariant_K_leg_gate.py \
+            scripts/peter_weyl_covariant_composition_gate.py \
+            scripts/peter_weyl_covariant_K_composition_gate.py \
+            scripts/peter_weyl_covariant_K_composition_cached_gate.py \
+            scripts/peter_weyl_covariant_K_sine_composition_gate.py \
+            scripts/peter_weyl_lorentzian_K_block_gate.py \
+            scripts/peter_weyl_lorentzian_ordered_triple_gate.py \
+            scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py \
+            scripts/peter_weyl_euclidean_sine_ordering_gate.py \
+            scripts/peter_weyl_covariant_K_projection_audit_gate.py
+      - name: Package complete tracked source tree with provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p staging/source
+          # Refuse to silently package empty submodule directories.
+          if git ls-files --stage | awk '$1 == "160000" { print; found=1 } END { exit found ? 0 : 1 }'; then
+            echo "Submodule gitlinks detected; recursive submodule materialization is required." >&2
+            exit 1
+          fi
+          # Copy exactly the tracked index paths. Unlike git archive, this does not
+          # silently omit paths marked export-ignore in .gitattributes.
+          git ls-files -z | tar --null -T - -cf - | tar -xf - -C staging/source
+          git rev-parse HEAD > staging/SOURCE_COMMIT.txt
+          git rev-parse 'HEAD^{tree}' > staging/SOURCE_TREE.txt
+          printf '%s\n' "$GITHUB_REF" > staging/SOURCE_REF.txt
+          git ls-tree -r HEAD > staging/GIT_TREE_MANIFEST.txt
+          {
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'commit=%s\n' "$GITHUB_SHA"
+            printf 'ref=%s\n' "$GITHUB_REF"
+            printf 'run_id=%s\n' "$GITHUB_RUN_ID"
+            printf 'run_attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
+            printf 'runner_os=%s\n' "$RUNNER_OS"
+            python --version
+            python -m pip --version
+          } > staging/RUNTIME.txt
+          python -m pip freeze > staging/PIP_FREEZE.txt
+          python - <<'PY'
+          import hashlib, json, pathlib, platform, subprocess, sys
+          root = pathlib.Path("staging")
+          source = root / "source"
+          files = []
+          for p in sorted(x for x in source.rglob("*") if x.is_file()):
+              data = p.read_bytes()
+              files.append({
+                  "path": str(p.relative_to(source)),
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+              })
+          manifest = {
+              "repository": "Shtenco/synergy_binary_quantum_theory",
+              "source_commit": (root / "SOURCE_COMMIT.txt").read_text().strip(),
+              "source_tree": (root / "SOURCE_TREE.txt").read_text().strip(),
+              "source_ref": (root / "SOURCE_REF.txt").read_text().strip(),
+              "python": sys.version,
+              "platform": platform.platform(),
+              "tracked_source_file_count": len(files),
+              "files": files,
+              "submodule_gitlinks_present": any(
+                  line.startswith("160000 ") for line in
+                  (root / "GIT_TREE_MANIFEST.txt").read_text().splitlines()
+              ),
+          }
+          (root / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+          )
+          PY
+          (
+            cd staging
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+          python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path("staging")
+          with zipfile.ZipFile("w5-production-source.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              for p in sorted(x for x in root.rglob("*") if x.is_file()):
+                  z.write(p, p.relative_to(root))
+          print({
+              "source_files": sum(1 for p in (root / "source").rglob("*") if p.is_file()),
+              "archive_bytes": pathlib.Path("w5-production-source.zip").stat().st_size,
+          })
+          PY
+      - name: Upload complete source tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: w5-production-source-${{ github.sha }}
+          path: w5-production-source.zip
+          if-no-files-found: error
+          retention-days: 7

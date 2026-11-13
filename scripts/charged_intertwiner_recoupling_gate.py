@@ -35,6 +35,7 @@ import argparse
 import functools
 import itertools
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -44,6 +45,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+import bqg_pruning_audit as PRUNE
 
 
 def allowed_pair2(sa, sb):
@@ -60,26 +62,92 @@ def allowed_charged_labels(spins, J2):
     return tuple(out)
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(32)
 def charged_tensor(spins, K12, K34, J2, M2):
+    """Build the coupled four-leg tensor by a separable CG contraction.
+
+    The previous implementation evaluated the same three Clebsch-Gordan
+    factors inside every magnetic-index quadruple.  Precomputing the two
+    pair-coupling tensors and the final (K12,K34)->J coupling turns that
+    repeated Python loop into one small optimized tensor contraction.
+    """
     spins = tuple(spins)
+    s1, s2, s3, s4 = spins
+    m1, m2, m3, m4 = (PW.m2vals_t(s) for s in spins)
+    mk, ml = PW.m2vals_t(K12), PW.m2vals_t(K34)
+
+    c12 = np.zeros((len(m1), len(m2), len(mk)), dtype=float)
+    c34 = np.zeros((len(m3), len(m4), len(ml)), dtype=float)
+    ctotal = np.zeros((len(mk), len(ml)), dtype=float)
+
+    for i, a in enumerate(m1):
+        for j, b in enumerate(m2):
+            for k, x in enumerate(mk):
+                if a + b == x:
+                    c12[i, j, k] = PW.cg2(s1, s2, K12, a, b, x)
+
+    for i, a in enumerate(m3):
+        for j, b in enumerate(m4):
+            for k, x in enumerate(ml):
+                if a + b == x:
+                    c34[i, j, k] = PW.cg2(s3, s4, K34, a, b, x)
+
+    for i, x in enumerate(mk):
+        for j, y in enumerate(ml):
+            if x + y == M2:
+                ctotal[i, j] = PW.cg2(K12, K34, J2, x, y, M2)
+
+    return np.einsum(
+        "ijx,kly,xy->ijkl", c12, c34, ctotal, optimize=True
+    ).astype(complex, copy=False)
+
+
+@PRUNE.audit_lru_cache(8)
+def charged_basis_matrix(spins, J2, M2):
+    """Cached row-major CG basis for one charged (J,M) sector."""
+    spins = tuple(spins)
+    labels = allowed_charged_labels(spins, J2)
+    basis = [charged_tensor(spins, a, b, J2, M2) for a, b in labels]
+    if not basis:
+        return np.zeros((0, int(np.prod([s + 1 for s in spins]))), dtype=complex)
+    matrix = np.stack([tensor.reshape(-1) for tensor in basis], axis=0)
+    matrix.setflags(write=False)
+    return matrix
+
+
+@PRUNE.audit_lru_cache(4)
+def charged_basis_multiplet_matrix(spins, J2):
+    """Generate every M sector from the highest-weight CG basis by J_-."""
+    spins = tuple(spins)
+    labels = allowed_charged_labels(spins, J2)
+    dimension = int(np.prod([s + 1 for s in spins]))
+    channel_count = len(labels)
+    if channel_count == 0:
+        return np.zeros((0, dimension), dtype=complex), len(PW.m2vals_t(J2)), 0
+
     dims = tuple(s + 1 for s in spins)
-    T = np.zeros(dims, complex)
-    msets = [PW.m2vals_t(s) for s in spins]
-    for inds in itertools.product(*[range(d) for d in dims]):
-        m1, m2, m3, m4 = [msets[a][inds[a]] for a in range(4)]
-        val = 0.0
-        for MK in PW.m2vals_t(K12):
-            ML = M2 - MK
-            if ML not in PW.m2vals_t(K34):
-                continue
-            val += (
-                PW.cg2(spins[0], spins[1], K12, m1, m2, MK)
-                * PW.cg2(spins[2], spins[3], K34, m3, m4, ML)
-                * PW.cg2(K12, K34, J2, MK, ML, M2)
-            )
-        T[inds] = val
-    return T
+    current = charged_basis_matrix(spins, J2, J2).reshape((channel_count,) + dims)
+    sectors = [current.reshape(channel_count, dimension)]
+    lowering = [
+        PW.spin_mats_cached(s)[0] - 1j * PW.spin_mats_cached(s)[1]
+        for s in spins
+    ]
+    m_values = PW.m2vals_t(J2)
+    for previous_M2, _next_M2 in zip(m_values, m_values[1:]):
+        j = J2 / 2.0
+        m = previous_M2 / 2.0
+        factor = math.sqrt((j + m) * (j - m + 1.0))
+        lowered = np.zeros_like(current)
+        for axis, operator in enumerate(lowering):
+            moved = np.moveaxis(current, axis + 1, 1)
+            acted = np.tensordot(operator, moved, axes=(1, 1))
+            lowered += np.moveaxis(acted, 0, axis + 1)
+        current = lowered / factor
+        sectors.append(current.reshape(channel_count, dimension))
+
+    matrix = np.concatenate(sectors, axis=0)
+    matrix.setflags(write=False)
+    return matrix, len(sectors), channel_count
 
 
 def close_with_external_half(TJM, J2, M2):
@@ -93,7 +161,7 @@ def close_with_external_half(TJM, J2, M2):
     return out
 
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def q123_matrix(spins3):
     spins3 = tuple(spins3)
     mats = [PW.spin_mats_cached(s) for s in spins3]
@@ -113,28 +181,49 @@ def apply_q_four(T, spins):
 
 
 def project_to_basis(X, basis):
-    coeff = np.asarray([np.vdot(B, X) for B in basis], complex)
-    recon = sum((c * B for c, B in zip(coeff, basis)), np.zeros_like(X))
-    return coeff, recon
+    if not basis:
+        return np.zeros(0, dtype=complex), np.zeros_like(X)
+    # Row-major basis storage turns the magnetic-index projection and
+    # reconstruction into two BLAS-backed contractions instead of Python
+    # loops over every recoupling channel.
+    basis_matrix = np.stack([np.asarray(B).reshape(-1) for B in basis], axis=0)
+    flat = np.asarray(X).reshape(-1)
+    coeff = basis_matrix.conj() @ flat
+    recon = (coeff @ basis_matrix).reshape(np.asarray(X).shape)
+    return np.asarray(coeff, dtype=complex), recon
 
 
 def q_block(spins, J2, M2):
-    labels = allowed_charged_labels(spins, J2)
-    basis = [charged_tensor(tuple(spins), a, b, J2, M2) for a, b in labels]
+    spins = tuple(spins)
+    dims = tuple(s + 1 for s in spins)
+    basis_matrix = charged_basis_matrix(spins, J2, M2)
+    basis = [row.reshape(dims) for row in basis_matrix]
     n = len(basis)
-    Qb = np.zeros((n, n), complex)
-    max_abs_leak = 0.0
-    max_rel_leak = 0.0
-    for j, B in enumerate(basis):
-        QB = apply_q_four(B, spins)
-        coeff, recon = project_to_basis(QB, basis)
-        Qb[:, j] = coeff
-        abs_leak = float(np.linalg.norm(QB - recon))
-        rel_leak = abs_leak / max(float(np.linalg.norm(QB)), 1e-30)
-        max_abs_leak = max(max_abs_leak, abs_leak)
-        max_rel_leak = max(max_rel_leak, rel_leak)
-    Qb = 0.5 * (Qb + Qb.conj().T)
-    return basis, Qb, max_abs_leak, max_rel_leak
+    if n == 0:
+        return basis, np.zeros((0, 0), complex), 0.0, 0.0
+
+    # Apply the same Q123 operator to every charged basis vector in one
+    # batched matrix multiplication. Each row of basis_matrix is one
+    # flattened (J,M) intertwiner; the first three magnetic axes are the
+    # operator domain and the fourth is the spectator axis.
+    d123 = int(np.prod(dims[:3]))
+    d4 = dims[3]
+    Q = q123_matrix(tuple(spins[:3]))
+    basis_batch = basis_matrix.reshape(n, d123, d4).transpose(1, 2, 0)
+    QB_batch = (Q @ basis_batch.reshape(d123, d4 * n))
+    QB_rows = QB_batch.reshape(d123, d4, n).transpose(2, 0, 1).reshape(n, -1)
+    coeff = basis_matrix.conj() @ QB_rows.T
+    recon_rows = coeff.T @ basis_matrix
+    residual_rows = QB_rows - recon_rows
+    abs_leaks = np.linalg.norm(residual_rows, axis=1)
+    q_norms = np.linalg.norm(QB_rows, axis=1)
+    rel_leaks = abs_leaks / np.maximum(q_norms, 1e-30)
+    Qb = 0.5 * (coeff + coeff.conj().T)
+    return (
+        basis, Qb,
+        float(np.max(abs_leaks, initial=0.0)),
+        float(np.max(rel_leaks, initial=0.0)),
+    )
 
 
 def canonical_volume_block(Qb):

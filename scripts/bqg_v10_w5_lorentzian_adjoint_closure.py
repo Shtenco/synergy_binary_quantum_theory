@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 from collections import deque
+from contextvars import ContextVar
 from pathlib import Path
 import sys
 
@@ -24,6 +25,13 @@ import sys
 W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 TOL = 0.0
+
+_ACTIVE_CV_BASE_STATE = ContextVar("w5_active_cv_base_state", default=None)
+
+
+def _freeze_sparse_state(state):
+    return tuple(sorted(state.items(), key=lambda kv: repr(kv[0])))
+
 
 
 def epsilon_triples(neighbors):
@@ -136,22 +144,26 @@ def node_kkv_maps(gauss_state, source_v, Jmax2, PW, CV, RAW):
         "CK_internal_volume_sector_leakage": 0.0,
         "CK_complete_charge_basis_leakage": 0.0,
     }
-    for epsilon, (a, b, c) in triples:
-        forward, leak_f, diag_f = triple_forward(
-            psi_cov, source_v, a, b, c, Jmax2,
-            RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
-        )
-        adjoint, leak_a, diag_a = triple_adjoint(
-            psi_cov, source_v, a, b, c, Jmax2,
-            RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
-        )
-        add_sparse(B, forward, epsilon)
-        add_sparse(Bdag, adjoint, epsilon)
-        diagnostics["CV_complete_basis_leakage"] = max(
-            diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
-        )
-        _merge_diag(diagnostics, diag_f)
-        _merge_diag(diagnostics, diag_a)
+    base_token = _ACTIVE_CV_BASE_STATE.set(_freeze_sparse_state(psi_cov))
+    try:
+        for epsilon, (a, b, c) in triples:
+            forward, leak_f, diag_f = triple_forward(
+                psi_cov, source_v, a, b, c, Jmax2,
+                RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
+            )
+            adjoint, leak_a, diag_a = triple_adjoint(
+                psi_cov, source_v, a, b, c, Jmax2,
+                RAW.COMP.C_volume_component, RAW.KCOMP.C_K_component
+            )
+            add_sparse(B, forward, epsilon)
+            add_sparse(Bdag, adjoint, epsilon)
+            diagnostics["CV_complete_basis_leakage"] = max(
+                diagnostics["CV_complete_basis_leakage"], leak_f, leak_a
+            )
+            _merge_diag(diagnostics, diag_f)
+            _merge_diag(diagnostics, diag_a)
+    finally:
+        _ACTIVE_CV_BASE_STATE.reset(base_token)
     diagnostics["CK_outer_complete_basis_leakage"] = max(
         float(diagnostics.get("outer_complete_basis_leakage", 0.0)),
         float(diagnostics.get("CK_outer_complete_basis_leakage", 0.0)),
@@ -242,6 +254,8 @@ def closure_acceptance(
     max_component_leakage,
     max_spin_reached,
     sine_engine_result,
+    spin_wall_omitted_branches=0,
+    max_intermediate_spin_reached=0.0,
 ):
     """Conjunctive acceptance: algebraic closure AND the underlying LSINE gate.
 
@@ -255,6 +269,8 @@ def closure_acceptance(
         and scalar_projection_rejected_terms == 0
         and max_component_leakage < 1e-9
         and max_spin_reached <= 3.5 + 1e-12
+        and spin_wall_omitted_branches == 0
+        and max_intermediate_spin_reached <= 3.5 + 1e-12
         and isinstance(sine_engine_result, dict)
         and sine_engine_result.get("passed") is True
     )
@@ -289,14 +305,170 @@ def sparse_ordering_parts(forward_columns, adjoint_columns):
     return symmetric, antihermitian, hermitian_k_hbar1
 
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
+
+
+def _factorized_branch_metrics(tensors, scalar_amp, include_payload=False):
+    """Measure a factorized spin-network branch, not merely its scalar prefactor."""
+    import hashlib
+    import numpy as np
+
+    digest = hashlib.sha256()
+    branch_l1 = float(abs(scalar_amp))
+    branch_l2 = float(abs(scalar_amp))
+    branch_max = float(abs(scalar_amp))
+    shapes = []
+    payload = []
+    for tensor in tensors:
+        arr = np.ascontiguousarray(np.asarray(tensor))
+        digest.update(repr(tuple(arr.shape)).encode("ascii"))
+        digest.update(arr.dtype.str.encode("ascii"))
+        digest.update(arr.tobytes(order="C"))
+        absolute = np.abs(arr)
+        local_l1 = float(absolute.sum())
+        local_l2 = float(np.linalg.norm(absolute.reshape(-1)))
+        local_max = float(absolute.max()) if absolute.size else 0.0
+        branch_l1 *= local_l1
+        branch_l2 *= local_l2
+        branch_max *= local_max
+        shapes.append(list(arr.shape))
+        if include_payload:
+            payload.append({
+                "shape": list(arr.shape),
+                "dtype": arr.dtype.str,
+                "real": np.asarray(arr.real).reshape(-1).astype(float).tolist(),
+                "imag": np.asarray(arr.imag).reshape(-1).astype(float).tolist(),
+            })
+    return {
+        "branch_l1": branch_l1,
+        "branch_l2": branch_l2,
+        "branch_max_abs": branch_max,
+        "tensor_sha256": digest.hexdigest(),
+        "tensor_shapes": shapes,
+        "tensor_payload": payload if include_payload else None,
+    }
+
+
+def _make_spin_wall_probe(original_apply_hit_branch, edge_index_map, wall, stats):
+    """Wrap primitive hits and retain the exact nonzero branches rejected at the upper spin wall.
+
+    The widened call is diagnostic only; the returned production branches are
+    still generated with the original wall. Since one hit changes doubled spin
+    by exactly +/-1, wall+2 is sufficient to expose every upper-wall candidate.
+    """
+    def probed(branch, x, y, i, j, Jmax2):
+        edge = tuple(sorted((x, y)))
+        edge_index = edge_index_map[edge]
+        input_spins, _tensors, _input_amp = branch
+        if Jmax2 == wall and input_spins[edge_index] == wall:
+            widened = original_apply_hit_branch(branch, x, y, i, j, wall + 2)
+            for candidate in widened:
+                out_spins, _out_tensors, out_amp = candidate
+                if out_spins[edge_index] > wall and abs(out_amp) > 0.0:
+                    metrics = _factorized_branch_metrics(
+                        _out_tensors, out_amp, include_payload=len(stats["samples"]) < 5
+                    )
+                    magnitude = metrics["branch_l2"]
+                    stats["count"] += 1
+                    stats["l1"] += metrics["branch_l1"]
+                    stats["l2_sq"] += magnitude * magnitude
+                    stats["max_abs"] = max(stats["max_abs"], metrics["branch_max_abs"])
+                    edge_label = f"{edge[0]}-{edge[1]}"
+                    stats["by_edge"][edge_label] = stats["by_edge"].get(edge_label, 0) + 1
+                    if len(stats["samples"]) < 25:
+                        stats["samples"].append({
+                            "edge": list(edge),
+                            "auxiliary_indices": [int(i), int(j)],
+                            "input_spins": list(input_spins),
+                            "omitted_output_spins": list(out_spins),
+                            "scalar_factor_real": float(out_amp.real),
+                            "scalar_factor_imag": float(out_amp.imag),
+                            "branch_l1": metrics["branch_l1"],
+                            "branch_l2": metrics["branch_l2"],
+                            "branch_max_abs": metrics["branch_max_abs"],
+                            "tensor_sha256": metrics["tensor_sha256"],
+                            "tensor_shapes": metrics["tensor_shapes"],
+                            "tensor_payload": metrics["tensor_payload"],
+                        })
+        actual = original_apply_hit_branch(branch, x, y, i, j, Jmax2)
+        for candidate in actual:
+            out_spins, _out_tensors, out_amp = candidate
+            reached = max(out_spins, default=0) / 2
+            stats["max_intermediate_spin_reached"] = max(
+                stats["max_intermediate_spin_reached"], float(reached)
+            )
+            if max(out_spins, default=0) > 7 and abs(out_amp) > 0.0:
+                metrics = _factorized_branch_metrics(
+                    _out_tensors,
+                    out_amp,
+                    include_payload=len(stats["intermediate_samples"]) < 5,
+                )
+                magnitude = metrics["branch_l2"]
+                stats["intermediate_above_3_5_count"] += 1
+                stats["intermediate_above_3_5_l1"] += metrics["branch_l1"]
+                stats["intermediate_above_3_5_l2_sq"] += magnitude * magnitude
+                if len(stats["intermediate_samples"]) < 25:
+                    stats["intermediate_samples"].append({
+                        "edge": list(edge),
+                        "auxiliary_indices": [int(i), int(j)],
+                        "output_spins": list(out_spins),
+                        "scalar_factor_real": float(out_amp.real),
+                        "scalar_factor_imag": float(out_amp.imag),
+                        "branch_l1": metrics["branch_l1"],
+                        "branch_l2": metrics["branch_l2"],
+                        "branch_max_abs": metrics["branch_max_abs"],
+                        "tensor_sha256": metrics["tensor_sha256"],
+                        "tensor_shapes": metrics["tensor_shapes"],
+                        "tensor_payload": metrics["tensor_payload"],
+                    })
+        return actual
+    return probed
+
+
+def _spin_wall_diagnostics(stats):
+    return {
+        "max_intermediate_spin_reached": float(stats["max_intermediate_spin_reached"]),
+        "intermediate_above_3_5_branch_count": int(stats["intermediate_above_3_5_count"]),
+        "intermediate_above_3_5_pathwise_l1": float(stats["intermediate_above_3_5_l1"]),
+        "intermediate_above_3_5_pathwise_l2": math.sqrt(float(stats["intermediate_above_3_5_l2_sq"])),
+        "intermediate_above_3_5_samples": list(stats["intermediate_samples"]),
+        "spin_wall_omitted_branch_count": int(stats["count"]),
+        "spin_wall_omitted_pathwise_l1": float(stats["l1"]),
+        "spin_wall_omitted_pathwise_l2": math.sqrt(float(stats["l2_sq"])),
+        "spin_wall_omitted_max_abs": float(stats["max_abs"]),
+        "spin_wall_omitted_by_edge": dict(stats["by_edge"]),
+        "spin_wall_omitted_samples": list(stats["samples"]),
+        "spin_wall_probe_note": (
+            "Counts nonzero primitive path branches immediately above the configured "
+            "upper doubled-spin wall before production rejection; L1/L2 are pathwise "
+            "sums and are not coherently aggregated output norms."
+        ),
+    }
+
+def _closure_cap_reasons(closure_size, input_depth, max_states, max_depth):
+    """Return every active support cap independently; None means unbounded."""
+    reasons = {}
+    if max_states is not None and closure_size >= max_states:
+        reasons["max_states"] = int(max_states)
+    if max_depth is not None and input_depth >= max_depth:
+        reasons["max_depth"] = int(max_depth)
+    return reasons
+
+
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, pruning_mode="production", spectral_zero_factor=1000.0, cache_mode="on"):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if max_states < len(W5_K) or max_depth < 0 or amp_tol <= 0:
+    if ((max_states is not None and max_states < len(W5_K))
+            or (max_depth is not None and max_depth < 0) or amp_tol < 0):
         raise ValueError("invalid closure limits")
+    if pruning_mode not in ("production", "shadow_no_prune"):
+        raise ValueError("pruning_mode must be production or shadow_no_prune")
+    if not math.isfinite(float(spectral_zero_factor)) or float(spectral_zero_factor) <= 0:
+        raise ValueError("spectral_zero_factor must be finite and positive")
+    if cache_mode not in ("on", "off"):
+        raise ValueError("cache_mode must be on or off")
 
     HERE = Path(__file__).resolve().parent
     if str(HERE) not in sys.path:
@@ -305,6 +477,51 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_covariant_volume_leg_gate as CV
     import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
+    import peter_weyl_zeroaware_volume_migration_experiment as ZVM
+    import bqg_pruning_audit as PRUNE
+    ZVM.ZERO_FACTOR = float(spectral_zero_factor)
+
+    # A lower-level pruning ledger must not depend on whether a prior caller
+    # warmed an lru_cache before capture. Clear every imported operator cache
+    # in this dependency family before the audited execution.
+    cleared_cache_functions = 0
+    for module_name, module in list(sys.modules.items()):
+        module_file = getattr(module, "__file__", None)
+        if module_file and Path(module_file).resolve().parent == HERE:
+            for candidate in vars(module).values():
+                clear = getattr(candidate, "cache_clear", None)
+                if callable(clear):
+                    clear()
+                    cleared_cache_functions += 1
+
+    # Cache repeated deterministic component maps at the KKV contraction
+    # boundary.  The epsilon orbit revisits identical C(V) requests for the
+    # same exact sparse input (same source node, target leg and auxiliary
+    # indices).  The audit-aware cache replays every nested pruning event in
+    # original call order; no amplitudes are rounded and no operator is changed.
+    old_cv_component = RAW.COMP.C_volume_component
+    old_ck_component = RAW.KCOMP.C_K_component
+
+    @PRUNE.audit_lru_cache(16)
+    def cached_cv_component(frozen, source_v, target_v, i, j, cutoff):
+        out, leak = old_cv_component(
+            dict(frozen), source_v, target_v, i, j, cutoff
+        )
+        return tuple(out.items()), float(leak)
+
+    def memoized_cv_component(state, source_v, target_v, i, j, cutoff):
+        frozen = _freeze_sparse_state(state)
+        # Cache only the first C(V) leg whose input is the fixed source state.
+        # Adjoint-side C(V) requests act on distinct intermediate states and
+        # must not evict the reusable source-state entries.
+        if frozen != _ACTIVE_CV_BASE_STATE.get():
+            return old_cv_component(state, source_v, target_v, i, j, cutoff)
+        items, leak = cached_cv_component(
+            frozen, source_v, target_v, i, j, cutoff
+        )
+        return dict(items), leak
+
+    RAW.COMP.C_volume_component = memoized_cv_component
 
     seeds = [w5_input_key(K) for K in W5_K]
     closure_keys = list(seeds)
@@ -319,7 +536,109 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     truncated = False
     omitted_support = 0
 
+    # Full coefficient-level loss ledger.  Records are intentionally not
+    # sample-capped: every coefficient removed by the V10 output threshold or
+    # by a reachable-support cap is retained with its complex value and keys.
+    coefficient_ledger = {
+        "amp_tol": {"forward": [], "adjoint": []},
+        "closure_caps": {"forward": [], "adjoint": []},
+        "summary": {},
+    }
+    coherent_sum_ledger = []
+
+    def node_contribution_rows(direction, source_v, input_key, state):
+        rows = []
+        for output_key, amplitude in state.items():
+            z = complex(amplitude)
+            rows.append({
+                "source_node": int(source_v),
+                "direction": direction,
+                "input_key": repr(input_key),
+                "output_key": repr(output_key),
+                "real": float(z.real),
+                "imag": float(z.imag),
+                "abs": float(abs(z)),
+            })
+        return rows
+
+    def coherent_metrics(rows, state):
+        path_l1 = sum(row["abs"] for row in rows)
+        path_l2 = math.sqrt(sum(row["abs"] ** 2 for row in rows))
+        coherent_l1 = sum(abs(z) for z in state.values())
+        coherent_l2 = sparse_norm(state)
+        return {
+            "pre_sum_branch_coefficient_count": len(rows),
+            "pre_sum_pathwise_l1": float(path_l1),
+            "pre_sum_pathwise_l2": float(path_l2),
+            "post_sum_coherent_support": len(state),
+            "post_sum_coherent_l1": float(coherent_l1),
+            "post_sum_coherent_l2": float(coherent_l2),
+            "l1_cancellation_gap": float(path_l1 - coherent_l1),
+        }
+
+    def record_dropped(stage, direction, input_key, output_key, amplitude,
+                       threshold=None, depth_value=None, cap=None, cap_reasons=None):
+        z = complex(amplitude)
+        row = {
+            "stage": stage,
+            "direction": direction,
+            "input_key": repr(input_key),
+            "output_key": repr(output_key),
+            "real": float(z.real),
+            "imag": float(z.imag),
+            "abs": float(abs(z)),
+        }
+        if threshold is not None:
+            row["threshold"] = float(threshold)
+        if depth_value is not None:
+            row["input_depth"] = int(depth_value)
+        if cap is not None:
+            if isinstance(cap, dict):
+                row["cap_limits"] = dict(cap)
+            else:
+                row["cap"] = int(cap)
+        if cap_reasons:
+            row["cap_reasons"] = dict(cap_reasons)
+        row["actual_discarded"] = bool(not PRUNE.keep(z, threshold or 0.0)) if stage == "amp_tol" else True
+        row["pruning_mode"] = pruning_mode
+        coefficient_ledger[stage][direction].append(row)
+
+    def summarize_ledger():
+        summary = {}
+        for stage in ("amp_tol", "closure_caps"):
+            for direction in ("forward", "adjoint"):
+                rows = coefficient_ledger[stage][direction]
+                actual = [row for row in rows if row.get("actual_discarded", True)]
+                summary[f"{stage}.{direction}"] = {
+                    "candidate_coefficient_count": len(rows),
+                    "candidate_pathwise_l1": float(sum(row["abs"] for row in rows)),
+                    "candidate_pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in rows)),
+                    "actual_discarded_coefficient_count": len(actual),
+                    "actual_discarded_pathwise_l1": float(sum(row["abs"] for row in actual)),
+                    "actual_discarded_pathwise_l2": math.sqrt(sum(row["abs"] ** 2 for row in actual)),
+                    "max_candidate_abs": max((row["abs"] for row in rows), default=0.0),
+                    "cap_reason_counts": {
+                        reason: sum(reason in row.get("cap_reasons", {}) for row in rows)
+                        for reason in ("max_states", "max_depth")
+                    } if stage == "closure_caps" else {},
+                }
+        coefficient_ledger["summary"] = summary
+        return coefficient_ledger
+
     old_raw_run = RAW.run
+    old_apply_hit_branch = PW.apply_hit_branch
+    spin_wall_stats = {
+        "count": 0, "l1": 0.0, "l2_sq": 0.0, "max_abs": 0.0,
+        "by_edge": {}, "samples": [],
+        "max_intermediate_spin_reached": 0.0,
+        "intermediate_above_3_5_count": 0,
+        "intermediate_above_3_5_l1": 0.0,
+        "intermediate_above_3_5_l2_sq": 0.0,
+        "intermediate_samples": [],
+    }
+    PW.apply_hit_branch = _make_spin_wall_probe(
+        old_apply_hit_branch, PW.EIDX, Jmax2, spin_wall_stats
+    )
     sine_engine_result = {}
 
     def closure_executor(_engine_node=0, a=None, b=None, c=None):
@@ -327,6 +646,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         while queue:
             key = queue.popleft()
             f_total, ad_total = {}, {}
+            f_node_rows, ad_node_rows = [], []
             for source_v in source_nodes:
                 f_cov, a_cov, diag = node_kkv_maps(
                     {key: 1.0 + 0j}, source_v, Jmax2, PW, CV, RAW
@@ -335,6 +655,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 ad, na, nanorm = covariant_to_gauss_map(a_cov, source_v)
                 rejected_count += nf + na
                 rejected_norm2 += nfnorm**2 + nanorm**2
+                f_node_rows.extend(node_contribution_rows("forward", source_v, key, f))
+                ad_node_rows.extend(node_contribution_rows("adjoint", source_v, key, ad))
                 add_sparse(f_total, f)
                 add_sparse(ad_total, ad)
                 for name, value in diag.items():
@@ -346,17 +668,58 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                         aggregate_leakage.get(name, 0.0), float(value)
                     )
 
-            # Store only amplitudes above the declared support tolerance.
-            f_total = {k: z for k, z in f_total.items() if abs(z) > amp_tol}
-            ad_total = {k: z for k, z in ad_total.items() if abs(z) > amp_tol}
+            # Preserve the pre-sum node coefficients and post-sum coherent
+            # vectors as distinct evidence. Pathwise and coherent norms are
+            # intentionally never merged into one loss number.
+            coherent_sum_ledger.append({
+                "input_key": repr(key),
+                "forward": {
+                    "node_contributions": f_node_rows,
+                    **coherent_metrics(f_node_rows, f_total),
+                },
+                "adjoint": {
+                    "node_contributions": ad_node_rows,
+                    **coherent_metrics(ad_node_rows, ad_total),
+                },
+            })
+
+            # Record every coefficient removed after coherent node summation.
+            # Forward and direct-adjoint ledgers are kept strictly separate.
+            for output, amplitude in f_total.items():
+                if abs(amplitude) <= amp_tol:
+                    record_dropped("amp_tol", "forward", key, output, amplitude,
+                                   threshold=amp_tol)
+            for output, amplitude in ad_total.items():
+                if abs(amplitude) <= amp_tol:
+                    record_dropped("amp_tol", "adjoint", key, output, amplitude,
+                                   threshold=amp_tol)
+            f_total = {k: z for k, z in f_total.items() if PRUNE.keep(z, amp_tol)}
+            ad_total = {k: z for k, z in ad_total.items() if PRUNE.keep(z, amp_tol)}
             forward_columns.append(f_total)
             adjoint_columns.append(ad_total)
 
+            # A state-cap/depth-cap rejection is recorded coefficient by
+            # coefficient, not merely as a count of omitted support keys.
             for output in set(f_total) | set(ad_total):
                 if output not in seen:
-                    if len(closure_keys) >= max_states or depth[key] >= max_depth:
+                    cap_reasons = _closure_cap_reasons(
+                        len(closure_keys), depth[key], max_states, max_depth
+                    )
+                    if cap_reasons:
                         truncated = True
                         omitted_support += 1
+                        cap_payload = {
+                            "max_states": max_states,
+                            "max_depth": max_depth,
+                        }
+                        if output in f_total:
+                            record_dropped("closure_caps", "forward", key, output,
+                                           f_total[output], depth_value=depth[key],
+                                           cap=cap_payload, cap_reasons=cap_reasons)
+                        if output in ad_total:
+                            record_dropped("closure_caps", "adjoint", key, output,
+                                           ad_total[output], depth_value=depth[key],
+                                           cap=cap_payload, cap_reasons=cap_reasons)
                         continue
                     seen.add(output)
                     depth[output] = depth[key] + 1
@@ -373,8 +736,9 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "output_norm": norm_f,
             "final_nonscalar_J_weight_fraction": 0.0 if rejected_norm2 == 0 else 1.0,
             "max_spin_reached": max(
-                (max(key[0]) for key in closure_keys), default=0
-            ) / 2,
+                max((max(key[0]) for key in closure_keys), default=0) / 2,
+                spin_wall_stats["max_intermediate_spin_reached"],
+            ),
             "max_diagnostics": {
                 "CV_complete_basis_leakage": aggregate_leakage.get("CV_complete_basis_leakage", 0.0),
                 "CK_outer_complete_basis_leakage": aggregate_leakage.get("CK_outer_complete_basis_leakage", 0.0),
@@ -384,14 +748,77 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         }
 
     RAW.run = closure_executor
-    try:
-        # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine and
-        # cache wrappers once for the entire closure walk.
-        # One invocation installs the sine K engine once; the intercepted
-        # executor coherently sums the selected node maps on every basis key.
-        sine_engine_result = LSINE.run(source_nodes[0])
-    finally:
-        RAW.run = old_raw_run
+    from contextlib import nullcontext
+    with PRUNE.capture() as lower_level_pruning:
+        pruning_context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else nullcontext()
+        cache_context = PRUNE.cache_bypass() if cache_mode == "off" else nullcontext()
+        with cache_context:
+            with pruning_context:
+                try:
+                    # LSINE.run installs the exact sine-Hermitian K=[V,H_E] engine.
+                    # The context-local cache policy applies through the complete
+                    # nested operator dependency chain.
+                    sine_engine_result = LSINE.run(source_nodes[0])
+                    spectral_sensitivity = ZVM.spectral_audit_snapshot()
+                finally:
+                    RAW.run = old_raw_run
+                    PW.apply_hit_branch = old_apply_hit_branch
+                    RAW.COMP.C_volume_component = old_cv_component
+                    RAW.KCOMP.C_K_component = old_ck_component
+    lower_level_pruning_ledger = lower_level_pruning.snapshot()
+    lower_level_pruning_ledger["mode"] = pruning_mode
+    lower_level_pruning_ledger["coverage"] = {
+        "complete": False,
+        "status": "PARTIAL_INSTRUMENTATION_NOT_A_ZERO_LOSS_CERTIFICATE",
+        "instrumented_modules": [
+            "k5_peter_weyl_safe_hda_column.py",
+            "peter_weyl_covariant_volume_leg_gate.py",
+            "peter_weyl_covariant_K_leg_gate.py",
+            "peter_weyl_covariant_composition_gate.py",
+            "peter_weyl_lorentzian_K_block_gate.py",
+            "peter_weyl_lorentzian_ordered_triple_gate.py",
+            "peter_weyl_euclidean_sine_ordering_gate.py",
+            "peter_weyl_covariant_K_projection_audit_gate.py",
+            "bqg_v10_w5_lorentzian_adjoint_closure.py",
+        ],
+        "remaining_checks": [
+            "independent transitive threshold-site inventory and coverage proof",
+            "cache-on/cache-off pruning-ledger equality for the full composition chain",
+            "complete spin-wall and state/depth-cap loss separation",
+            "full complex support convergence across Jmax2 and amplitude-threshold ladders",
+        ],
+        "excluded_from_amplitude_bypass": [
+            "exact SU(2) representation and parity selection rules",
+            "spin-wall truncation and state/depth caps",
+            "zero-aware spectral volume/nullspace convention",
+        ],
+        "shadow_no_prune_interpretation": (
+            "shadow_no_prune bypasses only wired nonzero amplitude thresholds. "
+            "Until coverage.complete is true, it is a partial diagnostic and "
+            "must never be reported as a true no-pruning reference."
+        ),
+    }
+    lower_level_pruning_ledger["component_cache"] = {
+        "C_volume_component": {
+            "hits": cached_cv_component.cache_info().hits,
+            "misses": cached_cv_component.cache_info().misses,
+            "maxsize": cached_cv_component.cache_info().maxsize,
+            "currsize": cached_cv_component.cache_info().currsize,
+            "semantics": "exact sparse-state key; audit events replayed on hits",
+        },
+        "physics_changed": False,
+    }
+    lower_level_pruning_ledger["cache_policy"] = {
+        "cleared_lru_cache_function_count": int(cleared_cache_functions),
+        "cleared_before_capture": True,
+        "mode": cache_mode,
+        "policy": (
+            "all W5 dependency LRU caches are audit-aware; cache_mode=off bypasses "
+            "every audit-aware cache context-locally while preserving operator bodies"
+            if cache_mode == "off" else
+            "all imported W5 dependency LRU caches are cleared before the audited closure and then enabled"
+        ),
+    }
 
     complete = not truncated and not queue and len(forward_columns) == len(closure_keys)
     if not complete:
@@ -417,6 +844,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         return {
             "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
             "source_nodes": list(source_nodes),
+            "pruning_mode": pruning_mode,
+            "cache_mode": cache_mode,
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
@@ -425,6 +854,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "max_states": max_states,
             "max_depth": max_depth,
             "omitted_new_support_keys": omitted_support,
+            "coefficient_loss_ledger": summarize_ledger(),
+            "lower_level_pruning_ledger": lower_level_pruning_ledger,
+            "coherent_node_sum_ledger": coherent_sum_ledger,
+            "spectral_sensitivity": spectral_sensitivity,
             "partial_diagnostics": {
                 "forward_frobenius_norm": sparse_frobenius(forward_columns),
                 "direct_adjoint_frobenius_norm": sparse_frobenius(adjoint_columns),
@@ -434,6 +867,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
                 "direct_adjoint_column_norms": [sparse_norm(x) for x in adjoint_columns],
                 "scalar_projection_rejected_terms": rejected_count,
                 "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
+                **_spin_wall_diagnostics(spin_wall_stats),
                 "component_leakage_by_node_and_type": leakage_max,
                 "component_leakage_max_by_type": aggregate_leakage,
             },
@@ -495,7 +929,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         {"value": aggregate_leakage.get("CK_complete_charge_basis_leakage", 0.0),
          "hard_acceptance": False},
     )
-    max_spin_reached = max((max(key[0]) for key in basis_keys), default=0) / 2
+    max_spin_reached = max(
+        max((max(key[0]) for key in basis_keys), default=0) / 2,
+        spin_wall_stats["max_intermediate_spin_reached"],
+    )
     passed = closure_acceptance(
         forward_norm=bnorm,
         adjoint_norm=bdag_norm,
@@ -504,10 +941,22 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         max_component_leakage=max_leak,
         max_spin_reached=max_spin_reached,
         sine_engine_result=sine_engine_result,
+        spin_wall_omitted_branches=spin_wall_stats["count"],
+        max_intermediate_spin_reached=spin_wall_stats["max_intermediate_spin_reached"],
+    )
+    algebraic_status = "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE"
+    reported_status = (
+        "INCOMPLETE_NO_PRUNING_COVERAGE"
+        if pruning_mode == "shadow_no_prune"
+        else algebraic_status
     )
     return {
-        "status": "PASS_ADJOINT_CONSISTENCY" if passed else "FAIL_ADJOINT_OR_LEAKAGE_GATE",
+        "status": reported_status,
+        "algebraic_status": algebraic_status,
+        "lower_level_pruning_coverage_complete": False,
         "source_nodes": list(source_nodes),
+        "pruning_mode": pruning_mode,
+        "cache_mode": cache_mode,
         "Jmax2": Jmax2,
         "Jmax": Jmax2 / 2,
         "seed_count": len(seeds),
@@ -531,6 +980,10 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "external_beta_kappa_planck_trace_regulator_prefactor_fixed": False,
             "warning": "This is the minimal symmetric completion of the computed raw KKV ordering, not a proof of the unique physical BQG Thiemann ordering."
         },
+        "coefficient_loss_ledger": summarize_ledger(),
+        "lower_level_pruning_ledger": lower_level_pruning_ledger,
+        "coherent_node_sum_ledger": coherent_sum_ledger,
+        "spectral_sensitivity": spectral_sensitivity,
         "diagnostics": {
             "direct_adjoint_relative_residual": relative,
             "direct_adjoint_absolute_residual": err,
@@ -542,6 +995,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "scalar_projection_rejected_norm": math.sqrt(rejected_norm2),
             "max_component_leakage": max_leak,
             "max_spin_reached": max_spin_reached,
+            **_spin_wall_diagnostics(spin_wall_stats),
             "sine_engine_gate_passed": sine_engine_result.get("passed") is True,
             "sine_engine_gate_diagnostics": sine_engine_result.get("max_diagnostics", {}),
             "component_leakage_by_type": leakage_max,
@@ -565,10 +1019,23 @@ def main():
     ap.add_argument("--Jmax2", type=int, default=10)
     ap.add_argument("--max-states", type=int, default=500)
     ap.add_argument("--max-depth", type=int, default=8)
+    ap.add_argument(
+        "--unbounded-closure", action="store_true",
+        help="disable both reachable-state and path-depth caps (finite Jmax2 still applies)",
+    )
     ap.add_argument("--amp-tol", type=float, default=1e-12)
+    ap.add_argument("--spectral-zero-factor", type=float, default=1000.0)
+    ap.add_argument("--cache-mode", choices=("on", "off"), default="on")
+    ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    result = run_closure(args.nodes, args.Jmax2, args.max_states, args.max_depth, args.amp_tol)
+    max_states = None if args.unbounded_closure else args.max_states
+    max_depth = None if args.unbounded_closure else args.max_depth
+    result = run_closure(
+        args.nodes, args.Jmax2, max_states, max_depth,
+        args.amp_tol, args.pruning_mode, args.spectral_zero_factor,
+        args.cache_mode,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({

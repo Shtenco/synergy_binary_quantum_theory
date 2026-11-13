@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 import sympy as sp
 from sympy.physics.wigner import clebsch_gordan
+import bqg_pruning_audit as PRUNE
 
 VERT=tuple(range(5))
 EDGES=tuple(itertools.combinations(VERT,2))
@@ -33,21 +34,21 @@ for p in itertools.permutations(range(3)):
     EPS3[p]=(-1)**inv
 EPS2=np.array([[0,1],[-1,0]],complex)
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def cg2(s1,s2,S,m1,m2,M):
     vals=[sp.Rational(x,2) for x in (s1,s2,S,m1,m2,M)]
     return float(clebsch_gordan(*vals).evalf())
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def m2vals_t(s):
     return tuple(range(s,-s-1,-2))
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def allowed_k2_t(s1,s2,s3,s4):
     return tuple(sorted(set(range(abs(s1-s2),s1+s2+1,2)) &
                         set(range(abs(s3-s4),s3+s4+1,2))))
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(32)
 def intertwiner_tensor_cached(spins,K):
     spins=tuple(spins)
     dims=[s+1 for s in spins]
@@ -64,7 +65,7 @@ def intertwiner_tensor_cached(spins,K):
         T[idxs]=val
     return T
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(32)
 def spin_mats_cached(s):
     j=s/2
     ms=np.array(m2vals_t(s),float)/2
@@ -79,13 +80,30 @@ def spin_mats_cached(s):
     Jm=Jp.conj().T
     return ((Jp+Jm)/2,(Jp-Jm)/(2j) if j>0 else np.zeros((1,1),complex),Jz)
 
+_AXIS4_EINSUM = (
+    "xa,abcd->xbcd",
+    "xb,abcd->axcd",
+    "xc,abcd->abxd",
+    "xd,abcd->abcx",
+)
+
+
 def apply_axis_np(T,axis,M):
+    """Apply a one-leg matrix without materializing two moveaxis views.
+
+    K5 node tensors are rank four.  The fixed einsum contractions avoid the
+    pair of axis permutations in the former moveaxis/tensordot/moveaxis path.
+    Keep the generic reference path for any other tensor rank.
+    """
+    if T.ndim == 4:
+        axis = axis % 4
+        return np.einsum(_AXIS4_EINSUM[axis], M, T, optimize=False)
     return np.moveaxis(np.tensordot(M,np.moveaxis(T,axis,0),axes=(1,0)),0,axis)
 
 def local_spins(spins,v):
     return tuple(spins[EIDX[tuple(sorted((v,w)))]] for w in NEIG[v])
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(128)
 def cg_leg_matrix(s_in,s_out,a2):
     Mi=m2vals_t(s_in); Mo=m2vals_t(s_out)
     M=np.zeros((s_out+1,s_in+1),complex)
@@ -105,7 +123,7 @@ def hit_mats(s_in,s_out,x,y,i,j):
         norm=math.sqrt((s_out+1)/(s_in+1))
     return Ml,Mr,norm
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(16)
 def epsilon_j(s):
     ms=m2vals_t(s);d=s+1
     E=np.zeros((d,d),complex)
@@ -114,7 +132,7 @@ def epsilon_j(s):
         E[idx[m],idx[-m]]=(-1)**((s-m)//2)
     return E
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(32)
 def oriented_intertwiner(v,spins_local,K):
     T=intertwiner_tensor_cached(tuple(spins_local),K).copy()
     for leg,w in enumerate(NEIG[v]):
@@ -158,7 +176,7 @@ def apply_path_branch(branch,path,iout,iin,Jmax2):
         outs.extend(branches)
     return outs
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def volume123_matrix(s1,s2,s3):
     mats=[spin_mats_cached(s) for s in (s1,s2,s3)]
     d=(s1+1)*(s2+1)*(s3+1)
@@ -190,8 +208,11 @@ def apply_volume_tensor_oriented(T,spins_local,v):
 
 def add_dict(dst,src,scale=1):
     for k,a in src.items():
-        v=dst.get(k,0j)+scale*a
-        if abs(v)>1e-13: dst[k]=v
+        prior=dst.get(k,0j)
+        incoming=scale*a
+        v=prior+incoming
+        PRUNE.record_merge("k5.add_dict.1e-13",k,prior,incoming,v,1e-13)
+        if PRUNE.keep(v,1e-13): dst[k]=v
         elif k in dst: del dst[k]
 
 def adjoint_path(path,iout,iin):
@@ -217,7 +238,7 @@ def T_sequences(v,a,b,c):
                  (-1,base2+(pf,)),(+1,base2+(pr,))]
     return tuple(seqs)
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(None)
 def oriented_specs(v):
     neigh=NEIG[v]
     specs=[]
@@ -251,17 +272,21 @@ def apply_primitive_oriented(input_key,seq,Jmax2):
             ls=local_spins(spins,v);opts=[]
             for K in allowed_k2_t(*ls):
                 c=np.vdot(oriented_intertwiner(v,ls,K),tensors[v])
-                if abs(c)>1e-12: opts.append((K,c))
+                PRUNE.record_threshold("k5.primitive.intertwiner_projection.1e-12",(spins,v,K),c,1e-12,incoming=amp)
+                if PRUNE.keep(c,1e-12): opts.append((K,c))
             if not opts: ok=False;break
             local_opts.append(opts)
         if not ok: continue
         for ch in itertools.product(*local_opts):
             val=amp
             for _,c in ch: val*=c
-            if abs(val)>1e-12:
-                ko=(spins,tuple(k for k,_ in ch))
+            ko=(spins,tuple(k for k,_ in ch))
+            PRUNE.record_threshold("k5.primitive.product_coefficient.1e-12",ko,val,1e-12)
+            if PRUNE.keep(val,1e-12):
                 out[ko]=out.get(ko,0j)+val
-    return {k:v for k,v in out.items() if abs(v)>1e-11}
+    for k,v in out.items():
+        if abs(v)<=1e-11: PRUNE.record_threshold("k5.primitive.output.1e-11",k,v,1e-11)
+    return {k:v for k,v in out.items() if PRUNE.keep(v,1e-11)}
 
 def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False):
     out={}
@@ -270,7 +295,7 @@ def apply_T_oriented_basis(input_key,v,a,b,c,Jmax2,adj=False):
         add_dict(out,apply_primitive_oriented(input_key,seq,Jmax2),coef)
     return out
 
-@functools.lru_cache(None)
+@PRUNE.audit_lru_cache(16)
 def T_cached(key,v,a,b,c,Jmax2,adj):
     return tuple(apply_T_oriented_basis(key,v,a,b,c,Jmax2,adj).items())
 
@@ -279,7 +304,9 @@ def apply_T_cached_state(state,spec,Jmax2,adj=False):
     for key,amp0 in state.items():
         for ko,c in T_cached(key,*spec,Jmax2,adj):
             out[ko]=out.get(ko,0j)+amp0*c
-    return {k:v for k,v in out.items() if abs(v)>1e-10}
+    for k,v in out.items():
+        if abs(v)<=1e-10: PRUNE.record_threshold("k5.cached_T_state.1e-10",k,v,1e-10)
+    return {k:v for k,v in out.items() if PRUNE.keep(v,1e-10)}
 
 def apply_H_cached_state(state,v,Jmax2):
     out={}
@@ -290,7 +317,9 @@ def apply_H_cached_state(state,v,Jmax2):
     return out
 
 def prune_state(st,tol=1e-8):
-    return {k:v for k,v in st.items() if abs(v)>tol}
+    for k,v in st.items():
+        if abs(v)<=tol: PRUNE.record_threshold("k5.prune_state",k,v,tol)
+    return {k:v for k,v in st.items() if PRUNE.keep(v,tol)}
 
 def prev_intertwiners():
     z=np.array([1,0],complex);o=np.array([0,1],complex)
@@ -345,7 +374,14 @@ def run():
     max_spin2=max(max(k[0]) for k in comm) if comm else 0
 
     V5=v5_tensor();v5norm=float(np.linalg.norm(V5));full=basis_full_jhalf()
-    coeffs=[(full[idx],val/v5norm) for idx,val in enumerate(V5) if abs(val)>1e-12]
+    coeffs=[]
+    for idx,val in enumerate(V5):
+        coefficient=val/v5norm
+        # Preserve the historical production decision on the raw V5 entry;
+        # normalization is applied only to the retained coefficient.
+        PRUNE.record_threshold("k5.V5_input_decomposition.1e-12",full[idx],val,1e-12)
+        if PRUNE.keep(val,1e-12):
+            coeffs.append((full[idx],coefficient))
     h0v={}
     for key,amp in coeffs:
         rr=apply_H_cached_state({key:1+0j},0,JMAX2)
