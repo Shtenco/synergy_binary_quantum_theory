@@ -8,7 +8,7 @@ import subprocess
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import bqg_v10_w5_amp_tol_shadow_compare as shadow_compare
 from bqg_v10_w5_amp_tol_shadow_compare import (
-    closure_matrix_available, compare_vectors, unpack_columns, run_one,
+    closure_matrix_available, compare_vectors, compare_cache_runs, unpack_columns, run_one,
 )
 
 
@@ -58,6 +58,54 @@ class TestV10ShadowVectorComparison(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestV10CacheEquivalence(unittest.TestCase):
+    @staticmethod
+    def result_fixture():
+        return {
+            "status": "PASS_ADJOINT_CONSISTENCY",
+            "basis_keys_repr": ["a", "b"],
+            "forward_B_columns_sparse": [[[0, 1.0, 0.0]], [[1, 0.5, 0.25]]],
+            "direct_Bdag_columns_sparse": [[[0, 1.0, 0.0]], [[1, 0.5, -0.25]]],
+            "lower_level_pruning_ledger": {
+                "event_count": 2,
+                "events": [{"site_id": "x", "propagated_abs": 1e-13}],
+                "cache_policy": "cache-on",
+            },
+            "coefficient_loss_ledger": {"summary": {"amp_tol.forward": {"count": 1}}},
+            "coherent_node_sum_ledger": [{"input_key": "a", "forward": {"post_sum_coherent_l1": 1.0}}],
+            "diagnostics": {
+                "spin_wall_omitted_branch_count": 0,
+                "max_intermediate_spin_reached": 3.0,
+                "closure_cap_counts": {"max_states": 0, "max_depth": 0},
+            },
+            "spectral_sensitivity": {"zero_factor": 1000.0, "zeroed_eigenvalue_count": 1},
+        }
+
+    def test_full_cache_matrix_and_every_ledger_compare_exactly(self):
+        cache_on = self.result_fixture()
+        cache_off = self.result_fixture()
+        cache_off["lower_level_pruning_ledger"]["cache_policy"] = "cache-off"
+
+        result = compare_cache_runs(cache_on, cache_off)
+        self.assertTrue(result["matrix_exactly_equal"])
+        self.assertTrue(result["full_ledger_exactly_equal"])
+        self.assertTrue(all(result["ledger_comparison"].values()))
+        self.assertEqual(result["cache_on_event_count"], 2)
+        self.assertEqual(result["cache_off_event_count"], 2)
+
+    def test_cache_comparison_detects_spin_wall_and_spectral_differences(self):
+        cache_on = self.result_fixture()
+        cache_off = self.result_fixture()
+        cache_off["diagnostics"]["spin_wall_omitted_branch_count"] = 1
+        cache_off["spectral_sensitivity"]["zeroed_eigenvalue_count"] = 2
+
+        result = compare_cache_runs(cache_on, cache_off)
+        self.assertTrue(result["matrix_exactly_equal"])
+        self.assertFalse(result["ledger_comparison"]["spin_wall_and_closure_diagnostics"])
+        self.assertFalse(result["ledger_comparison"]["spectral_sensitivity_ledger"])
+        self.assertFalse(result["full_ledger_exactly_equal"])
 
 
 class TestV10ShadowTimeoutHandling(unittest.TestCase):
