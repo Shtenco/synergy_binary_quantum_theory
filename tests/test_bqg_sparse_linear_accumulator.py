@@ -24,7 +24,8 @@ class TestSparseLinearAccumulator(unittest.TestCase):
         expected_discarded = math.hypot(0.5, 0.0)
         self.assertAlmostEqual(report["discarded_frobenius_norm"], expected_discarded)
         self.assertEqual(report["spectral_norm_error_upper_bound"], expected_discarded)
-        self.assertEqual(report["discarded_nonzero_count"], 2)
+        self.assertEqual(report["discarded_nonzero_count"], 1)
+        self.assertEqual(report["zero_entry_count"], 1)
         self.assertEqual(report["retained_nonzero_count"], 2)
         self.assertEqual(report["bound"], "||A-A_tau||_2 <= ||A-A_tau||_F")
         self.assertEqual(report["scope"], (
