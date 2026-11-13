@@ -51,11 +51,13 @@ jobs:
               "status": result.get("status"),
               "algebraic_status": result.get("algebraic_status"),
               "pruning_mode": result.get("pruning_mode"),
+              "seed_Ks": result.get("seed_Ks"),
               "lower_level_pruning_coverage_complete": result.get("lower_level_pruning_ledger", {}).get("coverage", {}).get("complete"),
               "diagnostics": result.get("diagnostics", result.get("partial_diagnostics")),
               "claim_scope": result.get("claim_scope"),
           }, indent=2))
           assert result.get("pruning_mode") == "shadow_no_prune"
+          assert result.get("seed_Ks") == [0]
           assert rc in (0, 2)
           PY
       - name: Upload shadow diagnostic
