@@ -9,6 +9,7 @@ on:
     paths:
       - '.github/workflows/bqg-w5-adjoint-closure-pilot.yml'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'scripts/bqg_pruning_coverage_inventory.py'
       - 'scripts/bqg_sparse_linear_accumulator.py'
       - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
@@ -56,6 +57,8 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py
           python -m py_compile scripts/peter_weyl_lorentzian_ordered_triple_gate.py
+      - name: Run W5 adjoint algebra and closure-control unit tests
+        run: python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
       - name: Run all five W5 seeds and all five K5 source nodes
         run: |
           mkdir -p verification_results
