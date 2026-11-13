@@ -196,7 +196,15 @@ def main() -> int:
             script, root / "shadow-no-prune.json", 0.0, args,
             pruning_mode="shadow_no_prune",
         )
-        if args.compare_cache_modes:
+        baseline_matrix_ready = closure_matrix_available(production)
+        if args.compare_cache_modes and not baseline_matrix_ready:
+            cache_equivalence = {
+                "status": "SKIPPED_BASELINE_MATRIX_INCOMPLETE",
+                "cache_on_status": production.get("status"),
+                "comparison_performed": False,
+                "reason": "The cache-off replay cannot be compared until the cache-on baseline has a complete matrix.",
+            }
+        elif args.compare_cache_modes:
             cache_off_args = argparse.Namespace(**vars(args))
             cache_off_args.cache_mode = "off"
             cache_off = run_one(
@@ -257,7 +265,14 @@ def main() -> int:
                     "cache_off_process": cache_off.get("_process"),
                     "comparison_performed": False,
                 }
-        if args.spectral_sensitivity_factors:
+        if args.spectral_sensitivity_factors and not baseline_matrix_ready:
+            spectral_sensitivity = {
+                "status": "SKIPPED_BASELINE_MATRIX_INCOMPLETE",
+                "baseline_zero_factor": float(args.spectral_zero_factor),
+                "comparison_performed": False,
+                "reason": "Spectral perturbation runs are not launched until the baseline matrix is complete.",
+            }
+        elif args.spectral_sensitivity_factors:
             factors = list(dict.fromkeys(
                 [float(args.spectral_zero_factor)]
                 + [float(value) for value in args.spectral_sensitivity_factors]
