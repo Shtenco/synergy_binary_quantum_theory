@@ -169,3 +169,31 @@ Run `43493076092` completed successfully on inventory commit `743a8825afdf76e0e3
 - pruning collector/cache replay tests: 11 passed.
 
 This confirms the static inventory remains complete when the inventory itself is part of the W5 dependency closure, and confirms the ledger-builder's separation between static classification and overall runtime completeness. The W5 cutoff-closure run triggered by the same integration is still pending; its numerical closure result is not inferred from this inventory PASS.
+
+
+## 10. Certified error bound for the standalone post-assembly matrix-mask utility
+
+The standalone helper `bqg_sparse_linear_accumulator.sparsify_matrix_columns_with_error_bound` now returns both the masked columns and an explicit loss report. For the discarded matrix (E=A-A_\tau), it computes the Frobenius norm and records the rigorous inequality
+
+`||A-A_tau||_2 <= ||A-A_tau||_F`.
+
+The report contains the absolute spectral-norm error upper bound, relative Frobenius error, retained/discarded nonzero counts, structural-zero counts, per-column discarded norms, and an explicit scope limitation. The implementation uses iterative `math.hypot` accumulation to avoid directly squaring large finite magnitudes.
+
+The new test suite checks:
+- the exact discarded Frobenius norm on a complex-valued fixture;
+- the induced output-error inequality for a test coefficient vector;
+- consistency with the legacy mask API;
+- empty/zero matrix behavior;
+- rejection of invalid tolerances and non-finite matrix entries.
+
+**Scope qualification:** the module documentation explicitly states that this sparse accumulator is not wired into the V09/V10/V11 production path. The W5 closure imports its `SparseLinearAccumulator` for coherent summation, but the W5 closure runner does not call `sparsify_matrix_columns` or its new certified companion. Therefore the bound API is available and tested, but the runtime ledger correctly reports `fixed_operator_mask_bound_api_available=true`, `fixed_operator_mask_bound_applied_in_production=false`, and `fixed_operator_mask_error_bound_complete=false`. This avoids treating a tested utility as evidence that a production operator has been sparsified with a certified error.
+
+GitHub Actions run `43498074138` completed successfully on the corresponding code/workflow commit `5426d0f2dc0419ac536b9f7557f510476e210b87`:
+- 20 modules in the static dependency inventory;
+- 80 threshold-like sites;
+- zero unclassified sites;
+- 5 inventory tests passed;
+- 11 pruning-audit/cache tests passed;
+- 5 sparse-matrix error-bound tests passed.
+
+The final small test-only follow-up is run `43498098817` on branch HEAD `2d5639b9e57c8446ca867e54a3635a4297a5b815`; it is being checked separately. Static inventory PASS and helper tests do not establish the pending W5 closure, full no-pruning reference, cache-on/cache-off equality, or physical SU(2) covariance.
