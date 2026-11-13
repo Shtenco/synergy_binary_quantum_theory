@@ -382,3 +382,28 @@ Updated gate status remains:
 - Production ZERO_LOSS: **NOT PROVED / OPEN**.
 
 The next engineering priority is now computational scaling in `project_branch_complete_charges` and its charged-basis contractions. Optimizations must preserve the exact coefficient/event ordering and be checked against the current implementation before promotion. Do not weaken the thresholds, spin wall, or closure criteria to obtain a nominal completion.
+
+## 2026-11-13 rank-four K5 leg contraction optimization
+
+A targeted profile of one complete apply_HE_complete_key pass at Jmax2=1 identified the dominant repeated kernel: apply_axis_np was called 27,438 times and consumed 0.778 s of a 1.436 s profiled run. The old implementation performed two moveaxis operations around tensordot; NumPy reported 55,180 moveaxis and 27,676 tensordot calls in that profile.
+
+The K5 node tensors in this path are rank four. The production helper now dispatches rank-four tensors to four fixed einsum equations (optimize=False) and retains the old generic moveaxis/tensordot fallback for other ranks. No thresholds, spin cutoffs, branch ordering, path enumeration, or physics assumptions were changed.
+
+### Differential evidence
+
+The old contraction was retained as an independent test reference. For four full apply_HE_complete_key comparisons with cold operator caches:
+
+| Input basis index | Jmax2 | Old (s) | New (s) | Speedup | Exact state / ordered ledger |
+|---:|---:|---:|---:|---:|---|
+| 0 | 1 | 0.5582 | 0.3256 | 1.71x | exact |
+| 1 | 1 | 0.5539 | 0.3161 | 1.75x | exact |
+| 2 | 1 | 0.5447 | 0.3098 | 1.76x | exact |
+| 0 | 2 | 11.7047 | 9.0147 | 1.30x | exact |
+
+For all four comparisons, sparse output keys and complex amplitudes were exactly equal, diagnostics were exactly equal, and every ordered audit event (including its value and key representation) matched exactly. The respective event counts were 1,034; 1,052; 1,047; and 102,305.
+
+Added regressions check every tensor axis on a non-cubic complex rank-four tensor, negative-axis handling, and a full end-to-end H_E operator plus exact ordered-ledger equivalence against the old contraction. The five W5-focused suites now pass 63 tests after this addition; the full instrumented dependency chain also passes py_compile.
+
+### Interpretation and remaining gate
+
+This is a measured local-kernel improvement, not evidence that the production V10 matrix is now tractable. The gain decreases at Jmax2=2, and no Jmax2=10 full matrix has yet completed with the new kernel. The next required experiment is to rerun the same preregistered production pilot without changing amp_tol, max_depth, max_states, or any physical cutoffs, then compare wall time, state counts, support, diagnostics, and complete audit traces. All ten scientific closure gates remain OPEN until their full required evidence exists; ZERO_LOSS remains NOT PROVED.
