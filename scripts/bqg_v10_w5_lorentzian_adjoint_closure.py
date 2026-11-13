@@ -941,12 +941,18 @@ def main():
     ap.add_argument("--Jmax2", type=int, default=10)
     ap.add_argument("--max-states", type=int, default=500)
     ap.add_argument("--max-depth", type=int, default=8)
+    ap.add_argument(
+        "--unbounded-closure", action="store_true",
+        help="disable both reachable-state and path-depth caps (finite Jmax2 still applies)",
+    )
     ap.add_argument("--amp-tol", type=float, default=1e-12)
     ap.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
+    max_states = None if args.unbounded_closure else args.max_states
+    max_depth = None if args.unbounded_closure else args.max_depth
     result = run_closure(
-        args.nodes, args.Jmax2, args.max_states, args.max_depth,
+        args.nodes, args.Jmax2, max_states, max_depth,
         args.amp_tol, args.pruning_mode,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
