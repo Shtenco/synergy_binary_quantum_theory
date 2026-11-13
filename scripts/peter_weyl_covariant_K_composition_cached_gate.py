@@ -144,7 +144,7 @@ def run(v=0,w=1):
         he_calls['reduced_requests'] += int(after>before)
         return restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def cached_k_frozen(frozen,source_v,Jmax2,charged_nodes):
         out,vleak,bleak=original_k(dict(frozen),source_v,Jmax2,tuple(charged_nodes))
         return tuple(out.items()),float(vleak),float(bleak)
@@ -155,7 +155,7 @@ def run(v=0,w=1):
         )
         return dict(items),vleak,bleak
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def cached_inv_frozen(frozen,source_v,target_v,k,j,Jmax2):
         out,leak=original_inv(dict(frozen),source_v,target_v,k,j,Jmax2)
         return tuple(out.items()),float(leak)
@@ -166,7 +166,7 @@ def run(v=0,w=1):
         )
         return dict(items),leak
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def cached_direct_frozen(frozen,source_v,Jmax2):
         out,vleak,bleak=original_direct(dict(frozen),source_v,Jmax2)
         return tuple(out.items()),float(vleak),float(bleak)
@@ -177,7 +177,7 @@ def run(v=0,w=1):
         )
         return dict(items),vleak,bleak
 
-    @PRUNE.audit_lru_cache(None)
+    @PRUNE.audit_lru_cache(2)
     def cached_close_frozen(frozen,source_v,target_v,i,k,Jmax2):
         out=original_close(dict(frozen),source_v,target_v,i,k,Jmax2)
         return tuple(out.items())
