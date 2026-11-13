@@ -103,6 +103,32 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
                 D[:, n] += sign * dense(d, self.dim)
         np.testing.assert_allclose(D, F.conj().T, rtol=5e-13, atol=5e-13)
 
+    def test_zeroaware_spectral_factor_reports_eigenvalue_sensitivity(self):
+        import peter_weyl_zeroaware_volume_migration_experiment as ZVM
+
+        original_factor = ZVM.ZERO_FACTOR
+        original_audit = ZVM.SPECTRAL_AUDIT
+        try:
+            matrix = np.diag([0.0, 1.0e-12, 1.0]).astype(complex)
+            ZVM.ZERO_FACTOR = 1000.0
+            ZVM.SPECTRAL_AUDIT = {}
+            _, tau_low, _ = ZVM.zeroaware_sqrt_abs(matrix)
+            low = ZVM.spectral_audit_snapshot()
+            ZVM.ZERO_FACTOR = 2000.0
+            ZVM.SPECTRAL_AUDIT = {}
+            _, tau_high, _ = ZVM.zeroaware_sqrt_abs(matrix)
+            high = ZVM.spectral_audit_snapshot()
+
+            self.assertGreater(tau_high, tau_low)
+            self.assertEqual(low["zeroed_eigenvalue_count"], 1)
+            self.assertEqual(low["retained_eigenvalue_count"], 2)
+            self.assertEqual(high["zeroed_eigenvalue_count"], 2)
+            self.assertEqual(high["retained_eigenvalue_count"], 1)
+            self.assertEqual(high["by_dimension"]["3"]["matrix_count"], 1)
+        finally:
+            ZVM.ZERO_FACTOR = original_factor
+            ZVM.SPECTRAL_AUDIT = original_audit
+
     def test_state_and_depth_caps_are_reported_independently(self):
         self.assertEqual(
             gate._closure_cap_reasons(500, 8, 500, 8),
