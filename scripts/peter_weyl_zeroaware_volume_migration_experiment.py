@@ -88,7 +88,7 @@ def spectral_audit_snapshot():
     }
 
 
-@PRUNE.audit_lru_cache(None)
+@PRUNE.audit_lru_cache(2)
 def zeroaware_volume123_matrix(s1, s2, s3):
     mats = [PW.spin_mats_cached(s) for s in (s1, s2, s3)]
     d = (s1 + 1) * (s2 + 1) * (s3 + 1)
