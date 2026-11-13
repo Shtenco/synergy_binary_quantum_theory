@@ -241,6 +241,34 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
 
 
 class TestW5CacheTransparency(unittest.TestCase):
+    def test_context_local_cache_bypass_reexecutes_operator_and_keeps_audit(self):
+        calls = []
+
+        @audit.audit_lru_cache(None)
+        def operator(value):
+            calls.append(value)
+            audit.record_threshold("cache_bypass.fixture", value, 0.5e-12, 1e-12)
+            return value * 3
+
+        with audit.capture() as collector:
+            self.assertEqual(operator(7), 21)
+            self.assertEqual(operator(7), 21)
+            with audit.cache_bypass():
+                self.assertEqual(operator(7), 21)
+                self.assertEqual(operator(7), 21)
+
+        self.assertEqual(calls, [7, 7, 7])
+        rows = collector.snapshot()["events"]
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(
+            [row["kind"] for row in rows],
+            ["coefficient_threshold", "coefficient_threshold",
+             "coefficient_threshold", "coefficient_threshold"],
+        )
+        self.assertEqual(operator.cache_info().hits, 1)
+        self.assertEqual(operator.cache_info().misses, 1)
+        operator.cache_clear()
+
     def test_gauss_volume_column_cached_and_uncached_full_outputs_match(self):
         import peter_weyl_lorentzian_K_block_gate as KG
 
