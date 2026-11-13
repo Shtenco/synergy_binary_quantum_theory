@@ -197,3 +197,21 @@ GitHub Actions run `43498074138` completed successfully on the corresponding cod
 - 5 sparse-matrix error-bound tests passed.
 
 The final small test-only follow-up is run `43498098817` on branch HEAD `2d5639b9e57c8446ca867e54a3635a4297a5b815`; it is being checked separately. Static inventory PASS and helper tests do not establish the pending W5 closure, full no-pruning reference, cache-on/cache-off equality, or physical SU(2) covariance.
+
+
+### 10.1. Final verification of the certified matrix-mask helper
+
+A first overflow-regression fixture used two entries of (10^{308}), but the stable `hypot` accumulator correctly represented their combined norm as a finite value. The test expectation—not the implementation—was wrong. The fixture was tightened to two finite entries of (1.7\times10^{308}), whose combined Frobenius norm exceeds the finite floating-point range. The helper now rejects this case rather than emitting an infinite or misleading finite certificate.
+
+The corrected CI run `43498364038` completed successfully on the branch HEAD commit `4aad457123c99d533c64cffbc2da22815eee3c5d`:
+
+- 20 modules;
+- 80 threshold-like sites;
+- zero unclassified sites;
+- 5 inventory tests passed;
+- 11 pruning collector/cache tests passed;
+- 6 matrix sparsification/error-bound tests passed, including the overflow rejection.
+
+The separate production L1 audit `43498254862` also completed successfully on the implementation commit `0744524e459e42d7b3907effd5196c02d259fd6c`; both module compilation and the L1 characterization/strict-reference test step passed.
+
+The helper's bound is now numerically regression-tested, but remains a standalone utility. No claim is made that the actual W5 production closure currently applies this matrix mask or uses its error report.
