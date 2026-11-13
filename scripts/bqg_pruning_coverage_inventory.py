@@ -55,6 +55,14 @@ NON_PRUNING_CLASSIFICATIONS = {
         "exact_SU2_triangle_and_parity_selection",
     ("peter_weyl_covariant_K_composition_cached_gate", "restore_scalar_charge_M"):
         "norm_bounded_SU2_selection_rule_acceptance",
+    ("peter_weyl_covariant_K_composition_cached_gate", "physical_acceptance_from_existing_output"):
+        "physical_operator_acceptance_residuals",
+    ("peter_weyl_lorentzian_sine_ordered_triple_gate", "run"):
+        "operator_leakage_acceptance_residuals",
+    ("peter_weyl_volume_cross_rep_audit", "one_quartet"):
+        "spectral_gap_diagnostic_zero_division_guard",
+    ("peter_weyl_zeroaware_volume_migration_experiment", "patch_and_clear"):
+        "spectral_zero_factor_configuration_validation",
     ("peter_weyl_covariant_volume_leg_gate", "weight_by_J"):
         "exact_irrep_label_weight_classification",
     ("peter_weyl_lorentzian_ordered_triple_gate", "run"):
