@@ -6,6 +6,14 @@ on:
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
+      - 'scripts/master_constraint_physical_projector_gate.py'
+      - 'scripts/q2_relational_history_projector_gate.py'
+      - 'scripts/q2_relational_metric_source_gate.py'
+      - 'scripts/bqg_projector_only_causality_nogo_gate.py'
+      - 'scripts/bqg_graph_changing_causal_order_gate.py'
+      - 'scripts/bqg_causal_cone_w5_certificate.py'
+      - 'BQG_GRAPH_CHANGING_CAUSAL_ORDER_THEOREM.md'
+      - 'BQG_PROJECTOR_ONLY_CAUSALITY_NOGO.md'
       - 'scripts/bqg_sharp_analytic_causal_cone_gate.py'
       - 'scripts/lemaitre_bqg_cone_reference_gate.py'
       - 'BQG_SHARP_ANALYTIC_CAUSAL_CONE.md'
@@ -19,6 +27,14 @@ on:
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
+      - 'scripts/master_constraint_physical_projector_gate.py'
+      - 'scripts/q2_relational_history_projector_gate.py'
+      - 'scripts/q2_relational_metric_source_gate.py'
+      - 'scripts/bqg_projector_only_causality_nogo_gate.py'
+      - 'scripts/bqg_graph_changing_causal_order_gate.py'
+      - 'scripts/bqg_causal_cone_w5_certificate.py'
+      - 'BQG_GRAPH_CHANGING_CAUSAL_ORDER_THEOREM.md'
+      - 'BQG_PROJECTOR_ONLY_CAUSALITY_NOGO.md'
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'physicalization_gates.json'
       - 'scripts/verify_physicalization_gates.py'
@@ -44,8 +60,27 @@ jobs:
         run: python -m pip install numpy
       - name: Compile and run physical-history reference engine
         run: |
+          python -W error::SyntaxWarning -m py_compile scripts/q2_relational_history_projector_gate.py
           python -m py_compile scripts/bqg_physical_history_decoherence_engine.py
+          python -m py_compile scripts/master_constraint_physical_projector_gate.py scripts/q2_relational_metric_source_gate.py
+          python -m py_compile scripts/bqg_projector_only_causality_nogo_gate.py scripts/bqg_graph_changing_causal_order_gate.py scripts/bqg_causal_cone_w5_certificate.py
           python scripts/bqg_physical_history_decoherence_engine.py > physical_history_reference.json
+      - name: Run finite projector, relational-clock and graph-causality controls
+        run: |
+          mkdir -p verification_results
+          python scripts/master_constraint_physical_projector_gate.py --output verification_results/master_projector.json
+          python scripts/q2_relational_history_projector_gate.py --output verification_results/relational_history.json
+          python scripts/q2_relational_metric_source_gate.py --output verification_results/relational_metric_source.json
+          python scripts/bqg_projector_only_causality_nogo_gate.py
+          python scripts/bqg_graph_changing_causal_order_gate.py
+          python scripts/bqg_causal_cone_w5_certificate.py > verification_results/w5_cone_certificate.txt
+      - name: Upload finite causal-control evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-finite-causal-controls-run-${{ github.run_id }}
+          path: verification_results/
+          if-no-files-found: warn
       - name: Run reduced analytic cone and independent reference comparison
         run: |
           python scripts/bqg_sharp_analytic_causal_cone_gate.py
