@@ -28,6 +28,56 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
         self.assertEqual(inventory._plain_lru_cache_decorators(function), [])
 
+    def test_nested_function_thresholds_are_not_duplicated_in_parent(self):
+        import ast
+        tree = ast.parse(
+            "def outer():\n"
+            "    value = 1\n"
+            "    def inner():\n"
+            "        if abs(value) < tol:\n"
+            "            PRUNE.keep(value, tol)\n"
+            "    return value\n"
+        )
+        outer = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
+        inner = next(node for node in outer.body if isinstance(node, ast.FunctionDef))
+        outer_compares = [
+            node for node in inventory._function_body_nodes(outer)
+            if isinstance(node, ast.Compare) and inventory._threshold_like(node)
+        ]
+        inner_compares = [
+            node for node in inventory._function_body_nodes(inner)
+            if isinstance(node, ast.Compare) and inventory._threshold_like(node)
+        ]
+        self.assertEqual(outer_compares, [])
+        self.assertEqual(len(inner_compares), 1)
+        self.assertFalse(inventory._function_has_prune_instrumentation(outer))
+        self.assertTrue(inventory._function_has_prune_instrumentation(inner))
+
+    def test_run_closure_parameter_checks_are_not_called_pruning(self):
+        expected = {
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "amp_tol < 0"):
+                "input_amplitude_tolerance_validation",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "float(spectral_zero_factor) <= 0"):
+                "spectral_operator_parameter_validation",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states is not None"):
+                "support_cap_configuration",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states < len(selected_seed_Ks)"):
+                "support_cap_parameter_validation",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth is not None"):
+                "support_cap_configuration",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth < 0"):
+                "support_cap_parameter_validation",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "threshold is not None"):
+                "loss_ledger_metadata_control",
+            ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "stage == 'amp_tol'"):
+                "loss_ledger_stage_classification",
+        }
+        for key, classification in expected.items():
+            self.assertEqual(
+                inventory.NON_PRUNING_COMPARISON_CLASSIFICATIONS.get(key),
+                classification,
+            )
+
     def test_inventory_detects_plain_cache_even_without_threshold_comparisons(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
