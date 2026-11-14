@@ -12,6 +12,9 @@ on:
       - 'tests/test_bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'scripts/bqg_pruning_coverage_inventory.py'
       - 'scripts/bqg_sparse_linear_accumulator.py'
+      - 'scripts/bqg_v10_w5_closure_summary.py'
+      - 'scripts/bqg_v10_w5_closure_aggregate.py'
+      - 'tests/test_bqg_v10_w5_closure_aggregate.py'
       - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
       - 'scripts/peter_weyl_lorentzian_ordered_triple_gate.py'
       - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
@@ -59,8 +62,12 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py
           python -m py_compile scripts/peter_weyl_lorentzian_ordered_triple_gate.py
+          python -m py_compile scripts/bqg_v10_w5_closure_summary.py
+          python -m py_compile scripts/bqg_v10_w5_closure_aggregate.py
       - name: Run W5 adjoint algebra and closure-control unit tests
         run: python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
+      - name: Test W5 closure evidence aggregation
+        run: python -m unittest discover -s tests -p 'test_bqg_v10_w5_closure_aggregate.py' -v
       - name: Run one W5 seed at one K5 source node
         run: |
           mkdir -p verification_results
@@ -71,10 +78,58 @@ jobs:
             --max-states 500 --max-depth 8 \
             --amp-tol 1e-12 \
             --output verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+      - name: Create compact W5 closure evidence summary
+        if: always() && hashFiles('verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json') != ''
+        run: |
+          python scripts/bqg_v10_w5_closure_summary.py \
+            --input verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json \
+            --output verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.summary.json
       - name: Upload numerical result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bqg-w5-adjoint-closure-node${{ matrix.node }}-k${{ matrix.seed_k }}-j${{ matrix.jmax2 }}-run${{ github.run_id }}
           path: verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+          if-no-files-found: warn
+      - name: Upload compact closure cell summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-adjoint-closure-summary-node${{ matrix.node }}-k${{ matrix.seed_k }}-j${{ matrix.jmax2 }}-run${{ github.run_id }}
+          path: verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.summary.json
+          if-no-files-found: warn
+
+  aggregate-w5-closure:
+    name: Aggregate 75 W5 closure cells and cutoff convergence
+    if: always()
+    needs: [w5-adjoint-closure]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download compact per-cell summaries
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-w5-adjoint-closure-summary-*-run${{ github.run_id }}
+          path: verification_results/w5_closure_summaries
+          merge-multiple: true
+      - name: Aggregate all seed-node-cutoff cells
+        if: always()
+        run: |
+          python scripts/bqg_v10_w5_closure_aggregate.py \
+            --input-dir verification_results/w5_closure_summaries \
+            --output verification_results/W5_CLOSURE_MATRIX_AGGREGATE_RUN${{ github.run_id }}.json
+      - name: Upload aggregate closure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-closure-matrix-aggregate-run${{ github.run_id }}
+          path: verification_results/W5_CLOSURE_MATRIX_AGGREGATE_RUN${{ github.run_id }}.json
           if-no-files-found: warn
