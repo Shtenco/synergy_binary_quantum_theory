@@ -54,6 +54,9 @@ def run_one(script: Path, output: Path, amp_tol: float, args,
     ]
     if getattr(args, "unbounded_closure", False):
         command.append("--unbounded-closure")
+    seed_ks = getattr(args, "seed_Ks", None)
+    if seed_ks:
+        command.extend(["--seed-K", *[str(seed_k) for seed_k in seed_ks]])
     command.extend(["--nodes", *[str(node) for node in args.nodes]])
     output.unlink(missing_ok=True)
     try:
