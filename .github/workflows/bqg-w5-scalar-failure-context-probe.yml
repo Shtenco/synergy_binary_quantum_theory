@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-scalar-context-${{ github.ref }}
+  group: bqg-w5-scalar-context-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:
