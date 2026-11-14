@@ -67,6 +67,23 @@ class TestCoherentMergeLinearity(unittest.TestCase):
         amplitude = next(iter(converted.values()))
         self.assertEqual(amplitude, 1.0e-14 - 2.0e-14j)
 
+    def test_nonfinite_merge_amplitude_is_rejected(self):
+        with self.assertRaises(ValueError):
+            composition.add({}, {"state": complex(float("nan"), 0.0)})
+
+    def test_nonfinite_basis_conversion_amplitude_is_rejected(self):
+        spins = tuple(range(10))
+        labels = (
+            ("C", 2, 0, 0, 0),
+            ("G", 0),
+            ("G", 0),
+            ("G", 0),
+            ("G", 0),
+        )
+        source = {(spins, labels): complex(float("inf"), 0.0)}
+        with self.assertRaises(ValueError):
+            composition.complete_to_covariant(source, source_v=0)
+
     def test_invalid_audit_tolerance_is_rejected(self):
         with self.assertRaises(ValueError):
             composition.add({}, {"state": 1.0}, tol=float("nan"))
