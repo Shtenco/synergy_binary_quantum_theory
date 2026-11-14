@@ -16,7 +16,7 @@ import peter_weyl_covariant_K_projection_audit_gate as KPA
 
 
 class TestPruningAuditOperatorWiring(unittest.TestCase):
-    def test_prune_state_and_complete_to_covariant_projection_are_observed(self):
+    def test_prune_state_is_instrumented_and_basis_relabel_preserves_small_amplitudes(self):
         spins = (4,) * 10
         with audit.capture() as collector:
             pruned = PW.prune_state({"small": 0.5e-8}, 1e-8)
@@ -27,10 +27,15 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
             )
 
         self.assertEqual(pruned, {})
-        self.assertEqual(projected, {})
+        self.assertEqual(
+            projected,
+            {((4,) * 10, (-1, 0, 0, 0, 0), 0, 0, 0, 0): 0.5e-11},
+        )
         sites = collector.snapshot()["by_site"]
         self.assertIn("k5.prune_state", sites)
-        self.assertIn("covariant_composition.complete_to_covariant", sites)
+        # Basis relabelling deliberately performs no amplitude threshold test;
+        # therefore it must not fabricate a pruning event for a retained value.
+        self.assertNotIn("covariant_composition.complete_to_covariant", sites)
 
     def test_shadow_mode_preserves_subthreshold_coefficients_at_wired_sites(self):
         with audit.capture() as collector:
@@ -57,7 +62,7 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         self.assertEqual(e, {"k": 0.5e-8})
         self.assertEqual(f, {((4,) * 10, (-1, 0, 0, 0, 0), 0, 0, 0, 0): 0.5e-11})
         events = collector.snapshot()["events"]
-        self.assertEqual(len(events), 6)
+        self.assertEqual(len(events), 5)
         self.assertTrue(all(x["kind"] == "would_prune_bypassed" for x in events))
 
     def test_independent_K_projection_ladder_prune_is_instrumented(self):
@@ -87,9 +92,11 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
             d = {}
             RAW.add(d, {"k": 0.5e-11})
 
+        # PW.add_dict and RAW.add retain their explicitly instrumented legacy
+        # threshold; CK and covariant composition merges are now linear.
         self.assertEqual(a, {})
-        self.assertEqual(b, {})
-        self.assertEqual(c, {})
+        self.assertEqual(b, {"k": 0.5e-11})
+        self.assertEqual(c, {"k": 0.5e-11})
         self.assertEqual(d, {})
         by_site = collector.snapshot()["by_site"]
         self.assertEqual(
@@ -237,40 +244,61 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
         self.assertIn("record_threshold", filter_calls)
         self.assertIn("keep", filter_calls)
 
-        # V10's sparse accumulator is allowed to be uninstrumented only
-        # because its default tolerance is exactly zero (exact-zero removal).
+        # V10 uses the shared exact-zero-only accumulator at every coherent
+        # composition boundary; there is no amplitude tolerance in this layer.
         v10_path = scripts / "bqg_v10_w5_lorentzian_adjoint_closure.py"
         v10_text = v10_path.read_text(encoding="utf-8")
         v10_tree = ast.parse(v10_text)
-        tol_assignments = [
-            node.value for node in ast.walk(v10_tree)
-            if isinstance(node, ast.Assign)
-            and any(isinstance(target, ast.Name) and target.id == "TOL"
-                    for target in node.targets)
-        ]
-        self.assertTrue(any(
-            isinstance(value, ast.Constant) and value.value == 0.0
-            for value in tol_assignments
-        ))
-        add_sparse_defs = [
+        accumulator_imports = [
             node for node in ast.walk(v10_tree)
-            if isinstance(node, ast.FunctionDef) and node.name == "add_sparse"
+            if isinstance(node, ast.ImportFrom)
+            and node.module == "bqg_sparse_linear_accumulator"
+            and any(alias.name == "SparseLinearAccumulator" for alias in node.names)
         ]
-        self.assertEqual(len(add_sparse_defs), 1)
-        self.assertEqual(ast.unparse(add_sparse_defs[0].args.defaults[-1]), "TOL")
-        add_sparse_calls = [
+        self.assertEqual(len(accumulator_imports), 1)
+        accumulator_constructors = [
             node for node in ast.walk(v10_tree)
             if isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name) and node.func.id == "add_sparse"
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "SparseLinearAccumulator"
         ]
-        self.assertTrue(add_sparse_calls)
-        self.assertTrue(all(
-            len(node.args) <= 3 and all(keyword.arg != "tol" for keyword in node.keywords)
-            for node in add_sparse_calls
+        self.assertGreaterEqual(len(accumulator_constructors), 4)
+        accumulator_adds = [
+            node for node in ast.walk(v10_tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "add"
+            and isinstance(node.func.value, ast.Name)
+        ]
+        accumulator_finishes = [
+            node for node in ast.walk(v10_tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "finish"
+            and isinstance(node.func.value, ast.Name)
+        ]
+        self.assertGreaterEqual(len(accumulator_adds), 4)
+        self.assertGreaterEqual(len(accumulator_finishes), 4)
+        self.assertFalse(any(
+            isinstance(node, ast.FunctionDef) and node.name == "add_sparse"
+            for node in ast.walk(v10_tree)
         ))
 
+        accumulator_path = scripts / "bqg_sparse_linear_accumulator.py"
+        accumulator_tree = ast.parse(accumulator_path.read_text(encoding="utf-8"))
+        finish_defs = [
+            node for node in ast.walk(accumulator_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "finish"
+        ]
+        self.assertEqual(len(finish_defs), 1)
+        finish_source = ast.get_source_segment(
+            accumulator_path.read_text(encoding="utf-8"), finish_defs[0]
+        )
+        self.assertIn("if z != 0", finish_source)
+        self.assertNotIn("PRUNE.keep", finish_source)
+
         # These are deliberately not amplitude pruning:
-        # - add_sparse has tol=0 at every V10 call site: exact-zero cancellation;
+        # - SparseLinearAccumulator removes exact-zero cancellations only;
         # - spin probes test exact nonzero branch existence before wall accounting;
         # - source-J and charged-label bounds are exact SU(2) selection rules;
         # - zero-aware eigenvalue masks define the volume operator and are a
