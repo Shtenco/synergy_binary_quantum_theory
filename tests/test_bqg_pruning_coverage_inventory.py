@@ -71,6 +71,12 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
                 "loss_ledger_metadata_control",
             ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "stage == 'amp_tol'"):
                 "loss_ledger_stage_classification",
+            ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['outer_complete_basis_leakage'] < 1e-10"):
+                "operator_acceptance_residual_thresholds",
+            ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['internal_volume_sector_leakage'] < 1e-10"):
+                "operator_acceptance_residual_thresholds",
+            ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['complete_charge_basis_leakage'] > 0.5"):
+                "historical_primitive_projection_failure_preservation",
         }
         for key, classification in expected.items():
             self.assertEqual(
