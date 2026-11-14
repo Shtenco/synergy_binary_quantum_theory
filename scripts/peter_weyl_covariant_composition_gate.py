@@ -114,13 +114,18 @@ def complete_to_covariant(state, source_v, tol=TOL):
                     raise ValueError("target charge must close before covariant projection")
                 Kother.append(lab[1])
         key = (spins, tuple(Kother), J2, M2, K12, K34)
-        terms.setdefault(key, []).append(complex(amp))
+        value = complex(amp)
+        if not (math.isfinite(value.real) and math.isfinite(value.imag)):
+            raise ValueError("basis-conversion amplitude must be finite")
+        terms.setdefault(key, []).append(value)
     out = {}
     for key, values in terms.items():
         z = complex(
             math.fsum(value.real for value in values),
             math.fsum(value.imag for value in values),
         )
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("basis-conversion sum must be finite")
         if z != 0j:
             out[key] = z
         else:
