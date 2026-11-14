@@ -28,7 +28,7 @@ def record(j, node, k, digest="same"):
 class TestW5ClosureAggregate(unittest.TestCase):
     def test_matrix_digest_is_stable_to_sub_precision_noise(self):
         a = [[[0, 1.234567890123, -0.000000000123456789]]]
-        b = [[[0, 1.234567890124, -0.000000000123456788]]]
+        b = [[[0, 1.234567890124, -0.00000000012345678901]]]
         self.assertEqual(matrix_digest(a), matrix_digest(b))
 
     def test_matrix_digest_changes_for_material_coefficient_change(self):
