@@ -28,8 +28,10 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
         pruning_mode: [production, shadow_no_prune]
+        Jmax2: [6, 8, 10]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -44,14 +46,14 @@ jobs:
       - name: Capture exact scalar-selection failure context
         run: |
           python scripts/peter_weyl_w5_scalar_failure_context_probe.py \
-            --K 0 --Jmax2 10 --amp-tol 1e-12 \
+            --K 0 --Jmax2 ${{ matrix.Jmax2 }} --amp-tol 1e-12 \
             --pruning-mode ${{ matrix.pruning_mode }} \
-            --output verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}.json
+            --output verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}_J${{ matrix.Jmax2 }}.json
       - name: Upload scalar-selection context
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-scalar-context-${{ matrix.pruning_mode }}-${{ github.run_id }}
-          path: verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}.json
+          name: bqg-w5-scalar-context-${{ matrix.pruning_mode }}-j${{ matrix.Jmax2 }}-${{ github.run_id }}
+          path: verification_results/W5_SCALAR_FAILURE_${{ matrix.pruning_mode }}_J${{ matrix.Jmax2 }}.json
           if-no-files-found: warn
           retention-days: 30
