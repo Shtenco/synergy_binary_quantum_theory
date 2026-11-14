@@ -2,11 +2,10 @@
 """L2 tests against real V10 production primitives.
 
 The fixture is a genuine finite Peter-Weyl basis state converted into the
-production covariant/complete representation.  The volume and cached H_E threshold-boundary characterizations remain expected
-failures.  The custom composition H_E threshold test is a hard acceptance
-check: its prior unexpected success showed that this path now preserves
-additivity at the tested boundary.  Safe-domain complex homogeneity remains
-a hard acceptance check.
+production covariant/complete representation.  Volume, cached H_E, and custom
+composition H_E threshold-boundary characterizations are hard acceptance
+checks: all three maps must preserve additivity at the tested boundary.
+Safe-domain complex homogeneity remains a hard acceptance check.
 """
 from __future__ import annotations
 
@@ -245,7 +244,6 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             "COMP.apply_HE_complete_state_custom",
         )
 
-    @unittest.expectedFailure
     def test_volume_threshold_additivity_characterization(self):
         self._assert_threshold_additivity_characterization(
             lambda state: CK.apply_volume_complete_state(state, 0),
@@ -253,7 +251,6 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             "CK.apply_volume_complete_state",
         )
 
-    @unittest.expectedFailure
     def test_he_state_threshold_additivity_characterization(self):
         self._assert_threshold_additivity_characterization(
             lambda state: CK.apply_HE_complete_state(state, 0, 5),
