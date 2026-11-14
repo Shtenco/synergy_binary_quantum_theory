@@ -226,20 +226,30 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
     observed_ledger_exactly_equal = (
         ledger_payloads_present and all(ledger_comparison.values())
     )
-    cache_on_coverage_complete = (
-        production.get("lower_level_pruning_ledger", {}).get("coverage", {}).get("complete") is True
+    cache_on_coverage = production.get("lower_level_pruning_ledger", {}).get("coverage", {})
+    cache_off_coverage = cache_off.get("lower_level_pruning_ledger", {}).get("coverage", {})
+    cache_on_static_coverage_complete = (
+        cache_on_coverage.get("static_threshold_inventory_complete") is True
+        and cache_on_coverage.get("fixed_operator_mask_error_bound_complete") is True
     )
-    cache_off_coverage_complete = (
-        cache_off.get("lower_level_pruning_ledger", {}).get("coverage", {}).get("complete") is True
+    cache_off_static_coverage_complete = (
+        cache_off_coverage.get("static_threshold_inventory_complete") is True
+        and cache_off_coverage.get("fixed_operator_mask_error_bound_complete") is True
     )
-    coverage_complete = cache_on_coverage_complete and cache_off_coverage_complete
-    full_ledger_exactly_equal = observed_ledger_exactly_equal and coverage_complete
+    static_coverage_complete = (
+        cache_on_static_coverage_complete and cache_off_static_coverage_complete
+    )
+    # Do not require coverage.complete here: that top-level flag intentionally
+    # remains false until cache equivalence itself, spin-wall/cap accounting,
+    # and cutoff convergence have all been aggregated. Requiring it here would
+    # make the cache-equivalence gate circular.
+    full_ledger_exactly_equal = observed_ledger_exactly_equal and static_coverage_complete
     if not ledger_payloads_present:
         status = "INCOMPLETE_CACHE_EQUIVALENCE_LEDGER_MISSING"
     elif not matrix_exactly_equal or not observed_ledger_exactly_equal:
         status = "FAIL_CACHE_EQUIVALENCE"
-    elif not coverage_complete:
-        status = "INCOMPLETE_CACHE_EQUIVALENCE_COVERAGE"
+    elif not static_coverage_complete:
+        status = "INCOMPLETE_CACHE_EQUIVALENCE_STATIC_COVERAGE"
     else:
         status = "PASS_CACHE_EQUIVALENCE"
     equivalent = status == "PASS_CACHE_EQUIVALENCE"
@@ -255,9 +265,9 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
         "observed_ledger_exactly_equal": observed_ledger_exactly_equal,
         "ledger_payloads_present": ledger_payloads_present,
         "missing_ledgers": missing_ledgers,
-        "cache_on_coverage_complete": cache_on_coverage_complete,
-        "cache_off_coverage_complete": cache_off_coverage_complete,
-        "coverage_complete": coverage_complete,
+        "cache_on_static_coverage_complete": cache_on_static_coverage_complete,
+        "cache_off_static_coverage_complete": cache_off_static_coverage_complete,
+        "static_coverage_complete": static_coverage_complete,
         "full_ledger_exactly_equal": full_ledger_exactly_equal,
         "equivalence_passed": equivalent,
         "ledger_metadata_excluded": ["lower_level_pruning_ledger.cache_policy"],
