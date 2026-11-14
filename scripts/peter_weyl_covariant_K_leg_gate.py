@@ -109,6 +109,12 @@ def branch_from_key(key, amp=1+0j):
 
 
 def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
+    """Project onto the fixed complete-charge basis without input-scaled pruning.
+
+    The tol argument is retained for call compatibility. The 1e-13 overlap
+    tests below define a fixed basis-support mask independent of amp; assembled
+    branch amplitudes are coherently merged without a post-projection cutoff.
+    """
     spins, tensors, amp = branch
     opts_by_node = []
     max_basis_leak = 0.0
