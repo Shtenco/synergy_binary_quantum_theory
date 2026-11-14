@@ -304,7 +304,7 @@ The staging run is not itself the production closure experiment. It validates so
 
 ## 2026-11-13 transitive threshold-site static guard
 
-A new regression in `tests/test_bqg_pruning_audit_wiring.py` now walks the repository-local Python import closure starting from the V10 production entry point. At the current source head the closure is 18 modules, including the sine engine, cached K-composition adapter, charged-intertwiner rules, and the zero-aware volume audits.
+A new regression in `tests/test_bqg_pruning_audit_wiring.py` now walks the repository-local Python import closure starting from the V10 production entry point. At the current source head the runtime import closure is 20 modules, including the sine engine, cached K-composition adapter, charged-intertwiner rules, zero-aware volume audits, strict sparse accumulator, and pruning-coverage inventory.
 
 The guard checks that every threshold-looking `abs(...)` / `np.abs(...)` comparison in that closure is either:
 - in a function that routes the actual amplitude decision through `PRUNE.keep`;
@@ -419,5 +419,5 @@ Do not infer a physical BQG constraint, continuum limit, causal propagation resu
 
 ### Cache-equivalence execution scope clarification
 
-The first fresh-process cache-on/cache-off run is now scoped to source node 0 and seed (K=0), rather than all five seed labels in one long runner job. This is an execution slice to obtain a complete matrix pair within the runner budget; it is **not** evidence of cache equivalence for the other 24 node/seed pairs. A PASS for this slice still requires both complete matrices, all four required ledger payloads, and complete static/runtime coverage. The all-node/all-seed cache-equivalence matrix remains OPEN.
+The first fresh-process cache-on/cache-off run is now scoped to source node 0 and seed (K=0), rather than all five seed labels in one long runner job. This is an execution slice to obtain a complete matrix pair within the runner budget; it is **not** evidence of cache equivalence for the other 24 node/seed pairs. A PASS for this slice still requires both complete matrices, all four required ledger payloads, complete static threshold-site coverage, and certified fixed-matrix-mask accounting. The top-level runtime coverage flag remains false until cache equivalence, spin-wall/cap accounting, and cutoff convergence are aggregated; the cache comparison deliberately does not require that flag, avoiding a circular acceptance gate. The all-node/all-seed cache-equivalence matrix remains OPEN.
 
