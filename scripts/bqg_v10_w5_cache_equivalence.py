@@ -29,6 +29,7 @@ def summarize_run(result: dict) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nodes", type=int, nargs="+", default=[0])
+    parser.add_argument("--seed-K", type=int, nargs="+", choices=(0, 2, 4, 6, 8), default=[0])
     parser.add_argument("--Jmax2", type=int, default=10)
     parser.add_argument("--max-states", type=int, default=500)
     parser.add_argument("--max-depth", type=int, default=8)
@@ -54,6 +55,7 @@ def main() -> int:
             max_states=args.max_states,
             max_depth=args.max_depth,
             nodes=args.nodes,
+            seed_Ks=args.seed_K,
             timeout_seconds=args.timeout_seconds,
             unbounded_closure=args.unbounded_closure,
             spectral_zero_factor=args.spectral_zero_factor,
@@ -97,6 +99,7 @@ def main() -> int:
         "comparison": comparison,
         "parameters": {
             "nodes": args.nodes,
+            "seed_Ks": args.seed_K,
             "Jmax2": args.Jmax2,
             "max_states": None if args.unbounded_closure else args.max_states,
             "max_depth": None if args.unbounded_closure else args.max_depth,
