@@ -9,6 +9,7 @@ Safe-domain complex homogeneity remains a hard acceptance check.
 """
 from __future__ import annotations
 
+import json
 import math
 import sys
 import unittest
@@ -122,6 +123,20 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
         # Exercise the actual two-hit identity and complete C_ij(V) matrix
         # assembly, including coherent summation across both internal indices.
         result = CV.run()
+        metrics = {
+            name: result[name]
+            for name in (
+                "two_hit_identity_max_covariant_state_error",
+                "two_hit_identity_nonzero_J_weight",
+                "charged_volume_max_Jhalf_projection_leakage",
+                "C_matrix_Frobenius_covariant_state_norm",
+                "C_J1_weight",
+                "C_J_greater_than_1_weight_fraction",
+                "max_spin_reached",
+                "passed",
+            )
+        }
+        print("COVARIANT_VOLUME_LEG_METRICS=" + json.dumps(metrics, sort_keys=True))
         self.assertTrue(
             result["passed"],
             "Covariant volume-leg operator-column gate failed: " + repr(result),
