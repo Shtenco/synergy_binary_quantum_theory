@@ -252,15 +252,47 @@ def _fixed_matrix_mask_calls(module: str, tree: ast.AST) -> list[dict[str, objec
 
 
 def _function_has_prune_instrumentation(function: ast.AST) -> bool:
+    """Require an audit/ledger hook; a bare keep predicate is not instrumentation."""
     markers = {
-        "PRUNE.record_threshold", "PRUNE.keep", "PRUNE.record_merge",
-        "PRUNE.filter_state", "record_dropped", "prune_state",
-        "add_state", "add_dict",
+        "PRUNE.record_threshold", "PRUNE.record_merge",
+        "PRUNE.filter_state", "record_dropped",
     }
     for node in _function_body_nodes(function):
         if isinstance(node, ast.Call) and ast.unparse(node.func) in markers:
             return True
     return False
+
+
+def _prune_decision_calls(module: str, function: ast.AST) -> list[dict[str, object]]:
+    """Inventory actual shared prune predicates separately from comparisons."""
+    calls = []
+    audited = _function_has_prune_instrumentation(function)
+    for node in _function_body_nodes(function):
+        if not isinstance(node, ast.Call):
+            continue
+        target = ast.unparse(node.func)
+        if target not in {"PRUNE.keep", "PRUNE.filter_state"} and not (
+            module == "bqg_pruning_audit" and target == "keep"
+        ):
+            continue
+        if target == "PRUNE.filter_state" or (
+            module == "bqg_pruning_audit" and function.name == "filter_state"
+        ):
+            classification = "shared_pruning_policy_call"
+        elif module == "bqg_pruning_audit" and function.name == "keep":
+            classification = "shared_pruning_policy_primitive"
+        elif audited:
+            classification = "instrumented_amplitude_pruning_call"
+        else:
+            classification = "UNCLASSIFIED_PRUNE_CALL"
+        calls.append({
+            "module": module,
+            "function": function.name,
+            "line": node.lineno,
+            "target": target,
+            "classification": classification,
+        })
+    return calls
 
 
 _CURRENT_SOURCE = ""
@@ -274,6 +306,8 @@ def run_inventory() -> dict:
     plain_lru_caches = []
     audited_lru_caches = []
     fixed_matrix_mask_calls = []
+    prune_decision_calls = []
+    unclassified_prune_calls = []
 
     for module in sorted(modules):
         path = SCRIPTS / (module + ".py")
@@ -298,6 +332,12 @@ def run_inventory() -> dict:
                 node for node in _function_body_nodes(function)
                 if isinstance(node, ast.Compare) and _threshold_like(node)
             ]
+            call_sites = _prune_decision_calls(module, function)
+            prune_decision_calls.extend(call_sites)
+            unclassified_prune_calls.extend(
+                site for site in call_sites
+                if site["classification"] == "UNCLASSIFIED_PRUNE_CALL"
+            )
             # Cache decorators are independent of threshold comparisons.
             # Inspect them before the early continue so a cached function with
             # no local comparison cannot evade the transitive cache audit.
@@ -350,7 +390,8 @@ def run_inventory() -> dict:
                     "classification": classification,
                 })
 
-    complete = not module_mismatch and not unclassified and not plain_lru_caches
+    complete = (not module_mismatch and not unclassified
+                and not unclassified_prune_calls and not plain_lru_caches)
     return {
         "schema": "bqg-v10-transitive-pruning-coverage-v1",
         "status": "PASS_TRANSITIVE_THRESHOLD_INVENTORY" if complete else "FAIL_TRANSITIVE_THRESHOLD_INVENTORY",
@@ -362,6 +403,9 @@ def run_inventory() -> dict:
         "module_set_mismatch": module_mismatch,
         "threshold_site_count": len(sites),
         "threshold_sites": sites,
+        "prune_decision_call_count": len(prune_decision_calls),
+        "prune_decision_calls": prune_decision_calls,
+        "unclassified_prune_calls": unclassified_prune_calls,
         "unclassified_sites": unclassified,
         "plain_lru_caches": plain_lru_caches,
         "audited_lru_caches": audited_lru_caches,
