@@ -1,6 +1,6 @@
 name: BQG W5 direct all-M SU(2) commutator audit
 
-# Run the full production/shadow commutator audit on the same revision as each
+# Run the full five-node production/shadow commutator audit on the same revision as each
 # covariant branch-projection and production-linearity correction.
 
 on:
