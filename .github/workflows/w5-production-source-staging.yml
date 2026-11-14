@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/physical-history-causality-20261112
+      - research/bqg-w5-production-audit-20261113
     paths:
       - .github/workflows/w5-production-source-staging.yml
       - W5_PRODUCTION_LOSS_INSTRUMENTATION_PLAN_20261112.md
@@ -58,10 +59,14 @@ jobs:
           python -m unittest discover -s tests -p 'test_bqg_pruning_audit_wiring.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_amp_tol_shadow_compare.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
+          python -m unittest discover -s tests -p 'test_bqg_v10_w5_closure_aggregate.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_convergence_grid.py' -v
       - name: Compile the complete instrumented W5 dependency chain
         run: |
           python -m py_compile \
+            scripts/bqg_sparse_linear_accumulator.py \
+            scripts/bqg_v10_w5_closure_summary.py \
+            scripts/bqg_v10_w5_closure_aggregate.py \
             scripts/bqg_pruning_audit.py \
             scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
             scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
