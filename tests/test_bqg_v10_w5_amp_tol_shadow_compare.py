@@ -141,6 +141,16 @@ class TestV10CacheEquivalence(unittest.TestCase):
         self.assertEqual(result["status"], "INCOMPLETE_CACHE_EQUIVALENCE_LEDGER_MISSING")
         self.assertFalse(result["equivalence_passed"])
 
+    def test_missing_lower_level_ledger_fails_closed_without_exception(self):
+        cache_on = self.result_fixture()
+        cache_off = self.result_fixture()
+        cache_off.pop("lower_level_pruning_ledger")
+
+        result = compare_cache_runs(cache_on, cache_off)
+        self.assertFalse(result["ledger_payloads_present"])
+        self.assertFalse(result["static_coverage_complete"])
+        self.assertEqual(result["status"], "INCOMPLETE_CACHE_EQUIVALENCE_LEDGER_MISSING")
+
     def test_cache_comparison_status_fails_on_matrix_mismatch(self):
         cache_on = self.result_fixture()
         cache_off = self.result_fixture()
