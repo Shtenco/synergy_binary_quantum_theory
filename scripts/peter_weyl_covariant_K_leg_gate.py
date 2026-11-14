@@ -127,15 +127,32 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
             Xu = CV.unorient_local(X, ls, v)
             recon_u = np.zeros_like(Xu)
             for J2 in CV.all_total_J2(ls):
+                # Reuse the cached complete multiplet basis for every M sector.
+                # Its row order is M descending, then the sorted (K12,K34)
+                # channels, exactly matching the explicit reference loop below.
+                basis_matrix, magnetic_count, channel_count = (
+                    CH.charged_basis_multiplet_matrix(tuple(ls), J2)
+                )
+                if channel_count == 0:
+                    continue
                 rec = CH.allowed_charged_labels(tuple(ls), J2)
-                for M2 in PW.m2vals_t(J2):
-                    for K12, K34 in rec:
-                        B = CH.charged_tensor(tuple(ls), K12, K34, J2, M2)
-                        c = np.vdot(B, Xu)
-                        PRUNE.record_threshold("covariant_K_leg.charged_projection.1e-13",(spins,v,J2,M2,K12,K34),c,1e-13,incoming=amp)
-                        if PRUNE.keep(c,1e-13):
+                coefficients = basis_matrix.conj() @ Xu.reshape(-1)
+                retained = np.zeros_like(coefficients)
+                for m_index, M2 in enumerate(PW.m2vals_t(J2)):
+                    for channel_index, (K12, K34) in enumerate(rec):
+                        index = m_index * channel_count + channel_index
+                        c = complex(coefficients[index])
+                        PRUNE.record_threshold(
+                            "covariant_K_leg.charged_projection.1e-13",
+                            (spins, v, J2, M2, K12, K34), c, 1e-13,
+                            incoming=amp,
+                        )
+                        if PRUNE.keep(c, 1e-13):
                             opts.append((label_charge(J2, M2, K12, K34), c))
-                            recon_u += c * B
+                            retained[index] = c
+                # Reconstruct only from the fixed-mask-retained basis
+                # coefficients, preserving the original leakage definition.
+                recon_u += (retained @ basis_matrix).reshape(Xu.shape)
             recon = CV.orient_local(recon_u, ls, v)
         else:
             for K in PW.allowed_k2_t(*ls):
