@@ -250,16 +250,16 @@ def covariant_scalar_to_gauss(key, source_v):
 
 
 def covariant_to_gauss_map(state, source_v):
-    out, rejected, rejected_norm2 = {}, 0, 0.0
+    out, rejected, rejected_norm = {}, 0, 0.0
     for key, amp in state.items():
         try:
             gkey = covariant_scalar_to_gauss(key, source_v)
         except ValueError:
             rejected += 1
-            rejected_norm2 += abs(amp) ** 2
+            rejected_norm = math.hypot(rejected_norm, abs(amp))
             continue
-        out[gkey] = out.get(gkey, 0j) + amp
-    return out, rejected, math.sqrt(rejected_norm2)
+        out[gkey] = amp
+    return out, rejected, rejected_norm
 
 
 def _matrix_adjoint_expected_columns(forward_columns, basis_keys, key_index):
