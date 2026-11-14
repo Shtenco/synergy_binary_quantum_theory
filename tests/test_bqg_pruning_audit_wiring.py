@@ -180,6 +180,61 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
                         plain_lru_caches.append((module_name, function.name, name))
         self.assertEqual(plain_lru_caches, [])
 
+        # Every sparse-amplitude decision must emit an event directly, use
+        # the instrumented sparse-state filter, or write V10's own ledger row.
+        unrecorded_decisions = []
+        for module_name in sorted(modules):
+            tree = ast.parse((scripts / (module_name + ".py")).read_text(encoding="utf-8"))
+            for function in (
+                node for node in ast.walk(tree)
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ):
+                call_names = {
+                    ast.unparse(node.func)
+                    for node in ast.walk(function) if isinstance(node, ast.Call)
+                }
+                has_decision = any(
+                    name.endswith(("PRUNE.keep", "PRUNE.filter_state", "prune_state"))
+                    for name in call_names
+                )
+                has_audit = any(
+                    name.endswith(("PRUNE.record_threshold", "PRUNE.record_merge",
+                                   "PRUNE.filter_state", "prune_state", "record_dropped"))
+                    for name in call_names
+                ) or (module_name == "bqg_v10_w5_lorentzian_adjoint_closure"
+                      and function.name == "record_dropped")
+                if has_decision and not has_audit:
+                    unrecorded_decisions.append((module_name, function.name, function.lineno))
+        self.assertEqual(unrecorded_decisions, [])
+
+        # The shared sparse-state filter must itself record every nonzero
+        # coefficient at/below threshold before applying PRUNE.keep.
+        pw_tree = ast.parse((scripts / "k5_peter_weyl_safe_hda_column.py").read_text(encoding="utf-8"))
+        prune_defs = [
+            node for node in ast.walk(pw_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "prune_state"
+        ]
+        self.assertEqual(len(prune_defs), 1)
+        prune_calls = {
+            ast.unparse(node.func)
+            for node in ast.walk(prune_defs[0]) if isinstance(node, ast.Call)
+        }
+        self.assertIn("PRUNE.record_threshold", prune_calls)
+        self.assertIn("PRUNE.keep", prune_calls)
+
+        audit_tree = ast.parse((scripts / "bqg_pruning_audit.py").read_text(encoding="utf-8"))
+        filter_defs = [
+            node for node in ast.walk(audit_tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "filter_state"
+        ]
+        self.assertEqual(len(filter_defs), 1)
+        filter_calls = {
+            ast.unparse(node.func)
+            for node in ast.walk(filter_defs[0]) if isinstance(node, ast.Call)
+        }
+        self.assertIn("record_threshold", filter_calls)
+        self.assertIn("keep", filter_calls)
+
         # V10's sparse accumulator is allowed to be uninstrumented only
         # because its default tolerance is exactly zero (exact-zero removal).
         v10_path = scripts / "bqg_v10_w5_lorentzian_adjoint_closure.py"
