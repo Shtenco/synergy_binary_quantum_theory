@@ -79,6 +79,18 @@ NON_PRUNING_COMPARISON_CLASSIFICATIONS = {
         "operator_acceptance_residual_thresholds",
     ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['complete_charge_basis_leakage'] > 0.5"):
         "historical_primitive_projection_failure_preservation",
+    ("peter_weyl_covariant_composition_gate", "add", "float(tol) < 0.0"):
+        "input_tolerance_parameter_validation",
+    ("peter_weyl_covariant_composition_gate", "complete_to_covariant", "float(tol) < 0.0"):
+        "input_tolerance_parameter_validation",
+    ("peter_weyl_covariant_K_leg_gate", "run", "diagmax['outer_complete_basis_leakage'] < 1e-10"):
+        "operator_acceptance_residual_thresholds",
+    ("peter_weyl_covariant_K_leg_gate", "run", "diagmax['internal_volume_sector_leakage'] < 1e-10"):
+        "operator_acceptance_residual_thresholds",
+    ("peter_weyl_covariant_K_leg_gate", "run", "diagmax['complete_charge_basis_leakage'] < 1e-10"):
+        "operator_acceptance_residual_thresholds",
+    ("peter_weyl_covariant_volume_leg_gate", "run", "abs(float(jj)) > 1e-15"):
+        "exact_irrep_label_weight_classification",
 }
 
 NON_PRUNING_CLASSIFICATIONS = {
