@@ -51,6 +51,22 @@ class TestCoherentMergeLinearity(unittest.TestCase):
         self.assertAlmostEqual(result.real, 0.8e-11, delta=1e-27)
         self.assertAlmostEqual(result.imag, 0.5e-11, delta=1e-27)
 
+
+    def test_basis_relabeling_preserves_subthreshold_nonzero_amplitude(self):
+        spins = tuple(range(10))
+        labels = (
+            ("C", 2, 0, 0, 0),
+            ("G", 0),
+            ("G", 0),
+            ("G", 0),
+            ("G", 0),
+        )
+        source = {(spins, labels): 1.0e-14 - 2.0e-14j}
+        converted = composition.complete_to_covariant(source, source_v=0)
+        self.assertEqual(len(converted), 1)
+        amplitude = next(iter(converted.values()))
+        self.assertEqual(amplitude, 1.0e-14 - 2.0e-14j)
+
     def test_invalid_audit_tolerance_is_rejected(self):
         with self.assertRaises(ValueError):
             composition.add({}, {"state": 1.0}, tol=float("nan"))
