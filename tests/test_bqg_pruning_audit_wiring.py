@@ -33,9 +33,9 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         )
         sites = collector.snapshot()["by_site"]
         self.assertIn("k5.prune_state", sites)
-        # Basis relabelling deliberately performs no amplitude threshold test;
-        # therefore it must not fabricate a pruning event for a retained value.
-        self.assertNotIn("covariant_composition.complete_to_covariant", sites)
+        # This is merge diagnostics only: the small nonzero basis amplitude is
+        # preserved, while its would-be threshold loss remains auditable.
+        self.assertIn("covariant_composition.complete_to_covariant", sites)
 
     def test_shadow_mode_preserves_subthreshold_coefficients_at_wired_sites(self):
         with audit.capture() as collector:
@@ -62,7 +62,7 @@ class TestPruningAuditOperatorWiring(unittest.TestCase):
         self.assertEqual(e, {"k": 0.5e-8})
         self.assertEqual(f, {((4,) * 10, (-1, 0, 0, 0, 0), 0, 0, 0, 0): 0.5e-11})
         events = collector.snapshot()["events"]
-        self.assertEqual(len(events), 5)
+        self.assertEqual(len(events), 6)
         self.assertTrue(all(x["kind"] == "would_prune_bypassed" for x in events))
 
     def test_independent_K_projection_ladder_prune_is_instrumented(self):
