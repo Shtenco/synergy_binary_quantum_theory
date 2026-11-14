@@ -72,6 +72,34 @@ def main():
     import peter_weyl_covariant_K_sine_composition_gate as SINEK
 
     context = {}
+
+    def write_checkpoint(status, phase):
+        """Atomically persist the last completed diagnostic stage.
+
+        GitHub-hosted runners may be externally stopped before the full probe
+        reaches the scalar guard. Keeping this file current lets the workflow's
+        always-run artifact step preserve the exact last completed sequence.
+        """
+        detail = {
+            "status": status,
+            "checkpoint_phase": phase,
+            "K_seed": args.K,
+            "Jmax2": args.Jmax2,
+            "amp_tol": args.amp_tol,
+            "pruning_mode": args.pruning_mode,
+            "diagnostics": context,
+            "operator_changed": False,
+            "projection_changed": False,
+            "guard_disabled": False,
+        }
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        temporary = args.output.with_name(args.output.name + ".tmp")
+        temporary.write_text(
+            json.dumps(detail, indent=2, default=json_default) + "\\n",
+            encoding="utf-8",
+        )
+        temporary.replace(args.output)
+
     original_canonicalize = CACHE.canonicalize_scalar_charge_M
     original_restore = CACHE.restore_scalar_charge_M
     original_complete = SINEK.complete_HE_sine
@@ -88,6 +116,7 @@ def main():
             "charged_nodes": list(charged_nodes),
             "original_JM": {str(k): list(v) for k, v in original.items()},
         })
+        write_checkpoint("IN_PROGRESS_SCALAR_PROBE", "canonicalized_input")
         return canonical, original
 
     def traced_restore(state, charged_nodes, original):
@@ -182,6 +211,23 @@ def main():
                 adj_acc = {}
                 for sequence_index, (coef, seq0) in enumerate(PW.T_sequences(*spec)):
                     seq = PW.adjoint_sequence(seq0) if adj else seq0
+                    context["operator_stage_progress"] = {
+                        "spec_index": spec_index,
+                        "oriented_spec": list(spec),
+                        "epsilon_sign": int(sign),
+                        "adjoint": bool(adj),
+                        "sequence_index": sequence_index,
+                        "sequence": repr(seq),
+                        "phase": "before_apply_sequence",
+                    }
+                    context["operator_stage_trace_partial"] = {
+                        "construction": "complete_HE_sine exact loop with passive per-sequence observers",
+                        "completed_sequence_rows": rows,
+                    }
+                    write_checkpoint(
+                        "IN_PROGRESS_OPERATOR_SEQUENCE",
+                        "before_apply_sequence",
+                    )
                     branches, vleak = KC.CK.apply_sequence_to_branch(
                         base, seq, source_v, Jmax2
                     )
@@ -209,6 +255,15 @@ def main():
                         "sequence_JM_weights": weights,
                         **wrong_weight(weights),
                     })
+                    context["operator_stage_progress"]["phase"] = "sequence_completed"
+                    context["operator_stage_trace_partial"] = {
+                        "construction": "complete_HE_sine exact loop with passive per-sequence observers",
+                        "completed_sequence_rows": rows,
+                    }
+                    write_checkpoint(
+                        "IN_PROGRESS_OPERATOR_SEQUENCE",
+                        "sequence_completed",
+                    )
                     KC.CK.add_state(adj_acc, sequence_acc)
                 KC.CK.add_state(spec_acc, adj_acc)
             spec_weights = jm_weights(spec_acc)
@@ -221,6 +276,20 @@ def main():
                 "spec_JM_weights": spec_weights,
                 **wrong_weight(spec_weights),
             })
+            context["operator_stage_progress"] = {
+                "spec_index": spec_index,
+                "oriented_spec": list(spec),
+                "epsilon_sign": int(sign),
+                "phase": "oriented_spec_completed",
+            }
+            context["operator_stage_trace_partial"] = {
+                "construction": "complete_HE_sine exact loop with passive per-sequence observers",
+                "completed_sequence_rows": rows,
+            }
+            write_checkpoint(
+                "IN_PROGRESS_OPERATOR_SEQUENCE",
+                "oriented_spec_completed",
+            )
 
         total_weights = jm_weights(out)
         context["operator_stage_trace"] = {
@@ -232,6 +301,7 @@ def main():
             "max_volume_leakage": max_v,
             "max_basis_leakage": max_b,
         }
+        write_checkpoint("IN_PROGRESS_OPERATOR_COMPLETE", "complete_HE_sine_finished")
         return out, max_v, max_b
 
     def traced_he_state(state, source_v, Jmax2, charged_nodes):
@@ -269,6 +339,7 @@ def main():
     KC.C_K_component = traced_ck
     PILOT.W5_K = (args.K,)
 
+    write_checkpoint("IN_PROGRESS_SCALAR_PROBE", "before_run_closure")
     try:
         result = PILOT.run_closure(
             source_nodes=(0,),
@@ -285,6 +356,7 @@ def main():
             "amp_tol": args.amp_tol,
             "pruning_mode": args.pruning_mode,
             "pilot_status": result.get("status"),
+            "diagnostics": context,
             "operator_changed": False,
             "projection_changed": False,
             "guard_disabled": False,
