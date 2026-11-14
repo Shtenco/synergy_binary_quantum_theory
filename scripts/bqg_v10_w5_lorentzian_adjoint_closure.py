@@ -41,6 +41,36 @@ def build_pruning_coverage(static_inventory):
         "post_assembly_fixed_operator_mask_with_frobenius_spectral_error_bound"
         for site in fixed_masks
     )
+    mask_calls_known = "fixed_matrix_mask_calls" in static_inventory
+    mask_calls = list(static_inventory.get("fixed_matrix_mask_calls", []))
+    unbounded_mask_calls = [
+        call for call in mask_calls if call.get("api") == "sparsify_matrix_columns"
+    ]
+    certified_mask_calls = [
+        call for call in mask_calls
+        if call.get("api") == "sparsify_matrix_columns_with_error_bound"
+    ]
+    fixed_mask_absent = mask_calls_known and not mask_calls
+    fixed_mask_bound_complete = (
+        fixed_mask_absent or (
+            mask_calls_known
+            and not unbounded_mask_calls
+            and len(certified_mask_calls) == len(mask_calls)
+        )
+    )
+    fixed_mask_checks = []
+    if not mask_calls_known:
+        fixed_mask_checks.append(
+            "inventory production call sites for post-assembly matrix masks"
+        )
+    elif unbounded_mask_calls:
+        fixed_mask_checks.append(
+            "replace legacy unbounded post-assembly matrix-mask calls with the certified API"
+        )
+    elif certified_mask_calls:
+        fixed_mask_checks.append(
+            "persist each certified post-assembly matrix-mask error bound in runtime evidence"
+        )
     return {
         # Overall coverage intentionally remains false until runtime loss,
         # cache-equivalence, support-cap and convergence controls are closed.
@@ -58,14 +88,14 @@ def build_pruning_coverage(static_inventory):
             "plain_lru_caches": list(static_inventory.get("plain_lru_caches", [])),
             "audited_lru_caches": list(static_inventory.get("audited_lru_caches", [])),
             "post_assembly_fixed_operator_masks": fixed_masks,
+            "production_fixed_matrix_mask_calls": mask_calls,
         },
         "runtime_loss_controls_complete": False,
         "fixed_operator_mask_bound_api_available": certified_bound_api_available,
-        "fixed_operator_mask_bound_applied_in_production": False,
-        "fixed_operator_mask_error_bound_complete": False,
-        "remaining_checks": [
-            "wire the certified matrix-mask API into any production call site that uses this mask and persist its error ledger",
-            "demonstrate that the post-assembly mask is absent from or explicitly bounded in the actual W5 execution path",
+        "fixed_operator_mask_bound_applied_in_production": bool(certified_mask_calls),
+        "fixed_operator_mask_absent_from_production_path": bool(fixed_mask_absent),
+        "fixed_operator_mask_error_bound_complete": bool(fixed_mask_bound_complete),
+        "remaining_checks": fixed_mask_checks + [
             "cache-on/cache-off pruning-ledger equality for the full composition chain",
             "complete spin-wall and state/depth-cap loss separation",
             "full complex support convergence across Jmax2 and amplitude-threshold ladders",
@@ -79,9 +109,10 @@ def build_pruning_coverage(static_inventory):
         "shadow_no_prune_interpretation": (
             "shadow_no_prune bypasses only wired nonzero amplitude thresholds. "
             "A passing static inventory proves site classification, not zero runtime loss. "
-            "Post-assembly fixed matrix masks and support caps are not removed by this bypass. "
+            "Post-assembly fixed matrix masks are absent from the production import closure "
+            "or must use the certified API; support caps are not removed by this bypass. "
             "The shadow result remains partial until runtime loss, cache-equivalence, "
-            "cap-accounting, fixed-mask error-bound and support-convergence controls pass."
+            "cap-accounting and support-convergence controls pass."
         ),
     }
 
