@@ -47,15 +47,33 @@ TOL = 1e-11
 
 
 def add(dst, src, scale=1.0, tol=TOL):
+    """Coherently merge complex amplitudes without an intermediate cutoff.
+
+    tol is retained for audit-event classification only. Applying it to this
+    incremental merge would make the operator nonlinear and order dependent:
+    a sub-threshold partial sum could be deleted before later contributions
+    arrive. Only an exact floating-point zero is removed here; physical and
+    regulator truncations must be explicit, separately certified boundaries
+    after the complete coherent sum.
+    """
+    factor = complex(scale)
+    if not (math.isfinite(factor.real) and math.isfinite(factor.imag)):
+        raise ValueError("merge scale must be finite")
+    if not math.isfinite(float(tol)) or float(tol) < 0.0:
+        raise ValueError("merge audit tolerance must be finite and nonnegative")
     for k, a in src.items():
-        prior = dst.get(k, 0j)
-        incoming = scale * a
-        z = prior + incoming
+        prior = complex(dst.get(k, 0j))
+        incoming = factor * complex(a)
+        real = math.fsum((prior.real, incoming.real))
+        imag = math.fsum((prior.imag, incoming.imag))
+        z = complex(real, imag)
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("merged complex amplitude must be finite")
         PRUNE.record_merge("covariant_composition.add", k, prior, incoming, z, tol)
-        if PRUNE.keep(z,tol):
+        if z != 0j:
             dst[k] = z
-        elif k in dst:
-            del dst[k]
+        else:
+            dst.pop(k, None)
 
 
 def covariant_key_to_complete(key, source_v):
