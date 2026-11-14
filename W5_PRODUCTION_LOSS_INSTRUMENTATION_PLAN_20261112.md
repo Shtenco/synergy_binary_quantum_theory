@@ -421,3 +421,7 @@ Do not infer a physical BQG constraint, continuum limit, causal propagation resu
 
 The first fresh-process cache-on/cache-off run is now scoped to source node 0 and seed (K=0), rather than all five seed labels in one long runner job. This is an execution slice to obtain a complete matrix pair within the runner budget; it is **not** evidence of cache equivalence for the other 24 node/seed pairs. A PASS for this slice still requires both complete matrices, all four required ledger payloads, complete static threshold-site coverage, and certified fixed-matrix-mask accounting. The top-level runtime coverage flag remains false until cache equivalence, spin-wall/cap accounting, and cutoff convergence are aggregated; the cache comparison deliberately does not require that flag, avoiding a circular acceptance gate. The all-node/all-seed cache-equivalence matrix remains OPEN.
 
+### CI concurrency clarification
+
+The concurrency behavior was rechecked against the actual run history. With `cancel-in-progress: false`, an in-progress job is not cancelled by a newer push; GitHub only replaces an older *pending* run in the same concurrency group. The temporary per-SHA groups therefore created redundant queued copies rather than protecting active work. W5 workflows have now returned to branch-scoped groups: active calculations continue, while only the newest pending run per workflow is retained. Previously queued per-SHA runs may still appear in the history; they are duplicate attempts, not separate scientific evidence.
+
