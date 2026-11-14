@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""L1 characterization tests for thresholded production accumulators.
+"""L1 acceptance tests for strict production accumulators and coherent merges.
 
-The remaining expected-failure tests expose known nonlinearity in the legacy
-K-leg add_state and permutation-order paths. The COMP.add subthreshold
-additivity check now passes and is a hard acceptance test.
+The COMP.add and K-leg add_state checks are hard acceptance tests for
+subthreshold additivity and floating-point permutation stability.
 """
 from __future__ import annotations
 
