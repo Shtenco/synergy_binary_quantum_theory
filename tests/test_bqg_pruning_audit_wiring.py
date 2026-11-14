@@ -142,6 +142,7 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
 
         expected_modules = {
             "bqg_pruning_audit",
+            "bqg_sparse_linear_accumulator",
             "bqg_v10_w5_lorentzian_adjoint_closure",
             "charged_intertwiner_recoupling_gate",
             "k5_peter_weyl_safe_hda_column",
@@ -274,6 +275,8 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
         # - zero-aware eigenvalue masks define the volume operator and are a
         #   separate spectral sensitivity axis, not sparse-amplitude deletion.
         exact_or_separate = {
+            ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns"),
+            ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns_with_error_bound"),
             ("bqg_v10_w5_lorentzian_adjoint_closure", "add_sparse"),
             ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"),
             ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"),
