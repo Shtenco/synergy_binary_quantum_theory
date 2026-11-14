@@ -61,7 +61,7 @@ jobs:
           python -m py_compile scripts/peter_weyl_lorentzian_ordered_triple_gate.py
       - name: Run W5 adjoint algebra and closure-control unit tests
         run: python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
-      - name: Run all five W5 seeds and all five K5 source nodes
+      - name: Run one W5 seed at one K5 source node
         run: |
           mkdir -p verification_results
           python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
