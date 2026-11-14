@@ -275,7 +275,10 @@ def _prune_decision_calls(module: str, function: ast.AST) -> list[dict[str, obje
             module == "bqg_pruning_audit" and target == "keep"
         ):
             continue
-        if target == "PRUNE.filter_state" or (
+        if (module == "bqg_v10_w5_lorentzian_adjoint_closure"
+                and function.name == "record_dropped"):
+            classification = "loss_ledger_discard_status_diagnostic"
+        elif target == "PRUNE.filter_state" or (
             module == "bqg_pruning_audit" and function.name == "filter_state"
         ):
             classification = "shared_pruning_policy_call"
