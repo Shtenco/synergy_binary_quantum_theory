@@ -79,7 +79,7 @@ jobs:
           MAX_DEPTH="${{ github.event.inputs.max_depth || '8' }}"
           TIMEOUT="${{ github.event.inputs.timeout_seconds || '900' }}"
           python scripts/bqg_v10_w5_cache_equivalence.py \
-            --nodes 0 --Jmax2 "$JMAX2" \
+            --nodes 0 --seed-K 0 --Jmax2 "$JMAX2" \
             --max-states "$MAX_STATES" --max-depth "$MAX_DEPTH" \
             --timeout-seconds "$TIMEOUT" \
             --output verification_results/W5_CACHE_EQUIVALENCE_RUN${{ github.run_id }}.json
