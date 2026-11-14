@@ -1,6 +1,7 @@
 import unittest
 
 from bqg_v10_w5_closure_aggregate import aggregate_records
+from bqg_v10_w5_closure_summary import matrix_digest
 
 
 def record(j, node, k, digest="same"):
@@ -25,6 +26,16 @@ def record(j, node, k, digest="same"):
 
 
 class TestW5ClosureAggregate(unittest.TestCase):
+    def test_matrix_digest_is_stable_to_sub_precision_noise(self):
+        a = [[[0, 1.234567890123, -0.000000000123456789]]]
+        b = [[[0, 1.234567890124, -0.000000000123456788]]]
+        self.assertEqual(matrix_digest(a), matrix_digest(b))
+
+    def test_matrix_digest_changes_for_material_coefficient_change(self):
+        a = [[[0, 1.234567890123, 0.0]]]
+        b = [[[0, 1.234567891123, 0.0]]]
+        self.assertNotEqual(matrix_digest(a), matrix_digest(b))
+
     def test_complete_matrix_and_cutoff_stability_pass(self):
         rows = [record(j, 0, 0) for j in (10, 12, 14)]
         result = aggregate_records(rows, nodes=(0,), seed_ks=(0,), jmax2_values=(10, 12, 14))
