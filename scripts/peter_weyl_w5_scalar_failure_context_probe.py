@@ -80,6 +80,27 @@ def main():
         reaches the scalar guard. Keeping this file current lets the workflow's
         always-run artifact step preserve the exact last completed sequence.
         """
+        # Keep the on-disk checkpoint bounded. The full sequence trace remains
+        # in memory for the final failure report, but serializing every prior row
+        # at every checkpoint makes cumulative checkpoint I/O quadratic.
+        checkpoint_context = dict(context)
+        progress_trace = None
+        for trace_name, rows_name in (
+            ("operator_stage_trace_partial", "completed_sequence_rows"),
+            ("operator_stage_trace", "sequence_rows"),
+        ):
+            trace = checkpoint_context.get(trace_name)
+            if isinstance(trace, dict) and isinstance(trace.get(rows_name), list):
+                rows = trace[rows_name]
+                progress_trace = {
+                    "completed_sequence_rows": len(rows),
+                    "last_completed_sequence_row": rows[-1] if rows else None,
+                }
+                compact_trace = dict(trace)
+                compact_trace.pop(rows_name, None)
+                compact_trace.update(progress_trace)
+                checkpoint_context[trace_name] = compact_trace
+
         detail = {
             "status": status,
             "checkpoint_phase": phase,
@@ -87,7 +108,8 @@ def main():
             "Jmax2": args.Jmax2,
             "amp_tol": args.amp_tol,
             "pruning_mode": args.pruning_mode,
-            "diagnostics": context,
+            "diagnostics": checkpoint_context,
+            "checkpoint_trace_summary": progress_trace,
             "operator_changed": False,
             "projection_changed": False,
             "guard_disabled": False,
@@ -99,6 +121,12 @@ def main():
             encoding="utf-8",
         )
         temporary.replace(args.output)
+        print(json.dumps({
+            "checkpoint_status": status,
+            "checkpoint_phase": phase,
+            "operator_stage_progress": context.get("operator_stage_progress"),
+            "trace_summary": progress_trace,
+        }, default=json_default), flush=True)
 
     original_canonicalize = CACHE.canonicalize_scalar_charge_M
     original_restore = CACHE.restore_scalar_charge_M
