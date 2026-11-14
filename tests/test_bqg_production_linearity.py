@@ -108,7 +108,6 @@ class TestLegacyProductionAccumulatorLinearity(unittest.TestCase):
         COMP.add(separate, y, tol=tol)
         self.assertEqual(combined, separate)
 
-    @unittest.expectedFailure
     def test_CK_add_state_is_additive_below_threshold(self):
         tol = 1e-11
         x = {"same": 0.6 * tol}
@@ -120,7 +119,6 @@ class TestLegacyProductionAccumulatorLinearity(unittest.TestCase):
         CK.add_state(separate, y, tol=tol)
         self.assertEqual(combined, separate)
 
-    @unittest.expectedFailure
     def test_COMP_add_is_permutation_invariant(self):
         tol = COMP.TOL
 
@@ -132,7 +130,14 @@ class TestLegacyProductionAccumulatorLinearity(unittest.TestCase):
 
         a = fold([1.1 * tol, -0.9 * tol, 0.9 * tol])
         b = fold([1.1 * tol, 0.9 * tol, -0.9 * tol])
-        self.assertEqual(a, b)
+        self.assertEqual(set(a), set(b))
+        for key in a:
+            scale = max(abs(a[key]), abs(b[key]), 1e-300)
+            self.assertLessEqual(
+                abs(a[key] - b[key]),
+                5e-16 * scale,
+                "permutation difference exceeds the floating-point summation bound",
+            )
 
 
 if __name__ == "__main__":
