@@ -56,6 +56,17 @@ def add_sparse(dst, src, scale=1.0):
         dst[key] = dst.get(key, 0j) + scale * amp
 
 
+def apply_local_jz(state, node):
+    out = {}
+    for (spins, labels), amp in state.items():
+        lab = labels[node]
+        if lab[0] != "C":
+            raise ValueError(f"node {node} is not in the charged basis")
+        m = int(lab[2]) / 2.0
+        out[(spins, labels)] = complex(amp) * m
+    return out
+
+
 def norm(state):
     if not state:
         return 0.0
@@ -167,6 +178,9 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
                     lhs = apply_local_ladder(H_input, node, direction)
                     rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
                     rel, abs_err, scale = relative_error(lhs, rhs)
+                    jz_output = apply_local_jz(H_input, node)
+                    jz_expected = {key: amp * (M2 / 2.0) for key, amp in H_input.items()}
+                    jz_rel, jz_abs_err, jz_scale = relative_error(jz_output, jz_expected)
                     wrong_fraction = wrong_sector_fraction(
                         H_input, node=node, expected_j2=2, expected_m2=M2
                     )
@@ -183,6 +197,9 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
                         "commutator_relative_residual": rel,
                         "commutator_absolute_residual": abs_err,
                         "comparison_scale": scale,
+                        "jz_commutator_relative_residual": jz_rel,
+                        "jz_commutator_absolute_residual": jz_abs_err,
+                        "jz_comparison_scale": jz_scale,
                         "wrong_JM_weight_fraction": wrong_fraction,
                         "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
                         "volume_leakage": max(
@@ -207,10 +224,12 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
             evaluate()
 
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
+    max_jz_commutator = max((x["jz_commutator_relative_residual"] for x in cases), default=0.0)
     max_wrong_fraction = max((x["wrong_JM_weight_fraction"] for x in cases), default=0.0)
     passed = (
         len(cases) == 4 * len(nodes)
         and max_commutator < 1e-8
+        and max_jz_commutator < 1e-12
         and max_wrong_fraction < 1e-18
         and max((x["volume_leakage"] for x in cases), default=0.0) < 1e-10
         and max((x["basis_leakage"] for x in cases), default=0.0) < 1e-10
@@ -224,9 +243,11 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
         "input_spins_doubled": [4] * 10,
         "input_charged_sector": {"J2": 2, "K12": 0, "K34": 2},
         "pruning_mode": pruning_mode,
-        "commutator_target": "[J_+, H_E]=[J_-, H_E]=0 on the actual complete W5 sine-H_E map",
+        "commutator_target": "[J_+, H_E]=[J_-, H_E]=[J_z, H_E]=0 on the actual complete W5 sine-H_E map",
         "max_commutator_relative_residual": max_commutator,
+        "max_jz_commutator_relative_residual": max_jz_commutator,
         "max_wrong_JM_weight_fraction": max_wrong_fraction,
+        "generators_checked": ["J_plus", "J_minus", "J_z"],
         "cases": cases,
         "scope": (
             "Direct all-M covariance check on one finite charged J=1 seed at each requested K5 source node. "
