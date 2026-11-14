@@ -3,7 +3,9 @@
 
 This module is wired into the V10 W5 epsilon-traced KKV path at the forward
 triple, direct-adjoint triple, and complete node epsilon-orbit sum boundaries.
-It is not yet wired into every lower-level K/V component builder or every
+It is also used by the production covariant K-leg builder at branch, unit-key
+H_E, complete-state, volume, commutator, and outer-node aggregation boundaries.
+It does not yet replace every amplitude cutoff in basis projection or every
 V09/V10/V11 state merge; end-to-end pruning closure therefore remains open.
 
 Accumulate coherent complex contributions before any optional fixed,
