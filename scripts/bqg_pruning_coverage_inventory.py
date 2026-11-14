@@ -57,17 +57,6 @@ NON_PRUNING_COMPARISON_CLASSIFICATIONS = {
         "input_tolerance_parameter_validation",
     ("bqg_sparse_linear_accumulator", "sparsify_matrix_columns", "abs(z) > tol"):
         "post_assembly_fixed_operator_mask_requires_error_bound",
-}
-
-NON_PRUNING_CLASSIFICATIONS = {
-    ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"):
-        "spin_wall_nonzero_branch_accounting",
-    ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"):
-        "spin_wall_nonzero_branch_accounting",
-    ("bqg_v10_w5_lorentzian_adjoint_closure", "_closure_cap_reasons"):
-        "state_and_depth_support_caps",
-    ("bqg_v10_w5_lorentzian_adjoint_closure", "closure_acceptance"):
-        "operator_acceptance_residual_thresholds",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "amp_tol < 0"):
         "input_amplitude_tolerance_validation",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "float(spectral_zero_factor) <= 0"):
@@ -84,6 +73,23 @@ NON_PRUNING_CLASSIFICATIONS = {
         "loss_ledger_metadata_control",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "stage == 'amp_tol'"):
         "loss_ledger_stage_classification",
+    ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['outer_complete_basis_leakage'] < 1e-10"):
+        "operator_acceptance_residual_thresholds",
+    ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['internal_volume_sector_leakage'] < 1e-10"):
+        "operator_acceptance_residual_thresholds",
+    ("peter_weyl_covariant_K_projection_audit_gate", "run", "raw['complete_charge_basis_leakage'] > 0.5"):
+        "historical_primitive_projection_failure_preservation",
+}
+
+NON_PRUNING_CLASSIFICATIONS = {
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"):
+        "spin_wall_nonzero_branch_accounting",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"):
+        "spin_wall_nonzero_branch_accounting",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "_closure_cap_reasons"):
+        "state_and_depth_support_caps",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "closure_acceptance"):
+        "operator_acceptance_residual_thresholds",
     ("charged_intertwiner_recoupling_gate", "allowed_charged_labels"):
         "exact_SU2_triangle_and_parity_selection",
     ("peter_weyl_covariant_K_composition_cached_gate", "restore_scalar_charge_M"):
