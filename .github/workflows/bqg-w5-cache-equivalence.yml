@@ -45,7 +45,7 @@ on:
         default: "900"
 
 concurrency:
-  group: bqg-w5-cache-equivalence-${{ github.ref }}-${{ github.sha }}
+  group: bqg-w5-cache-equivalence-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
