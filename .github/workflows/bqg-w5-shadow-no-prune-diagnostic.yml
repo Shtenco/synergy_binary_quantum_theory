@@ -14,6 +14,13 @@ on:
       - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
       - 'scripts/peter_weyl_covariant_K_composition_gate.py'
       - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_composition_gate.py'
+      - 'scripts/peter_weyl_lorentzian_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+      - 'scripts/charged_intertwiner_recoupling_gate.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
   workflow_dispatch:
 
