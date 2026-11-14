@@ -153,13 +153,13 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
         for lab, c in choice:
             labels.append(lab); val *= c
         key = (spins, tuple(labels))
-        PRUNE.record_threshold("covariant_K_leg.complete_branch_projection",key,val,tol)
-        if PRUNE.keep(val,tol):
-            out[key] = out.get(key, 0j) + val
-    for key, value in out.items():
-        if abs(value) <= tol:
-            PRUNE.record_threshold("covariant_K_leg.complete_branch_output",key,value,tol)
-    return {k:a for k,a in out.items() if PRUNE.keep(a,tol)}, max_basis_leak
+        # val includes the input branch amplitude. Thresholding it here
+        # makes the unit-column operator depend on the scale of its input and
+        # breaks linearity. Keep every nonzero branch contribution and merge
+        # coherently; fixed support masks belong at certified operator/basis
+        # boundaries, not at this amplitude-dependent boundary.
+        add_state(out, {key: val})
+    return out, max_basis_leak
 
 
 @PRUNE.audit_lru_cache(None)
