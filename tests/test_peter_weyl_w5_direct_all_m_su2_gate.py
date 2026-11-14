@@ -90,7 +90,7 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
 
     def test_full_gate_rejects_empty_production_operator(self):
         with patch.object(gate.SINE, "complete_HE_sine", return_value=({}, 0.0, 0.0)):
-            with self.assertRaisesRegex(AssertionError, "H_E\(M2=-2\).*empty"):
+            with self.assertRaisesRegex(AssertionError, "H_E.*M2=-2.*empty"):
                 gate.run(Jmax2=10, pruning_mode="production")
 
 
