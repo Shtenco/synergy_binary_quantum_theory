@@ -417,3 +417,7 @@ Do not infer a physical BQG constraint, continuum limit, causal propagation resu
 - The scalar-selection probe now runs the same exact capture at `Jmax2=6,8,10` in both production and shadow modes, so a lower-cutoff failure can be captured without waiting for the heaviest endpoint.
 - The optimization is a source-level performance change only. No speedup or physical SU(2) conclusion is claimed until the fresh L2, staging, direct all-M, and scalar-context artifacts complete.
 
+### Cache-equivalence execution scope clarification
+
+The first fresh-process cache-on/cache-off run is now scoped to source node 0 and seed (K=0), rather than all five seed labels in one long runner job. This is an execution slice to obtain a complete matrix pair within the runner budget; it is **not** evidence of cache equivalence for the other 24 node/seed pairs. A PASS for this slice still requires both complete matrices, all four required ledger payloads, and complete static/runtime coverage. The all-node/all-seed cache-equivalence matrix remains OPEN.
+
