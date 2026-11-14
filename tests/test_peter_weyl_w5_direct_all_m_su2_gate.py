@@ -65,6 +65,29 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicates"):
             gate.run(nodes=(0, 0))
 
+    def test_all_five_nodes_receive_four_adjacent_m_commutator_checks(self):
+        def identity_map(key, source_v, Jmax2, charged_nodes):
+            self.assertEqual(charged_nodes, (source_v,))
+            return {key: 1.0 + 0j}, 0.0, 0.0
+
+        with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map):
+            result = gate.run(Jmax2=4, nodes=(0, 1, 2, 3, 4))
+
+        self.assertTrue(result["passed"], result)
+        self.assertEqual(result["source_nodes"], [0, 1, 2, 3, 4])
+        self.assertEqual(len(result["cases"]), 20)
+        self.assertEqual(
+            {case["source_node"] for case in result["cases"]},
+            {0, 1, 2, 3, 4},
+        )
+        self.assertEqual(
+            {(case["direction"], case["input_M2"]) for case in result["cases"]},
+            {
+                ("J_plus", -2), ("J_plus", 0),
+                ("J_minus", 0), ("J_minus", 2),
+            },
+        )
+
     def test_full_gate_rejects_empty_production_operator(self):
         with patch.object(gate.SINE, "complete_HE_sine", return_value=({}, 0.0, 0.0)):
             with self.assertRaisesRegex(AssertionError, "H_E\(M2=-2\).*empty"):
