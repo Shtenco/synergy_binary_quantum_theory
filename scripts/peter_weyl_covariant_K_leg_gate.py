@@ -246,7 +246,8 @@ def apply_sequence_to_branch(branch, seq, source_v, Jmax2):
 
 
 def apply_HE_complete_key(key, source_v, Jmax2, charged_nodes=(0,1)):
-    base=branch_from_key(key); out={}; max_v_leak=0.0; max_basis_leak=0.0
+    base=branch_from_key(key); accumulator=SparseLinearAccumulator()
+    max_v_leak=0.0; max_basis_leak=0.0
     for sign,spec in PW.oriented_specs(source_v):
         v,a,b,c=spec
         for adj in (False,True):
@@ -258,8 +259,8 @@ def apply_HE_complete_key(key, source_v, Jmax2, charged_nodes=(0,1)):
                 for br in branches:
                     projected,bleak=project_branch_complete_charges(br,charged_nodes)
                     max_basis_leak=max(max_basis_leak,bleak)
-                    add_state(out,projected,pref*coef)
-    return out,max_v_leak,max_basis_leak
+                    accumulator.add(projected, scale=pref*coef)
+    return accumulator.finish(),max_v_leak,max_basis_leak
 
 
 @PRUNE.audit_lru_cache(None)
@@ -305,7 +306,9 @@ def apply_K_complete_state(state,source_v,target_v,Jmax2):
     VH=apply_volume_complete_state(HE,source_v)
     Vstate=apply_volume_complete_state(state,source_v)
     HV,vleak2,bleak2=apply_HE_complete_state(Vstate,source_v,Jmax2)
-    out={}; add_state(out,VH,+1); add_state(out,HV,-1)
+    accumulator=SparseLinearAccumulator()
+    accumulator.add(VH,+1); accumulator.add(HV,-1)
+    out=accumulator.finish()
     k_wrong_v,k_wv=wrong_charge_fraction(out,source_v)
     k_wrong_w,k_ww=wrong_charge_fraction(out,target_v)
     return out,max(vleak1,vleak2),max(bleak1,bleak2),{
@@ -321,24 +324,26 @@ def apply_K_complete_state(state,source_v,target_v,Jmax2):
 def inverse_outer_complete(initial,v,w,k,j,Jmax2):
     branches=[]
     for br in [PW.initial_factorized_oriented(initial)]: branches.extend(PW.apply_hit_branch(br,w,v,k,j,Jmax2))
-    out={}; max_leak=0.0
+    accumulator=SparseLinearAccumulator(); max_leak=0.0
     for br in branches:
         projected,leak=project_branch_complete_charges(br,(v,w))
-        max_leak=max(max_leak,leak); add_state(out,projected)
+        max_leak=max(max_leak,leak); accumulator.add(projected)
+    out=accumulator.finish()
     wrong_v,wv=wrong_charge_fraction(out,v); wrong_w,ww=wrong_charge_fraction(out,w)
     return out,max_leak,max(wrong_v,wrong_w),{"source":wv,"target":ww}
 
 
 def close_complete_state_covariantly(state,v,w,i,k,Jmax2):
-    out={}
+    accumulator=SparseLinearAccumulator()
     for key,amp in state.items():
         br=branch_from_key(key,amp)
-        for cb in PW.apply_hit_branch(br,v,w,i,k,Jmax2): add_state(out,CV.project_covariant_branches([cb],v))
-    return out
+        for cb in PW.apply_hit_branch(br,v,w,i,k,Jmax2):
+            accumulator.add(CV.project_covariant_branches([cb],v))
+    return accumulator.finish()
 
 
 def covariant_K_leg(initial,v,w,i,j,Jmax2):
-    total={}; diagmax={
+    total=SparseLinearAccumulator(); diagmax={
         "outer_complete_basis_leakage":0.0,"outer_wrong_charge_fraction":0.0,
         "internal_volume_sector_leakage":0.0,"complete_charge_basis_leakage":0.0,
         "HE_wrong_charge_fraction":0.0,"K_wrong_charge_fraction":0.0,
@@ -353,8 +358,8 @@ def covariant_K_leg(initial,v,w,i,j,Jmax2):
         diagmax["HE_wrong_charge_fraction"]=max(diagmax["HE_wrong_charge_fraction"],diag["HE_wrong_source_fraction"],diag["HE_wrong_target_fraction"])
         diagmax["K_wrong_charge_fraction"]=max(diagmax["K_wrong_charge_fraction"],diag["K_wrong_source_fraction"],diag["K_wrong_target_fraction"])
         sample=diag
-        add_state(total,close_complete_state_covariantly(Kstate,v,w,i,k,Jmax2))
-    return total,diagmax,sample
+        total.add(close_complete_state_covariantly(Kstate,v,w,i,k,Jmax2))
+    return total.finish(),diagmax,sample
 
 
 def covariant_norm2(state): return float(sum(abs(a)**2 for a in state.values()))
@@ -371,9 +376,9 @@ def run(v=0,w=1):
             hKh,diag,smp=covariant_K_leg(initial,v,w,i,j,JMAX2)
             for name in diagmax: diagmax[name]=max(diagmax[name],diag[name])
             sample=smp
-            out={}
-            if i==j: add_state(out,Kcov,+1)
-            add_state(out,hKh,-1); C[i][j]=out
+            accumulator=SparseLinearAccumulator()
+            if i==j: accumulator.add(Kcov,+1)
+            accumulator.add(hKh,-1); C[i][j]=accumulator.finish()
     weights=CV.weight_by_J(C); total_weight=sum(weights.values()); j1=weights.get("1.0",0.0)
     high=sum(x for j,x in weights.items() if float(j)>1.0+1e-15)/max(total_weight,1e-30)
     Cnorm=matrix_norm(C); supports=[[len(C[i][j]) for j in range(2)] for i in range(2)]
