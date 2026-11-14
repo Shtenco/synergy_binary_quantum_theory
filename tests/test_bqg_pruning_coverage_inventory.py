@@ -87,6 +87,8 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
                 "operator_acceptance_residual_thresholds",
             ("peter_weyl_covariant_K_leg_gate", "run", "diagmax['complete_charge_basis_leakage'] < 1e-10"):
                 "operator_acceptance_residual_thresholds",
+            ("peter_weyl_covariant_K_leg_gate", "add_state", "tolerance < 0.0"):
+                "input_tolerance_parameter_validation",
             ("peter_weyl_covariant_volume_leg_gate", "run", "abs(float(jj)) > 1e-15"):
                 "exact_irrep_label_weight_classification",
         }
