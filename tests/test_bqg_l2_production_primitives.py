@@ -118,6 +118,16 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
         )
         self.assertLessEqual(abs(unit_leak - scaled_leak), 5e-14)
 
+    def test_full_covariant_volume_leg_operator_column(self):
+        # Exercise the actual two-hit identity and complete C_ij(V) matrix
+        # assembly, including coherent summation across both internal indices.
+        result = CV.run()
+        self.assertTrue(
+            result["passed"],
+            "Covariant volume-leg operator-column gate failed: " + repr(result),
+        )
+        self.assertGreater(result["C_matrix_Frobenius_covariant_state_norm"], 1e-10)
+
     def test_fixture_HE_state_map_is_nonzero(self):
         result = output_dict(CK.apply_HE_complete_state(self.complete_state, 0, 5))
         self.assertTrue(
