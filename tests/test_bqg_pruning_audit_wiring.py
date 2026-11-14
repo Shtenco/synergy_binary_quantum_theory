@@ -357,6 +357,35 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
         np.testing.assert_allclose(actual_coeff, expected_coeff, rtol=0.0, atol=1e-14)
         np.testing.assert_allclose(actual_recon, expected_recon, rtol=0.0, atol=1e-14)
 
+    def test_vectorized_complete_multiplet_projection_matches_explicit_vdot_loop(self):
+        rng = np.random.default_rng(20261114)
+        for spins in ((1, 1, 1, 1), (2, 1, 1, 2)):
+            dims = tuple(s + 1 for s in spins)
+            X = rng.normal(size=dims) + 1j * rng.normal(size=dims)
+            for J2 in CV.all_total_J2(spins):
+                matrix, magnetic_count, channel_count = CHARGED.charged_basis_multiplet_matrix(
+                    spins, J2
+                )
+                if channel_count == 0:
+                    continue
+                expected_coefficients = []
+                expected_reconstruction = np.zeros_like(X)
+                for M2 in PW.m2vals_t(J2):
+                    for K12, K34 in CHARGED.allowed_charged_labels(spins, J2):
+                        basis = CHARGED.charged_tensor(spins, K12, K34, J2, M2)
+                        coefficient = np.vdot(basis, X)
+                        expected_coefficients.append(coefficient)
+                        expected_reconstruction += coefficient * basis
+                actual_coefficients = matrix.conj() @ X.reshape(-1)
+                actual_reconstruction = (actual_coefficients @ matrix).reshape(X.shape)
+                np.testing.assert_allclose(
+                    actual_coefficients, expected_coefficients, rtol=0.0, atol=2e-14
+                )
+                np.testing.assert_allclose(
+                    actual_reconstruction, expected_reconstruction, rtol=0.0, atol=2e-13
+                )
+                self.assertEqual(magnetic_count, len(PW.m2vals_t(J2)))
+
     def test_cached_multiplet_basis_stacks_every_M_sector(self):
         for spins in ((1, 1, 1, 1), (4, 4, 4, 4), (2, 4, 4, 2)):
             for J2 in CV.all_total_J2(spins):
