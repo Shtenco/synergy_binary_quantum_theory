@@ -95,7 +95,7 @@ def main():
         args.output.parent.mkdir(parents=True, exist_ok=True)
         temporary = args.output.with_name(args.output.name + ".tmp")
         temporary.write_text(
-            json.dumps(detail, indent=2, default=json_default) + "\\n",
+            json.dumps(detail, indent=2, default=json_default) + "\n",
             encoding="utf-8",
         )
         temporary.replace(args.output)
