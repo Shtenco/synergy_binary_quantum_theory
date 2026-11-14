@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """L1 characterization tests for thresholded production accumulators.
 
-The expected-failure tests intentionally expose known nonlinearity in legacy
-production helpers. Once strict accumulation is wired into the active KKV path,
-remove expectedFailure so these become hard acceptance tests.
+The remaining expected-failure tests expose known nonlinearity in the legacy
+K-leg add_state and permutation-order paths. The COMP.add subthreshold
+additivity check now passes and is a hard acceptance test.
 """
 from __future__ import annotations
 
@@ -97,7 +97,6 @@ class TestStrictSparseLinearAccumulator(unittest.TestCase):
 
 
 class TestLegacyProductionAccumulatorLinearity(unittest.TestCase):
-    @unittest.expectedFailure
     def test_COMP_add_is_additive_below_threshold(self):
         tol = COMP.TOL
         x = {"same": 0.6 * tol}
