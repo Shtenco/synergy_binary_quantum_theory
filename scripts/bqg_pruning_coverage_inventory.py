@@ -190,6 +190,66 @@ def _function_body_nodes(function: ast.AST):
         yield node
         stack.extend(reversed(list(ast.iter_child_nodes(node))))
 
+_FIXED_MATRIX_MASK_APIS = {
+    "sparsify_matrix_columns",
+    "sparsify_matrix_columns_with_error_bound",
+}
+
+
+def _fixed_matrix_mask_calls(module: str, tree: ast.AST) -> list[dict[str, object]]:
+    """Find production call sites for post-assembly matrix masks, including aliases."""
+    if module == "bqg_sparse_linear_accumulator":
+        return []
+
+    direct_aliases: dict[str, str] = {}
+    module_aliases: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "bqg_sparse_linear_accumulator":
+            for alias in node.names:
+                if alias.name in _FIXED_MATRIX_MASK_APIS:
+                    direct_aliases[alias.asname or alias.name] = alias.name
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "bqg_sparse_linear_accumulator":
+                    module_aliases.add(alias.asname or alias.name)
+
+    calls: list[dict[str, object]] = []
+    scopes: list[str] = []
+
+    class Visitor(ast.NodeVisitor):
+        def visit_FunctionDef(self, node):
+            scopes.append(node.name)
+            for child in node.body:
+                self.visit(child)
+            scopes.pop()
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+
+        def visit_Call(self, node):
+            target = ast.unparse(node.func)
+            api = direct_aliases.get(target)
+            if api is None and target in _FIXED_MATRIX_MASK_APIS:
+                api = target
+            if api is None:
+                for alias in module_aliases:
+                    prefix = alias + "."
+                    if target.startswith(prefix):
+                        candidate = target[len(prefix):]
+                        if candidate in _FIXED_MATRIX_MASK_APIS:
+                            api = candidate
+                            break
+            if api is not None:
+                calls.append({
+                    "module": module,
+                    "function": scopes[-1] if scopes else "<module>",
+                    "line": node.lineno,
+                    "api": api,
+                })
+            self.generic_visit(node)
+
+    Visitor().visit(tree)
+    return calls
+
 
 def _function_has_prune_instrumentation(function: ast.AST) -> bool:
     markers = {
@@ -213,6 +273,7 @@ def run_inventory() -> dict:
     unclassified = []
     plain_lru_caches = []
     audited_lru_caches = []
+    fixed_matrix_mask_calls = []
 
     for module in sorted(modules):
         path = SCRIPTS / (module + ".py")
@@ -220,6 +281,7 @@ def run_inventory() -> dict:
         global _CURRENT_SOURCE
         _CURRENT_SOURCE = source
         tree = ast.parse(source, filename=str(path))
+        fixed_matrix_mask_calls.extend(_fixed_matrix_mask_calls(module, tree))
 
         functions = [
             node for node in ast.walk(tree)
@@ -303,6 +365,7 @@ def run_inventory() -> dict:
         "unclassified_sites": unclassified,
         "plain_lru_caches": plain_lru_caches,
         "audited_lru_caches": audited_lru_caches,
+        "fixed_matrix_mask_calls": fixed_matrix_mask_calls,
         "semantics": (
             "Completeness means every threshold-like comparison in the transitive "
             "V10 local Python import closure is either instrumented by the shared "
