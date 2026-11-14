@@ -27,7 +27,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-adjoint-closure-${{ github.ref }}
+  group: bqg-w5-adjoint-closure-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:
