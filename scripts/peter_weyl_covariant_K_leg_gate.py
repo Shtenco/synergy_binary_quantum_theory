@@ -53,15 +53,32 @@ from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 
 
 def add_state(dst, src, scale=1.0, tol=1e-11):
+    """Coherently merge without thresholding an input-dependent partial sum.
+
+    tol is retained only for pruning-ledger classification. Fixed basis and
+    operator masks are applied at their explicit boundaries; this generic
+    merge must preserve every nonzero accumulated amplitude.
+    """
+    tolerance = float(tol)
+    factor = complex(scale)
+    if not math.isfinite(tolerance) or tolerance < 0.0:
+        raise ValueError("merge audit tolerance must be finite and nonnegative")
+    if not (math.isfinite(factor.real) and math.isfinite(factor.imag)):
+        raise ValueError("merge scale must be finite")
     for key, amp in src.items():
-        prior = dst.get(key, 0j)
-        incoming = scale * amp
-        z = prior + incoming
-        PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tol)
-        if PRUNE.keep(z,tol):
+        prior = complex(dst.get(key, 0j))
+        incoming = factor * complex(amp)
+        z = complex(
+            math.fsum((prior.real, incoming.real)),
+            math.fsum((prior.imag, incoming.imag)),
+        )
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("merged amplitude must be finite")
+        PRUNE.record_merge("covariant_K_leg.add_state", key, prior, incoming, z, tolerance)
+        if z != 0j:
             dst[key] = z
-        elif key in dst:
-            del dst[key]
+        else:
+            dst.pop(key, None)
 
 
 def label_gauss(K):
