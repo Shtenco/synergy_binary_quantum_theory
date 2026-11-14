@@ -386,5 +386,26 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
             gate.covariant_scalar_to_gauss(invalid, 0)
 
 
+    def test_sparse_norm_is_scale_robust_for_large_and_tiny_amplitudes(self):
+        self.assertEqual(gate.sparse_norm({"large": 1.0e200 + 0j}), 1.0e200)
+        self.assertEqual(gate.sparse_norm({"tiny": 1.0e-200 + 0j}), 1.0e-200)
+
+    def test_matrix_norm_and_residual_avoid_intermediate_square_overflow(self):
+        columns = [{"large": 1.0e200 + 0j}, {"tiny": 1.0e-200 + 0j}]
+        self.assertEqual(gate.sparse_frobenius(columns), 1.0e200)
+        error, scale = gate.sparse_matrix_residual(
+            [{"x": 1.0e200 + 0j}],
+            [{"x": 1.0e200 + 1.0e190j}],
+        )
+        self.assertAlmostEqual(error, 1.0e190, delta=1.0e175)
+        self.assertAlmostEqual(scale, abs(1.0e200 + 1.0e190j), delta=1.0e185)
+
+    def test_sum_difference_norm_is_scale_robust(self):
+        self.assertEqual(
+            gate.sparse_sum_difference_norm([{"x": 1.0e200 + 0j}], [{}]),
+            1.0e200,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
