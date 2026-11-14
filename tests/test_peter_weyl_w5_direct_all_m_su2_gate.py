@@ -47,6 +47,24 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         )
         self.assertEqual(fraction, 0.5)
 
+    def test_make_input_places_the_charged_sector_on_each_requested_node(self):
+        for node in range(5):
+            _, labels = gate.make_input(0, node)
+            self.assertEqual(labels[node], ("C", 2, 0, 0, 2))
+            self.assertEqual(sum(label[0] == "C" for label in labels), 1)
+
+    def test_make_input_rejects_invalid_node(self):
+        for node in (-1, 5, True, 1.5):
+            with self.subTest(node=node):
+                with self.assertRaises(ValueError):
+                    gate.make_input(0, node)
+
+    def test_run_rejects_duplicate_or_empty_node_selection(self):
+        with self.assertRaisesRegex(ValueError, "non-empty subset"):
+            gate.run(nodes=())
+        with self.assertRaisesRegex(ValueError, "duplicates"):
+            gate.run(nodes=(0, 0))
+
     def test_full_gate_rejects_empty_production_operator(self):
         with patch.object(gate.SINE, "complete_HE_sine", return_value=({}, 0.0, 0.0)):
             with self.assertRaisesRegex(AssertionError, "H_E\(M2=-2\).*empty"):
