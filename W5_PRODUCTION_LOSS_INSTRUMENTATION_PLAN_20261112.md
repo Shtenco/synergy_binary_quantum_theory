@@ -329,3 +329,82 @@ A fresh V10 production pilot was attempted with one source node, the minimum fiv
 No cache-on/cache-off full-matrix comparison has yet completed. The existing sine engine installs local memoization wrappers and restores monkey-patched functions in `finally`, while V10 clears module-level LRU caches before its audited walk. This is good isolation hygiene, but it is not an equivalence proof. The required next test must execute the same pinned operator columns with caches enabled and disabled, compare complete complex dictionaries and diagnostics, and compare threshold events with explicit accounting for cache-hit replay versus unique operator-column construction.
 
 Production V10 closure, independent no-pruning reference, cache equivalence, `Jmax2 × amp_tol` convergence, and Production ZERO_LOSS remain OPEN.
+
+
+## 2026-11-13 follow-up: exact staging evidence, fail-closed comparison, and runtime bottleneck
+
+The W5 staging and physical-history/reference workflows both completed successfully for branch head `8f79f75c64d216de387b19bd731eaeb14046860a`. The W5 staging artifact was downloaded and unpacked independently. Its embedded source commit is the PR merge-source commit `e7f6b983e2990b1c268d9164f7f2e438f54e9e6e`; the embedded per-file SHA-256 manifest verified. Five W5-focused test files were rerun directly from that artifact: **59 passed, 8 subtests passed**. This is source/regression evidence only, not a production closure result.
+
+The cache comparison helper now has fail-closed result semantics:
+- `PASS_CACHE_EQUIVALENCE` requires exact equality of forward and direct-adjoint complex sparse matrices (zero support symmetric difference and zero coefficient residual) and exact equality of every substantive ledger/diagnostic group;
+- `FAIL_CACHE_EQUIVALENCE` is returned for either a matrix mismatch or any ledger mismatch;
+- `COMPLETED_CACHE_EQUIVALENCE` is no longer used as a status that could be mistaken for a pass when the comparison itself found a difference.
+
+Regression tests cover successful equality, spin-wall/spectral-ledger mismatches, and a numerical matrix mismatch. The W5 runner now has an explicit context-local cache-off execution mode; it is implemented but has not yet completed a real full-matrix comparison.
+
+A fresh local execution of the staged V10 source was attempted with `Jmax2=10`, one source node `[0]`, the five W5 seed states, `max_depth=0`, and `amp_tol=1e-12`. It did not complete within 260 seconds. A separate local-only timing probe (not committed and not used as scientific output) sampled the hot path: `project_branch_complete_charges` consumed approximately 23.5 seconds of a 25-second interval over 4,074 calls; the projection path made approximately 2.58 million charged-tensor/projection calls in that interval. This identifies a computational scaling bottleneck, not a mathematical failure or a loss bound. A vectorized projection prototype was explored locally, but its first end-to-end timing did not establish a material speedup; it was not promoted into the production branch.
+
+Current execution status:
+- Production V10 full matrix: **OPEN**; minimal real run timed out.
+- Independent full no-pruning reference: **OPEN**; current shadow shares the production operator implementation and remains partial.
+- Cache-on/off full forward and direct-adjoint matrix equality: **OPEN**; harness and fail-closed comparison are implemented, but no full pair completed.
+- Cache-on/off complete ordered ledger equality: **OPEN**; same reason.
+- Full `Jmax2 × amp_tol` grid and sparse-support convergence: **OPEN**; runner compares forward and direct-adjoint support, but no full grid completed.
+- Spin-wall omissions: instrumentation exists; complete production measurement remains **OPEN**.
+- State/depth caps: independently classified and reported; cap-free run remains **OPEN**.
+- Spectral sensitivity: factor ladder and diagnostics exist; full matrix ladder remains **OPEN**.
+- Production ZERO_LOSS: **NOT PROVED / OPEN**.
+
+Do not upgrade any of these scientific gates from CI success, static inventory, unit fixtures, or a partial timeout profile. A future closure claim still requires completed real matrices, a genuinely independent reference, exact cache-on/off ledger/matrix comparison, and complete pathwise/coherent forward-and-adjoint loss accounting.
+
+## 2026-11-14 production corrections and current evidence
+
+The following source corrections and independent checks were added on `research/bqg-w5-production-audit-20261113`. They do not upgrade the full physical constraint or Production ZERO_LOSS.
+
+### Production operator corrections
+
+- Removed the input-amplitude-scaled branch pruning from the complete charged K-leg projection. The retained overlap support mask is defined by the fixed basis, while the arbitrary complex branch amplitude is propagated linearly.
+- Replaced thresholded intermediate dictionary merges in the covariant volume-leg path with `SparseLinearAccumulator`.
+- Replaced the final `C_ij(V)` output threshold with coherent accumulation of the direct-volume and inverse/forward contributions. No state-dependent output cutoff is applied after the complete matrix-column sum.
+- Added a full covariant volume operator-column test and sub-cutoff complex homogeneity tests.
+
+### Completed source and numerical evidence
+
+- L2 production audit: **15/15 tests passed** on run `43574459787`. This includes the real full covariant volume operator-column test.
+- Numerical two-hit identity residual: `2.2211398302543545e-15`.
+- Covariant volume matrix-state norm: `0.6453707252087313`.
+- Charged volume projection leakage: `2.4825341532472726e-16`.
+- Nonzero J=1 weight: `0.33145630368119594`; reported weight above J=1 is zero.
+- Transitive static inventory: **20 scanned modules, 68 threshold sites, zero unclassified sites, zero plain LRU caches, zero production fixed-matrix-mask calls**; run `43575097777` passed.
+
+The 20-module inventory includes the inventory scanner itself and the strict sparse accumulator; the runtime import-closure regression has its own explicit expected-module set. The AST guard is being extended to include the sparse accumulator's two post-assembly matrix-mask APIs as separately classified operations, not as state-amplitude pruning.
+
+### Cache and scalar diagnostics
+
+- Cache-on/cache-off matrix and complete-ledger equivalence remains **OPEN**. An earlier run ended with runner exit code 143 / shutdown signal before comparison output; this is infrastructure interruption, not a numerical PASS or FAIL. A fresh run is in progress.
+- The exact scalar-selection context probe remains **OPEN**. The earlier shadow probe was likewise interrupted by a runner shutdown signal before producing its JSON evidence.
+- Cache comparison now fails closed if any required ledger is missing or if static threshold-site coverage is incomplete. Equal observed ledgers alone cannot produce `PASS_CACHE_EQUIVALENCE`.
+
+### SU(2) and full W5 closure execution
+
+- The direct all-M SU(2) audit is split by source node and pruning mode, with four adjacent-m commutator checks per node. Its first sharded attempt exposed only a stale expected-error regular expression; the production operator step was skipped. The diagnostic assertion was corrected and a fresh run is queued. No SU(2) physical gate is yet declared passed.
+- The full W5 closure study is split across five source nodes, five seed labels `K={0,2,4,6,8}`, and three cutoffs `Jmax2={10,12,14}`, producing 75 independent cells.
+- Each cell preserves its full numerical JSON and a compact summary. A final aggregator requires every cell to pass the adjoint/leakage gates and compares basis fingerprints, sparse matrix fingerprints (10 significant digits), closure sizes, and operator norms across cutoffs.
+- The aggregate report is deliberately fail-closed: missing, duplicate, capped, timed-out, non-finite, non-PASS, or cutoff-dependent cells cannot yield a PASS.
+
+### Integration status and scientific boundaries
+
+PR #83 remains a draft on `research/bqg-w5-production-audit-20261113`; the target branch is six commits ahead and GitHub reports the PR as diverged/dirty. The latest base-branch cache-coverage and AST-audit safeguards were ported into the PR branch, but no rebase, forced update, merge, or change to `main` was performed.
+
+The following remain OPEN until exact-head artifacts and numerical reports are inspected:
+
+1. Complete production W5 closure across all 75 seed/node/cutoff cells.
+2. A genuinely independent no-pruning reference; the current shadow path still shares production operator code.
+3. Exact cache-on/cache-off forward and direct-adjoint matrix equality plus complete ordered-ledger equality.
+4. The full `Jmax2 × amp_tol` convergence ladder and sparse-support stability.
+5. Direct all-M SU(2) covariance in both production and shadow modes across all five nodes.
+6. Complete runtime accounting of spin-wall omissions, state/depth caps, and spectral sensitivity.
+7. Production ZERO_LOSS.
+
+Do not infer a physical BQG constraint, continuum limit, causal propagation result, or unique Lorentzian ordering from the finite W5 operator tests. The completed L2 and inventory results establish only the specific finite-dimensional operator and source-coverage claims stated above.
+
