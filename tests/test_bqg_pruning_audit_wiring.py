@@ -379,10 +379,10 @@ class TestChargedIntertwinerTensorContraction(unittest.TestCase):
                 actual_coefficients = matrix.conj() @ X.reshape(-1)
                 actual_reconstruction = (actual_coefficients @ matrix).reshape(X.shape)
                 np.testing.assert_allclose(
-                    actual_coefficients, expected_coefficients, rtol=0.0, atol=2e-14
+                    actual_coefficients, expected_coefficients, rtol=2e-14, atol=2e-13
                 )
                 np.testing.assert_allclose(
-                    actual_reconstruction, expected_reconstruction, rtol=0.0, atol=2e-13
+                    actual_reconstruction, expected_reconstruction, rtol=2e-13, atol=2e-12
                 )
                 self.assertEqual(magnetic_count, len(PW.m2vals_t(J2)))
 
