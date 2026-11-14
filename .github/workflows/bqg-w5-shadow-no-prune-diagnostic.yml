@@ -24,6 +24,10 @@ on:
       - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
   workflow_dispatch:
 
+concurrency:
+  group: bqg-w5-shadow-no-prune-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
