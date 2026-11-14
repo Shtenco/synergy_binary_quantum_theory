@@ -49,6 +49,7 @@ import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_covariant_volume_leg_gate as CV
 import peter_weyl_lorentzian_K_block_gate as KG
+from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 
 
 def add_state(dst, src, scale=1.0, tol=1e-11):
@@ -182,7 +183,13 @@ def apply_volume_allJ_oriented(T, spins_local, v):
 
 
 def apply_volume_complete_state(state, v):
-    out = {}
+    """Apply the fixed volume blocks with coherent, unthresholded output sums.
+
+    The 1e-13 matrix-element mask is a fixed operator-definition boundary and
+    is independent of the input state.  The former 1e-11 output-amplitude
+    mask was state dependent and made this linear map nonlinear; it is removed.
+    """
+    accumulator = SparseLinearAccumulator()
     for key, amp in state.items():
         spins, labels = key
         lab = labels[v]
@@ -198,11 +205,8 @@ def apply_volume_complete_state(state, v):
             ko = (spins,tuple(labs))
             PRUNE.record_threshold("covariant_K_leg.volume_matrix_element.1e-13",ko,c,1e-13,incoming=amp)
             if PRUNE.keep(c,1e-13):
-                out[ko] = out.get(ko,0j)+amp*c
-    for key, value in out.items():
-        if abs(value)<=1e-11:
-            PRUNE.record_threshold("covariant_K_leg.volume_state_output.1e-11",key,value,1e-11)
-    return {k:a for k,a in out.items() if PRUNE.keep(a,1e-11)}
+                accumulator.add({ko: c}, scale=amp)
+    return accumulator.finish()
 
 
 def apply_sequence_to_branch(branch, seq, source_v, Jmax2):
@@ -248,15 +252,19 @@ def HE_complete_cached(key,source_v,Jmax2):
 
 
 def apply_HE_complete_state(state,source_v,Jmax2):
-    out={}; max_v=0.0; max_b=0.0
+    """Apply cached unit-key H_E columns and coherently accumulate all outputs.
+
+    Thresholds inside the unit-key operator construction remain explicit and
+    audited.  No additional state-dependent cutoff is applied after the
+    operator acts on the input superposition.
+    """
+    accumulator = SparseLinearAccumulator()
+    max_v=0.0; max_b=0.0
     for key,amp in state.items():
         items,vleak,bleak=HE_complete_cached(key,source_v,Jmax2)
         max_v=max(max_v,vleak); max_b=max(max_b,bleak)
-        for ko,c in items: out[ko]=out.get(ko,0j)+amp*c
-    for key, value in out.items():
-        if abs(value)<=1e-10:
-            PRUNE.record_threshold("covariant_K_leg.HE_state_output.1e-10",key,value,1e-10)
-    return {k:a for k,a in out.items() if PRUNE.keep(a,1e-10)},max_v,max_b
+        accumulator.add(dict(items), scale=amp)
+    return accumulator.finish(),max_v,max_b
 
 
 def charge_weights(state,node):
