@@ -70,6 +70,27 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             "Frozen Peter-Weyl fixture has no volume output; L2 cannot be inferred.",
         )
 
+    def test_covariant_volume_branch_projection_is_homogeneous_below_cutoff(self):
+        # The old branch/output cutoffs acted on values containing the input
+        # amplitude. Exercise the actual covariant volume-leg projection.
+        key = next(iter(self.complete_state))
+        spins, tensors, _ = CK.branch_from_key(key, 1.0 + 0j)
+        alpha = 2.5e-14 - 1.75e-14j
+        unit = CV.project_covariant_branches([(spins, tensors, 1.0 + 0j)], 0)
+        scaled = CV.project_covariant_branches([(spins, tensors, alpha)], 0)
+        self.assertTrue(unit, "Reference covariant branch projection is empty.")
+        self.assertTrue(
+            scaled,
+            "Nonzero input-scaled covariant branch output was pruned.",
+        )
+        expected = {state: alpha * value for state, value in unit.items()}
+        residual = difference_norm(scaled, expected)
+        relative = residual / max(norm(scaled), norm(expected), 1e-300)
+        self.assertLessEqual(
+            relative, 5e-12,
+            f"covariant volume branch projection homogeneity residual={relative:.6e}",
+        )
+
     def test_complete_branch_projection_is_homogeneous_below_amplitude_cutoff(self):
         # The tensor/basis projection coefficients are fixed by the source
         # basis key, while the branch amplitude is an arbitrary complex input.
