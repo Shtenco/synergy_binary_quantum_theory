@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   w5-adjoint-closure:
-    name: W5 full-node closure Jmax2=${{ matrix.jmax2 }}
+    name: W5 closure Jmax2=${{ matrix.jmax2 }} node=${{ matrix.node }} seedK=${{ matrix.seed_k }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -43,6 +43,8 @@ jobs:
       max-parallel: 3
       matrix:
         jmax2: [10, 12, 14]
+        node: [0, 1, 2, 3, 4]
+        seed_k: [0, 2, 4, 6, 8]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,15 +65,16 @@ jobs:
         run: |
           mkdir -p verification_results
           python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
-            --nodes 0 1 2 3 4 \
+            --nodes ${{ matrix.node }} \
+            --seed-K ${{ matrix.seed_k }} \
             --Jmax2 ${{ matrix.jmax2 }} \
             --max-states 500 --max-depth 8 \
             --amp-tol 1e-12 \
-            --output verification_results/W5_ADJOINT_CLOSURE_ALLNODES_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+            --output verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
       - name: Upload numerical result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-adjoint-closure-j${{ matrix.jmax2 }}-run${{ github.run_id }}
-          path: verification_results/W5_ADJOINT_CLOSURE_ALLNODES_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+          name: bqg-w5-adjoint-closure-node${{ matrix.node }}-k${{ matrix.seed_k }}-j${{ matrix.jmax2 }}-run${{ github.run_id }}
+          path: verification_results/W5_ADJOINT_CLOSURE_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
