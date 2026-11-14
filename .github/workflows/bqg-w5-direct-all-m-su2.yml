@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-direct-all-m-${{ github.ref }}-${{ github.sha }}
+  group: bqg-w5-direct-all-m-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
