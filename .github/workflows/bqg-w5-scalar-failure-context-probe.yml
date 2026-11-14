@@ -31,7 +31,8 @@ jobs:
       max-parallel: 3
       matrix:
         pruning_mode: [production, shadow_no_prune]
-        Jmax2: [6, 8, 10]
+        # W5 j=2 seed support requires Jmax2 >= 10; probe only valid cutoffs.
+        Jmax2: [10, 12, 14]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
