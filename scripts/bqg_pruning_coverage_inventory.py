@@ -68,6 +68,22 @@ NON_PRUNING_CLASSIFICATIONS = {
         "state_and_depth_support_caps",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "closure_acceptance"):
         "operator_acceptance_residual_thresholds",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "amp_tol < 0"):
+        "input_amplitude_tolerance_validation",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "float(spectral_zero_factor) <= 0"):
+        "spectral_operator_parameter_validation",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states is not None"):
+        "support_cap_configuration",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states < len(selected_seed_Ks)"):
+        "support_cap_parameter_validation",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth is not None"):
+        "support_cap_configuration",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth < 0"):
+        "support_cap_parameter_validation",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "threshold is not None"):
+        "loss_ledger_metadata_control",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "stage == 'amp_tol'"):
+        "loss_ledger_stage_classification",
     ("charged_intertwiner_recoupling_gate", "allowed_charged_labels"):
         "exact_SU2_triangle_and_parity_selection",
     ("peter_weyl_covariant_K_composition_cached_gate", "restore_scalar_charge_M"):
@@ -144,14 +160,27 @@ def _threshold_like(compare: ast.Compare) -> bool:
     return any(token in source for token in needles)
 
 
+def _function_body_nodes(function: ast.AST):
+    """Walk one function body without descending into nested lexical scopes."""
+    stack = list(reversed(getattr(function, "body", [])))
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            continue
+        yield node
+        stack.extend(reversed(list(ast.iter_child_nodes(node))))
+
+
 def _function_has_prune_instrumentation(function: ast.AST) -> bool:
-    text = ast.get_source_segment(_CURRENT_SOURCE, function) or ""
-    markers = (
+    markers = {
         "PRUNE.record_threshold", "PRUNE.keep", "PRUNE.record_merge",
-        "PRUNE.filter_state", "record_dropped(", "prune_state(",
-        "add_state(", "add_dict(",
-    )
-    return any(marker in text for marker in markers)
+        "PRUNE.filter_state", "record_dropped", "prune_state",
+        "add_state", "add_dict",
+    }
+    for node in _function_body_nodes(function):
+        if isinstance(node, ast.Call) and ast.unparse(node.func) in markers:
+            return True
+    return False
 
 
 _CURRENT_SOURCE = ""
@@ -184,7 +213,7 @@ def run_inventory() -> dict:
             # no local amplitude comparison.
 
             compares = [
-                node for node in ast.walk(function)
+                node for node in _function_body_nodes(function)
                 if isinstance(node, ast.Compare) and _threshold_like(node)
             ]
             # Cache decorators are independent of threshold comparisons.
