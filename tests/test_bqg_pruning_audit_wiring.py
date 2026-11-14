@@ -142,6 +142,7 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
 
         expected_modules = {
             "bqg_pruning_audit",
+            "bqg_pruning_coverage_inventory",
             "bqg_sparse_linear_accumulator",
             "bqg_v10_w5_lorentzian_adjoint_closure",
             "charged_intertwiner_recoupling_gate",
@@ -280,6 +281,7 @@ class TestW5TransitivePruningCoverage(unittest.TestCase):
             ("bqg_v10_w5_lorentzian_adjoint_closure", "add_sparse"),
             ("bqg_v10_w5_lorentzian_adjoint_closure", "_make_spin_wall_probe"),
             ("bqg_v10_w5_lorentzian_adjoint_closure", "probed"),
+            ("peter_weyl_covariant_volume_leg_gate", "run"),
             ("peter_weyl_lorentzian_ordered_triple_gate", "run"),
             ("charged_intertwiner_recoupling_gate", "allowed_charged_labels"),
             ("peter_weyl_zeroaware_volume_migration_experiment", "zeroaware_sqrt_abs"),
