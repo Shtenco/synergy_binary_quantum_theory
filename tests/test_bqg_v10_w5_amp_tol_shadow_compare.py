@@ -71,7 +71,7 @@ class TestV10CacheEquivalence(unittest.TestCase):
             "lower_level_pruning_ledger": {
                 "event_count": 2,
                 "events": [{"site_id": "x", "propagated_abs": 1e-13}],
-                "coverage": {"complete": True},
+                "coverage": {"complete": False, "static_threshold_inventory_complete": True, "fixed_operator_mask_error_bound_complete": True},
                 "cache_policy": "cache-on",
             },
             "coefficient_loss_ledger": {"summary": {"amp_tol.forward": {"count": 1}}},
@@ -92,7 +92,7 @@ class TestV10CacheEquivalence(unittest.TestCase):
         result = compare_cache_runs(cache_on, cache_off)
         self.assertEqual(result["status"], "PASS_CACHE_EQUIVALENCE")
         self.assertTrue(result["equivalence_passed"])
-        self.assertTrue(result["coverage_complete"])
+        self.assertTrue(result["static_coverage_complete"])
         self.assertTrue(result["full_ledger_exactly_equal"])
         self.assertTrue(result["observed_ledger_exactly_equal"])
         self.assertTrue(result["matrix_exactly_equal"])
@@ -115,19 +115,19 @@ class TestV10CacheEquivalence(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL_CACHE_EQUIVALENCE")
         self.assertFalse(result["equivalence_passed"])
 
-    def test_observed_equal_ledgers_are_not_full_until_coverage_is_complete(self):
+    def test_cache_equivalence_uses_static_coverage_not_circular_runtime_flag(self):
         cache_on = self.result_fixture()
         cache_off = self.result_fixture()
         cache_off["lower_level_pruning_ledger"]["cache_policy"] = "cache-off"
-        cache_on["lower_level_pruning_ledger"]["coverage"]["complete"] = False
-        cache_off["lower_level_pruning_ledger"]["coverage"]["complete"] = False
+        cache_on["lower_level_pruning_ledger"]["coverage"]["static_threshold_inventory_complete"] = False
+        cache_off["lower_level_pruning_ledger"]["coverage"]["static_threshold_inventory_complete"] = False
 
         result = compare_cache_runs(cache_on, cache_off)
         self.assertTrue(result["matrix_exactly_equal"])
         self.assertTrue(result["observed_ledger_exactly_equal"])
-        self.assertFalse(result["coverage_complete"])
+        self.assertFalse(result["static_coverage_complete"])
         self.assertFalse(result["full_ledger_exactly_equal"])
-        self.assertEqual(result["status"], "INCOMPLETE_CACHE_EQUIVALENCE_COVERAGE")
+        self.assertEqual(result["status"], "INCOMPLETE_CACHE_EQUIVALENCE_STATIC_COVERAGE")
         self.assertFalse(result["equivalence_passed"])
 
     def test_cache_comparison_fails_closed_when_required_ledger_is_missing(self):
