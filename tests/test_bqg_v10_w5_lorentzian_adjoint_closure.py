@@ -407,5 +407,16 @@ class TestW5AdjointClosureAlgebra(unittest.TestCase):
         )
 
 
+    def test_covariant_rejection_norm_is_scale_robust(self):
+        spins = (4,) * 10
+        invalid = (spins, (-1, 0, 0, 0, 0), 2, 0, 0, 0)
+        mapped, rejected, rejected_norm = gate.covariant_to_gauss_map(
+            {invalid: 1.0e200 + 0j}, 0
+        )
+        self.assertEqual(mapped, {})
+        self.assertEqual(rejected, 1)
+        self.assertEqual(rejected_norm, 1.0e200)
+
+
 if __name__ == "__main__":
     unittest.main()
