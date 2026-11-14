@@ -408,3 +408,12 @@ The following remain OPEN until exact-head artifacts and numerical reports are i
 
 Do not infer a physical BQG constraint, continuum limit, causal propagation result, or unique Lorentzian ordering from the finite W5 operator tests. The completed L2 and inventory results establish only the specific finite-dimensional operator and source-coverage claims stated above.
 
+## 2026-11-14 follow-up: AST closure and charged-projection acceleration
+
+- The pruning-wiring AST regression now includes the dynamically imported inventory module and the strict sparse accumulator in the expected V10 local import closure.
+- The two `SparseLinearAccumulator` post-assembly matrix-mask APIs are explicitly classified as fixed operator-mask operations, separate from state-amplitude pruning. The volume-leg `abs(jj)>1e-15` comparison is explicitly classified as exact irrep-label weight selection.
+- `project_branch_complete_charges` now uses the cached all-M charged multiplet basis and a batched complex matrix-vector projection instead of rebuilding every charged tensor and calling `vdot` in nested Python loops. Per-coefficient audit events and the original fixed 1e-13 support decision are preserved; the leakage reconstruction uses only retained coefficients.
+- Added an explicit reference test comparing the vectorized all-M coefficients and reconstruction against the original per-`M`, per-channel `charged_tensor`/`vdot` loop on two spin tuples.
+- The scalar-selection probe now runs the same exact capture at `Jmax2=6,8,10` in both production and shadow modes, so a lower-cutoff failure can be captured without waiting for the heaviest endpoint.
+- The optimization is a source-level performance change only. No speedup or physical SU(2) conclusion is claimed until the fresh L2, staging, direct all-M, and scalar-context artifacts complete.
+
