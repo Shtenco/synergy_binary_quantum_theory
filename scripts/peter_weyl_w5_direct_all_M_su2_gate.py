@@ -3,7 +3,8 @@
 
 This deliberately bypasses the cached highest-weight wrapper. It evaluates the
 same production H_E map on every magnetic component of a fixed charged J=1
-four-leg state and checks [J_+, H_E]=[J_-, H_E]=0 on the complete sparse output.
+four-leg state at each of the five K5 source nodes and checks
+[J_+, H_E]=[J_-, H_E]=0 on the complete sparse output.
 """
 from __future__ import annotations
 
@@ -113,83 +114,90 @@ def wrong_sector_fraction(state, *, node, expected_j2, expected_m2):
     return fraction
 
 
-def make_input(M2):
+def make_input(M2, node=0):
+    if not isinstance(node, int) or isinstance(node, bool) or not 0 <= node < 5:
+        raise ValueError("node must be an integer in [0, 4]")
     spins = (4,) * 10
-    labels = (
-        ("C", 2, int(M2), 0, 2),
-        ("G", 0), ("G", 0), ("G", 0), ("G", 0),
-    )
-    return spins, labels
+    labels = [("G", 0) for _ in range(5)]
+    labels[node] = ("C", 2, int(M2), 0, 2)
+    return spins, tuple(labels)
 
 
-def run(Jmax2=10, pruning_mode="production"):
+def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
     if pruning_mode not in ("production", "shadow_no_prune"):
         raise ValueError("invalid pruning_mode")
     if Jmax2 < 4:
         raise ValueError("Jmax2 must be at least 4 for this fixed W5 seed")
+    nodes = tuple(nodes)
+    if not nodes or any(not isinstance(node, int) or isinstance(node, bool) or not 0 <= node < 5 for node in nodes):
+        raise ValueError("nodes must be a non-empty subset of [0, 1, 2, 3, 4]")
+    if len(set(nodes)) != len(nodes):
+        raise ValueError("nodes must not contain duplicates")
     directions = (1, -1)
     cases = []
     context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else None
 
     def evaluate():
-        he_by_m = {}
-        for M2 in (-2, 0, 2):
-            with PRUNE.capture() as collector:
-                result = SINE.complete_HE_sine(
-                    make_input(M2), 0, Jmax2, charged_nodes=(0,)
-                )
-            require_nonzero_output(result[0], label=f"H_E(M2={M2})")
-            he_by_m[M2] = {
-                "state": result[0],
-                "norm": norm(result[0]),
-                "volume_leakage": float(result[1]),
-                "basis_leakage": float(result[2]),
-                "pruning_events": collector.snapshot()["event_count"],
-            }
+        for node in nodes:
+            he_by_m = {}
+            for M2 in (-2, 0, 2):
+                with PRUNE.capture() as collector:
+                    result = SINE.complete_HE_sine(
+                        make_input(M2, node), node, Jmax2, charged_nodes=(node,)
+                    )
+                require_nonzero_output(result[0], label=f"H_E(node={node}, M2={M2})")
+                he_by_m[M2] = {
+                    "state": result[0],
+                    "norm": norm(result[0]),
+                    "volume_leakage": float(result[1]),
+                    "basis_leakage": float(result[2]),
+                    "pruning_events": collector.snapshot()["event_count"],
+                }
 
-        for direction in directions:
-            source_M2_values = (-2, 0) if direction > 0 else (0, 2)
-            for M2 in source_M2_values:
-                input_key = make_input(M2)
-                raised_input = apply_local_ladder({input_key: 1.0 + 0j}, 0, direction)
-                if len(raised_input) != 1:
-                    raise AssertionError("ladder action should produce one adjacent M sector")
-                raised_key, ladder_factor = next(iter(raised_input.items()))
-                H_input = he_by_m[M2]["state"]
-                H_raised = he_by_m[M2 + 2 * direction]["state"]
-                lhs = apply_local_ladder(H_input, 0, direction)
-                rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
-                rel, abs_err, scale = relative_error(lhs, rhs)
-                wrong_fraction = wrong_sector_fraction(
-                    H_input, node=0, expected_j2=2, expected_m2=M2
-                )
-                cases.append({
-                    "direction": "J_plus" if direction > 0 else "J_minus",
-                    "input_M2": M2,
-                    "output_M2": M2 + 2 * direction,
-                    "ladder_factor": ladder_factor,
-                    "input_HE_support": len(H_input),
-                    "raised_HE_support": len(H_raised),
-                    "input_HE_norm": he_by_m[M2]["norm"],
-                    "raised_HE_norm": he_by_m[M2 + 2 * direction]["norm"],
-                    "commutator_relative_residual": rel,
-                    "commutator_absolute_residual": abs_err,
-                    "comparison_scale": scale,
-                    "wrong_JM_weight_fraction": wrong_fraction,
-                    "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
-                    "volume_leakage": max(
-                        he_by_m[M2]["volume_leakage"],
-                        he_by_m[M2 + 2 * direction]["volume_leakage"],
-                    ),
-                    "basis_leakage": max(
-                        he_by_m[M2]["basis_leakage"],
-                        he_by_m[M2 + 2 * direction]["basis_leakage"],
-                    ),
-                    "pruning_events": (
-                        he_by_m[M2]["pruning_events"]
-                        + he_by_m[M2 + 2 * direction]["pruning_events"]
-                    ),
-                })
+            for direction in directions:
+                source_M2_values = (-2, 0) if direction > 0 else (0, 2)
+                for M2 in source_M2_values:
+                    input_key = make_input(M2, node)
+                    raised_input = apply_local_ladder({input_key: 1.0 + 0j}, node, direction)
+                    if len(raised_input) != 1:
+                        raise AssertionError("ladder action should produce one adjacent M sector")
+                    _, ladder_factor = next(iter(raised_input.items()))
+                    H_input = he_by_m[M2]["state"]
+                    H_raised = he_by_m[M2 + 2 * direction]["state"]
+                    lhs = apply_local_ladder(H_input, node, direction)
+                    rhs = {key: amp * ladder_factor for key, amp in H_raised.items()}
+                    rel, abs_err, scale = relative_error(lhs, rhs)
+                    wrong_fraction = wrong_sector_fraction(
+                        H_input, node=node, expected_j2=2, expected_m2=M2
+                    )
+                    cases.append({
+                        "source_node": node,
+                        "direction": "J_plus" if direction > 0 else "J_minus",
+                        "input_M2": M2,
+                        "output_M2": M2 + 2 * direction,
+                        "ladder_factor": ladder_factor,
+                        "input_HE_support": len(H_input),
+                        "raised_HE_support": len(H_raised),
+                        "input_HE_norm": he_by_m[M2]["norm"],
+                        "raised_HE_norm": he_by_m[M2 + 2 * direction]["norm"],
+                        "commutator_relative_residual": rel,
+                        "commutator_absolute_residual": abs_err,
+                        "comparison_scale": scale,
+                        "wrong_JM_weight_fraction": wrong_fraction,
+                        "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
+                        "volume_leakage": max(
+                            he_by_m[M2]["volume_leakage"],
+                            he_by_m[M2 + 2 * direction]["volume_leakage"],
+                        ),
+                        "basis_leakage": max(
+                            he_by_m[M2]["basis_leakage"],
+                            he_by_m[M2 + 2 * direction]["basis_leakage"],
+                        ),
+                        "pruning_events": (
+                            he_by_m[M2]["pruning_events"]
+                            + he_by_m[M2 + 2 * direction]["pruning_events"]
+                        ),
+                    })
 
     if context is None:
         with PRUNE.cache_bypass():
@@ -201,7 +209,7 @@ def run(Jmax2=10, pruning_mode="production"):
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
     max_wrong_fraction = max((x["wrong_JM_weight_fraction"] for x in cases), default=0.0)
     passed = (
-        len(cases) == 4
+        len(cases) == 4 * len(nodes)
         and max_commutator < 1e-8
         and max_wrong_fraction < 1e-18
         and max((x["volume_leakage"] for x in cases), default=0.0) < 1e-10
@@ -212,7 +220,7 @@ def run(Jmax2=10, pruning_mode="production"):
         "status": "PASS_DIRECT_ALL_M_SU2_COMMUTATOR" if passed else "FAIL_DIRECT_ALL_M_SU2_COMMUTATOR",
         "passed": bool(passed),
         "Jmax2": Jmax2,
-        "source_node": 0,
+        "source_nodes": list(nodes),
         "input_spins_doubled": [4] * 10,
         "input_charged_sector": {"J2": 2, "K12": 0, "K34": 2},
         "pruning_mode": pruning_mode,
@@ -221,8 +229,8 @@ def run(Jmax2=10, pruning_mode="production"):
         "max_wrong_JM_weight_fraction": max_wrong_fraction,
         "cases": cases,
         "scope": (
-            "Direct all-M covariance check on one finite charged J=1 seed and one K5 node. "
-            "It is not a proof for every W5 seed, cutoff, graph refinement, or the physical continuum."
+            "Direct all-M covariance check on one finite charged J=1 seed at each requested K5 source node. "
+            "It is not a proof for every W5 seed, charged intertwiner channel, cutoff, graph refinement, or the physical continuum."
         ),
     }
 
@@ -231,9 +239,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--Jmax2", type=int, default=10)
     parser.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
+    parser.add_argument("--nodes", type=int, nargs="+", default=[0])
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = run(args.Jmax2, args.pruning_mode)
+    result = run(args.Jmax2, args.pruning_mode, args.nodes)
     text = json.dumps(result, indent=2)
     print(text)
     args.output.parent.mkdir(parents=True, exist_ok=True)
