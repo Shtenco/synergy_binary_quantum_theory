@@ -75,6 +75,22 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0]["classification"], "UNCLASSIFIED_PRUNE_CALL")
 
+    def test_loss_ledger_keep_predicate_is_classified_as_diagnostic(self):
+        import ast
+        tree = ast.parse(
+            "def record_dropped(value, threshold):\n"
+            "    return not PRUNE.keep(value, threshold)\n"
+        )
+        function = tree.body[0]
+        calls = inventory._prune_decision_calls(
+            "bqg_v10_w5_lorentzian_adjoint_closure", function
+        )
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(
+            calls[0]["classification"],
+            "loss_ledger_discard_status_diagnostic",
+        )
+
     def test_run_closure_parameter_checks_are_not_called_pruning(self):
         expected = {
             ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "amp_tol < 0"):
