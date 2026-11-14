@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Strict sparse complex accumulation for finite-dimensional operator prototypes.
+"""Strict sparse complex accumulation for finite-dimensional BQG operators.
 
-This module is deliberately NOT wired into the V09/V10/V11 production path yet.
-It provides a dependency-free reference implementation for L1/L3 tests:
-accumulate all contributions first, then optionally freeze one matrix-level
-sparsification mask. Never threshold a state amplitude during accumulation.
+This module is wired into the V10 W5 epsilon-traced KKV path at the forward
+triple, direct-adjoint triple, and complete node epsilon-orbit sum boundaries.
+It is not yet wired into every lower-level K/V component builder or every
+V09/V10/V11 state merge; end-to-end pruning closure therefore remains open.
+
+Accumulate coherent complex contributions before any optional fixed,
+post-assembly matrix mask. Never threshold a state amplitude during accumulation.
 """
 from __future__ import annotations
 
