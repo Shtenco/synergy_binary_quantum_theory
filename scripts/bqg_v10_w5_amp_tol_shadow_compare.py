@@ -226,8 +226,10 @@ def compare_cache_runs(production: dict, cache_off: dict) -> dict:
     observed_ledger_exactly_equal = (
         ledger_payloads_present and all(ledger_comparison.values())
     )
-    cache_on_coverage = production.get("lower_level_pruning_ledger", {}).get("coverage", {})
-    cache_off_coverage = cache_off.get("lower_level_pruning_ledger", {}).get("coverage", {})
+    cache_on_ledger = production.get("lower_level_pruning_ledger") or {}
+    cache_off_ledger = cache_off.get("lower_level_pruning_ledger") or {}
+    cache_on_coverage = cache_on_ledger.get("coverage") or {}
+    cache_off_coverage = cache_off_ledger.get("coverage") or {}
     cache_on_static_coverage_complete = (
         cache_on_coverage.get("static_threshold_inventory_complete") is True
         and cache_on_coverage.get("fixed_operator_mask_error_bound_complete") is True
