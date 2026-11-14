@@ -42,6 +42,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import k5_peter_weyl_safe_hda_column as PW
+from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 import bqg_pruning_audit as PRUNE
 import charged_intertwiner_recoupling_gate as CH
 import peter_weyl_lorentzian_K_block_gate as KG
@@ -175,7 +176,7 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
 
 
 def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
-    total = {}
+    total = SparseLinearAccumulator()
     max_charged_projection_leak = 0.0
     for k in range(2):
         branches = []
@@ -194,13 +195,13 @@ def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
         for br in branches:
             closed.extend(PW.apply_hit_branch(br, v, w, i, k, Jmax2))
         projected = project_covariant_branches(closed, v)
-        PW.add_dict(total, projected, +1)
-    for key, value in total.items():
+        total.add(projected)
+    assembled = total.finish()
+    for key, value in assembled.items():
         PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
-    # The closed state still carries the arbitrary input amplitude. Keep all
-    # nonzero components; a fixed operator/basis mask must be applied to
-    # unit columns before their linear extension, not to this state output.
-    return {k: a for k, a in total.items() if a != 0j}, max_charged_projection_leak
+    # Coherently combine the k branches before any amplitude-dependent
+    # decision. No output threshold is applied to this state-dependent map.
+    return assembled, max_charged_projection_leak
 
 
 def gauss_to_covariant(state, source_v):
@@ -260,14 +261,16 @@ def run(v=0, w=1):
         for j in range(2):
             hVh, cleak = inverse_then_forward(initial, v, w, i, j, JMAX2, True)
             max_charged_leak = max(max_charged_leak, cleak)
-            out = {}
+            accumulator = SparseLinearAccumulator()
             if i == j:
-                PW.add_dict(out, Vcov, +1)
-            PW.add_dict(out, hVh, -1)
+                accumulator.add(Vcov, +1)
+            accumulator.add(hVh, -1)
+            out = accumulator.finish()
             for key, value in out.items():
-                if abs(value) <= 1e-10:
-                    PRUNE.record_threshold("covariant_volume_leg.C_matrix_output.1e-10",key,value,1e-10)
-            C[i][j] = {k: a for k, a in out.items() if PRUNE.keep(a,1e-10)}
+                PRUNE.record_threshold("covariant_volume_leg.C_matrix_output.1e-10",key,value,1e-10)
+            # This is a complete operator-column combination. Retain every
+            # nonzero component; do not apply a state-dependent output cutoff.
+            C[i][j] = out
 
     Cnorm = matrix_state_norm(C)
     Cweights = weight_by_J(C)
