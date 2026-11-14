@@ -28,6 +28,25 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         function = next(node for node in tree.body if isinstance(node, ast.FunctionDef))
         self.assertEqual(inventory._plain_lru_cache_decorators(function), [])
 
+    def test_fixed_matrix_mask_call_sites_resolve_direct_and_module_aliases(self):
+        import ast
+        tree = ast.parse(
+            "from bqg_sparse_linear_accumulator import sparsify_matrix_columns as mask\n"
+            "import bqg_sparse_linear_accumulator as acc\n"
+            "def build(columns):\n"
+            "    mask(columns, 1e-9)\n"
+            "    acc.sparsify_matrix_columns_with_error_bound(columns, 1e-9)\n"
+        )
+        calls = inventory._fixed_matrix_mask_calls("fixture", tree)
+        self.assertEqual(
+            [call["api"] for call in calls],
+            [
+                "sparsify_matrix_columns",
+                "sparsify_matrix_columns_with_error_bound",
+            ],
+        )
+        self.assertEqual([call["function"] for call in calls], ["build", "build"])
+
     def test_nested_function_thresholds_are_not_duplicated_in_parent(self):
         import ast
         tree = ast.parse(
@@ -140,6 +159,7 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         self.assertFalse(coverage["complete"])
         self.assertFalse(coverage["runtime_loss_controls_complete"])
         self.assertFalse(coverage["fixed_operator_mask_error_bound_complete"])
+        self.assertFalse(coverage["fixed_operator_mask_absent_from_production_path"])
         self.assertFalse(coverage["fixed_operator_mask_bound_api_available"])
         self.assertFalse(coverage["fixed_operator_mask_bound_applied_in_production"])
         self.assertEqual(
@@ -201,7 +221,9 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         coverage = closure.build_pruning_coverage(result)
         self.assertTrue(coverage["fixed_operator_mask_bound_api_available"])
         self.assertFalse(coverage["fixed_operator_mask_bound_applied_in_production"])
-        self.assertFalse(coverage["fixed_operator_mask_error_bound_complete"])
+        self.assertTrue(coverage["fixed_operator_mask_absent_from_production_path"])
+        self.assertTrue(coverage["fixed_operator_mask_error_bound_complete"])
+        self.assertEqual(result["fixed_matrix_mask_calls"], [])
 
 
 if __name__ == "__main__":
