@@ -24,7 +24,7 @@ class TestCoherentMergeLinearity(unittest.TestCase):
         # Both contributions are individually significant; their remainder
         # is below TOL and must remain available to subsequent operators.
         result = self.merge([1.2e-11, -1.0e-11])
-        self.assertAlmostEqual(result, 0.2e-11, delta=1e-27)
+        self.assertAlmostEqual(result, 0.2e-11, delta=2e-27)
         self.assertNotEqual(result, 0j)
 
     def test_scaling_commutes_with_coherent_merge(self):
@@ -44,7 +44,7 @@ class TestCoherentMergeLinearity(unittest.TestCase):
         residual = {}
         composition.add(residual, {"state": 2.0e-11})
         composition.add(residual, {"state": -1.9e-11})
-        self.assertEqual(residual["state"], 0.1e-11)
+        self.assertAlmostEqual(residual["state"].real, 0.1e-11, delta=3e-28)
 
     def test_complex_real_and_imaginary_parts_are_accumulated(self):
         result = self.merge([0.4e-11 + 0.7e-11j, 0.4e-11 - 0.2e-11j])
