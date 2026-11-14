@@ -91,7 +91,15 @@ def covariant_key_to_complete(key, source_v):
 
 
 def complete_to_covariant(state, source_v, tol=TOL):
-    out = {}
+    """Change representation labels without pruning coherent amplitudes.
+
+    The tolerance remains a validation/diagnostic parameter only.  This map is
+    a basis relabelling after the target endpoint has closed, not a license to
+    erase small nonzero components.
+    """
+    if not math.isfinite(float(tol)) or float(tol) < 0.0:
+        raise ValueError("projection audit tolerance must be finite and nonnegative")
+    terms = {}
     for (spins, labels), amp in state.items():
         src = labels[source_v]
         if src[0] != "C":
@@ -106,13 +114,20 @@ def complete_to_covariant(state, source_v, tol=TOL):
                     raise ValueError("target charge must close before covariant projection")
                 Kother.append(lab[1])
         key = (spins, tuple(Kother), J2, M2, K12, K34)
-        out[key] = out.get(key, 0j) + amp
-    for key, value in out.items():
-        if abs(value) <= tol:
-            PRUNE.record_threshold(
-                "covariant_composition.complete_to_covariant", key, value, tol
+        terms.setdefault(key, []).append(complex(amp))
+    out = {}
+    for key, values in terms.items():
+        z = complex(
+            math.fsum(value.real for value in values),
+            math.fsum(value.imag for value in values),
+        )
+        if z != 0j:
+            out[key] = z
+        else:
+            PRUNE.record_merge(
+                "covariant_composition.complete_to_covariant", key, 0j, 0j, z, tol
             )
-    return {k: a for k, a in out.items() if PRUNE.keep(a, tol)}
+    return out
 
 
 def covariant_to_complete(state, source_v):
