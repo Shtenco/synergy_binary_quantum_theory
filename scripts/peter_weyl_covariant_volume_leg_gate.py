@@ -103,8 +103,13 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
       (spins, K_other_tuple, J2, M2, K12, K34)
     where K_other_tuple has -1 at source_v and Gauss recoupling labels elsewhere.
     """
-    out = {}
+    if not math.isfinite(float(tol)) or float(tol) < 0.0:
+        raise ValueError("projection audit tolerance must be finite and nonnegative")
+    terms = {}
     for spins, tensors, amp in branches:
+        amp = complex(amp)
+        if not (math.isfinite(amp.real) and math.isfinite(amp.imag)):
+            raise ValueError("branch amplitude must be finite")
         other_opts = []
         ok = True
         for u in PW.VERT:
@@ -150,12 +155,23 @@ def project_covariant_branches(branches, source_v, tol=1e-11):
                 val = base_amp * cs
                 key = (spins, tuple(Kother), J2, M2, K12, K34)
                 PRUNE.record_threshold("covariant_volume_leg.branch_projection",key,val,tol)
-                if PRUNE.keep(val,tol):
-                    out[key] = out.get(key, 0j) + val
-    for key, value in out.items():
-        if abs(value) <= tol:
-            PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
-    return {k: v for k, v in out.items() if PRUNE.keep(v,tol)}
+                if val != 0j:
+                    terms.setdefault(key, []).append(complex(val))
+    out = {}
+    for key, values in terms.items():
+        value = complex(
+            math.fsum(item.real for item in values),
+            math.fsum(item.imag for item in values),
+        )
+        if not (math.isfinite(value.real) and math.isfinite(value.imag)):
+            raise ValueError("covariant branch sum must be finite")
+        # This aggregate contains the arbitrary input branch amplitude.
+        # Record would-be threshold losses, but never prune this state-dependent
+        # sum: doing so breaks homogeneity/additivity of the covariant map.
+        PRUNE.record_threshold("covariant_volume_leg.branch_output",key,value,tol)
+        if value != 0j:
+            out[key] = value
+    return out
 
 
 def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
@@ -180,9 +196,11 @@ def inverse_then_forward(initial, v, w, i, j, Jmax2, with_volume):
         projected = project_covariant_branches(closed, v)
         PW.add_dict(total, projected, +1)
     for key, value in total.items():
-        if abs(value) <= 1e-10:
-            PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
-    return {k: a for k, a in total.items() if PRUNE.keep(a,1e-10)}, max_charged_projection_leak
+        PRUNE.record_threshold("covariant_volume_leg.closed_state_output.1e-10",key,value,1e-10)
+    # The closed state still carries the arbitrary input amplitude. Keep all
+    # nonzero components; a fixed operator/basis mask must be applied to
+    # unit columns before their linear extension, not to this state output.
+    return {k: a for k, a in total.items() if a != 0j}, max_charged_projection_leak
 
 
 def gauss_to_covariant(state, source_v):
