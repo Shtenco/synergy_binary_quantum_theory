@@ -8,6 +8,9 @@ on:
       - research/bqg-w5-production-audit-20261113
     paths:
       - 'scripts/bqg_sparse_linear_accumulator.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_composition_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_gate.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
       - 'tests/test_bqg_v10_strict_accumulation.py'
       - 'tests/test_bqg_production_linearity.py'
