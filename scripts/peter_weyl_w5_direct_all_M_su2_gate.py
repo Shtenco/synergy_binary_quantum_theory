@@ -180,7 +180,13 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,)):
                     rel, abs_err, scale = relative_error(lhs, rhs)
                     jz_output = apply_local_jz(H_input, node)
                     jz_expected = {key: amp * (M2 / 2.0) for key, amp in H_input.items()}
-                    jz_rel, jz_abs_err, jz_scale = relative_error(jz_output, jz_expected)
+                    jz_difference = {
+                        key: jz_output.get(key, 0j) - jz_expected.get(key, 0j)
+                        for key in set(jz_output) | set(jz_expected)
+                    }
+                    jz_abs_err = norm(jz_difference)
+                    jz_scale = norm(H_input)
+                    jz_rel = jz_abs_err / jz_scale
                     wrong_fraction = wrong_sector_fraction(
                         H_input, node=node, expected_j2=2, expected_m2=M2
                     )
