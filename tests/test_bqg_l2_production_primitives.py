@@ -70,6 +70,33 @@ class TestV10ProductionPrimitiveLinearity(unittest.TestCase):
             "Frozen Peter-Weyl fixture has no volume output; L2 cannot be inferred.",
         )
 
+    def test_complete_branch_projection_is_homogeneous_below_amplitude_cutoff(self):
+        # The tensor/basis projection coefficients are fixed by the source
+        # basis key, while the branch amplitude is an arbitrary complex input.
+        # Scaling that input below the historical 1e-11 threshold must scale
+        # the complete projected state rather than erase it.
+        key = next(iter(self.complete_state))
+        alpha = 2.5e-14 - 1.75e-14j
+        unit, unit_leak = CK.project_branch_complete_charges(
+            CK.branch_from_key(key, 1.0 + 0j)
+        )
+        scaled, scaled_leak = CK.project_branch_complete_charges(
+            CK.branch_from_key(key, alpha)
+        )
+        self.assertTrue(unit, "Reference complete branch projection is empty.")
+        self.assertTrue(
+            scaled,
+            "A nonzero input-scaled branch projection was removed by a fixed amplitude cutoff.",
+        )
+        expected = {state: alpha * value for state, value in unit.items()}
+        residual = difference_norm(scaled, expected)
+        relative = residual / max(norm(scaled), norm(expected), 1e-300)
+        self.assertLessEqual(
+            relative, 5e-12,
+            f"complete branch projection complex homogeneity residual={relative:.6e}",
+        )
+        self.assertLessEqual(abs(unit_leak - scaled_leak), 5e-14)
+
     def test_fixture_HE_state_map_is_nonzero(self):
         result = output_dict(CK.apply_HE_complete_state(self.complete_state, 0, 5))
         self.assertTrue(
