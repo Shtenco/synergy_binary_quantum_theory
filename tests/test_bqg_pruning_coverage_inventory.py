@@ -70,7 +70,10 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
         self.assertEqual(outer_compares, [])
         self.assertEqual(len(inner_compares), 1)
         self.assertFalse(inventory._function_has_prune_instrumentation(outer))
-        self.assertTrue(inventory._function_has_prune_instrumentation(inner))
+        self.assertFalse(inventory._function_has_prune_instrumentation(inner))
+        calls = inventory._prune_decision_calls("fixture", outer) + inventory._prune_decision_calls("fixture", inner)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["classification"], "UNCLASSIFIED_PRUNE_CALL")
 
     def test_run_closure_parameter_checks_are_not_called_pruning(self):
         expected = {
@@ -214,6 +217,8 @@ class TestV10TransitivePruningCoverageInventory(unittest.TestCase):
             },
         )
         self.assertEqual(result["unclassified_sites"], [])
+        self.assertGreater(result["prune_decision_call_count"], 0)
+        self.assertEqual(result["unclassified_prune_calls"], [])
         self.assertTrue(result["complete"])
         self.assertGreaterEqual(result["threshold_site_count"], 20)
         self.assertEqual(result["status"], "PASS_TRANSITIVE_THRESHOLD_INVENTORY")
