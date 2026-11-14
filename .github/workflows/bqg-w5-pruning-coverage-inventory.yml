@@ -34,7 +34,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-pruning-inventory-${{ github.ref }}-${{ github.sha }}
+  group: bqg-w5-pruning-inventory-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
