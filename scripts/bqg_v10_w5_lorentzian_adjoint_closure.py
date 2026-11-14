@@ -119,7 +119,11 @@ def sum_sparse_maps(states):
 
 
 def sparse_norm(state):
-    return math.sqrt(sum(abs(z) ** 2 for z in state.values()))
+    """Stable Euclidean norm for sparse complex amplitudes."""
+    norm = 0.0
+    for amplitude in state.values():
+        norm = math.hypot(norm, abs(amplitude))
+    return norm
 
 
 def prune_scalar_channel(state):
@@ -271,27 +275,31 @@ def _matrix_adjoint_expected_columns(forward_columns, basis_keys, key_index):
 
 
 def sparse_matrix_residual(actual_columns, expected_columns):
-    err2 = 0.0
-    scale2 = 0.0
+    err_norm = 0.0
+    scale_norm = 0.0
     for actual, expected in zip(actual_columns, expected_columns):
         for key in set(actual) | set(expected):
             a = actual.get(key, 0j)
             b = expected.get(key, 0j)
-            err2 += abs(a - b) ** 2
-            scale2 += abs(b) ** 2
-    return math.sqrt(err2), math.sqrt(scale2)
+            err_norm = math.hypot(err_norm, abs(a - b))
+            scale_norm = math.hypot(scale_norm, abs(b))
+    return err_norm, scale_norm
 
 
 def sparse_frobenius(columns):
-    return math.sqrt(sum(abs(z) ** 2 for col in columns for z in col.values()))
+    norm = 0.0
+    for column in columns:
+        for amplitude in column.values():
+            norm = math.hypot(norm, abs(amplitude))
+    return norm
 
 
 def sparse_sum_difference_norm(columns_a, columns_b, sign=1.0):
-    total2 = 0.0
+    norm = 0.0
     for a, b in zip(columns_a, columns_b):
-        keys = set(a) | set(b)
-        total2 += sum(abs(a.get(k, 0j) + sign * b.get(k, 0j)) ** 2 for k in keys)
-    return math.sqrt(total2)
+        for key in set(a) | set(b):
+            norm = math.hypot(norm, abs(a.get(key, 0j) + sign * b.get(key, 0j)))
+    return norm
 
 def closure_acceptance(
     forward_norm,
