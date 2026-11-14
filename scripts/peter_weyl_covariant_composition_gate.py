@@ -126,12 +126,23 @@ def complete_to_covariant(state, source_v, tol=TOL):
         )
         if not (math.isfinite(z.real) and math.isfinite(z.imag)):
             raise ValueError("basis-conversion sum must be finite")
+        # Keep the coherent basis relabelling exactly as assembled above,
+        # but retain a diagnostic trace of every incremental merge. This records
+        # sub-threshold partial sums and exact cancellations without applying a
+        # threshold to the operator output.
+        audit_partial = 0j
+        for term in values:
+            audit_result = complex(
+                math.fsum((audit_partial.real, term.real)),
+                math.fsum((audit_partial.imag, term.imag)),
+            )
+            PRUNE.record_merge(
+                "covariant_composition.complete_to_covariant",
+                key, audit_partial, term, audit_result, tol,
+            )
+            audit_partial = audit_result
         if z != 0j:
             out[key] = z
-        else:
-            PRUNE.record_merge(
-                "covariant_composition.complete_to_covariant", key, 0j, 0j, z, tol
-            )
     return out
 
 
