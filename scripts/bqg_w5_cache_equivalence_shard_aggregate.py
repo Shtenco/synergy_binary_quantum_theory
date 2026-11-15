@@ -95,8 +95,19 @@ def _validate_mode(report, expected_mode, key):
         "coherent_node_sum_ledger": isinstance(params.get("coherent_node_sum_ledger"), list),
         "pruning_ledger": isinstance(params.get("lower_level_pruning_ledger"), dict),
     }
+    pruning = params.get("lower_level_pruning_ledger") or {}
+    checks["pruning_ledger_mode"] = (pruning.get("cache_policy") or {}).get("mode") == expected_mode
+    checks["pruning_event_count_consistent"] = (
+        isinstance(pruning.get("events"), list)
+        and pruning.get("event_count") == len(pruning.get("events", []))
+    )
+    basis_dimension = len(params.get("basis_keys_repr", []))
     for field in MATRIX_FIELDS:
-        checks[field] = isinstance(params.get(field), list) and bool(params[field])
+        checks[field] = (
+            isinstance(params.get(field), list)
+            and bool(params[field])
+            and len(params[field]) == basis_dimension
+        )
     physical = params.get("physical_status") or {}
     checks["physical_ordering_not_selected"] = physical.get("physical_hermitian_ordering_selected") is False
     checks["full_physical_HL_not_claimed"] = physical.get("full_physical_HL") is False
