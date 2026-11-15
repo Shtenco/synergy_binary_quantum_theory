@@ -231,6 +231,20 @@
       ]
     },
     {
+      "id": "LORENTZIAN_FULL_NODE_HAMILTONIAN",
+      "status": "conditional",
+      "closure_role": "core",
+      "claim": "The complete regulated Lorentzian node Hamiltonian must assemble the full epsilon-oriented K-K-V face sum from the sine-Hermitian Euclidean operator, include the fixed real-beta coefficient, define a common domain and explicit adjoint/Hermitian ordering, and retain all graph/spin-changing outputs.",
+      "evidence": [
+        "LORENTZIAN_BETA_CANCELLATION.md",
+        "scripts/peter_weyl_lorentzian_K_block_gate.py",
+        "scripts/peter_weyl_lorentzian_ordered_triple_gate.py",
+        "scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py",
+        "BQG_MINIMAL_PROOF_ROADMAP.md"
+      ],
+      "hard_scope": "Existing finite beta cancellation is classical; the K=[V,H_E] block is a prerequisite; the current K-K-V gate evaluates one ordered triple only. The complete epsilon-oriented node operator, its Hermitian ordering, common-domain adjointness and Lorentzian off-shell HDA closure are not yet demonstrated."
+    },
+    {
       "id": "LHDA_COMP",
       "status": "proved",
       "closure_role": "core",
@@ -471,7 +485,7 @@
       "id": "S4_LOGICAL_MULTIPLICITY",
       "status": "proved",
       "closure_role": "core",
-      "claim": "For Inv_SU2(V_j^\u22974), the multiplicity of the S4 [2,2] irrep is ceil(2j/3); uniqueness holds only at j=1/2,1,3/2 and fails from j=2 onward.",
+      "claim": "For Inv_SU2(V_j^⊗4), the multiplicity of the S4 [2,2] irrep is ceil(2j/3); uniqueness holds only at j=1/2,1,3/2 and fails from j=2 onward.",
       "evidence": [
         "BQG_S4_LOGICAL_MULTIPLICITY_THEOREM.md",
         "scripts/bqg_s4_refinement_carrier_scan.py",
@@ -503,7 +517,7 @@
       "id": "J2_CONSTRAINT_MASTER_MULTIPLICITY",
       "status": "tested_finite",
       "closure_role": "core",
-      "claim": "The exact S4-twirled local Euclidean Peter-Weyl constraint master at j=2 has Schur form A2\u2297I2 on the multiplicity-two [2,2] sector, with multiplicity eigenvalues 5.067680982953853 and 5.807713077901408 and gap 0.740032094947555; its preferred low channel is not aligned with the low-volume channel.",
+      "claim": "The exact S4-twirled local Euclidean Peter-Weyl constraint master at j=2 has Schur form A2⊗I2 on the multiplicity-two [2,2] sector, with multiplicity eigenvalues 5.067680982953853 and 5.807713077901408 and gap 0.740032094947555; its preferred low channel is not aligned with the low-volume channel.",
       "evidence": [
         "BQG_J2_CONSTRAINT_MASTER_MULTIPLICITY.md",
         "scripts/bqg_j2_constraint_master_multiplicity_gate.py",
