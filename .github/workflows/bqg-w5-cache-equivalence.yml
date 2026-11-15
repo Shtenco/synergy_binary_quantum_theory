@@ -28,8 +28,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-cache-equivalence-v3-${{ github.ref }}
-  cancel-in-progress: true
+  group: bqg-w5-cache-equivalence-v4-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
