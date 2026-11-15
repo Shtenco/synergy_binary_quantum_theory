@@ -40,9 +40,9 @@ A downstream gate cannot compensate for an upstream failure. In particular, an I
 
 ### A1. Representation statement
 
-For every declared W5 node and charged sector, specify the complete representation space, including total ((J,M)), multiplicity/recoupling labels, endpoint representation factors and the gauge action on every open holonomy index.
+For every declared W5 node and charged sector, specify the complete representation space, including total `(J,M)`, multiplicity/recoupling labels, endpoint representation factors and the gauge action on every open holonomy index.
 
-For a **fully contracted rank-zero operator** (O^{(0)}), the target selection rule is
+For a **fully contracted rank-zero operator** `O^{(0)}`, the target selection rule is
 
 [
 langle J'M';\alpha'|O^{(0)}|JM;\alphaangle
@@ -53,9 +53,9 @@ The operator may mix multiplicity labels. Do not apply this scalar rule to a par
 
 ### A2. Required checks
 
-1. Prove the transformation law of the complete sine-ordered (H_E), not just a label convention or one cached highest-weight output.
-2. Independently evaluate all (M=-J,\ldots,J) components and all five W5 source nodes for the frozen seed.
-3. Check ([J_+,H_E]=[J_-,H_E]=[J_z,H_E]=0) on the complete output, with scale-robust relative and absolute residuals.
+1. Prove the transformation law of the complete sine-ordered `H_E`, not just a label convention or one cached highest-weight output.
+2. Independently evaluate all $M=-J,\\ldots,J$ components and all five W5 source nodes for the frozen seed.
+3. Check $[J_+,H_E]=[J_-,H_E]=[J_z,H_E]=0$ on the complete output, with scale-robust relative and absolute residuals.
 4. Check forbidden-sector weight before any cleanup; preserve the raw leakage ledger and use the frozen acceptance contract.
 5. Demonstrate cache-on/cache-off equivalence and a fully instrumented no-pruning reference. An incomplete shadow run is not evidence that pruning is harmless.
 6. Prove operator linearity and complex homogeneity on a fixed input/output basis. Accumulate all coherent contributions before any sparsification. Any fixed mask must be input-independent and have a certified operator-norm or induced-norm error bound.
@@ -64,7 +64,7 @@ The operator may mix multiplicity labels. Do not apply this scalar rule to a par
 
 ### A3. Current evidence and limits
 
-- A production W5 artifact previously reported 172 output states and a wrong-sector fraction around (4.42\times10^{-21}) for one finite seed/node/cutoff. It is evidence for that artifact only; the no-pruning contribution was not thereby excluded.
+- A production W5 artifact previously reported 172 output states and a wrong-sector fraction around $4.42\\times10^{-21}$ for one finite seed/node/cutoff. It is evidence for that artifact only; the no-pruning contribution was not thereby excluded.
 - A direct all-(M) gate exists and is designed to bypass the cached highest-weight wrapper. Its completed all-node result must be inspected before claiming covariance.
 - Strict compensated complex accumulation has been integrated at selected V10/V11 boundaries. The repository's own remediation plan still identifies lower-level threshold sites and pruning coverage as incomplete.
 - Finite HDA controls are not the complete physical anomaly-free constraint algebra.
@@ -77,32 +77,32 @@ The operator may mix multiplicity labels. Do not apply this scalar rule to a par
 
 For a specified finite family (C_A) and a positive-definite Hermitian constraint metric (G),
 
-[
-M_G=\sum_{A,B}C_A^\dagger G^{AB}C_B,
-\qquad
-\langle\psi|M_G|\psi\rangle
-=\|G^{1/2}C\psi\|^2\ge0,
-]
+$
+M_G=\\sum_{A,B}C_A^\\dagger G^{AB}C_B,
+\\qquad
+\\langle\\psi|M_G|\\psi\\rangle
+=\\|G^{1/2}C\\psi\\|^2\\ge0.
+$
 
 so
 
-[
-\ker M_G=\bigcap_A\ker C_A.
-]
+$
+\\ker M_G=\\bigcap_A\\ker C_A.
+$
 
-If zero is an isolated eigenvalue, (P_0=\mathbf1_{\{0\}}(M_G)) is an orthogonal projector. This is an exact finite-dimensional theorem. It does not by itself define the continuum physical Hilbert space.
+If zero is an isolated eigenvalue, $P_0=\\mathbf1_{\\{0\\}}(M_G)$ is an orthogonal projector. This is an exact finite-dimensional theorem. It does not by itself define the continuum physical Hilbert space.
 
 ### B2. Theory-specific obligations
 
-1. Freeze the **actual complete regulated BQG constraint family** (C_A^{(\epsilon,J)}), including its graph-changing action, domains, adjoints and anomaly prescription.
-2. Construct (M_{G}^{(\epsilon,J)}) and verify positivity and common-kernel equivalence on that actual family, not only on randomly generated synthetic matrices.
+1. Freeze the **actual complete regulated BQG constraint family** $C_A^{(\\epsilon,J)}$, including its graph-changing action, domains, adjoints and anomaly prescription.
+2. Construct $M_G^{(\\epsilon,J)}$ and verify positivity and common-kernel equivalence on that actual family, not only on randomly generated synthetic matrices.
 3. State the physical boundary states and their normalization, gauge treatment and observable insertions.
 4. Define the normalized spectral-window, heat-kernel or rigging-map sequence. If the gap closes or zero enters continuous spectrum, use the appropriate distributional/RAQ construction rather than assuming a finite-rank projector survives.
 5. Prove refinement compatibility and convergence of physical matrix elements, independently of the arbitrary positive metric (G) wherever the theorem says the exact kernel must be invariant.
 6. Construct the physical inner product
-   [
-   (\eta(\phi),\eta(\psi))_{phys}=\eta(\psi)[\phi]
-   ]
+   $
+   (\\eta(\\phi),\\eta(\\psi))_{phys}=\\eta(\\psi)[\\phi]
+   $
    (or a declared convention-equivalent form), prove Hermiticity and positivity, quotient its null space, and establish a nontrivial completed physical Hilbert space.
 7. Prove that the physical observables preserve the rigging-map domain and are well-defined on the quotient.
 
@@ -122,13 +122,13 @@ The clock must be part of the microscopic theory or a rigorously justified matte
 
 If a deparametrization is valid, establish a constraint of the form
 
-[
+$
 P_T+H_{phys}=0,
-\qquad
-i\hbar\partial_T\Psi=H_{phys}\Psi,
-]
+\\qquad
+i\\hbar\\partial_T\\Psi=H_{phys}\\Psi,
+$
 
-including self-adjointness of (H_{phys}), the clock's physical range, and the domain on which conditional states and probabilities are defined.
+including self-adjointness of `H_phys`, the clock's physical range, and the domain on which conditional states and probabilities are defined.
 
 ### C2. Required relational checks
 
@@ -142,7 +142,7 @@ including self-adjointness of (H_{phys}), the clock's physical range, and the do
 
 ### C3. Current evidence and limits
 
-- `Q2_RELATIONAL_HISTORY_PROJECTOR.md` contains an exact finite C8 Page–Wootters-style positive control. Its clock is external and (R=J) is not the physical graph-changing gravitational evolution operator.
+- `Q2_RELATIONAL_HISTORY_PROJECTOR.md` contains an exact finite C8 Page–Wootters-style positive control. Its clock is external and `R=J` is not the physical graph-changing gravitational evolution operator.
 - The finite source/metric generating-functional controls are not a spacetime physical TT kernel.
 - `PHYSICAL_PROJECTOR_HISTORY`, `CONNECTED_INTERBLOCK_HISTORY` and `PHYSICAL_TT_KERNEL` remain open physical gates.
 
@@ -154,12 +154,12 @@ including self-adjointness of (H_{phys}), the clock's physical range, and the do
 
 Derive the physical connected metric generating functional from Gate B, then its Legendre effective action and transverse-traceless two-point kernel:
 
-[
-K_{TT}(\omega,\mathbf{k})
-=\Pi_{TT}\frac{\delta^2\Gamma[g]}{\delta g\,\delta g}\Pi_{TT}.
-]
+$
+K_{TT}(\\omega,\\mathbf{k})
+=\\Pi_{TT}\\frac{\\delta^2\\Gamma[g]}{\\delta g\\,\\delta g}\\Pi_{TT}.
+$
 
-The frequency (omega) must be the physical relational frequency from Gate C. A constraint spectral parameter, finite character angle or Euclidean/source parameter is not interchangeable with it.
+The frequency `omega` must be the physical relational frequency from Gate C. A constraint spectral parameter, finite character angle or Euclidean/source parameter is not interchangeable with it.
 
 ### D2. Required continuum properties
 
