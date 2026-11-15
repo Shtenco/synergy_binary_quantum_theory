@@ -153,6 +153,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         raise ValueError("channels must be a non-empty unique set of (K12,K34) pairs")
     directions = (1, -1)
     cases = []
+    all_outputs = {}
     context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else None
 
     def evaluate():
@@ -168,6 +169,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                     require_nonzero_output(
                         result[0], label=f"H_E(node={node}, K12={K12}, K34={K34}, M2={M2})"
                     )
+                    all_outputs[(node, K12, K34, M2)] = result[0]
                     he_by_m[M2] = {
                         "state": result[0],
                         "norm": norm(result[0]),
@@ -252,20 +254,12 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for K12, K34 in channels for M2 in (-2, 0, 2)
         ]
         matrix = np.zeros((len(basis_keys), len(basis_keys)), dtype=np.complex128)
-        node_outputs = {
-            (K12, K34, M2): he_by_channel_m[(K12, K34)][M2]["state"]
-            for K12, K34 in channels for M2 in (-2, 0, 2)
-        } if False else None
-        # Re-evaluate only the finite matrix elements from the already computed
-        # unit columns. The output may leave this small seed subspace; the
-        # compression is a necessary (not sufficient) adjointness check.
+        # Reuse the exact same unit columns that were evaluated under the
+        # selected production or shadow-no-prune context.
         for column, (K12, K34, M2) in enumerate(
             ( (k1, k2, m) for k1, k2 in channels for m in (-2, 0, 2) )
         ):
-            with PRUNE.capture():
-                output = SINE.complete_HE_sine(
-                    make_input(M2, node, K12, K34), node, Jmax2, charged_nodes=(node,)
-                )[0]
+            output = all_outputs[(node, K12, K34, M2)]
             for row, key in enumerate(basis_keys):
                 matrix[row, column] = output.get(key, 0j)
         matrix_norm = float(np.linalg.norm(matrix, "fro"))
