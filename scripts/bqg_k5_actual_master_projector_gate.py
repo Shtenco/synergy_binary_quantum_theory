@@ -34,6 +34,16 @@ def stable_norm(x) -> float:
 def assemble_constraint_family():
     meta, states, reverse, Up, Ud, powers, full_order, V5, _target, trans = K5C.build_runtime()
     local = K5C.make_actions(Up, Ud, powers, trans)
+    link_operator_matrices = list(Up.reshape(-1)) + list(Ud.reshape(-1))
+    omitted_link_entries = [
+        abs(complex(value))
+        for matrix in link_operator_matrices
+        for value in np.asarray(matrix).reshape(-1)
+        if 0.0 < abs(complex(value)) <= 1e-12
+    ]
+    fixed_link_mask_frobenius = math.sqrt(
+        math.fsum(value * value for value in omitted_link_entries)
+    )
     specs = K5C.local_specs()
     if len(meta) != 140 or len(full_order) != 32 or len(specs) != 60:
         raise AssertionError(
@@ -93,6 +103,9 @@ def assemble_constraint_family():
         "gauss_hilbert_dimension": len(meta),
         "active_domain_dimension": len(full_order),
         "constraint_count": len(specs),
+        "fixed_link_matrix_element_threshold": 1e-12,
+        "fixed_link_matrix_omitted_nonzero_entry_count": len(omitted_link_entries),
+        "fixed_link_matrix_omitted_frobenius_norm": fixed_link_mask_frobenius,
         "max_gauss_projection_loss_fraction": max(raw_leakage, default=0.0),
         "mean_constraint_max_projection_loss_fraction": float(np.mean(raw_leakage)),
         "constraint_projection_loss_by_operator": raw_leakage,
