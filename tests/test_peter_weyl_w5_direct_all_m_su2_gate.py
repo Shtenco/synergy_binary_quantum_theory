@@ -92,13 +92,13 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
             self.assertEqual(charged_nodes, (source_v,))
             if projection_diagnostics is not None:
-                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0}
+                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0, "basis_kind": "charged_complete_JM_recoupling"}
             return {key: 1.0 + 0j}, 0.0, 0.0
 
         def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
             self.assertEqual(charged_nodes, (source_v,))
             if projection_diagnostics is not None:
-                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0}
+                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0, "basis_kind": "charged_complete_JM_recoupling"}
             return dict(state), 0.0, 0.0
 
         with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
