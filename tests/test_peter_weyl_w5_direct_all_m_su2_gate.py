@@ -86,6 +86,14 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         self.assertLess(result["max_adjointness_compression_relative_residual"], 1e-12)
         self.assertLess(result["max_finite_matrix_linearity_relative_residual"], 1e-12)
         self.assertEqual(len(result["cases"]), 40)
+        self.assertEqual(len(result["operator_columns_sparse"]), 30)
+        self.assertTrue(all(len(column["entries"]) >= 1 for column in result["operator_columns_sparse"]))
+        self.assertEqual(
+            {(column["source_node"], column["K12"], column["K34"], column["input_M2"])
+             for column in result["operator_columns_sparse"]},
+            {(node, k12, k34, m2) for node in range(5)
+             for k12, k34 in ((0, 2), (2, 0)) for m2 in (-2, 0, 2)},
+        )
         self.assertEqual(
             {case["source_node"] for case in result["cases"]},
             {0, 1, 2, 3, 4},
