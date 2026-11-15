@@ -236,3 +236,33 @@ The preferred no-shortcut chain is now
 \]
 
 The first two arrows are exact finite operator mathematics.  The continuum/projector-history and microscopic six-Wilson evaluation remain calculations to be completed; they are not supplied by notation.
+
+
+---
+
+## 9. Actual finite K5 constraint family: implementation under verification
+
+A separate implementation now assembles the repository's actual finite K5 Thiemann-type local constraint maps rather than using random synthetic matrices:
+
+\[
+T(v;a,b|c)=
+\operatorname{Tr}\!\left[
+\left(U_{vabv}-U_{vbav}\right)
+U_{vc}\,[U_{cv},P_{k_v=4}]
+\right].
+\]
+
+The declared finite domain is the 32-dimensional fully-active \(j=1/2\) K5 sector. The output/codomain is the 140-dimensional Gauss-invariant K5 Hilbert space. The implementation constructs all 60 local constraint maps \(C_A:\mathcal H_{active}^{32}\to\mathcal H_{Gauss}^{140}\) on every one of the 32 input basis states, then forms
+
+\[
+(M_G)_{ij}
+=\sum_{A,B,o}\overline{(C_A)_{oi}}\,G^{AB}(C_B)_{oj}.
+\]
+
+It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap.
+
+Implementation: scripts/bqg_k5_actual_master_projector_gate.py  
+Regression tests: tests/test_bqg_k5_actual_master_projector_gate.py  
+Workflow: .github/workflows/bqg-k5-actual-master-projector.yml
+
+**Claim boundary:** this is a finite Euclidean/canonical K5 construction on the declared 32D domain. Even if its CI gate passes, it does not establish the full Lorentzian constraint family, invariance of the entire kinematical Hilbert space, anomaly-free arbitrary-graph refinement, continuum rigging map, or physical Born measure. The physical gate PHYSICAL_PROJECTOR_HISTORY remains open until those further constructions are demonstrated.
