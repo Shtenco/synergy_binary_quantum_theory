@@ -86,7 +86,7 @@ def _validate_mode(report, expected_mode, key):
         "Jmax2": params.get("Jmax2") == key[0],
         "cache_mode": params.get("cache_mode") == expected_mode,
         "pruning_mode": params.get("pruning_mode") == "production",
-        "unbounded_closure": params.get("max_states") is None and params.get("max_depth") is None,
+        "unbounded_closure": params.get("unbounded_closure") is True and params.get("max_states") is None and params.get("max_depth") is None,
         "no_omitted_closure_support": params.get("omitted_new_support_keys") == 0,
         "lower_level_coverage_disclosed": params.get("lower_level_pruning_coverage_complete") is False,
         "basis_hash": isinstance(params.get("basis_id_sha256"), str) and len(params["basis_id_sha256"]) == 64,
@@ -146,6 +146,7 @@ def aggregate(directory: Path, jmax2_values=DEFAULT_JMAX2, tolerance=TOLERANCE):
         on_name, on = on_item
         off_name, off = off_item
         comparisons = {}
+        same_basis = False
         try:
             same_basis = (
                 on.get("basis_id_sha256") == off.get("basis_id_sha256")
@@ -176,7 +177,7 @@ def aggregate(directory: Path, jmax2_values=DEFAULT_JMAX2, tolerance=TOLERANCE):
         pair_results.append({
             "Jmax2": key[0], "node": key[1], "seed_K": key[2],
             "cache_on_artifact": on_name, "cache_off_artifact": off_name,
-            "same_basis": same_basis if "same_basis" in locals() else False,
+            "same_basis": same_basis,
             "matrix_comparisons": comparisons,
             "coefficient_loss_ledger_equal": coefficient_ledger_equal,
             "coherent_node_sum_ledger_equal": coherent_ledger_equal,
