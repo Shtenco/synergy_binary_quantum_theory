@@ -315,7 +315,7 @@
         "scripts/bqg_k5_actual_master_projector_gate.py",
         ".github/workflows/bqg-k5-actual-master-projector.yml"
       ],
-      "hard_scope": "Strict finite K5 numerical gate only: 32D fully-active j=1/2 domain, 60 implemented Euclidean constraints, four positive metrics and rank-one quotient. It does not establish the full Lorentzian/refinement-compatible rigging-map limit or physical history projector."
+      "hard_scope": "Finite K5 result only: the declared 32D fully-active j=1/2 domain, 60 implemented Euclidean constraints and four tested positive metrics. It does not establish the Lorentzian constraint family, graph/refinement limit, continuum rigging map, physical Born measure, relational time, causal response, IR graviton kernel or experimental confirmation."
     }
   ],
   "physical_environment_overlap_closed_declared": false,
