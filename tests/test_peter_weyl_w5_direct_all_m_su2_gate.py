@@ -81,7 +81,7 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             self.assertEqual(charged_nodes, (source_v,))
             return dict(state), 0.0, 0.0
 
-        with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \\
+        with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
              patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
             result = gate.run(Jmax2=4, nodes=(0, 1, 2, 3, 4))
 
