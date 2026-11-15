@@ -31,7 +31,7 @@ on:
         default: "3600"
 
 concurrency:
-  group: bqg-w5-full-shadow-no-prune-\${{ github.ref }}
+  group: bqg-w5-full-shadow-no-prune-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -39,7 +39,7 @@ permissions:
 
 jobs:
   full-shadow-matrix:
-    name: Full W5 shadow comparison Jmax2=\${{ matrix.jmax2 }}
+    name: Full W5 shadow comparison Jmax2=${{ matrix.jmax2 }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     strategy:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: \${{ github.sha }}
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -64,20 +64,20 @@ jobs:
         shell: bash
         run: |
           mkdir -p verification_results
-          TIMEOUT="\${{ github.event.inputs.timeout_seconds || '3600' }}"
+          TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
           set +e
           python scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
             --nodes 0 1 2 3 4 \
-            --Jmax2 "\${{ matrix.jmax2 }}" \
+            --Jmax2 "${{ matrix.jmax2 }}" \
             --max-states 500 --max-depth 8 \
             --unbounded-closure \
             --amp-tol 1e-12 \
             --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_FULL_SHADOW_J\${{ matrix.jmax2 }}_RUN\${{ github.run_id }}.json
+            --output verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
           rc=$?
           set -e
-          test -f verification_results/W5_FULL_SHADOW_J\${{ matrix.jmax2 }}_RUN\${{ github.run_id }}.json
-          python - "$rc" "verification_results/W5_FULL_SHADOW_J\${{ matrix.jmax2 }}_RUN\${{ github.run_id }}.json" <<'PY'
+          test -f verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+          python - "$rc" "verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json" <<'PY'
           import json, math, sys
           rc = int(sys.argv[1])
           result = json.load(open(sys.argv[2], encoding="utf-8"))
@@ -109,7 +109,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-full-shadow-j\${{ matrix.jmax2 }}-\${{ github.run_id }}
-          path: verification_results/W5_FULL_SHADOW_J\${{ matrix.jmax2 }}_RUN\${{ github.run_id }}.json
+          name: bqg-w5-full-shadow-j${{ matrix.jmax2 }}-${{ github.run_id }}
+          path: verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
