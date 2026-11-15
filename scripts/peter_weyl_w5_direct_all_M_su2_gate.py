@@ -250,6 +250,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             evaluate()
 
     adjoint_rows = []
+    linearity_rows = []
     for node in nodes:
         basis_keys = [
             make_input(M2, node, K12, K34)
@@ -264,8 +265,38 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             output = all_outputs[(node, K12, K34, M2)]
             for row, key in enumerate(basis_keys):
                 matrix[row, column] = output.get(key, 0j)
+        output_keys = sorted({
+            key for K12, K34 in channels for M2 in (-2, 0, 2)
+            for key in all_outputs[(node, K12, K34, M2)]
+        }, key=repr)
+        output_index = {key: row for row, key in enumerate(output_keys)}
+        operator_matrix = np.zeros((len(output_keys), len(basis_keys)), dtype=np.complex128)
+        for column, (K12, K34, M2) in enumerate(
+            ((k1, k2, m) for k1, k2 in channels for m in (-2, 0, 2))
+        ):
+            for key, amplitude in all_outputs[(node, K12, K34, M2)].items():
+                operator_matrix[output_index[key], column] = amplitude
         matrix_norm = float(np.linalg.norm(matrix, "fro"))
         adjoint_abs = float(np.linalg.norm(matrix - matrix.conj().T, "fro"))
+        linear_rng = np.random.default_rng(1729 + node)
+        x = linear_rng.normal(size=len(basis_keys)) + 1j * linear_rng.normal(size=len(basis_keys))
+        y = linear_rng.normal(size=len(basis_keys)) + 1j * linear_rng.normal(size=len(basis_keys))
+        alpha = 0.7 + 0.2j
+        beta = -0.3 + 0.9j
+        lhs = operator_matrix @ (alpha * x + beta * y)
+        rhs = alpha * (operator_matrix @ x) + beta * (operator_matrix @ y)
+        linearity_abs = float(np.linalg.norm(lhs - rhs))
+        linearity_scale = max(float(np.linalg.norm(lhs)), float(np.linalg.norm(rhs)), 1e-30)
+        linearity_rel = linearity_abs / linearity_scale
+        linearity_rows.append({
+            "source_node": node,
+            "input_basis_dimension": len(basis_keys),
+            "output_support_dimension": len(output_keys),
+            "operator_matrix_shape": [len(output_keys), len(basis_keys)],
+            "linearity_absolute_residual": linearity_abs,
+            "linearity_relative_residual": linearity_rel,
+            "scope": "finite matrix extension on the declared seed subspace",
+        })
         adjoint_rel = adjoint_abs / max(matrix_norm, 1e-30)
         adjoint_rows.append({
             "source_node": node,
@@ -277,6 +308,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         })
 
     max_adjoint = max((x["adjoint_relative_residual"] for x in adjoint_rows), default=0.0)
+    max_linearity = max((x["linearity_relative_residual"] for x in linearity_rows), default=0.0)
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
     max_jz_commutator = max((x["jz_commutator_relative_residual"] for x in cases), default=0.0)
     max_wrong_fraction = max((x["wrong_JM_weight_fraction"] for x in cases), default=0.0)
@@ -284,6 +316,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         len(cases) == 4 * len(channels) * len(nodes)
         and max_commutator < 1e-8
         and max_adjoint < 1e-8
+        and max_linearity < 1e-12
         and all(x["matrix_frobenius_norm"] > 1e-14 for x in adjoint_rows)
         and max_jz_commutator < 1e-12
         and max_wrong_fraction < 1e-18
@@ -301,6 +334,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "magnetic_components_tested_M2": [-2, 0, 2],
         "adjointness_compression_rows": adjoint_rows,
         "max_adjointness_compression_relative_residual": max_adjoint,
+        "linearity_matrix_rows": linearity_rows,
+        "max_finite_matrix_linearity_relative_residual": max_linearity,
         "pruning_mode": pruning_mode,
         "commutator_target": "[J_+, H_E]=[J_-, H_E]=[J_z, H_E]=0 on the actual complete W5 sine-H_E map",
         "max_commutator_relative_residual": max_commutator,
