@@ -1,3 +1,4 @@
+import ast
 import math
 import unittest
 
@@ -40,6 +41,18 @@ class FakeV09:
             "B_scalar_projection_rejections": [],
             "term_diagnostics": [{"max_basis_leakage": 0.0}],
         }
+
+
+class CancellationV09(FakeV09):
+    def run_column(self, node, input_K, Jmax2=10, start=0, count=24):
+        result = super().run_column(node, input_K, Jmax2, start, count)
+        key = ast.literal_eval(result["A_Euclidean_sine_Gauss"][0][0])
+        result["A_Euclidean_sine_Gauss"] = [
+            [repr(key), 1.0e16, 0.0],
+            [repr(key), 1.0, 0.0],
+            [repr(key), -1.0e16, 0.0],
+        ]
+        return result
 
 
 class FakeV10:
@@ -141,6 +154,16 @@ class TestW5CommonCarrier(unittest.TestCase):
         a_idx = a_rows.index(repr(((4,) * 10, (0, 0, 0, 0, 1))))
         self.assertEqual(result["A"][a_idx][0], [15.0, 0.0])
         self.assertEqual(result["B"][a_rows.index(repr(((4,) * 10, (0, 0, 0, 0, 2))))][0], [20.0, 0.0])
+
+    def test_build_carrier_uses_compensated_sum_for_duplicate_v09_rows_and_nodes(self):
+        result = build_carrier(
+            source_nodes=(0, 1, 2, 3, 4),
+            v09_module=CancellationV09(),
+            v10_module=FakeV10(),
+        )
+        key = ((4,) * 10, (0, 0, 0, 0, 1))
+        row = result["common_output_basis"]["keys_repr"].index(repr(key))
+        self.assertEqual(result["A"][row][0], [5.0, 0.0])
 
     def test_threshold_is_applied_after_coherent_node_sum(self):
         amp_tol = 1e-12
