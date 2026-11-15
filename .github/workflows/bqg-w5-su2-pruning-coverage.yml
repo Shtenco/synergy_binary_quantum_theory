@@ -1,0 +1,50 @@
+name: BQG W5 SU2 transitive pruning coverage
+
+on:
+  push:
+    branches:
+      - research/bqg-w5-production-audit-20261113
+    paths:
+      - '.github/workflows/bqg-w5-su2-pruning-coverage.yml'
+      - 'scripts/bqg_w5_su2_pruning_coverage_inventory.py'
+      - 'scripts/bqg_pruning_coverage_inventory.py'
+      - 'scripts/peter_weyl_w5_direct_all_M_su2_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+  workflow_dispatch:
+
+concurrency:
+  group: bqg-w5-su2-pruning-coverage-\${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile inventory
+        run: python -m py_compile scripts/bqg_w5_su2_pruning_coverage_inventory.py scripts/bqg_pruning_coverage_inventory.py
+      - name: Inventory all transitive W5 SU2 threshold sites
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_w5_su2_pruning_coverage_inventory.py \
+            --output verification_results/W5_SU2_PRUNING_COVERAGE.json
+      - name: Upload W5 SU2 pruning coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-su2-pruning-coverage-\${{ github.run_id }}
+          path: verification_results/W5_SU2_PRUNING_COVERAGE.json
+          if-no-files-found: warn
+          retention-days: 30
