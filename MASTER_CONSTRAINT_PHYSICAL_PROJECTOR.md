@@ -259,7 +259,13 @@ The declared finite domain is the 32-dimensional fully-active \(j=1/2\) K5 secto
 =\sum_{A,B,o}\overline{(C_A)_{oi}}\,G^{AB}(C_B)_{oj}.
 \]
 
-It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap.
+It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap. It also constructs the induced finite physical form
+
+[
+(eta(phi),eta(psi))_{phys}=langlephi|P_{phys}|psiangle
+]
+
+and checks Hermiticity, positive semidefiniteness on the kinematical domain, and rank after quotienting the projector kernel.
 
 Implementation: scripts/bqg_k5_actual_master_projector_gate.py  
 Regression tests: tests/test_bqg_k5_actual_master_projector_gate.py  
