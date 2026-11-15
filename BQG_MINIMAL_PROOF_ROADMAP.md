@@ -221,3 +221,58 @@ The PR base had diverged: compare against `research/physical-history-causality-2
 6. Only then calculate the physical TT IR kernel, six-vector, common scale and blind observables.
 
 This ordering is intentionally strict: it is the shortest route that does not skip a logical dependency.
+
+
+## 9. Additional proof obligations exposed by the 2026-11-15 source audit
+
+### 9.1 Direct all-M SU(2): artifact-level equivalence is mandatory
+
+The direct W5 gate now persists all six complete sparse H_E output columns per source node, including output states outside the six-dimensional seed compression. A separate aggregate gate must pair all five production artifacts with all five `shadow_no_prune` artifacts and compare all 30 complex sparse columns. A collection of ten individually successful jobs is not itself a production/no-prune equivalence result.
+
+The direct gate also propagates complex superposition coefficients through the actual initial branch, graph-changing sequence, recoupling projection and coherent-accumulation path. This is distinct from multiplying an already assembled matrix by vectors, which remains only a matrix-algebra consistency check. The new numerical results remain pending until the matching-head workflow artifacts are complete.
+
+### 9.2 Rank-one finite physical quotient is a positive control, not a dynamics result
+
+The actual K5 master-projector gate yields a one-dimensional finite physical quotient on its declared 32-dimensional fully-active j=1/2 domain. This is nonzero and mathematically meaningful, but a one-dimensional physical space cannot by itself demonstrate nontrivial relational evolution, a noncommuting physical-observable algebra, or propagating tensor degrees of freedom.
+
+The next physical-projector extension must enlarge the graph/representation/boundary-state family and report:
+- the dimension and stability of the physical quotient under graph and spin refinement;
+- matrix elements of a declared separating set of gauge-invariant observables;
+- whether the induced physical observable algebra is nontrivial;
+- whether at least two independent physical states survive in a regime intended to support relational dynamics;
+- whether null directions are kinematical redundancies or regulator artifacts.
+
+Do not require rank greater than one as a theorem for every finite regulator. Require it before claiming that this particular finite control demonstrates nontrivial dynamics.
+
+### 9.3 The present Lorentzian code is a prerequisite chain, not the full Lorentzian constraint
+
+The source audit distinguishes three existing objects:
+1. the local prerequisite (K_v=[V_v,H_{E,v}]);
+2. individual sine-ordered (C_i(K)C_j(K)C_k(V))-type graph-changing triples;
+3. the full Lorentzian Hamiltonian constraint with its complete index/orientation sums, fixed beta-dependent coefficient, operator ordering, common domain and adjoint prescription.
+
+The first object is explicitly labelled a prerequisite in `peter_weyl_lorentzian_K_block_gate.py`. The sine-ordered triple gate explicitly evaluates a first KKV triple and says it is not the full H_L. The three-node HDA result is a finite Euclidean-Hamiltonian plus route-normal control; its own result note leaves full Lorentzian amplitudes open.
+
+Therefore no finite K5 Euclidean master-projector result or three-node Euclidean HDA scaling result may be promoted to a complete Lorentzian constraint-family proof. The next Lorentzian gate must assemble the complete regulated (H_L[N]), retain every graph/spin-changing output, and test:
+- the exact fixed beta-dependent coefficient and all orientation/permutation terms;
+- symmetry/adjoint relations on a common declared dense finite-regulator domain;
+- compatibility of Euclidean and Lorentzian terms on the same domain and codomain;
+- the off-shell commutator against the independently constructed diffeomorphism constraint with its geometry-dependent structure function;
+- anomaly and regulator/refinement behavior without projection back to the seed graph.
+
+### 9.4 Relational clock remains a positive control only
+
+The C8 combined clock-system projector uses the declared finite system step (R=J). It resolves the clock-only averaging ambiguity, but (R=J) is not derived from the graph-changing gravitational constraint. A physical clock must be derived from the actual constrained system or from physical boundary data, and its conditional propagator must agree with gauge-invariant projector/history observables. No physical frequency may be introduced by relabelling a constraint spectral parameter.
+
+### 9.5 Updated execution dependency
+
+The corrected next sequence is:
+1. finish the matching-head direct all-M SU(2), actual-superposition, and production/shadow artifact comparison;
+2. obtain cache-on/cache-off full-closure matrices and complete loss ledgers, treating runner termination as incomplete;
+3. assemble the complete Lorentzian constraint family on the same regulated domain as the Euclidean maps;
+4. test full off-shell HDA/anomaly closure and common-domain adjoints;
+5. enlarge the actual master-projector family and test refinement stability and nontrivial physical observables;
+6. construct the physical rigging/inner-product limit and only then derive the relational clock and retarded response;
+7. derive the IR TT kernel and experimental predictions only after all upstream gates pass.
+
+This order prevents a finite Euclidean projector, a K prerequisite, or an externally chosen clock from standing in for the missing physical theory.
