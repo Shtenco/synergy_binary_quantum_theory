@@ -140,6 +140,23 @@ def make_input(M2, node=0, K12=0, K34=2):
     return spins, tuple(labels)
 
 
+def json_default(value):
+    """Losslessly encode complex diagnostics as explicit [real, imag] pairs."""
+    if isinstance(value, (complex, np.complexfloating)):
+        z = complex(value)
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("non-finite complex value cannot enter evidence JSON")
+        return [float(z.real), float(z.imag)]
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError("non-finite floating value cannot enter evidence JSON")
+        return result
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0))):
     if pruning_mode not in ("production", "shadow_no_prune"):
         raise ValueError("invalid pruning_mode")
@@ -440,13 +457,7 @@ def main():
     args = parser.parse_args()
     result = run(args.Jmax2, args.pruning_mode, args.nodes)
     # Complex amplitudes are part of the scientific evidence, not an error.
-    # Encode any residual complex-valued diagnostics explicitly as [real, imag]
-    # so the full finite operator report is durable JSON.
-    def json_default(value):
-        if isinstance(value, complex):
-            return [float(value.real), float(value.imag)]
-        raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
-
+    # Encode them explicitly as [real, imag], rejecting non-finite values.
     text = json.dumps(result, indent=2, default=json_default, allow_nan=False)
     print(text)
     args.output.parent.mkdir(parents=True, exist_ok=True)
