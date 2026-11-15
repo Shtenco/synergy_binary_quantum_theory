@@ -276,3 +276,16 @@ The corrected next sequence is:
 7. derive the IR TT kernel and experimental predictions only after all upstream gates pass.
 
 This order prevents a finite Euclidean projector, a K prerequisite, or an externally chosen clock from standing in for the missing physical theory.
+
+
+## 10. Live CI snapshot — 2026-11-15 10:15 UTC
+
+This is a timestamped execution snapshot, not a durable mathematical claim:
+- PR #83 head at the time of writing: `b84eb13fa6be0d4ab3efc21a8e1d3bc0942ef97c`; base: `43970dd2d457fd7516a40b6bc4a4af6a94c7d85e`; Draft, open, `mergeable=false`.
+- The earlier direct all-M run `43697475172` was still running only two production-node computations; eight other matrix jobs remained queued. It predates the new full-output/superposition gate and cannot validate those additions.
+- The updated direct all-M run `43702946133`, on code head `0ccb07aaeb2808f64de3ed9ce5abed78a2609690`, was pending. It includes full sparse artifacts, actual branch-superposition tests and the new aggregate production/shadow comparison.
+- The updated cache-equivalence run `43702946091`, on the same code head, was pending.
+- Previous cache run `43697478520` completed as failure without comparison artifacts. Its failure is not a numerical cache mismatch and not a pass.
+- Source-staging run `43702946075` completed successfully; staging success is not numerical evidence.
+
+The code-validation head `0ccb07a` is an ancestor of the current documentation-only head `b84eb13`; the source code under test is identical. Always re-check run conclusions and artifacts before changing any gate status.
