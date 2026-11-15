@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 import tempfile
@@ -27,7 +28,7 @@ class TestW5CacheShardAggregate(unittest.TestCase):
             "unbounded_closure": True,
             "omitted_new_support_keys": 0,
             "closure_size": 2,
-            "basis_id_sha256": "a" * 64,
+            "basis_id_sha256": hashlib.sha256(b"basis-0\\nbasis-1").hexdigest(),
             "basis_keys_repr": ["basis-0", "basis-1"],
             "forward_B_columns_sparse": [[[0, matrix_value, 0.0]], [[1, 2.0, 0.0]]],
             "direct_Bdag_columns_sparse": [[[0, 3.0, 0.0]], [[1, 4.0, 0.0]]],
@@ -97,6 +98,31 @@ class TestW5CacheShardAggregate(unittest.TestCase):
             result = aggregate(directory, (10,))
         self.assertFalse(result["passed"])
         self.assertTrue(any("coefficient loss ledgers differ" in error for error in result["errors"]))
+
+
+    def test_incorrect_basis_digest_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.fill(directory)
+            path = directory / "W5_CACHE_MATRIX_J10_NODE0_K0_MODEon_RUN1.json"
+            report = json.loads(path.read_text())
+            report["basis_id_sha256"] = "a" * 64
+            path.write_text(json.dumps(report), encoding="utf-8")
+            result = aggregate(directory, (10,))
+        self.assertFalse(result["passed"])
+        self.assertTrue(any("failed checks: basis_hash" in error for error in result["errors"]))
+
+    def test_matrix_column_count_must_match_basis_dimension(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.fill(directory)
+            path = directory / "W5_CACHE_MATRIX_J10_NODE0_K0_MODEon_RUN1.json"
+            report = json.loads(path.read_text())
+            report["forward_B_columns_sparse"].pop()
+            path.write_text(json.dumps(report), encoding="utf-8")
+            result = aggregate(directory, (10,))
+        self.assertFalse(result["passed"])
+        self.assertTrue(any("failed checks: forward_B_columns_sparse" in error for error in result["errors"]))
 
     def test_bounded_closure_cannot_pass(self):
         with tempfile.TemporaryDirectory() as temp:
