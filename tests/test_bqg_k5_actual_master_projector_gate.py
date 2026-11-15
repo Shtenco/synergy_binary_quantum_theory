@@ -71,6 +71,15 @@ class TestActualK5MasterProjectorAlgebra(unittest.TestCase):
         self.assertEqual(target.shape, (32,))
         self.assertEqual(dims["gauss_hilbert_dimension"], 140)
         self.assertEqual(dims["active_domain_dimension"], 32)
+        self.assertTrue(dims["gauss_projection_is_part_of_constraint_definition"])
+        self.assertAlmostEqual(
+            dims["total_constraint_operator_omission_frobenius_bound"],
+            dims["subthreshold_operator_error_frobenius_bound"],
+            places=24,
+        )
+        self.assertGreaterEqual(
+            dims["gauss_projection_omission_frobenius_bound"], 0.0
+        )
 
 
 if __name__ == "__main__":
