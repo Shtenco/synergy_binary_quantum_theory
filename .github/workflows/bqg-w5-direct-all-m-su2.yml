@@ -102,9 +102,9 @@ jobs:
       - name: Compare all five production/shadow pairs
         if: always()
         run: |
-          python scripts/bqg_w5_direct_all_m_shadow_equivalence.py \\
-            --directory verification_results \\
-            --tolerance 1e-10 \\
+          python scripts/bqg_w5_direct_all_m_shadow_equivalence.py \
+            --directory verification_results \
+            --tolerance 1e-10 \
             --output verification_results/PRODUCTION_SHADOW_EQUIVALENCE.json
       - name: Upload aggregate production-shadow evidence
         if: always()
