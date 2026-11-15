@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -78,6 +79,12 @@ def _ledger_projection(report):
 
 def _validate_mode(report, expected_mode, key):
     params = report
+    basis_keys = params.get("basis_keys_repr")
+    basis_digest = (
+        hashlib.sha256("\\n".join(basis_keys).encode("utf-8")).hexdigest()
+        if isinstance(basis_keys, list) and all(isinstance(key, str) for key in basis_keys)
+        else None
+    )
     checks = {
         "status": params.get("status") == "PASS_ADJOINT_CONSISTENCY",
         "algebraic_status": params.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
@@ -89,7 +96,7 @@ def _validate_mode(report, expected_mode, key):
         "unbounded_closure": params.get("unbounded_closure") is True and params.get("max_states") is None and params.get("max_depth") is None,
         "no_omitted_closure_support": params.get("omitted_new_support_keys") == 0,
         "lower_level_coverage_disclosed": params.get("lower_level_pruning_coverage_complete") is False,
-        "basis_hash": isinstance(params.get("basis_id_sha256"), str) and len(params["basis_id_sha256"]) == 64,
+        "basis_hash": isinstance(params.get("basis_id_sha256"), str) and params.get("basis_id_sha256") == basis_digest,
         "basis_keys": isinstance(params.get("basis_keys_repr"), list) and bool(params["basis_keys_repr"]),
         "coefficient_loss_ledger": isinstance(params.get("coefficient_loss_ledger"), dict),
         "coherent_node_sum_ledger": isinstance(params.get("coherent_node_sum_ledger"), list),
