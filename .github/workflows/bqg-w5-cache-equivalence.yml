@@ -46,7 +46,7 @@ jobs:
         jmax2: [10, 12, 14]
         node: [0, 1, 2, 3, 4]
         seed_k: [0, 2, 4, 6, 8]
-        cache_mode: [on, off]
+        cache_mode: ['on', 'off']
     steps:
       - uses: actions/checkout@v4
         with:

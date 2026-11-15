@@ -74,7 +74,7 @@ class TestW5CachePairedShardAggregate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            self.write(directory, report(10, 0, 0, "off", amplitude=2.0), "RUN2")
+            self.write(directory, report(10, 0, 0, "off", amplitude=2.0))
             result = aggregate(directory)
         self.assertFalse(result["passed"])
         self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
@@ -83,7 +83,7 @@ class TestW5CachePairedShardAggregate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            self.write(directory, report(10, 0, 0, "on", status="INCOMPLETE_CLOSURE_LIMIT_REACHED"), "RUN2")
+            self.write(directory, report(10, 0, 0, "on", status="INCOMPLETE_CLOSURE_LIMIT_REACHED"))
             result = aggregate(directory)
         self.assertFalse(result["passed"])
         self.assertTrue(any("failed checks" in e for e in result["errors"]))

@@ -67,7 +67,7 @@ class TestW5ShadowPairedShardAggregate(unittest.TestCase):
             directory = Path(temp)
             self.fill(directory)
             bad = report(10, 0, "shadow_no_prune", amplitude=float("nan"))
-            self.write(directory, bad, "RUN2")
+            self.write(directory, bad)
             result = aggregate(directory)
         self.assertFalse(result["finite_matrix_comparison_complete"])
         self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
