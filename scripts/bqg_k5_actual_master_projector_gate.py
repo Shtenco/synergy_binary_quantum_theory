@@ -246,6 +246,7 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             and physical_gram["gram_rank_after_kinematical_null_quotient"] == zero_rank
             and physical_gram["gram_hermiticity_residual"] < 1e-8
             and dimensions["max_gauss_projection_loss_fraction"] < 1e-10
+            and dimensions["fixed_link_matrix_omitted_nonzero_entry_count"] == 0
             and dimensions["independent_target_max_raw_constraint_residual"] < 1e-10
             and master_error_bound < 1e-10 * master_scale
             and min_eig >= -1e-10 * scale
