@@ -81,7 +81,7 @@ def _validate_mode(report, expected_mode, key):
     params = report
     basis_keys = params.get("basis_keys_repr")
     basis_digest = (
-        hashlib.sha256("\\n".join(basis_keys).encode("utf-8")).hexdigest()
+        hashlib.sha256("\n".join(basis_keys).encode("utf-8")).hexdigest()
         if isinstance(basis_keys, list) and all(isinstance(key, str) for key in basis_keys)
         else None
     )
