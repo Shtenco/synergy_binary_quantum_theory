@@ -419,6 +419,9 @@ def main() -> int:
                 "INCOMPLETE_TIMEOUT" if timed_out
                 else "INCOMPLETE_CLOSURE_LIMIT_REACHED"
             ),
+            "source_nodes": list(args.nodes),
+            "seed_Ks": production.get("seed_Ks") or zero_output.get("seed_Ks"),
+            "Jmax2": args.Jmax2,
             "production_status": production.get("status"),
             "shadow_no_prune_status": zero_output.get("status"),
             "production_process": production.get("_process"),
@@ -439,6 +442,9 @@ def main() -> int:
         )
         result = {
             "status": "INCOMPLETE_NO_PRUNING_REFERENCE",
+            "source_nodes": list(args.nodes),
+            "seed_Ks": production.get("seed_Ks"),
+            "Jmax2": args.Jmax2,
             "comparison_performed": True,
             "production_amp_tol": args.amp_tol,
             "shadow_amp_tol": 0.0,
