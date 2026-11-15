@@ -117,6 +117,16 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         self.assertEqual(len(result["actual_complex_superposition_rows"]), 5)
         self.assertLess(result["max_actual_complex_superposition_relative_residual"], 1e-12)
         self.assertEqual(len(result["cases"]), 40)
+        self.assertTrue(all(
+            case["input_basis_leakage_by_vertex"][case["source_node"]]["samples"] >= 1
+            and case["raised_basis_leakage_by_vertex"][case["source_node"]]["samples"] >= 1
+            for case in result["cases"]
+        ))
+        self.assertTrue(all(
+            case["input_basis_leakage_by_vertex"][case["source_node"]]["basis_kind"]
+            == "charged_complete_JM_recoupling"
+            for case in result["cases"]
+        ))
         self.assertEqual(len(result["operator_columns_sparse"]), 30)
         self.assertTrue(all(len(column["entries"]) >= 1 for column in result["operator_columns_sparse"]))
         self.assertEqual(
