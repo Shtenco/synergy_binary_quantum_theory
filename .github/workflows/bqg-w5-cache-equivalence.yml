@@ -26,6 +26,8 @@ on:
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
       - 'scripts/peter_weyl_w5_direct_all_M_su2_gate.py'
+      - 'scripts/bqg_w5_cache_equivalence_shard_aggregate.py'
+      - 'tests/test_bqg_w5_cache_equivalence_shard_aggregate.py'
       - 'tests/test_peter_weyl_w5_direct_all_m_su2_gate.py'
   workflow_dispatch:
     inputs:
@@ -35,7 +37,7 @@ on:
         default: "3600"
 
 concurrency:
-  group: bqg-w5-cache-equivalence-v2-${{ github.ref }}
+  group: bqg-w5-cache-equivalence-v3-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -43,14 +45,16 @@ permissions:
 
 jobs:
   cache-equivalence:
-    name: Cache equivalence Jmax2=${{ matrix.jmax2 }}
+    name: Cache equivalence J${{ matrix.jmax2 }} node${{ matrix.node }} seedK${{ matrix.seed_k }}
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       max-parallel: 2
       matrix:
         jmax2: [10, 12, 14]
+        node: [0, 1, 2, 3, 4]
+        seed_k: [0, 2, 4, 6, 8]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,23 +69,56 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_cache_equivalence.py
           python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
+          python -m py_compile scripts/bqg_w5_cache_equivalence_shard_aggregate.py
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_cache_equivalence.py' -v
-      - name: Compare fresh-process cache-on and cache-off W5 matrices and ledgers
+          python -m unittest discover -s tests -p 'test_bqg_w5_cache_equivalence_shard_aggregate.py' -v
+      - name: Compare cache-on/cache-off for one node and one seed
         shell: bash
         run: |
           mkdir -p verification_results
           TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
           python scripts/bqg_v10_w5_cache_equivalence.py \
-            --nodes 0 1 2 3 4 --seed-K 0 2 4 6 8 \
+            --nodes "${{ matrix.node }}" --seed-K "${{ matrix.seed_k }}" \
             --Jmax2 "${{ matrix.jmax2 }}" \
             --max-states 500 --max-depth 8 --unbounded-closure \
             --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
-      - name: Upload cache equivalence report
+            --output verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_RUN${{ github.run_id }}.json
+      - name: Upload cache equivalence shard
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-cache-equivalence-j${{ matrix.jmax2 }}-${{ github.run_id }}
-          path: verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+          name: bqg-w5-cache-equivalence-j${{ matrix.jmax2 }}-node${{ matrix.node }}-k${{ matrix.seed_k }}-${{ github.run_id }}
+          path: verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_RUN${{ github.run_id }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate-cache-equivalence:
+    name: Aggregate all 75 cache-equivalence shards
+    if: always()
+    needs: cache-equivalence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download all cache-equivalence shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-w5-cache-equivalence-j*-node*-k*-${{ github.run_id }}
+          path: verification_results
+          merge-multiple: true
+          if-no-artifact-found: warn
+      - name: Validate complete shard coverage and every pairwise result
+        if: always()
+        run: python scripts/bqg_w5_cache_equivalence_shard_aggregate.py --directory verification_results --Jmax2 10 12 14 --output verification_results/W5_CACHE_EQUIVALENCE_AGGREGATE.json
+      - name: Upload aggregate cache-equivalence evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-cache-equivalence-aggregate-${{ github.run_id }}
+          path: verification_results/W5_CACHE_EQUIVALENCE_AGGREGATE.json
           if-no-files-found: warn
           retention-days: 30
