@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from bqg_v10_w5_closure_aggregate import aggregate_records
-from bqg_v10_w5_closure_summary import matrix_digest
+from bqg_v10_w5_closure_summary import matrix_digest, summarize
 
 
 def record(j, node, k, digest="same"):
@@ -24,6 +24,9 @@ def record(j, node, k, digest="same"):
         "max_intermediate_spin_reached": 3.5,
         "spin_wall_omitted_branch_count": 0,
         "sine_engine_gate_passed": True,
+        "lower_level_pruning_coverage_complete": True,
+        "static_threshold_inventory_complete": True,
+        "runtime_loss_controls_complete": True,
         "forward_matrix_digest_10sig": digest,
         "direct_adjoint_matrix_digest_10sig": digest,
     }
@@ -57,6 +60,47 @@ class TestW5ClosureAggregate(unittest.TestCase):
         result = aggregate_records(rows, nodes=(0,), seed_ks=(0,), jmax2_values=(10, 12, 14))
         self.assertFalse(result["passed"])
         self.assertTrue(result["cutoff_convergence_failures"])
+
+    def test_incomplete_runtime_pruning_coverage_fails_closed(self):
+        rows = [record(j, 0, 0) for j in (10, 12, 14)]
+        for row in rows:
+            row["lower_level_pruning_coverage_complete"] = False
+            row["runtime_loss_controls_complete"] = False
+        result = aggregate_records(rows, nodes=(0,), seed_ks=(0,), jmax2_values=(10, 12, 14))
+        self.assertFalse(result["passed"])
+        reasons = [item["reason"] for item in result["cell_failures"]]
+        self.assertTrue(any("runtime pruning coverage" in reason for reason in reasons))
+        self.assertTrue(any("runtime pruning-loss controls" in reason for reason in reasons))
+
+    def test_missing_pruning_evidence_fails_closed(self):
+        rows = [record(j, 0, 0) for j in (10, 12, 14)]
+        for row in rows:
+            row.pop("lower_level_pruning_coverage_complete")
+            row.pop("static_threshold_inventory_complete")
+            row.pop("runtime_loss_controls_complete")
+        result = aggregate_records(rows, nodes=(0,), seed_ks=(0,), jmax2_values=(10, 12, 14))
+        self.assertFalse(result["passed"])
+        self.assertTrue(result["cell_failures"])
+
+    def test_summary_preserves_pruning_coverage_provenance(self):
+        source = {
+            "lower_level_pruning_coverage_complete": False,
+            "lower_level_pruning_ledger": {
+                "coverage": {
+                    "status": "STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING",
+                    "static_threshold_inventory_complete": True,
+                    "runtime_loss_controls_complete": False,
+                }
+            },
+        }
+        result = summarize(source)
+        self.assertFalse(result["lower_level_pruning_coverage_complete"])
+        self.assertTrue(result["static_threshold_inventory_complete"])
+        self.assertFalse(result["runtime_loss_controls_complete"])
+        self.assertEqual(
+            result["lower_level_pruning_coverage_status"],
+            "STATIC_THRESHOLD_INVENTORY_PASS_RUNTIME_LOSS_CONTROLS_PENDING",
+        )
 
     def test_nonpass_algebraic_status_fails(self):
         rows = [record(j, 0, 0) for j in (10, 12, 14)]
