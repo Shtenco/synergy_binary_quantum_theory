@@ -1000,6 +1000,12 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         "Jmax": Jmax2 / 2,
         "seed_count": len(seeds),
         "seed_Ks": list(selected_seed_Ks),
+        # Persist regulator boundaries explicitly so downstream cache-on/off
+        # comparisons can prove that both runs used the same unbounded closure.
+        "max_states": max_states,
+        "max_depth": max_depth,
+        "unbounded_closure": max_states is None and max_depth is None,
+        "omitted_new_support_keys": int(omitted_support),
         "closure_size": len(basis_keys),
         "closure_depth_max": max(depth.values(), default=0),
         "basis_id_sha256": basis_id,
