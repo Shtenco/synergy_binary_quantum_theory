@@ -6,10 +6,8 @@ on:
       - research/bqg-w5-production-audit-20261113
     paths:
       - '.github/workflows/bqg-w5-cache-equivalence.yml'
-      - 'scripts/bqg_v10_w5_cache_equivalence.py'
-      - 'tests/test_bqg_v10_w5_cache_equivalence.py'
-      - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
       - 'scripts/bqg_pruning_audit.py'
       - 'scripts/bqg_pruning_coverage_inventory.py'
       - 'scripts/bqg_sparse_linear_accumulator.py'
@@ -25,27 +23,20 @@ on:
       - 'scripts/charged_intertwiner_recoupling_gate.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
-      - 'scripts/peter_weyl_w5_direct_all_M_su2_gate.py'
       - 'scripts/bqg_w5_cache_equivalence_shard_aggregate.py'
       - 'tests/test_bqg_w5_cache_equivalence_shard_aggregate.py'
-      - 'tests/test_peter_weyl_w5_direct_all_m_su2_gate.py'
   workflow_dispatch:
-    inputs:
-      timeout_seconds:
-        description: "Timeout for each fresh process in seconds"
-        required: true
-        default: "3600"
 
 concurrency:
   group: bqg-w5-cache-equivalence-v3-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   cache-equivalence:
-    name: Cache equivalence J${{ matrix.jmax2 }} node${{ matrix.node }} seedK${{ matrix.seed_k }}
+    name: Cache ${{ matrix.cache_mode }} J${{ matrix.jmax2 }} node${{ matrix.node }} seedK${{ matrix.seed_k }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -55,6 +46,7 @@ jobs:
         jmax2: [10, 12, 14]
         node: [0, 1, 2, 3, 4]
         seed_k: [0, 2, 4, 6, 8]
+        cache_mode: [on, off]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,36 +56,31 @@ jobs:
           python-version: '3.11'
       - name: Install numerical dependencies
         run: python -m pip install --upgrade numpy sympy
-      - name: Compile cache comparison and W5 closure
+      - name: Compile direct closure and paired aggregator
         run: |
-          python -m py_compile scripts/bqg_v10_w5_cache_equivalence.py
-          python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_w5_cache_equivalence_shard_aggregate.py
-          python -m unittest discover -s tests -p 'test_bqg_v10_w5_cache_equivalence.py' -v
           python -m unittest discover -s tests -p 'test_bqg_w5_cache_equivalence_shard_aggregate.py' -v
-      - name: Compare cache-on/cache-off for one node and one seed
-        shell: bash
+      - name: Run one fresh cache-mode closure process
         run: |
           mkdir -p verification_results
-          TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
-          python scripts/bqg_v10_w5_cache_equivalence.py \
-            --nodes "${{ matrix.node }}" --seed-K "${{ matrix.seed_k }}" \
-            --Jmax2 "${{ matrix.jmax2 }}" \
-            --max-states 500 --max-depth 8 --unbounded-closure \
-            --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_RUN${{ github.run_id }}.json
-      - name: Upload cache equivalence shard
+          python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
+            --nodes ${{ matrix.node }} --seed-K ${{ matrix.seed_k }} \
+            --Jmax2 ${{ matrix.jmax2 }} --unbounded-closure \
+            --amp-tol 1e-12 --cache-mode ${{ matrix.cache_mode }} \
+            --pruning-mode production \
+            --output verification_results/W5_CACHE_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_MODE${{ matrix.cache_mode }}_RUN${{ github.run_id }}.json
+      - name: Upload single-mode matrix shard
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-cache-equivalence-j${{ matrix.jmax2 }}-node${{ matrix.node }}-k${{ matrix.seed_k }}-${{ github.run_id }}
-          path: verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_RUN${{ github.run_id }}.json
+          name: bqg-w5-cache-matrix-j${{ matrix.jmax2 }}-node${{ matrix.node }}-k${{ matrix.seed_k }}-mode${{ matrix.cache_mode }}-${{ github.run_id }}
+          path: verification_results/W5_CACHE_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_K${{ matrix.seed_k }}_MODE${{ matrix.cache_mode }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
 
   aggregate-cache-equivalence:
-    name: Aggregate all 75 cache-equivalence shards
+    name: Aggregate all 75 fresh-process cache pairs
     if: always()
     needs: cache-equivalence
     runs-on: ubuntu-latest
@@ -104,17 +91,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Download all cache-equivalence shards
+      - name: Install comparison dependencies
+        run: python -m pip install numpy
+      - name: Download all cache-mode artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: bqg-w5-cache-equivalence-j*-node*-k*-${{ github.run_id }}
+          pattern: bqg-w5-cache-matrix-j*-node*-k*-mode*-${{ github.run_id }}
           path: verification_results
           merge-multiple: true
           if-no-artifact-found: warn
-      - name: Validate complete shard coverage and every pairwise result
+      - name: Compare paired full matrices and ledgers
         if: always()
         run: python scripts/bqg_w5_cache_equivalence_shard_aggregate.py --directory verification_results --Jmax2 10 12 14 --output verification_results/W5_CACHE_EQUIVALENCE_AGGREGATE.json
-      - name: Upload aggregate cache-equivalence evidence
+      - name: Upload cache-equivalence aggregate
         if: always()
         uses: actions/upload-artifact@v4
         with:

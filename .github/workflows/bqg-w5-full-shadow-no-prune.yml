@@ -6,8 +6,8 @@ on:
       - research/bqg-w5-production-audit-20261113
     paths:
       - '.github/workflows/bqg-w5-full-shadow-no-prune.yml'
-      - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/bqg_v10_w5_amp_tol_shadow_compare.py'
       - 'scripts/bqg_pruning_audit.py'
       - 'scripts/bqg_pruning_coverage_inventory.py'
       - 'scripts/bqg_sparse_linear_accumulator.py'
@@ -26,22 +26,17 @@ on:
       - 'scripts/bqg_w5_shadow_no_prune_shard_aggregate.py'
       - 'tests/test_bqg_w5_shadow_no_prune_shard_aggregate.py'
   workflow_dispatch:
-    inputs:
-      timeout_seconds:
-        description: Timeout for each fresh production/shadow process
-        required: true
-        default: "3600"
 
 concurrency:
   group: bqg-w5-full-shadow-no-prune-v2-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   full-shadow-matrix:
-    name: Full W5 shadow comparison J${{ matrix.jmax2 }} node${{ matrix.node }}
+    name: Shadow ${{ matrix.pruning_mode }} J${{ matrix.jmax2 }} node${{ matrix.node }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -50,6 +45,7 @@ jobs:
       matrix:
         jmax2: [10, 12, 14]
         node: [0, 1, 2, 3, 4]
+        pruning_mode: [production, shadow_no_prune]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,78 +55,52 @@ jobs:
           python-version: '3.11'
       - name: Install numerical dependencies
         run: python -m pip install --upgrade numpy sympy
-      - name: Compile full shadow comparison and shard aggregator
+      - name: Compile direct closure and paired aggregator
         run: |
-          python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_w5_shadow_no_prune_shard_aggregate.py
           python -m unittest discover -s tests -p 'test_bqg_w5_shadow_no_prune_shard_aggregate.py' -v
-      - name: Compare all W5 seeds at one source node with unbounded closure
+      - name: Run one fresh production/shadow closure process
         shell: bash
         run: |
           mkdir -p verification_results
-          TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
           set +e
-          python scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
-            --nodes "${{ matrix.node }}" \
-            --Jmax2 "${{ matrix.jmax2 }}" \
-            --max-states 500 --max-depth 8 \
-            --unbounded-closure \
-            --amp-tol 1e-12 \
-            --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
+          python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
+            --nodes ${{ matrix.node }} --seed-K 0 2 4 6 8 \
+            --Jmax2 ${{ matrix.jmax2 }} --unbounded-closure \
+            --amp-tol 1e-12 --cache-mode on \
+            --pruning-mode ${{ matrix.pruning_mode }} \
+            --output verification_results/W5_SHADOW_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_MODE${{ matrix.pruning_mode }}_RUN${{ github.run_id }}.json
           rc=$?
           set -e
-          test -f verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
-          python - "$rc" "verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json" "${{ matrix.node }}" "${{ matrix.jmax2 }}" <<'PY'
-          import json, math, sys
+          test -f verification_results/W5_SHADOW_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_MODE${{ matrix.pruning_mode }}_RUN${{ github.run_id }}.json
+          python - "$rc" "verification_results/W5_SHADOW_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_MODE${{ matrix.pruning_mode }}_RUN${{ github.run_id }}.json" "${{ matrix.pruning_mode }}" <<'PY'
+          import json, sys
           rc = int(sys.argv[1])
-          node = int(sys.argv[3])
-          jmax2 = int(sys.argv[4])
-          result = json.load(open(sys.argv[2], encoding="utf-8"))
-          assert rc == 2, f"expected explicitly incomplete diagnostic exit code 2, got {rc}"
-          assert result.get("status") == "INCOMPLETE_NO_PRUNING_REFERENCE", result.get("status")
-          assert result.get("comparison_performed") is True
-          assert result.get("source_nodes") == [node]
-          assert result.get("seed_Ks") == [0, 2, 4, 6, 8]
-          assert result.get("Jmax2") == jmax2
-          assert result.get("shadow_pruning_mode") == "shadow_no_prune"
-          assert result.get("lower_level_pruning_bypassed_at_instrumented_sites") is True
-          assert result.get("all_lower_level_pruning_bypassed") is False
-          assert result.get("unverified_lower_level_sites_may_remain") is True
-          assert result.get("parameters", {}).get("unbounded_closure") is True
-          for key in (
-              "production_coefficient_loss_ledger",
-              "shadow_coefficient_loss_ledger",
-              "production_coherent_node_sum_ledger",
-              "shadow_coherent_node_sum_ledger",
-          ):
-              assert result.get(key) is not None, f"missing runtime evidence: {key}"
-          for key in ("forward_matrix_comparison", "direct_adjoint_matrix_comparison"):
-              residual = result[key].get("relative_l2_residual")
-              assert isinstance(residual, (int, float)) and math.isfinite(residual)
-          print(json.dumps({
-              "diagnostic_status": result["status"],
-              "production_status": result.get("production_status"),
-              "shadow_status": result.get("shadow_no_prune_status"),
-              "node": node,
-              "Jmax2": jmax2,
-              "forward_comparison": result["forward_matrix_comparison"],
-              "adjoint_comparison": result["direct_adjoint_matrix_comparison"],
-              "claim": "finite one-node W5 production-vs-instrumented-shadow diagnostic; global pruning closure remains open",
-          }, indent=2))
+          report = json.load(open(sys.argv[2], encoding="utf-8"))
+          mode = sys.argv[3]
+          if mode == "production":
+              assert rc == 0 and report.get("status") == "PASS_ADJOINT_CONSISTENCY", report.get("status")
+          else:
+              assert rc == 2 and report.get("status") == "INCOMPLETE_NO_PRUNING_COVERAGE", report.get("status")
+              assert report.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY"
+          assert report.get("max_states") is None and report.get("max_depth") is None
+          assert report.get("seed_Ks") == [0, 2, 4, 6, 8]
+          assert report.get("forward_B_columns_sparse")
+          assert report.get("direct_Bdag_columns_sparse")
+          print("single-mode W5 matrix shard: PASS (finite diagnostic only)")
           PY
-      - name: Upload full shadow comparison shard
+      - name: Upload single-mode shadow matrix shard
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-full-shadow-j${{ matrix.jmax2 }}-node${{ matrix.node }}-${{ github.run_id }}
-          path: verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
+          name: bqg-w5-shadow-matrix-j${{ matrix.jmax2 }}-node${{ matrix.node }}-mode${{ matrix.pruning_mode }}-${{ github.run_id }}
+          path: verification_results/W5_SHADOW_MATRIX_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_MODE${{ matrix.pruning_mode }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
 
   aggregate-full-shadow:
-    name: Aggregate all 15 finite shadow matrix comparisons
+    name: Aggregate all 15 finite production/shadow pairs
     if: always()
     needs: full-shadow-matrix
     runs-on: ubuntu-latest
@@ -141,14 +111,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Download all full-shadow shards
+      - name: Install comparison dependencies
+        run: python -m pip install numpy
+      - name: Download all single-mode artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: bqg-w5-full-shadow-j*-node*-${{ github.run_id }}
+          pattern: bqg-w5-shadow-matrix-j*-node*-mode*-${{ github.run_id }}
           path: verification_results
           merge-multiple: true
           if-no-artifact-found: warn
-      - name: Validate finite matrix comparison coverage
+      - name: Compare paired full matrices and preserve incomplete claim boundary
         if: always()
         run: python scripts/bqg_w5_shadow_no_prune_shard_aggregate.py --directory verification_results --Jmax2 10 12 14 --output verification_results/W5_FULL_SHADOW_AGGREGATE.json
       - name: Upload aggregate shadow evidence

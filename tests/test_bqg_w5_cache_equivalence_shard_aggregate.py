@@ -10,73 +10,83 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from bqg_w5_cache_equivalence_shard_aggregate import aggregate
 
 
-class TestW5CacheShardAggregate(unittest.TestCase):
-    def write_shard(self, directory, jmax2, node, seed_k, *, passed=True):
-        report = {
-            "status": "PASS_CACHE_EQUIVALENCE" if passed else "INCOMPLETE_CACHE_EQUIVALENCE",
-            "comparison_performed": passed,
-            "cache_on": {"status": "PASS_ADJOINT_CONSISTENCY" if passed else "INCOMPLETE"},
-            "cache_off": {"status": "PASS_ADJOINT_CONSISTENCY" if passed else "INCOMPLETE"},
-            "comparison": {
-                "status": "PASS_CACHE_EQUIVALENCE" if passed else "INCOMPLETE_CACHE_EQUIVALENCE",
-                "comparison_completed": passed,
-                "matrix_exactly_equal": passed,
-                "equivalence_passed": passed,
-                "observed_ledger_exactly_equal": passed,
-                "static_coverage_complete": passed,
+def report(jmax2, node, seed_k, mode, *, amplitude=1.0, status="PASS_ADJOINT_CONSISTENCY"):
+    return {
+        "status": status,
+        "source_nodes": [node],
+        "seed_Ks": [seed_k],
+        "Jmax2": jmax2,
+        "pruning_mode": "production",
+        "cache_mode": mode,
+        "max_states": None,
+        "max_depth": None,
+        "basis_keys_repr": ["basis-0"],
+        "forward_B_columns_sparse": [[[0, amplitude, 0.0]]],
+        "direct_Bdag_columns_sparse": [[[0, amplitude, 0.0]]],
+        "lower_level_pruning_ledger": {
+            "cache_policy": mode,
+            "coverage": {
+                "static_threshold_inventory_complete": True,
+                "fixed_operator_mask_error_bound_complete": True,
             },
-            "parameters": {
-                "nodes": [node],
-                "seed_Ks": [seed_k],
-                "Jmax2": jmax2,
-                "unbounded_closure": True,
-            },
-        }
-        path = directory / f"W5_CACHE_EQUIVALENCE_J{jmax2}_NODE{node}_K{seed_k}_RUN1.json"
-        path.write_text(json.dumps(report), encoding="utf-8")
+            "event_count": 0,
+        },
+        "coefficient_loss_ledger": {},
+        "coherent_node_sum_ledger": [],
+        "spectral_sensitivity": {},
+        "diagnostics": {},
+    }
 
-    def fill(self, directory, *, failed=None):
-        for jmax2 in (10, 12, 14):
-            for node in range(5):
-                for seed_k in (0, 2, 4, 6, 8):
-                    key = (jmax2, node, seed_k)
-                    self.write_shard(directory, *key, passed=(key != failed))
 
-    def test_all_75_exact_shards_pass(self):
+class TestW5CachePairedShardAggregate(unittest.TestCase):
+    def write(self, directory, data, suffix="RUN1"):
+        j, n, k = data["Jmax2"], data["source_nodes"][0], data["seed_Ks"][0]
+        mode = data["cache_mode"]
+        path = directory / f"W5_CACHE_MATRIX_J{j}_NODE{n}_K{k}_MODE{mode}_{suffix}.json"
+        path.write_text(json.dumps(data), encoding="utf-8")
+
+    def fill(self, directory):
+        for j in (10, 12, 14):
+            for n in range(5):
+                for k in (0, 2, 4, 6, 8):
+                    for mode in ("on", "off"):
+                        self.write(directory, report(j, n, k, mode))
+
+    def test_all_75_pairs_pass_with_separate_mode_artifacts(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
             result = aggregate(directory)
         self.assertTrue(result["passed"], result["errors"])
-        self.assertEqual(result["valid_shard_count"], 75)
-        self.assertEqual(result["expected_shard_count"], 75)
+        self.assertEqual(result["completed_pair_count"], 75)
+        self.assertEqual(result["valid_mode_shard_count"], 150)
 
-    def test_missing_shard_is_incomplete(self):
+    def test_missing_cache_off_shard_is_incomplete(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            (directory / "W5_CACHE_EQUIVALENCE_J14_NODE4_K8_RUN1.json").unlink()
+            (directory / "W5_CACHE_MATRIX_J14_NODE4_K8_MODEoff_RUN1.json").unlink()
             result = aggregate(directory)
         self.assertFalse(result["passed"])
-        self.assertEqual(len(result["missing_shards"]), 1)
+        self.assertEqual(len(result["missing_mode_shards"]), 1)
 
-    def test_failed_cache_comparison_cannot_pass_aggregate(self):
-        with tempfile.TemporaryDirectory() as temp:
-            directory = Path(temp)
-            self.fill(directory, failed=(10, 0, 0))
-            result = aggregate(directory)
-        self.assertFalse(result["passed"])
-        self.assertTrue(any("failed checks" in error for error in result["errors"]))
-
-    def test_duplicate_shard_is_rejected(self):
+    def test_matrix_mismatch_fails_pair(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            duplicate = directory / "W5_CACHE_EQUIVALENCE_J10_NODE0_K0_RUN2.json"
-            duplicate.write_text((directory / "W5_CACHE_EQUIVALENCE_J10_NODE0_K0_RUN1.json").read_text())
+            self.write(directory, report(10, 0, 0, "off", amplitude=2.0), "RUN2")
             result = aggregate(directory)
         self.assertFalse(result["passed"])
-        self.assertTrue(any("duplicate shard identity" in error for error in result["errors"]))
+        self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
+
+    def test_incomplete_operator_gate_cannot_pass(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.fill(directory)
+            self.write(directory, report(10, 0, 0, "on", status="INCOMPLETE_CLOSURE_LIMIT_REACHED"), "RUN2")
+            result = aggregate(directory)
+        self.assertFalse(result["passed"])
+        self.assertTrue(any("failed checks" in e for e in result["errors"]))
 
 
 if __name__ == "__main__":

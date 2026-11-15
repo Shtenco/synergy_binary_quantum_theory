@@ -10,61 +10,67 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from bqg_w5_shadow_no_prune_shard_aggregate import aggregate
 
 
-class TestW5ShadowShardAggregate(unittest.TestCase):
-    def write_shard(self, directory, jmax2, node, *, valid=True):
-        report = {
-            "status": "INCOMPLETE_NO_PRUNING_REFERENCE",
-            "source_nodes": [node],
-            "Jmax2": jmax2,
-            "comparison_performed": True,
-            "parameters": {"unbounded_closure": True},
-            "lower_level_pruning_bypassed_at_instrumented_sites": True,
-            "all_lower_level_pruning_bypassed": False,
-            "unverified_lower_level_sites_may_remain": True,
-            "production_coefficient_loss_ledger": {},
-            "shadow_coefficient_loss_ledger": {},
-            "production_coherent_node_sum_ledger": [],
-            "shadow_coherent_node_sum_ledger": [],
-            "forward_matrix_comparison": {"relative_l2_residual": 0.0},
-            "direct_adjoint_matrix_comparison": {"relative_l2_residual": 0.0},
-        }
-        if not valid:
-            report["comparison_performed"] = False
-        path = directory / f"W5_FULL_SHADOW_J{jmax2}_NODE{node}_RUN1.json"
-        path.write_text(json.dumps(report), encoding="utf-8")
+def report(jmax2, node, mode, *, amplitude=1.0):
+    status = "PASS_ADJOINT_CONSISTENCY" if mode == "production" else "INCOMPLETE_NO_PRUNING_COVERAGE"
+    return {
+        "status": status,
+        "algebraic_status": "PASS_ADJOINT_CONSISTENCY",
+        "source_nodes": [node],
+        "seed_Ks": [0, 2, 4, 6, 8],
+        "Jmax2": jmax2,
+        "pruning_mode": mode,
+        "cache_mode": "on",
+        "max_states": None,
+        "max_depth": None,
+        "basis_keys_repr": ["basis-0"],
+        "forward_B_columns_sparse": [[[0, amplitude, 0.0]]],
+        "direct_Bdag_columns_sparse": [[[0, amplitude, 0.0]]],
+        "coefficient_loss_ledger": {},
+        "lower_level_pruning_ledger": {"event_count": 0},
+        "coherent_node_sum_ledger": [],
+    }
+
+
+class TestW5ShadowPairedShardAggregate(unittest.TestCase):
+    def write(self, directory, data, suffix="RUN1"):
+        j, n, mode = data["Jmax2"], data["source_nodes"][0], data["pruning_mode"]
+        path = directory / f"W5_SHADOW_MATRIX_J{j}_NODE{n}_MODE{mode}_{suffix}.json"
+        path.write_text(json.dumps(data), encoding="utf-8")
 
     def fill(self, directory):
         for j in (10, 12, 14):
-            for node in range(5):
-                self.write_shard(directory, j, node)
+            for n in range(5):
+                for mode in ("production", "shadow_no_prune"):
+                    self.write(directory, report(j, n, mode))
 
-    def test_all_fifteen_shards_complete_but_claim_stays_incomplete(self):
+    def test_all_fifteen_pairs_complete_but_never_claim_global_pass(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
             result = aggregate(directory)
-        self.assertTrue(result["finite_matrix_comparison_complete"])
+        self.assertTrue(result["finite_matrix_comparison_complete"], result["errors"])
         self.assertFalse(result["passed"])
+        self.assertEqual(result["completed_pair_count"], 15)
         self.assertEqual(result["status"], "INCOMPLETE_NO_PRUNING_COVERAGE_ALL_SHARDS_COMPLETED")
-        self.assertEqual(result["valid_shard_count"], 15)
 
-    def test_missing_shard_is_incomplete(self):
+    def test_missing_shadow_mode_is_incomplete(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            (directory / "W5_FULL_SHADOW_J14_NODE4_RUN1.json").unlink()
+            (directory / "W5_SHADOW_MATRIX_J14_NODE4_MODEshadow_no_prune_RUN1.json").unlink()
             result = aggregate(directory)
         self.assertFalse(result["finite_matrix_comparison_complete"])
-        self.assertEqual(len(result["missing_shards"]), 1)
+        self.assertEqual(len(result["missing_mode_shards"]), 1)
 
-    def test_bad_comparison_cannot_be_aggregated(self):
+    def test_non_finite_comparison_cannot_pass(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.fill(directory)
-            self.write_shard(directory, 10, 0, valid=False)
+            bad = report(10, 0, "shadow_no_prune", amplitude=float("nan"))
+            self.write(directory, bad, "RUN2")
             result = aggregate(directory)
         self.assertFalse(result["finite_matrix_comparison_complete"])
-        self.assertTrue(any("failed checks" in error for error in result["errors"]))
+        self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
 
 
 if __name__ == "__main__":
