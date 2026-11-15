@@ -35,7 +35,7 @@ on:
         default: "3600"
 
 concurrency:
-  group: bqg-w5-cache-equivalence-${{ github.ref }}
+  group: bqg-w5-cache-equivalence-v2-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
