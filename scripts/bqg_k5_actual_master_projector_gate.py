@@ -108,6 +108,30 @@ def master_from_constraints(C: np.ndarray, G: np.ndarray) -> np.ndarray:
     return 0.5 * (M + M.conj().T)
 
 
+def physical_inner_product(P: np.ndarray, phi: np.ndarray, psi: np.ndarray) -> complex:
+    """Finite rigging/projector inner product <eta(phi),eta(psi)>=<phi|P|psi>."""
+    return complex(np.vdot(phi, P @ psi))
+
+
+def physical_gram_check(P: np.ndarray, rng: np.random.Generator) -> dict:
+    n = P.shape[0]
+    probes = rng.normal(size=(n, 6)) + 1j * rng.normal(size=(n, 6))
+    projected = P @ probes
+    gram = probes.conj().T @ projected
+    gram = 0.5 * (gram + gram.conj().T)
+    values = np.linalg.eigvalsh(gram)
+    scale = max(float(np.max(np.abs(values))), 1.0)
+    rank = int(np.sum(values > 1e-9 * scale))
+    hermiticity = stable_norm(gram - gram.conj().T)
+    return {
+        "gram_dimension": int(gram.shape[0]),
+        "gram_min_eigenvalue": float(np.min(values)),
+        "gram_rank_after_kinematical_null_quotient": rank,
+        "gram_hermiticity_residual": hermiticity,
+        "positive_semidefinite": bool(float(np.min(values)) >= -1e-10 * scale),
+    }
+
+
 def spectral_projector(M: np.ndarray, *, relative_zero_tol: float = 1e-10):
     if not math.isfinite(relative_zero_tol) or relative_zero_tol <= 0.0:
         raise ValueError("relative_zero_tol must be finite and positive")
@@ -148,6 +172,7 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
         constraint_residual = max(stable_norm(C[a] @ P) for a in range(m))
         target_residual = max(stable_norm(C[a] @ target) for a in range(m))
         target_projector_error = stable_norm(P @ target - target)
+        physical_gram = physical_gram_check(P, rng)
         min_eig = float(np.min(evals))
         positivity_margin = min_eig / scale
 
@@ -173,6 +198,9 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             and constraint_residual < 1e-8
             and target_residual < 1e-8
             and target_projector_error < 1e-7
+            and physical_gram["positive_semidefinite"]
+            and physical_gram["gram_rank_after_kinematical_null_quotient"] == zero_rank
+            and physical_gram["gram_hermiticity_residual"] < 1e-8
             and dimensions["max_gauss_projection_loss_fraction"] < 1e-10
             and dimensions["independent_target_max_raw_constraint_residual"] < 1e-10
             and min_eig >= -1e-10 * scale
@@ -195,6 +223,11 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             "all_constraint_projector_residual": constraint_residual,
             "independent_target_constraint_residual": target_residual,
             "target_to_projector_residual": target_projector_error,
+            "finite_physical_inner_product": {
+                "definition": "<eta(phi),eta(psi)>_phys = <phi|P_phys|psi>",
+                "status": "positive semidefinite on the kinematical domain; positive definite after quotient by ker(P_phys)",
+                **physical_gram,
+            },
             "heat_kernel_checks": heat_rows,
             "passed": bool(passed),
         })
@@ -223,6 +256,11 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
         "metric_results": rows,
         "all_metrics_same_zero_projector": bool(pairwise < 1e-7),
         "all_constraints_kill_projector": all(row["all_constraint_projector_residual"] < 1e-8 for row in rows),
+        "finite_positive_physical_inner_product_passed": all(
+            row["finite_physical_inner_product"]["positive_semidefinite"]
+            and row["finite_physical_inner_product"]["gram_rank_after_kinematical_null_quotient"] == row["zero_sector_rank"]
+            for row in rows
+        ),
         "independent_target_residual_max": max(target_residuals, default=0.0),
         "independent_target_raw_residual_max": dimensions["independent_target_max_raw_constraint_residual"],
         "gauss_projection_loss_gate_passed": dimensions["max_gauss_projection_loss_fraction"] < 1e-10,
