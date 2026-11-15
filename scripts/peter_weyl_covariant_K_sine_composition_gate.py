@@ -21,7 +21,7 @@ import peter_weyl_covariant_K_composition_gate as KC
 import peter_weyl_euclidean_sine_ordering_gate as SINE
 
 
-def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1)):
+def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1), projection_diagnostics=None):
     base=KC.CK.branch_from_key(key)
     out={}; max_v=0.0; max_b=0.0
     for sign,spec in KC.PW.oriented_specs(source_v):
@@ -33,13 +33,15 @@ def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1)):
                 branches,vleak=KC.CK.apply_sequence_to_branch(base,seq,source_v,Jmax2)
                 max_v=max(max_v,float(vleak))
                 for br in branches:
-                    projected,bleak=KC.CK.project_branch_complete_charges(br,charged_nodes)
+                    projected,bleak=KC.CK.project_branch_complete_charges(
+                        br, charged_nodes, diagnostics=projection_diagnostics
+                    )
                     max_b=max(max_b,float(bleak))
                     KC.CK.add_state(out,projected,pref*coef)
     return out,max_v,max_b
 
 
-def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1)):
+def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1), projection_diagnostics=None):
     """Apply the actual branch/recoupling path to a complex sparse superposition.
 
     Unlike a post-hoc matrix multiplication, each input coefficient is placed
@@ -71,7 +73,7 @@ def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1)):
                     max_v = max(max_v, float(vleak))
                     for branch in branches:
                         projected, bleak = KC.CK.project_branch_complete_charges(
-                            branch, charged_nodes
+                            branch, charged_nodes, diagnostics=projection_diagnostics
                         )
                         max_b = max(max_b, float(bleak))
                         KC.CK.add_state(out, projected, pref * coef)
