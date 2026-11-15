@@ -63,10 +63,14 @@ NON_PRUNING_COMPARISON_CLASSIFICATIONS = {
         "spectral_operator_parameter_validation",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states is not None"):
         "support_cap_configuration",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states is None"):
+        "support_cap_configuration_unbounded_branch",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_states < len(selected_seed_Ks)"):
         "support_cap_parameter_validation",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth is not None"):
         "support_cap_configuration",
+    ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth is None"):
+        "support_cap_configuration_unbounded_branch",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "run_closure", "max_depth < 0"):
         "support_cap_parameter_validation",
     ("bqg_v10_w5_lorentzian_adjoint_closure", "record_dropped", "threshold is not None"):
