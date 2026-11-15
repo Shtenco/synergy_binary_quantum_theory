@@ -21,11 +21,24 @@ import peter_weyl_covariant_K_composition_gate as KC
 import peter_weyl_euclidean_sine_ordering_gate as SINE
 
 
+def projection_charge_nodes(charged_nodes, spec):
+    """Include all vertices carrying open charge in this graph-changing term.
+
+    A T-sequence touches the four vertices in its oriented spec. Its open
+    fundamental indices are not confined to the source vertex: projecting
+    the other touched vertices to Gauss intertwiners discards genuine branch
+    support. Preserve caller-declared charges and add the term-local support.
+    """
+    v, a, b, c = spec
+    return tuple(dict.fromkeys(tuple(charged_nodes) + (v, a, b, c)))
+
+
 def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1), projection_diagnostics=None):
     base=KC.CK.branch_from_key(key)
     out={}; max_v=0.0; max_b=0.0
     for sign,spec in KC.PW.oriented_specs(source_v):
         v,a,b,c=spec
+        term_charged_nodes = projection_charge_nodes(charged_nodes, spec)
         for adj in (False,True):
             pref=(+0.5j if adj else -0.5j)*sign
             for coef,seq0 in KC.PW.T_sequences(v,a,b,c):
@@ -34,7 +47,7 @@ def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1), projection_diagn
                 max_v=max(max_v,float(vleak))
                 for br in branches:
                     projected,bleak=KC.CK.project_branch_complete_charges(
-                        br, charged_nodes, diagnostics=projection_diagnostics
+                        br, term_charged_nodes, diagnostics=projection_diagnostics
                     )
                     max_b=max(max_b,float(bleak))
                     KC.CK.add_state(out,projected,pref*coef)
@@ -63,6 +76,7 @@ def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1), projecti
         base = KC.CK.branch_from_key(key, amp=amp)
         for sign, spec in KC.PW.oriented_specs(source_v):
             v, a, b, c = spec
+            term_charged_nodes = projection_charge_nodes(charged_nodes, spec)
             for adj in (False, True):
                 pref = (+0.5j if adj else -0.5j) * sign
                 for coef, seq0 in KC.PW.T_sequences(v, a, b, c):
@@ -73,7 +87,7 @@ def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1), projecti
                     max_v = max(max_v, float(vleak))
                     for branch in branches:
                         projected, bleak = KC.CK.project_branch_complete_charges(
-                            branch, charged_nodes, diagnostics=projection_diagnostics
+                            branch, term_charged_nodes, diagnostics=projection_diagnostics
                         )
                         max_b = max(max_b, float(bleak))
                         KC.CK.add_state(out, projected, pref * coef)

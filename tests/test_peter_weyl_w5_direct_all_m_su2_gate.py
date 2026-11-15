@@ -8,6 +8,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import peter_weyl_w5_direct_all_M_su2_gate as gate
 import peter_weyl_covariant_K_sine_composition_gate as sine_gate
+import peter_weyl_covariant_K_leg_gate as leg_gate
+import k5_peter_weyl_safe_hda_column as pw
 
 
 class TestDirectAllMSU2FailClosed(unittest.TestCase):
@@ -147,6 +149,42 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             },
         )
 
+    def test_graph_changing_term_keeps_all_touched_vertices_in_complete_charge_basis(self):
+        node = 0
+        key = gate.make_input(0, node, 0, 2)
+        base = leg_gate.branch_from_key(key)
+        _sign, spec = pw.oriented_specs(node)[0]
+        v, a, b, c = spec
+        _coefficient, sequence = pw.T_sequences(v, a, b, c)[0]
+        branches, _ = leg_gate.apply_sequence_to_branch(base, sequence, node, 10)
+        self.assertTrue(branches)
+        branch = branches[0]
+
+        source_only_diagnostics = {}
+        source_only, source_only_leak = leg_gate.project_branch_complete_charges(
+            branch, (node,), diagnostics=source_only_diagnostics
+        )
+        self.assertFalse(source_only)
+        self.assertEqual(source_only_leak, 1.0)
+
+        term_charged_nodes = sine_gate.projection_charge_nodes((node,), spec)
+        self.assertEqual(term_charged_nodes, (0, 2, 3, 4))
+        diagnostics = {}
+        projected, leakage = leg_gate.project_branch_complete_charges(
+            branch, term_charged_nodes, diagnostics=diagnostics
+        )
+        self.assertTrue(projected)
+        self.assertLess(leakage, 1e-10)
+        for touched in term_charged_nodes:
+            self.assertEqual(
+                diagnostics[touched]["basis_kind"],
+                "charged_complete_JM_recoupling",
+            )
+            self.assertLess(diagnostics[touched]["max_relative_leakage"], 1e-10)
+        untouched = next(v for v in pw.VERT if v not in term_charged_nodes)
+        self.assertEqual(diagnostics[untouched]["basis_kind"], "Gauss_intertwiner")
+        self.assertLess(diagnostics[untouched]["max_relative_leakage"], 1e-10)
+
     def test_complex_superposition_helper_propagates_amplitudes_into_branches(self):
         key = gate.make_input(0, 0, 0, 2)
 
@@ -156,7 +194,10 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         def apply_sequence(branch, seq, source_v, Jmax2):
             return [(seq, branch[2])], 0.0
 
+        observed_charge_nodes = []
+
         def project_branch(branch, charged_nodes, diagnostics=None):
+            observed_charge_nodes.append(tuple(charged_nodes))
             seq, amp = branch
             if diagnostics is not None:
                 diagnostics[0] = {"samples": 1, "max_relative_leakage": 0.25}
@@ -179,6 +220,7 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
                 {key: beta}, 0, 4, charged_nodes=(0,)
             )
 
+        self.assertEqual(set(observed_charge_nodes), {(0, 1, 2, 3)})
         self.assertEqual(projection_diagnostics[0]["max_relative_leakage"], 0.25)
         self.assertEqual(mixed_leak, 0.25)
 
