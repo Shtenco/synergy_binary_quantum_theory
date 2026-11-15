@@ -94,7 +94,7 @@ def _validate(report, mode, key):
     status = "PASS_ADJOINT_CONSISTENCY" if mode == "production" else "INCOMPLETE_NO_PRUNING_COVERAGE"
     basis_keys = report.get("basis_keys_repr")
     basis_digest = (
-        hashlib.sha256("\\n".join(basis_keys).encode("utf-8")).hexdigest()
+        hashlib.sha256("\n".join(basis_keys).encode("utf-8")).hexdigest()
         if isinstance(basis_keys, list) and all(isinstance(item, str) for item in basis_keys)
         else None
     )
