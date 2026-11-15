@@ -156,6 +156,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     directions = (1, -1)
     cases = []
     all_outputs = {}
+    superposition_rows = []
     context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else None
 
     def evaluate():
@@ -180,6 +181,53 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         "pruning_events": collector.snapshot()["event_count"],
                     }
                 he_by_channel_m[(K12, K34)] = he_by_m
+
+            # Independent implementation-level linearity check: place complex
+            # coefficients on the input branches, then run the real sequence,
+            # recoupling, projection and coherent-accumulation path.
+            key_a = make_input(0, node, 0, 2)
+            key_b = make_input(0, node, 2, 0)
+            alpha = 0.7 + 0.2j
+            beta = -0.3 + 0.9j
+            mixed, mixed_vleak, mixed_bleak = SINE.complete_HE_sine_state(
+                {key_a: alpha, key_b: beta},
+                node, Jmax2, charged_nodes=(node,),
+            )
+            require_nonzero_output(
+                mixed, label=f"H_E complex superposition at node {node}"
+            )
+            expected_terms = {}
+            for key, coefficient in ((key_a, alpha), (key_b, beta)):
+                unit_output = all_outputs[(node, key[1][node][3], key[1][node][4], 0)]
+                for output_key, amplitude in unit_output.items():
+                    expected_terms.setdefault(output_key, []).append(coefficient * amplitude)
+            expected = {
+                output_key: complex(
+                    math.fsum(value.real for value in terms),
+                    math.fsum(value.imag for value in terms),
+                )
+                for output_key, terms in expected_terms.items()
+                if any(value != 0j for value in terms)
+            }
+            super_rel, super_abs, super_scale = relative_error(mixed, expected)
+            superposition_rows.append({
+                "source_node": node,
+                "input_basis_states": 2,
+                "complex_coefficients": [
+                    [alpha.real, alpha.imag], [beta.real, beta.imag]
+                ],
+                "output_support_dimension": len(mixed),
+                "relative_residual": super_rel,
+                "absolute_residual": super_abs,
+                "comparison_scale": super_scale,
+                "volume_leakage": float(mixed_vleak),
+                "basis_leakage": float(mixed_bleak),
+                "scope": (
+                    "Actual complex coefficients propagated through branch construction, "
+                    "graph-changing sequences, recoupling projection and coherent accumulation; "
+                    "compared with independently evaluated unit-column outputs"
+                ),
+            })
 
             for K12, K34 in channels:
               he_by_m = he_by_channel_m[(K12, K34)]
@@ -312,7 +360,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             "operator_matrix_shape": [len(output_keys), len(basis_keys)],
             "linearity_absolute_residual": linearity_abs,
             "linearity_relative_residual": linearity_rel,
-            "scope": "finite matrix extension on the declared seed subspace",
+            "scope": "matrix algebra identity only; not an independent test of the branch implementation",
         })
         adjoint_rel = adjoint_abs / max(matrix_norm, 1e-30)
         adjoint_rows.append({
@@ -329,11 +377,14 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
     max_jz_commutator = max((x["jz_commutator_relative_residual"] for x in cases), default=0.0)
     max_wrong_fraction = max((x["wrong_JM_weight_fraction"] for x in cases), default=0.0)
+    max_actual_superposition = max((x["relative_residual"] for x in superposition_rows), default=float("inf"))
     passed = (
         len(cases) == 4 * len(channels) * len(nodes)
         and max_commutator < 1e-8
         and max_adjoint < 1e-8
         and max_linearity < 1e-12
+        and max_actual_superposition < 1e-10
+        and len(superposition_rows) == len(nodes)
         and all(x["matrix_frobenius_norm"] > 1e-14 for x in adjoint_rows)
         and max_jz_commutator < 1e-12
         and max_wrong_fraction < 1e-18
@@ -351,8 +402,10 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "magnetic_components_tested_M2": [-2, 0, 2],
         "adjointness_compression_rows": adjoint_rows,
         "max_adjointness_compression_relative_residual": max_adjoint,
-        "linearity_matrix_rows": linearity_rows,
-        "max_finite_matrix_linearity_relative_residual": max_linearity,
+        "matrix_superposition_identity_rows": linearity_rows,
+        "max_matrix_superposition_identity_relative_residual": max_linearity,
+        "actual_complex_superposition_rows": superposition_rows,
+        "max_actual_complex_superposition_relative_residual": max_actual_superposition,
         "pruning_mode": pruning_mode,
         "commutator_target": "[J_+, H_E]=[J_-, H_E]=[J_z, H_E]=0 on the actual complete W5 sine-H_E map",
         "max_commutator_relative_residual": max_commutator,
