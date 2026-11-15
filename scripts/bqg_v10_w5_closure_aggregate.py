@@ -66,6 +66,21 @@ def aggregate_records(records, nodes=EXPECTED_NODES, seed_ks=EXPECTED_SEED_KS, j
             cell_failures.append({"cell": key, "reason": "spin-wall omitted branches are nonzero"})
         if r.get("sine_engine_gate_passed") is not True:
             cell_failures.append({"cell": key, "reason": "underlying sine engine gate did not pass"})
+        if r.get("lower_level_pruning_coverage_complete") is not True:
+            cell_failures.append({
+                "cell": key,
+                "reason": "transitive runtime pruning coverage is not certified complete",
+            })
+        if r.get("static_threshold_inventory_complete") is not True:
+            cell_failures.append({
+                "cell": key,
+                "reason": "static threshold inventory is not certified complete",
+            })
+        if r.get("runtime_loss_controls_complete") is not True:
+            cell_failures.append({
+                "cell": key,
+                "reason": "runtime pruning-loss controls are not certified complete",
+            })
 
     convergence_failures = []
     for node in nodes:
@@ -113,6 +128,18 @@ def aggregate_records(records, nodes=EXPECTED_NODES, seed_ks=EXPECTED_SEED_KS, j
             "component_leakage_max": 1e-9,
             "max_spin": 3.5,
             "spin_wall_omitted_branches": 0,
+            "transitive_runtime_pruning_coverage_complete": not any(
+                "transitive runtime pruning coverage" in x["reason"]
+                for x in cell_failures
+            ),
+            "static_threshold_inventory_complete": not any(
+                "static threshold inventory" in x["reason"]
+                for x in cell_failures
+            ),
+            "runtime_loss_controls_complete": not any(
+                "runtime pruning-loss controls" in x["reason"]
+                for x in cell_failures
+            ),
         },
         "scope": "Finite W5-seeded reachable closure only; does not establish the physical Lorentzian ordering, continuum limit, or full BQG constraint.",
     }
