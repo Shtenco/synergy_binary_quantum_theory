@@ -1,3 +1,5 @@
+"""Negative controls exercise true paired-matrix mismatch, not duplicate artifacts."""
+
 import json
 import sys
 import tempfile
