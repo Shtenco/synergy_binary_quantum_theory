@@ -92,6 +92,13 @@ jobs:
           assert result.get("all_lower_level_pruning_bypassed") is False
           assert result.get("unverified_lower_level_sites_may_remain") is True
           assert result.get("parameters", {}).get("unbounded_closure") is True
+          for key in (
+              "production_coefficient_loss_ledger",
+              "shadow_coefficient_loss_ledger",
+              "production_coherent_node_sum_ledger",
+              "shadow_coherent_node_sum_ledger",
+          ):
+              assert result.get(key) is not None, f"missing runtime evidence: {key}"
           for key in ("forward_matrix_comparison", "direct_adjoint_matrix_comparison"):
               comparison = result[key]
               residual = comparison.get("relative_l2_residual")
