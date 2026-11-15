@@ -66,6 +66,33 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         )
         self.assertEqual(fraction, 0.5)
 
+    def test_spectator_gauss_check_accepts_j0_and_rejects_non_singlet_weight(self):
+        scalar_spectators = (
+            ("C", 0, 0, 0, 0),
+            ("G", 0),
+            ("C", 0, 0, 0, 0),
+            ("G", 0),
+        )
+        source = ("C", 2, 0, 0, 2)
+        singlet_key = ((4,) * 10, (source,) + scalar_spectators)
+        nonsinglet_labels = list((source,) + scalar_spectators)
+        nonsinglet_labels[1] = ("C", 2, 0, 0, 2)
+        nonsinglet_key = ((4,) * 10, tuple(nonsinglet_labels))
+
+        fractions = gate.spectator_non_singlet_weight_fractions(
+            {singlet_key: 1.0 + 0j}, source_node=0
+        )
+        self.assertEqual(fractions, {"1": 0.0, "2": 0.0, "3": 0.0, "4": 0.0})
+
+        fractions = gate.spectator_non_singlet_weight_fractions(
+            {singlet_key: 1.0 + 0j, nonsinglet_key: 1.0 + 0j},
+            source_node=0,
+        )
+        self.assertEqual(fractions["1"], 0.5)
+        self.assertEqual(fractions["2"], 0.0)
+        self.assertEqual(fractions["3"], 0.0)
+        self.assertEqual(fractions["4"], 0.0)
+
     def test_make_input_places_the_charged_sector_on_each_requested_node(self):
         for node in range(5):
             _, labels = gate.make_input(0, node)
