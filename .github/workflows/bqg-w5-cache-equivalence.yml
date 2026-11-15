@@ -25,6 +25,8 @@ on:
       - 'scripts/charged_intertwiner_recoupling_gate.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+      - 'scripts/peter_weyl_w5_direct_all_M_su2_gate.py'
+      - 'tests/test_peter_weyl_w5_direct_all_m_su2_gate.py'
   workflow_dispatch:
     inputs:
       timeout_seconds:
