@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - research/lemaitre-bqg-causal-cone-20261110
+      - research/bqg-w5-production-audit-20261113
     paths:
       - 'scripts/bqg_v09_w5_lorentzian_raw_column.py'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
@@ -16,7 +17,7 @@ on:
 
 concurrency:
   group: bqg-v11-w5-carrier-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -40,6 +41,8 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_v11_w5_common_carrier.py
           python -m py_compile scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py
+      - name: Run V11 common-carrier regression tests
+        run: python -m unittest discover -s tests -p 'test_bqg_v11_w5_common_carrier.py' -v
       - name: Run V11 common W5 carrier (structural only)
         run: |
           mkdir -p verification_results
