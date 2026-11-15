@@ -14,9 +14,10 @@ if str(HERE) not in sys.path:
 import bqg_pruning_coverage_inventory as BASE
 
 ROOT_MODULE = "peter_weyl_w5_direct_all_M_su2_gate"
+_ORIGINAL_LOCAL_IMPORT_CLOSURE = BASE.local_import_closure
 
 def _w5_closure(root=ROOT_MODULE):
-    return BASE.local_import_closure(root)
+    return _ORIGINAL_LOCAL_IMPORT_CLOSURE(root)
 
 # Reuse the audited AST classifier, but scope it to the direct all-M W5 path.
 BASE.local_import_closure = _w5_closure
