@@ -251,6 +251,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
 
     adjoint_rows = []
     linearity_rows = []
+    operator_columns_sparse = []
     for node in nodes:
         basis_keys = [
             make_input(M2, node, K12, K34)
@@ -270,6 +271,22 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for key in all_outputs[(node, K12, K34, M2)]
         }, key=repr)
         output_index = {key: row for row, key in enumerate(output_keys)}
+        # Persist the complete sparse outputs, including support outside the
+        # declared seed subspace. The downstream CI aggregator compares each
+        # production column with its shadow_no_prune counterpart.
+        for K12, K34 in channels:
+            for M2 in (-2, 0, 2):
+                sparse_output = all_outputs[(node, K12, K34, M2)]
+                operator_columns_sparse.append({
+                    "source_node": node,
+                    "K12": K12,
+                    "K34": K34,
+                    "input_M2": M2,
+                    "entries": [
+                        [repr(key), float(complex(amplitude).real), float(complex(amplitude).imag)]
+                        for key, amplitude in sorted(sparse_output.items(), key=lambda item: repr(item[0]))
+                    ],
+                })
         operator_matrix = np.zeros((len(output_keys), len(basis_keys)), dtype=np.complex128)
         for column, (K12, K34, M2) in enumerate(
             ((k1, k2, m) for k1, k2 in channels for m in (-2, 0, 2))
@@ -343,6 +360,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "max_wrong_JM_weight_fraction": max_wrong_fraction,
         "generators_checked": ["J_plus", "J_minus", "J_z"],
         "cases": cases,
+        "operator_columns_sparse": operator_columns_sparse,
+        "operator_columns_encoding": "[repr(output_key), real_amplitude, imaginary_amplitude]; complete output support, no seed-subspace projection",
         "scope": (
             "Direct all-M covariance check on the declared finite charged J=1 recoupling channels at each requested K5 source node. "
             "The adjointness result is only the compression to the declared seed subspace; it is not a global self-adjointness proof. "
