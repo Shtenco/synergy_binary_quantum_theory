@@ -12,6 +12,25 @@ class PhysicalOverlap(unittest.TestCase):
         r=e.physical_overlap_matrix(states,eta)
         self.assertTrue(r["positive_semidefinite"])
         self.assertGreaterEqual(r["minimum_eigenvalue"],-1e-10)
+
+    def test_reject_nonfinite_metric_and_state_amplitudes(self):
+        with self.assertRaisesRegex(ValueError, "finite"):
+            e.physical_overlap_matrix([np.array([1, np.nan])], np.eye(2))
+        with self.assertRaisesRegex(ValueError, "finite"):
+            e.physical_overlap_matrix([np.array([1, 0])], np.array([[1, np.inf], [0, 1]]))
+
+    def test_reports_null_record_representatives_for_quotient(self):
+        r=e.physical_overlap_matrix(
+            [np.array([1, 0]), np.array([0, 1])],
+            np.diag([1.0, 0.0]),
+        )
+        self.assertEqual(r["zero_norm_record_indices"], [1])
+        self.assertTrue(r["null_record_quotient_required"])
+
+    def test_reject_invalid_tolerance(self):
+        with self.assertRaisesRegex(ValueError, "finite and nonnegative"):
+            e.physical_overlap_matrix([np.array([1])], np.eye(1), tol=float("nan"))
+
     def test_reject_indefinite_form(self):
         with self.assertRaises(ValueError):
             e.physical_overlap_matrix([np.array([1,0])],np.diag([1.,-1.]))
@@ -26,6 +45,25 @@ class InterferenceAndEnvironment(unittest.TestCase):
         self.assertAlmostEqual(D[0,0].real,.5)
         self.assertAlmostEqual(D[1,1].real,.5)
         self.assertAlmostEqual(abs(D[0,1]),0.)
+
+    def test_reject_nonfinite_class_operator(self):
+        with self.assertRaisesRegex(ValueError, "finite"):
+            e.decoherence_functional({"bad": np.array([[np.nan]])}, np.array([[1.0]]))
+
+    def test_reject_nonfinite_path_amplitude_and_noninteger_depth(self):
+        with self.assertRaisesRegex(ValueError, "finite"):
+            e.history_sector_report([(1, "s", complex(float("inf"), 0))])
+        with self.assertRaisesRegex(ValueError, "integer"):
+            e.history_sector_report([(1.5, "s", 1.0)])
+
+    def test_reject_nonfinite_response_sample(self):
+        with self.assertRaisesRegex(ValueError, "finite"):
+            e.channel_frontier_report({"photon": [(1.0, 2.0, complex(float("nan"), 0))]}, 1e-9)
+
+    def test_reject_empty_refinement_sequence(self):
+        with self.assertRaisesRegex(ValueError, "at least one refinement"):
+            e.refinement_channel_frontier_report({}, 1e-9)
+
     def test_without_environment_record_cross_term_survives(self):
         k0=np.array([[1],[0]],complex); k1=np.array([[0],[1]],complex)
         F0=k0@k0.conj().T; F1=k0@k1.conj().T
