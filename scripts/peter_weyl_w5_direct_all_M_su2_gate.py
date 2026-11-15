@@ -308,6 +308,12 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                             he_by_m[M2]["basis_leakage"],
                             he_by_m[M2 + 2 * direction]["basis_leakage"],
                         ),
+                        # Preserve the local projection evidence for both
+                        # unit columns participating in this ladder comparison.
+                        # Aggregate leakage alone cannot identify the vertex or
+                        # distinguish charged-basis from Gauss-basis loss.
+                        "input_basis_leakage_by_vertex": he_by_m[M2]["basis_leakage_by_vertex"],
+                        "raised_basis_leakage_by_vertex": he_by_m[M2 + 2 * direction]["basis_leakage_by_vertex"],
                         "pruning_events": (
                             he_by_m[M2]["pruning_events"]
                             + he_by_m[M2 + 2 * direction]["pruning_events"]
