@@ -307,14 +307,15 @@
     {
       "id": "K5_MASTER_PROJECTOR_FINITE",
       "status": "tested_finite",
-      "closure_role": "core",
+      "closure_role": "reference",
       "claim": "For the declared 32D fully-active j=1/2 K5 domain and all 60 implemented Euclidean Thiemann-type local graph-changing constraints, the finite positive master operator has a one-dimensional zero sector invariant across four strictly positive constraint metrics; the induced finite physical Gram form is positive semidefinite with rank one after the kinematical-null quotient, and heat-kernel convergence matches the spectral-gap formula.",
       "evidence": [
         "K5_ACTUAL_MASTER_PROJECTOR_RESULT_20261115.md",
         "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
         "scripts/bqg_k5_actual_master_projector_gate.py",
         ".github/workflows/bqg-k5-actual-master-projector.yml"
-      ]
+      ],
+      "hard_scope": "Strict finite K5 numerical gate only: 32D fully-active j=1/2 domain, 60 implemented Euclidean constraints, four positive metrics and rank-one quotient. It does not establish the full Lorentzian/refinement-compatible rigging-map limit or physical history projector."
     }
   ],
   "physical_environment_overlap_closed_declared": false,
