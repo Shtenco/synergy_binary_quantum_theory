@@ -439,7 +439,15 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = run(args.Jmax2, args.pruning_mode, args.nodes)
-    text = json.dumps(result, indent=2)
+    # Complex amplitudes are part of the scientific evidence, not an error.
+    # Encode any residual complex-valued diagnostics explicitly as [real, imag]
+    # so the full finite operator report is durable JSON.
+    def json_default(value):
+        if isinstance(value, complex):
+            return [float(value.real), float(value.imag)]
+        raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+    text = json.dumps(result, indent=2, default=json_default, allow_nan=False)
     print(text)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(text + "\n", encoding="utf-8")
