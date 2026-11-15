@@ -23,6 +23,8 @@ on:
       - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
       - 'scripts/charged_intertwiner_recoupling_gate.py'
       - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/bqg_w5_shadow_no_prune_shard_aggregate.py'
+      - 'tests/test_bqg_w5_shadow_no_prune_shard_aggregate.py'
   workflow_dispatch:
     inputs:
       timeout_seconds:
@@ -31,7 +33,7 @@ on:
         default: "3600"
 
 concurrency:
-  group: bqg-w5-full-shadow-no-prune-${{ github.ref }}
+  group: bqg-w5-full-shadow-no-prune-v2-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -39,14 +41,15 @@ permissions:
 
 jobs:
   full-shadow-matrix:
-    name: Full W5 shadow comparison Jmax2=${{ matrix.jmax2 }}
+    name: Full W5 shadow comparison J${{ matrix.jmax2 }} node${{ matrix.node }}
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       max-parallel: 2
       matrix:
         jmax2: [10, 12, 14]
+        node: [0, 1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,37 +59,41 @@ jobs:
           python-version: '3.11'
       - name: Install numerical dependencies
         run: python -m pip install --upgrade numpy sympy
-      - name: Compile full shadow comparison and production closure
+      - name: Compile full shadow comparison and shard aggregator
         run: |
           python -m py_compile scripts/bqg_v10_w5_amp_tol_shadow_compare.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
-      - name: Compare all W5 seeds and all five source nodes with unbounded closure
+          python -m py_compile scripts/bqg_w5_shadow_no_prune_shard_aggregate.py
+          python -m unittest discover -s tests -p 'test_bqg_w5_shadow_no_prune_shard_aggregate.py' -v
+      - name: Compare all W5 seeds at one source node with unbounded closure
         shell: bash
         run: |
           mkdir -p verification_results
           TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
           set +e
           python scripts/bqg_v10_w5_amp_tol_shadow_compare.py \
-            --nodes 0 1 2 3 4 \
+            --nodes "${{ matrix.node }}" \
             --Jmax2 "${{ matrix.jmax2 }}" \
             --max-states 500 --max-depth 8 \
             --unbounded-closure \
             --amp-tol 1e-12 \
             --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+            --output verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
           rc=$?
           set -e
-          test -f verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
-          python - "$rc" "verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json" <<'PY'
+          test -f verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
+          python - "$rc" "verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json" "${{ matrix.node }}" "${{ matrix.jmax2 }}" <<'PY'
           import json, math, sys
           rc = int(sys.argv[1])
+          node = int(sys.argv[3])
+          jmax2 = int(sys.argv[4])
           result = json.load(open(sys.argv[2], encoding="utf-8"))
-          assert rc == 2, f"expected the explicitly incomplete diagnostic exit code 2, got {rc}"
+          assert rc == 2, f"expected explicitly incomplete diagnostic exit code 2, got {rc}"
           assert result.get("status") == "INCOMPLETE_NO_PRUNING_REFERENCE", result.get("status")
           assert result.get("comparison_performed") is True
-          assert result.get("source_nodes") == [0, 1, 2, 3, 4]
+          assert result.get("source_nodes") == [node]
           assert result.get("seed_Ks") == [0, 2, 4, 6, 8]
-          assert result.get("Jmax2") in (10, 12, 14)
+          assert result.get("Jmax2") == jmax2
           assert result.get("shadow_pruning_mode") == "shadow_no_prune"
           assert result.get("lower_level_pruning_bypassed_at_instrumented_sites") is True
           assert result.get("all_lower_level_pruning_bypassed") is False
@@ -100,26 +107,55 @@ jobs:
           ):
               assert result.get(key) is not None, f"missing runtime evidence: {key}"
           for key in ("forward_matrix_comparison", "direct_adjoint_matrix_comparison"):
-              comparison = result[key]
-              residual = comparison.get("relative_l2_residual")
+              residual = result[key].get("relative_l2_residual")
               assert isinstance(residual, (int, float)) and math.isfinite(residual)
           print(json.dumps({
               "diagnostic_status": result["status"],
               "production_status": result.get("production_status"),
               "shadow_status": result.get("shadow_no_prune_status"),
-              "nodes": result.get("parameters", {}).get("nodes"),
-              "Jmax2": result.get("parameters", {}).get("Jmax2"),
-              "unbounded_closure": result.get("parameters", {}).get("unbounded_closure"),
+              "node": node,
+              "Jmax2": jmax2,
               "forward_comparison": result["forward_matrix_comparison"],
               "adjoint_comparison": result["direct_adjoint_matrix_comparison"],
-              "claim": "full finite W5 production-vs-instrumented-shadow diagnostic only; pruning closure remains explicitly unproven",
+              "claim": "finite one-node W5 production-vs-instrumented-shadow diagnostic; global pruning closure remains open",
           }, indent=2))
           PY
-      - name: Upload full shadow comparison evidence
+      - name: Upload full shadow comparison shard
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-full-shadow-j${{ matrix.jmax2 }}-${{ github.run_id }}
-          path: verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
+          name: bqg-w5-full-shadow-j${{ matrix.jmax2 }}-node${{ matrix.node }}-${{ github.run_id }}
+          path: verification_results/W5_FULL_SHADOW_J${{ matrix.jmax2 }}_NODE${{ matrix.node }}_RUN${{ github.run_id }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate-full-shadow:
+    name: Aggregate all 15 finite shadow matrix comparisons
+    if: always()
+    needs: full-shadow-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download all full-shadow shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-w5-full-shadow-j*-node*-${{ github.run_id }}
+          path: verification_results
+          merge-multiple: true
+          if-no-artifact-found: warn
+      - name: Validate finite matrix comparison coverage
+        if: always()
+        run: python scripts/bqg_w5_shadow_no_prune_shard_aggregate.py --directory verification_results --Jmax2 10 12 14 --output verification_results/W5_FULL_SHADOW_AGGREGATE.json
+      - name: Upload aggregate shadow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-full-shadow-aggregate-${{ github.run_id }}
+          path: verification_results/W5_FULL_SHADOW_AGGREGATE.json
           if-no-files-found: warn
           retention-days: 30
