@@ -53,6 +53,12 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             self.assertEqual(labels[node], ("C", 2, 0, 0, 2))
             self.assertEqual(sum(label[0] == "C" for label in labels), 1)
 
+    def test_make_input_rejects_invalid_magnetic_component(self):
+        for m2 in (-4, 4, 1, True):
+            with self.subTest(m2=m2):
+                with self.assertRaises(ValueError):
+                    gate.make_input(m2, 0)
+
     def test_make_input_rejects_invalid_node(self):
         for node in (-1, 5, True, 1.5):
             with self.subTest(node=node):
@@ -75,7 +81,10 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
 
         self.assertTrue(result["passed"], result)
         self.assertEqual(result["source_nodes"], [0, 1, 2, 3, 4])
-        self.assertEqual(len(result["cases"]), 20)
+        self.assertEqual(result["input_charged_sector"]["channels_K12_K34"], [[0, 2], [2, 0]])
+        self.assertEqual(result["magnetic_components_tested_M2"], [-2, 0, 2])
+        self.assertLess(result["max_adjointness_compression_relative_residual"], 1e-12)
+        self.assertEqual(len(result["cases"]), 40)
         self.assertEqual(
             {case["source_node"] for case in result["cases"]},
             {0, 1, 2, 3, 4},
