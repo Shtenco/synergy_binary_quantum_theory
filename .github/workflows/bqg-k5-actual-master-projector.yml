@@ -1,0 +1,53 @@
+name: BQG K5 actual constraint master projector
+
+on:
+  push:
+    branches:
+      - research/bqg-w5-production-audit-20261113
+    paths:
+      - '.github/workflows/bqg-k5-actual-master-projector.yml'
+      - 'scripts/bqg_k5_actual_master_projector_gate.py'
+      - 'scripts/k5_thiemann_constraint_gate.py'
+      - 'scripts/k5_quantum_geometry_bridge.py'
+      - 'tests/test_bqg_k5_actual_master_projector_gate.py'
+  workflow_dispatch:
+
+concurrency:
+  group: bqg-k5-actual-master-projector-\${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  actual-master-projector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Compile actual finite projector implementation
+        run: python -m py_compile scripts/bqg_k5_actual_master_projector_gate.py scripts/k5_thiemann_constraint_gate.py
+      - name: Run algebraic and actual-assembler regressions
+        run: python -m unittest discover -s tests -p 'test_bqg_k5_actual_master_projector_gate.py' -v
+      - name: Build master operator from all 60 actual local K5 constraints
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_k5_actual_master_projector_gate.py \
+            --seed 1729 \
+            --relative-zero-tol 1e-10 \
+            --output verification_results/K5_ACTUAL_MASTER_PROJECTOR.json
+      - name: Upload actual K5 master-projector evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-k5-actual-master-projector-\${{ github.run_id }}
+          path: verification_results/K5_ACTUAL_MASTER_PROJECTOR.json
+          if-no-files-found: warn
+          retention-days: 30
