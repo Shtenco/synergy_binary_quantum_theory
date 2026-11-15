@@ -290,11 +290,17 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         ),
                     })
 
+    # Keep the direct, uncached highest-weight-wrapper path: every M column
+    # enters complete_HE_sine and the actual graph-changing branch engine.
+    # Exact lower-level audit-aware memoization remains enabled. Its cache key
+    # includes pruning mode and it replays the original ordered pruning trace,
+    # so this does not replace the operator with a cached matrix or suppress
+    # pruning evidence. The former global cache_bypass disabled every audited
+    # recoupling/branch cache and made this direct control needlessly expensive.
     if context is None:
-        with PRUNE.cache_bypass():
-            evaluate()
+        evaluate()
     else:
-        with PRUNE.cache_bypass(), context:
+        with context:
             evaluate()
 
     adjoint_rows = []
@@ -407,6 +413,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "actual_complex_superposition_rows": superposition_rows,
         "max_actual_complex_superposition_relative_residual": max_actual_superposition,
         "pruning_mode": pruning_mode,
+        "top_level_cached_operator_wrapper_used": False,
+        "lower_level_audit_aware_cache_enabled": True,
         "commutator_target": "[J_+, H_E]=[J_-, H_E]=[J_z, H_E]=0 on the actual complete W5 sine-H_E map",
         "max_commutator_relative_residual": max_commutator,
         "max_jz_commutator_relative_residual": max_jz_commutator,
