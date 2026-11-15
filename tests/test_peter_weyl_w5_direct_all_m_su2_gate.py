@@ -82,11 +82,14 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             return dict(state), 0.0, 0.0
 
         with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
-             patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
+             patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition), \
+             patch.object(gate.PRUNE, "cache_bypass", side_effect=AssertionError("global cache bypass is forbidden")):
             result = gate.run(Jmax2=4, nodes=(0, 1, 2, 3, 4))
 
         self.assertTrue(result["passed"], result)
         self.assertEqual(result["source_nodes"], [0, 1, 2, 3, 4])
+        self.assertFalse(result["top_level_cached_operator_wrapper_used"])
+        self.assertTrue(result["lower_level_audit_aware_cache_enabled"])
         self.assertEqual(result["input_charged_sector"]["channels_K12_K34"], [[0, 2], [2, 0]])
         self.assertEqual(result["magnetic_components_tested_M2"], [-2, 0, 2])
         self.assertLess(result["max_adjointness_compression_relative_residual"], 1e-12)
