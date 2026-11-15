@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 import tempfile
@@ -27,7 +28,7 @@ class TestW5ShadowShardAggregate(unittest.TestCase):
             "unbounded_closure": unbounded,
             "omitted_new_support_keys": 0,
             "closure_size": 2,
-            "basis_id_sha256": "a" * 64,
+            "basis_id_sha256": hashlib.sha256(b"basis-0\\nbasis-1").hexdigest(),
             "basis_keys_repr": ["basis-0", "basis-1"],
             "forward_B_columns_sparse": [[[0, matrix_value, 0.0]], [[1, 2.0, 0.0]]],
             "direct_Bdag_columns_sparse": [[[0, 3.0, 0.0]], [[1, 4.0, 0.0]]],
@@ -77,6 +78,19 @@ class TestW5ShadowShardAggregate(unittest.TestCase):
             result = aggregate(directory, (10,))
         self.assertFalse(result["finite_matrix_comparison_complete"])
         self.assertEqual(len(result["missing_shards"]), 1)
+
+
+    def test_incorrect_basis_digest_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.fill(directory)
+            path = directory / "W5_SHADOW_MATRIX_J10_NODE0_MODEproduction_RUN1.json"
+            report = json.loads(path.read_text())
+            report["basis_id_sha256"] = "a" * 64
+            path.write_text(json.dumps(report), encoding="utf-8")
+            result = aggregate(directory, (10,))
+        self.assertFalse(result["finite_matrix_comparison_complete"])
+        self.assertTrue(any("failed checks: basis_hash" in error for error in result["errors"]))
 
     def test_bounded_closure_cannot_be_aggregated_as_unbounded(self):
         with tempfile.TemporaryDirectory() as temp:
