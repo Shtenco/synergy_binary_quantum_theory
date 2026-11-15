@@ -28,7 +28,7 @@ class TestW5CacheShardAggregate(unittest.TestCase):
             "unbounded_closure": True,
             "omitted_new_support_keys": 0,
             "closure_size": 2,
-            "basis_id_sha256": hashlib.sha256(b"basis-0\\nbasis-1").hexdigest(),
+            "basis_id_sha256": hashlib.sha256(b"basis-0\nbasis-1").hexdigest(),
             "basis_keys_repr": ["basis-0", "basis-1"],
             "forward_B_columns_sparse": [[[0, matrix_value, 0.0]], [[1, 2.0, 0.0]]],
             "direct_Bdag_columns_sparse": [[[0, 3.0, 0.0]], [[1, 4.0, 0.0]]],
