@@ -12,9 +12,13 @@ import numpy as np
 
 
 def _hermitian_psd(name: str, matrix: np.ndarray, tol: float = 1e-10) -> np.ndarray:
+    if not np.isfinite(tol) or tol < 0:
+        raise ValueError("tolerance must be finite and nonnegative")
     a = np.asarray(matrix, dtype=complex)
     if a.ndim != 2 or a.shape[0] != a.shape[1]:
         raise ValueError(f"{name} must be square")
+    if not np.all(np.isfinite(a.real)) or not np.all(np.isfinite(a.imag)):
+        raise ValueError(f"{name} must contain only finite entries")
     if not np.allclose(a, a.conj().T, atol=tol, rtol=0):
         raise ValueError(f"{name} must be Hermitian")
     if np.linalg.eigvalsh((a + a.conj().T) / 2).min() < -tol:
@@ -35,7 +39,11 @@ def physical_overlap_matrix(states: Sequence[np.ndarray],
     vectors = [np.asarray(v, dtype=complex).reshape(-1) for v in states]
     if not vectors or any(v.size != eta.shape[0] for v in vectors):
         raise ValueError("states must be nonempty and match physical metric dimension")
+    if any(not np.all(np.isfinite(v.real)) or not np.all(np.isfinite(v.imag)) for v in vectors):
+        raise ValueError("physical state vectors must contain only finite amplitudes")
     G = np.array([[np.vdot(a, eta @ b) for b in vectors] for a in vectors])
+    if not np.all(np.isfinite(G.real)) or not np.all(np.isfinite(G.imag)):
+        raise ValueError("physical Gram matrix contains non-finite entries")
     G = (G + G.conj().T) / 2
     eig = np.linalg.eigvalsh(G)
     cs_violation = max((abs(G[i,j])**2 - max(0.0, G[i,i].real*G[j,j].real)
@@ -45,6 +53,8 @@ def physical_overlap_matrix(states: Sequence[np.ndarray],
         "minimum_eigenvalue": float(eig.min()),
         "rank": int(np.linalg.matrix_rank(G, tol=tol)),
         "null_directions": int(np.count_nonzero(np.abs(eig) <= tol)),
+        "zero_norm_record_indices": [i for i in range(len(vectors)) if G[i, i].real <= tol],
+        "null_record_quotient_required": bool(np.any(np.real(np.diag(G)) <= tol)),
         "cauchy_schwarz_violation": float(max(0.0, cs_violation)),
         "positive_semidefinite": bool(eig.min() >= -tol),
         "scope": "Positivity conditional on supplied physical inner product; no BQG rigging map or actual BQG physical states are constructed here."
@@ -68,6 +78,8 @@ def decoherence_functional(class_ops: Mapping[Hashable, np.ndarray],
     n = r.shape[0]
     if any(x.shape != (n,n) for x in mats):
         raise ValueError("class operators must match rho")
+    if any(not np.all(np.isfinite(x.real)) or not np.all(np.isfinite(x.imag)) for x in mats):
+        raise ValueError("class operators must contain only finite entries")
     w, u = np.linalg.eigh(r)
     root = (u * np.sqrt(np.clip(w, 0, None))) @ u.conj().T
     xs = [x @ root for x in mats]
@@ -81,13 +93,16 @@ def decoherence_functional(class_ops: Mapping[Hashable, np.ndarray],
 
 def history_sector_report(paths: Sequence[tuple[int, Hashable, complex]],
                           relative_zero_tol: float = 0.0) -> dict:
-    if relative_zero_tol < 0:
-        raise ValueError("relative_zero_tol must be nonnegative")
+    if not np.isfinite(relative_zero_tol) or relative_zero_tol < 0:
+        raise ValueError("relative_zero_tol must be finite and nonnegative")
     groups = {}
     for depth, sector, amplitude in paths:
-        if depth < 0:
-            raise ValueError("depth must be nonnegative")
-        groups.setdefault((int(depth), sector), []).append(complex(amplitude))
+        if isinstance(depth, bool) or int(depth) != depth or depth < 0:
+            raise ValueError("depth must be a nonnegative integer")
+        z = complex(amplitude)
+        if not (np.isfinite(z.real) and np.isfinite(z.imag)):
+            raise ValueError("path amplitudes must be finite")
+        groups.setdefault((int(depth), sector), []).append(z)
     rows = []
     for (depth, sector), amps in sorted(groups.items(), key=lambda z:(z[0][0],repr(z[0][1]))):
         total, l1 = sum(amps, 0j), sum(abs(a) for a in amps)
@@ -104,15 +119,18 @@ def history_sector_report(paths: Sequence[tuple[int, Hashable, complex]],
 
 def channel_frontier_report(samples: Mapping[str, Sequence[tuple[float,float,complex]]],
                             response_floor: float) -> dict:
-    if response_floor < 0:
-        raise ValueError("response_floor must be nonnegative")
+    if not np.isfinite(response_floor) or response_floor < 0:
+        raise ValueError("response_floor must be finite and nonnegative")
     out = {}
     for channel, triples in samples.items():
         by_t = {}
         for t,x,g in triples:
-            if t < 0 or x < 0:
-                raise ValueError("time and distance must be nonnegative")
-            by_t.setdefault(float(t),[]).append((float(x),abs(complex(g))))
+            z = complex(g)
+            if not np.isfinite(t) or not np.isfinite(x) or t < 0 or x < 0:
+                raise ValueError("time and distance must be finite and nonnegative")
+            if not (np.isfinite(z.real) and np.isfinite(z.imag)):
+                raise ValueError("response amplitudes must be finite")
+            by_t.setdefault(float(t),[]).append((float(x),abs(z)))
         front = [{"time":t,"max_detected_distance":max((x for x,a in vals if a>response_floor),default=None)}
                  for t,vals in sorted(by_t.items())]
         pts = [(z["time"],z["max_detected_distance"]) for z in front
@@ -127,6 +145,8 @@ def channel_frontier_report(samples: Mapping[str, Sequence[tuple[float,float,com
 
 def refinement_channel_frontier_report(levels: Mapping[str, Mapping[str, Sequence[tuple[float,float,complex]]]],
                                        response_floor: float) -> dict:
+    if not levels:
+        raise ValueError("at least one refinement level is required")
     reports = []
     names = sorted({c for channels in levels.values() for c in channels})
     sequences = {c:[] for c in names}
