@@ -154,12 +154,12 @@ def compare_directory(directory: Path, *, tolerance=1e-10):
         "input_columns_compared": len(pairs),
         "relative_l2_tolerance": tolerance,
         "max_relative_l2_error": max((row["relative_l2_error"] for row in pairs), default=0.0),
-        "total_production_pruning_events": sum(
+        "summed_production_case_pruning_event_observations": sum(
             int(row.get("pruning_events", 0))
             for (mode, _), report in reports.items() if mode == "production"
             for row in report.get("cases", [])
         ),
-        "total_shadow_pruning_events": sum(
+        "summed_shadow_case_pruning_event_observations": sum(
             int(row.get("pruning_events", 0))
             for (mode, _), report in reports.items() if mode == "shadow_no_prune"
             for row in report.get("cases", [])
@@ -192,7 +192,7 @@ def main():
             "scope": "No equivalence claim is possible without all ten valid matrix artifacts.",
         }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2) + "\\n", encoding="utf-8")
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": result["status"],
         "comparison_performed": result["comparison_performed"],
