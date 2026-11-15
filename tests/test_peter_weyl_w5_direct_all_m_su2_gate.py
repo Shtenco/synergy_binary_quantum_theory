@@ -153,37 +153,53 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         node = 0
         key = gate.make_input(0, node, 0, 2)
         base = leg_gate.branch_from_key(key)
-        _sign, spec = pw.oriented_specs(node)[0]
-        v, a, b, c = spec
-        _coefficient, sequence = pw.T_sequences(v, a, b, c)[0]
-        branches, _ = leg_gate.apply_sequence_to_branch(base, sequence, node, 10)
-        self.assertTrue(branches)
-        branch = branches[0]
+        specs_checked = 0
 
-        source_only_diagnostics = {}
-        source_only, source_only_leak = leg_gate.project_branch_complete_charges(
-            branch, (node,), diagnostics=source_only_diagnostics
-        )
-        self.assertFalse(source_only)
-        self.assertEqual(source_only_leak, 1.0)
+        # Every oriented tetrahedral spec is exercised on an actual branch.
+        # The first sequence is enough to expose the local charge support at
+        # all four vertices touched by that term.
+        for _sign, spec in pw.oriented_specs(node):
+            v, a, b, c = spec
+            _coefficient, sequence = pw.T_sequences(v, a, b, c)[0]
+            branches, _ = leg_gate.apply_sequence_to_branch(base, sequence, node, 10)
+            self.assertTrue(branches, spec)
+            branch = branches[0]
 
-        term_charged_nodes = sine_gate.projection_charge_nodes((node,), spec)
-        self.assertEqual(term_charged_nodes, (0, 2, 3, 4))
-        diagnostics = {}
-        projected, leakage = leg_gate.project_branch_complete_charges(
-            branch, term_charged_nodes, diagnostics=diagnostics
-        )
-        self.assertTrue(projected)
-        self.assertLess(leakage, 1e-10)
-        for touched in term_charged_nodes:
-            self.assertEqual(
-                diagnostics[touched]["basis_kind"],
-                "charged_complete_JM_recoupling",
+            source_only, source_only_leak = leg_gate.project_branch_complete_charges(
+                branch, (node,)
             )
-            self.assertLess(diagnostics[touched]["max_relative_leakage"], 1e-10)
-        untouched = next(v for v in pw.VERT if v not in term_charged_nodes)
-        self.assertEqual(diagnostics[untouched]["basis_kind"], "Gauss_intertwiner")
-        self.assertLess(diagnostics[untouched]["max_relative_leakage"], 1e-10)
+            self.assertFalse(source_only, spec)
+            self.assertEqual(source_only_leak, 1.0, spec)
+
+            term_charged_nodes = sine_gate.projection_charge_nodes((node,), spec)
+            self.assertEqual(set(term_charged_nodes), {v, a, b, c})
+            diagnostics = {}
+            projected, leakage = leg_gate.project_branch_complete_charges(
+                branch, term_charged_nodes, diagnostics=diagnostics
+            )
+            self.assertTrue(projected, spec)
+            self.assertLess(leakage, 1e-10, spec)
+            for touched in term_charged_nodes:
+                self.assertEqual(
+                    diagnostics[touched]["basis_kind"],
+                    "charged_complete_JM_recoupling",
+                    (spec, touched),
+                )
+                self.assertLess(
+                    diagnostics[touched]["max_relative_leakage"],
+                    1e-10,
+                    (spec, touched),
+                )
+            untouched = next(vv for vv in pw.VERT if vv not in term_charged_nodes)
+            self.assertEqual(
+                diagnostics[untouched]["basis_kind"], "Gauss_intertwiner", spec
+            )
+            self.assertLess(
+                diagnostics[untouched]["max_relative_leakage"], 1e-10, spec
+            )
+            specs_checked += 1
+
+        self.assertEqual(specs_checked, 12)
 
     def test_complex_superposition_helper_propagates_amplitudes_into_branches(self):
         key = gate.make_input(0, 0, 0, 2)
