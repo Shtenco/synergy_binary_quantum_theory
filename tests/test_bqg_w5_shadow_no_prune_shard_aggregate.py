@@ -1,3 +1,5 @@
+"""Fail-closed checks include non-finite full sparse matrix comparisons."""
+
 import json
 import sys
 import tempfile
