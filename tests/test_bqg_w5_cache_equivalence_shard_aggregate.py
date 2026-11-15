@@ -15,8 +15,8 @@ class TestW5CacheShardAggregate(unittest.TestCase):
         report = {
             "status": "PASS_CACHE_EQUIVALENCE" if passed else "INCOMPLETE_CACHE_EQUIVALENCE",
             "comparison_performed": passed,
-            "cache_on": {"status": "PASS" if passed else "INCOMPLETE"},
-            "cache_off": {"status": "PASS" if passed else "INCOMPLETE"},
+            "cache_on": {"status": "PASS_ADJOINT_CONSISTENCY" if passed else "INCOMPLETE"},
+            "cache_off": {"status": "PASS_ADJOINT_CONSISTENCY" if passed else "INCOMPLETE"},
             "comparison": {
                 "status": "PASS_CACHE_EQUIVALENCE" if passed else "INCOMPLETE_CACHE_EQUIVALENCE",
                 "comparison_completed": passed,
