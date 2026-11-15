@@ -42,6 +42,10 @@ class TestW5CacheShardAggregate(unittest.TestCase):
                 "coverage": {"unclassified_sites": 0},
                 "cache_policy": {"mode": mode},
             },
+            "physical_status": {
+                "physical_hermitian_ordering_selected": False,
+                "full_physical_HL": False,
+            },
             "diagnostics": {"direct_adjoint_relative_residual": 0.0},
         }
 
