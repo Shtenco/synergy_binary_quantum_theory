@@ -30,7 +30,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-direct-all-m-v3-${{ github.ref }}
+  group: bqg-w5-direct-all-m-v4-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
