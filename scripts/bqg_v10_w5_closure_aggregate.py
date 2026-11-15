@@ -128,17 +128,23 @@ def aggregate_records(records, nodes=EXPECTED_NODES, seed_ks=EXPECTED_SEED_KS, j
             "component_leakage_max": 1e-9,
             "max_spin": 3.5,
             "spin_wall_omitted_branches": 0,
-            "transitive_runtime_pruning_coverage_complete": not any(
-                "transitive runtime pruning coverage" in x["reason"]
-                for x in cell_failures
+            "transitive_runtime_pruning_coverage_complete": (
+                not missing and all(
+                    indexed.get(key, {}).get("lower_level_pruning_coverage_complete") is True
+                    for key in expected
+                )
             ),
-            "static_threshold_inventory_complete": not any(
-                "static threshold inventory" in x["reason"]
-                for x in cell_failures
+            "static_threshold_inventory_complete": (
+                not missing and all(
+                    indexed.get(key, {}).get("static_threshold_inventory_complete") is True
+                    for key in expected
+                )
             ),
-            "runtime_loss_controls_complete": not any(
-                "runtime pruning-loss controls" in x["reason"]
-                for x in cell_failures
+            "runtime_loss_controls_complete": (
+                not missing and all(
+                    indexed.get(key, {}).get("runtime_loss_controls_complete") is True
+                    for key in expected
+                )
             ),
         },
         "scope": "Finite W5-seeded reachable closure only; does not establish the physical Lorentzian ordering, continuum limit, or full BQG constraint.",
