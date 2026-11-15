@@ -289,3 +289,16 @@ This is a timestamped execution snapshot, not a durable mathematical claim:
 - Source-staging run `43702946075` completed successfully; staging success is not numerical evidence.
 
 The code-validation head `0ccb07a` is an ancestor of the current documentation-only head `b84eb13`; the source code under test is identical. Always re-check run conclusions and artifacts before changing any gate status.
+
+
+### 9.6 CI execution redesign after repeated runner termination
+
+The 2026-11-15 logs showed repeated exit code 143 / runner shutdown while the unbounded multi-node W5 jobs were still inside the numerical comparison step. Those runs produced no complete JSON matrix artifact; they are infrastructure-incomplete, not mathematical mismatches.
+
+Two execution changes are now staged for fresh matching-HEAD validation:
+
+- The direct all-M SU(2) gate still calls `complete_HE_sine` directly for each magnetic component and does not call the cached highest-weight operator wrapper. It no longer disables all lower-level audit-aware LRU memoization. Those caches preserve exact values, include pruning mode in their keys, and replay the ordered pruning event trace. This removes redundant recomputation without changing the operator map or the pruning policy.
+- Cache-on/cache-off closure is sharded over the full Cartesian set `Jmax2={10,12,14} × node={0,…,4} × seedK={0,2,4,6,8}`. A fail-closed aggregate requires all 75 reports to contain complete forward/adjoint matrices, exact equality and matching ledgers.
+- Production/shadow no-prune closure is sharded over `Jmax2={10,12,14} × node={0,…,4}`, retaining all five W5 seed-K inputs per node. A fail-closed aggregate requires all 15 finite matrix comparisons and explicitly preserves the incomplete global-pruning claim.
+
+The new shards and aggregate jobs have not yet passed. A staging bundle passing is not numerical evidence. The aggregate shadow report is intentionally labelled incomplete even when every finite matrix comparison completes, because static inventory alone does not bypass uninstrumented thresholds, spectral conventions, spin-wall/cap effects or continuum convergence.
