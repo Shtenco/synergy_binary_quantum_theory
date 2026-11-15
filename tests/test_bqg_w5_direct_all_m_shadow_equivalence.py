@@ -52,7 +52,7 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
         self.assertTrue(result["passed"], result)
         self.assertEqual(result["input_columns_compared"], 30)
         self.assertEqual(result["max_relative_l2_error"], 0.0)
-        self.assertEqual(result["total_production_pruning_events"], 15)
+        self.assertEqual(result["summed_production_case_pruning_event_observations"], 15)
 
     def test_detects_material_production_shadow_difference(self):
         with tempfile.TemporaryDirectory() as temp:
