@@ -2,7 +2,7 @@ name: physicalization-truth
 
 on:
   push:
-    branches: [main]
+    branches: [main, research/bqg-w5-production-audit-20261113]
     paths:
       - 'physicalization_gates.json'
       - 'theory_gates.json'
@@ -16,8 +16,9 @@ on:
       - 'scripts/q2_relational_metric_source_gate.py'
       - 'scripts/verify_physicalization_gates.py'
       - '.github/workflows/physicalization-truth.yml'
+  workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [main, research/physical-history-causality-20261112]
     paths:
       - 'physicalization_gates.json'
       - 'theory_gates.json'
