@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import peter_weyl_covariant_K_composition_cached_gate as BASE
@@ -36,6 +37,45 @@ def complete_HE_sine(key, source_v, Jmax2, charged_nodes=(0,1)):
                     max_b=max(max_b,float(bleak))
                     KC.CK.add_state(out,projected,pref*coef)
     return out,max_v,max_b
+
+
+def complete_HE_sine_state(state, source_v, Jmax2, charged_nodes=(0,1)):
+    """Apply the actual branch/recoupling path to a complex sparse superposition.
+
+    Unlike a post-hoc matrix multiplication, each input coefficient is placed
+    on the initial branch before the graph-changing sequences and projection
+    run. Coherent contributions from all inputs and oriented terms are then
+    accumulated in the output sparse map.
+    """
+    if not state:
+        raise ValueError("input superposition must be non-empty")
+    out = {}
+    max_v = 0.0
+    max_b = 0.0
+    for key, amplitude in state.items():
+        amp = complex(amplitude)
+        if not (math.isfinite(amp.real) and math.isfinite(amp.imag)):
+            raise ValueError("input superposition contains a non-finite amplitude")
+        if amp == 0j:
+            continue
+        base = KC.CK.branch_from_key(key, amp=amp)
+        for sign, spec in KC.PW.oriented_specs(source_v):
+            v, a, b, c = spec
+            for adj in (False, True):
+                pref = (+0.5j if adj else -0.5j) * sign
+                for coef, seq0 in KC.PW.T_sequences(v, a, b, c):
+                    seq = KC.PW.adjoint_sequence(seq0) if adj else seq0
+                    branches, vleak = KC.CK.apply_sequence_to_branch(
+                        base, seq, source_v, Jmax2
+                    )
+                    max_v = max(max_v, float(vleak))
+                    for branch in branches:
+                        projected, bleak = KC.CK.project_branch_complete_charges(
+                            branch, charged_nodes
+                        )
+                        max_b = max(max_b, float(bleak))
+                        KC.CK.add_state(out, projected, pref * coef)
+    return out, max_v, max_b
 
 
 def gauss_HE_sine_with_historical_K_cutoff(state,node,Jmax2):
