@@ -182,9 +182,12 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for K12, K34 in channels:
                 he_by_m = {}
                 for M2 in (-2, 0, 2):
+                    projection_diagnostics = {}
                     with PRUNE.capture() as collector:
                         result = SINE.complete_HE_sine(
-                            make_input(M2, node, K12, K34), node, Jmax2, charged_nodes=(node,)
+                            make_input(M2, node, K12, K34), node, Jmax2,
+                            charged_nodes=(node,),
+                            projection_diagnostics=projection_diagnostics,
                         )
                     require_nonzero_output(
                         result[0], label=f"H_E(node={node}, K12={K12}, K34={K34}, M2={M2})"
@@ -195,6 +198,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         "norm": norm(result[0]),
                         "volume_leakage": float(result[1]),
                         "basis_leakage": float(result[2]),
+                        "basis_leakage_by_vertex": projection_diagnostics,
                         "pruning_events": collector.snapshot()["event_count"],
                     }
                 he_by_channel_m[(K12, K34)] = he_by_m
@@ -206,9 +210,11 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             key_b = make_input(0, node, 2, 0)
             alpha = 0.7 + 0.2j
             beta = -0.3 + 0.9j
+            mixed_projection_diagnostics = {}
             mixed, mixed_vleak, mixed_bleak = SINE.complete_HE_sine_state(
                 {key_a: alpha, key_b: beta},
                 node, Jmax2, charged_nodes=(node,),
+                projection_diagnostics=mixed_projection_diagnostics,
             )
             require_nonzero_output(
                 mixed, label=f"H_E complex superposition at node {node}"
@@ -239,6 +245,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                 "comparison_scale": super_scale,
                 "volume_leakage": float(mixed_vleak),
                 "basis_leakage": float(mixed_bleak),
+                "basis_leakage_by_vertex": mixed_projection_diagnostics,
                 "scope": (
                     "Actual complex coefficients propagated through branch construction, "
                     "graph-changing sequences, recoupling projection and coherent accumulation; "
