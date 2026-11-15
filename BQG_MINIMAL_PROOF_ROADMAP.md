@@ -43,10 +43,10 @@ A downstream gate cannot compensate for an upstream failure. In particular, an I
 For every declared W5 node and charged sector, specify the complete representation space, including total `(J,M)`, multiplicity/recoupling labels, endpoint representation factors and the gauge action on every open holonomy index.
 
 For a **fully contracted rank-zero operator** `O^{(0)}`, the target selection rule is
-$
+$$
 \langle J'M';\alpha'|O^{(0)}|JM;\alphaangle
 =\delta_{J'J}\delta_{M'M}O^J_{\alpha'\alpha}.
-$
+$$
 The operator may mix multiplicity labels. Do not apply this scalar rule to a partially contracted endpoint tensor.
 
 ### A2. Required checks
@@ -80,16 +80,16 @@ The operator may mix multiplicity labels. Do not apply this scalar rule to a par
 ### B1. Exact finite theorem
 
 For a specified finite family (C_A) and a positive-definite Hermitian constraint metric (G),
-$
+$$
 M_G=\sum_{A,B}C_A^\dagger G^{AB}C_B,
 \qquad
 \langle\psi|M_G|\psi\rangle
 =\|G^{1/2}C\psi\|^2\ge0.
-$
+$$
 so
-$
+$$
 \ker M_G=\bigcap_A\ker C_A.
-$
+$$
 If zero is an isolated eigenvalue, $P_0=\mathbf1_{\{0\}}(M_G)$ is an orthogonal projector. This is an exact finite-dimensional theorem. It does not by itself define the continuum physical Hilbert space.
 
 ### B2. Theory-specific obligations
@@ -100,9 +100,9 @@ If zero is an isolated eigenvalue, $P_0=\mathbf1_{\{0\}}(M_G)$ is an orthogonal 
 4. Define the normalized spectral-window, heat-kernel or rigging-map sequence. If the gap closes or zero enters continuous spectrum, use the appropriate distributional/RAQ construction rather than assuming a finite-rank projector survives.
 5. Prove refinement compatibility and convergence of physical matrix elements, independently of the arbitrary positive metric (G) wherever the theorem says the exact kernel must be invariant.
 6. Construct the physical inner product
-$
+$$
    (\eta(\phi),\eta(\psi))_{phys}=\eta(\psi)[\phi]
-$
+$$
    (or a declared convention-equivalent form), prove Hermiticity and positivity, quotient its null space, and establish a nontrivial completed physical Hilbert space.
 7. Prove that the physical observables preserve the rigging-map domain and are well-defined on the quotient.
 
@@ -121,11 +121,11 @@ $
 The clock must be part of the microscopic theory or a rigorously justified matter/reference sector. Do not add an external clock merely to create a frequency variable.
 
 If a deparametrization is valid, establish a constraint of the form
-$
+$$
 P_T+H_{phys}=0,
 \qquad
 i\hbar\partial_T\Psi=H_{phys}\Psi,
-$
+$$
 including self-adjointness of `H_phys`, the clock's physical range, and the domain on which conditional states and probabilities are defined.
 
 ### C2. Required relational checks
@@ -151,10 +151,10 @@ including self-adjointness of `H_phys`, the clock's physical range, and the doma
 ### D1. First required IR object
 
 Derive the physical connected metric generating functional from Gate B, then its Legendre effective action and transverse-traceless two-point kernel:
-$
+$$
 K_{TT}(\omega,\mathbf{k})
 =\Pi_{TT}\frac{\delta^2\Gamma[g]}{\delta g\,\delta g}\Pi_{TT}.
-$
+$$
 The frequency `omega` must be the physical relational frequency from Gate C. A constraint spectral parameter, finite character angle or Euclidean/source parameter is not interchangeable with it.
 
 ### D2. Required continuum properties
