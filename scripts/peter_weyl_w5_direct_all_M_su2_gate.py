@@ -14,6 +14,8 @@ import math
 from pathlib import Path
 import sys
 
+import numpy as np
+
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
