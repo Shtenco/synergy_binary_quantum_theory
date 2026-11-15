@@ -84,6 +84,9 @@ jobs:
           assert rc == 2, f"expected the explicitly incomplete diagnostic exit code 2, got {rc}"
           assert result.get("status") == "INCOMPLETE_NO_PRUNING_REFERENCE", result.get("status")
           assert result.get("comparison_performed") is True
+          assert result.get("source_nodes") == [0, 1, 2, 3, 4]
+          assert result.get("seed_Ks") == [0, 2, 4, 6, 8]
+          assert result.get("Jmax2") in (10, 12, 14)
           assert result.get("shadow_pruning_mode") == "shadow_no_prune"
           assert result.get("lower_level_pruning_bypassed_at_instrumented_sites") is True
           assert result.get("all_lower_level_pruning_bypassed") is False
