@@ -122,9 +122,13 @@ def assemble_constraint_family():
         "gauss_projection_omission_frobenius_bound": math.sqrt(
             math.fsum(value * value for value in gauss_projection_loss_norms)
         ),
+        # Gauss projection is part of the declared codomain map C_a=P_G T_a,
+        # not an approximation to C_a.  Its leakage is reported separately;
+        # counting it as omitted operator mass would bound T_a-C_a instead of
+        # the numerical column mask error in the operator actually assembled.
+        "gauss_projection_is_part_of_constraint_definition": True,
         "total_constraint_operator_omission_frobenius_bound": math.sqrt(
             math.fsum(value * value for value in subthreshold_raw_norms)
-            + math.fsum(value * value for value in gauss_projection_loss_norms)
         ),
         "independent_target_max_raw_constraint_residual": float(max(raw_target_residuals, default=0.0)),
         "independent_target_mean_raw_constraint_residual": float(np.mean(raw_target_residuals)),
@@ -232,6 +236,8 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             })
 
         C_fro = float(np.linalg.norm(C.reshape(m * C.shape[1], C.shape[2]), "fro"))
+        # Bound only numerical omissions from the assembled projected maps.
+        # P_G is the exact codomain projection defining C_a, not a dropped term.
         E_fro = dimensions["total_constraint_operator_omission_frobenius_bound"]
         master_error_bound = float(np.linalg.norm(G, 2) * (2.0 * C_fro * E_fro + E_fro * E_fro))
         master_scale = max(float(np.linalg.norm(M, 2)), 1.0)
