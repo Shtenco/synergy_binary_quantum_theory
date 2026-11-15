@@ -372,6 +372,11 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for key, amplitude in all_outputs[(node, K12, K34, M2)].items():
                 operator_matrix[output_index[key], column] = amplitude
         matrix_norm = float(np.linalg.norm(matrix, "fro"))
+        # The graph-changing map is rectangular: its full codomain is
+        # output_keys, not the original seed basis_keys. Keep the seed
+        # compression as a diagnostic only, and measure nonzero output on
+        # the complete codomain matrix.
+        full_output_matrix_norm = float(np.linalg.norm(operator_matrix, "fro"))
         adjoint_abs = float(np.linalg.norm(matrix - matrix.conj().T, "fro"))
         linear_rng = np.random.default_rng(1729 + node)
         x = linear_rng.normal(size=len(basis_keys)) + 1j * linear_rng.normal(size=len(basis_keys))
@@ -392,17 +397,37 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             "linearity_relative_residual": linearity_rel,
             "scope": "matrix algebra identity only; not an independent test of the branch implementation",
         })
-        adjoint_rel = adjoint_abs / max(matrix_norm, 1e-30)
+        adjoint_rel = adjoint_abs / matrix_norm if matrix_norm > 1e-14 else None
         adjoint_rows.append({
             "source_node": node,
             "basis_dimension": len(basis_keys),
             "matrix_frobenius_norm": matrix_norm,
             "adjoint_absolute_residual": adjoint_abs,
             "adjoint_relative_residual": adjoint_rel,
-            "scope": "compression to the declared seed subspace; not a global self-adjointness proof",
+            "adjointness_compression_informative": matrix_norm > 1e-14,
+            "full_output_matrix_frobenius_norm": full_output_matrix_norm,
+            "full_output_codomain_dimension": len(output_keys),
+            "scope": (
+                "seed-subspace compression only; its adjointness residual is null when "
+                "the graph-changing map has no support back into the seed subspace. "
+                "The full rectangular map norm is reported separately; this is not "
+                "a global self-adjointness proof."
+            ),
         })
 
-    max_adjoint = max((x["adjoint_relative_residual"] for x in adjoint_rows), default=0.0)
+    informative_adjoint = [
+        x["adjoint_relative_residual"] for x in adjoint_rows
+        if x["adjointness_compression_informative"]
+    ]
+    max_adjoint = max(informative_adjoint, default=None)
+    adjointness_status = (
+        "SEED_SUBSPACE_COMPRESSION_CHECKED"
+        if len(informative_adjoint) == len(adjoint_rows)
+        else "INCOMPLETE_SEED_SUBSPACE_COMPRESSION"
+    )
+    full_output_nonzero = all(
+        x["full_output_matrix_frobenius_norm"] > 1e-14 for x in adjoint_rows
+    )
     max_linearity = max((x["linearity_relative_residual"] for x in linearity_rows), default=0.0)
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
     max_jz_commutator = max((x["jz_commutator_relative_residual"] for x in cases), default=0.0)
@@ -411,7 +436,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     passed = (
         len(cases) == 4 * len(channels) * len(nodes)
         and max_commutator < 1e-8
-        and max_adjoint < 1e-8
+        and full_output_nonzero
+        and (max_adjoint is None or max_adjoint < 1e-8)
         and max_linearity < 1e-12
         and max_actual_superposition < 1e-10
         and len(superposition_rows) == len(nodes)
@@ -431,7 +457,9 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "input_charged_sector": {"J2": 2, "channels_K12_K34": [list(x) for x in channels]},
         "magnetic_components_tested_M2": [-2, 0, 2],
         "adjointness_compression_rows": adjoint_rows,
+        "adjointness_compression_status": adjointness_status,
         "max_adjointness_compression_relative_residual": max_adjoint,
+        "all_full_output_matrices_nonzero": full_output_nonzero,
         "matrix_superposition_identity_rows": linearity_rows,
         "max_matrix_superposition_identity_relative_residual": max_linearity,
         "actual_complex_superposition_rows": superposition_rows,
