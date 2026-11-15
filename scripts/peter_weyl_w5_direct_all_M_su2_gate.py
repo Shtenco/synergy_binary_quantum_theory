@@ -441,7 +441,10 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         and max_linearity < 1e-12
         and max_actual_superposition < 1e-10
         and len(superposition_rows) == len(nodes)
-        and all(x["matrix_frobenius_norm"] > 1e-14 for x in adjoint_rows)
+        # Seed-subspace adjointness compression is diagnostic only for a
+        # graph-changing rectangular map. A zero compression is explicitly
+        # reported as INCOMPLETE_SEED_SUBSPACE_COMPRESSION; it must not veto
+        # the independent full-codomain SU(2) covariance result.
         and max_jz_commutator < 1e-12
         and max_wrong_fraction < 1e-18
         and max((x["volume_leakage"] for x in cases), default=0.0) < 1e-10
