@@ -89,12 +89,16 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             gate.run(nodes=(0, 0))
 
     def test_all_five_nodes_receive_four_adjacent_m_commutator_checks(self):
-        def identity_map(key, source_v, Jmax2, charged_nodes):
+        def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
             self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0}
             return {key: 1.0 + 0j}, 0.0, 0.0
 
-        def identity_superposition(state, source_v, Jmax2, charged_nodes):
+        def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
             self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {"samples": 1, "max_relative_leakage": 0.0}
             return dict(state), 0.0, 0.0
 
         with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
@@ -142,9 +146,11 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         def apply_sequence(branch, seq, source_v, Jmax2):
             return [(seq, branch[2])], 0.0
 
-        def project_branch(branch, charged_nodes):
+        def project_branch(branch, charged_nodes, diagnostics=None):
             seq, amp = branch
-            return {("output", seq): amp}, 0.0
+            if diagnostics is not None:
+                diagnostics[0] = {"samples": 1, "max_relative_leakage": 0.25}
+            return {("output", seq): amp}, 0.25
 
         with patch.object(sine_gate.KC.CK, "branch_from_key", side_effect=branch_from_key), \
              patch.object(sine_gate.KC.PW, "oriented_specs", return_value=[(1, (0, 1, 2, 3))]), \
@@ -154,12 +160,17 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
              patch.object(sine_gate.KC.CK, "project_branch_complete_charges", side_effect=project_branch):
             alpha = 0.7 + 0.2j
             beta = -0.3 + 0.9j
-            mixed, _, _ = sine_gate.complete_HE_sine_state(
-                {key: alpha}, 0, 4, charged_nodes=(0,)
+            projection_diagnostics = {}
+            mixed, _, mixed_leak = sine_gate.complete_HE_sine_state(
+                {key: alpha}, 0, 4, charged_nodes=(0,),
+                projection_diagnostics=projection_diagnostics,
             )
             scaled, _, _ = sine_gate.complete_HE_sine_state(
                 {key: beta}, 0, 4, charged_nodes=(0,)
             )
+
+        self.assertEqual(projection_diagnostics[0]["max_relative_leakage"], 0.25)
+        self.assertEqual(mixed_leak, 0.25)
 
         self.assertEqual(set(mixed), {("output", ("forward",)), ("output", ("adjoint",))})
         for output_key in mixed:
