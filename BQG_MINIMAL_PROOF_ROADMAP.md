@@ -109,7 +109,7 @@ If zero is an isolated eigenvalue, $P_0=\mathbf1_{\{0\}}(M_G)$ is an orthogonal 
 ### B3. Current evidence and limits
 
 - `MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md` proves the positive-master-operator/common-kernel identity and the isolated-zero finite spectral projector.
-- The associated numerical gate is a finite synthetic operator-algebra self-test; it is not the full BQG constraint family.
+- The original `master_constraint_physical_projector_gate.py` remains a synthetic operator-algebra self-test. A separate gate now assembles all 60 actual finite K5 Thiemann-type local constraint maps on the 32D fully-active domain and constructs the corresponding master operator and induced positive inner product. Its strict Gauss-projection-loss, spectral, and physical-Gram checks are running in CI; until that exact-head run passes, treat it as an implementation under verification, not a closed gate.
 - `PHYSICAL_PROJECTOR_HISTORY` remains explicitly `open_physical` in `physicalization_gates.json`. The repository itself says the continuum/rigging-map limit and physical boundary amplitude remain open.
 
 **Exit condition B:** a nontrivial, positive, regulator-compatible physical Hilbert space has been constructed from the actual BQG constraints, with physical observables and boundary amplitudes defined on it.
