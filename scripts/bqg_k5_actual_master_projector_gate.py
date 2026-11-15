@@ -117,12 +117,12 @@ def physical_gram_check(P: np.ndarray, rng: np.random.Generator) -> dict:
     n = P.shape[0]
     probes = rng.normal(size=(n, 6)) + 1j * rng.normal(size=(n, 6))
     projected = P @ probes
-    gram = probes.conj().T @ projected
-    gram = 0.5 * (gram + gram.conj().T)
+    raw_gram = probes.conj().T @ projected
+    hermiticity = stable_norm(raw_gram - raw_gram.conj().T)
+    gram = 0.5 * (raw_gram + raw_gram.conj().T)
     values = np.linalg.eigvalsh(gram)
     scale = max(float(np.max(np.abs(values))), 1.0)
     rank = int(np.sum(values > 1e-9 * scale))
-    hermiticity = stable_norm(gram - gram.conj().T)
     return {
         "gram_dimension": int(gram.shape[0]),
         "gram_min_eigenvalue": float(np.min(values)),
