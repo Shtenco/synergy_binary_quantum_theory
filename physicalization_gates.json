@@ -19,7 +19,6 @@
   "structural_status_source": "theory_gates.json",
   "required_physical_gates": [
     "PHYSICAL_PROJECTOR_HISTORY",
-    "RELATIONAL_DYNAMICS_CAUSALITY",
     "CONNECTED_INTERBLOCK_HISTORY",
     "PHYSICAL_TT_KERNEL",
     "IR_SIX_VECTOR",
@@ -138,19 +137,6 @@
         "CORE_FALSIFICATION_TESTS.md"
       ],
       "hard_scope": "The exact finite master-projector theorem and the C8 relational positive control do not close this theory-specific physical gate."
-    },
-    {
-      "id": "RELATIONAL_DYNAMICS_CAUSALITY",
-      "status": "open_physical",
-      "closure_role": "physical",
-      "claim": "Derive the physical relational clock or boundary-time observable from the actual graph-changing constraint/physical-history construction, then compute its conditional propagator and retarded response with a demonstrated causal support, stable positive physical norm and agreement with gauge-invariant projector observables.",
-      "evidence": [
-        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
-        "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
-        "THREE_NODE_GRAPH_HDA_RESULT.md",
-        "CORE_FALSIFICATION_TESTS.md"
-      ],
-      "hard_scope": "The finite C8 Page-Wootters control uses an externally declared clock and R=J; it does not derive physical gravitational time, a Lorentzian retarded kernel, a causal cone or microcausality. Euclidean finite HDA scaling is not a causal-response calculation."
     },
     {
       "id": "CONNECTED_INTERBLOCK_HISTORY",
@@ -296,20 +282,20 @@
       "id": "PHYSICAL_RELATIONAL_CLOCK_RESPONSE",
       "status": "open_physical",
       "closure_role": "physical",
-      "claim": "Derive a physical clock or boundary-history ordering from the actual graph-changing constraints, construct the rigging-map projector and relational observables, and compute physical retarded commutators.",
+      "claim": "Derive a physical clock or boundary-history ordering from the actual graph-changing constraints, construct the theory-specific rigging-map projector and relational observables, establish a stable positive physical norm on the quotient, and compute conditional propagators and physical retarded commutators that agree with gauge-invariant projector observables.",
       "evidence": [
         "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
         "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
         "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
         "scripts/q2_relational_history_projector_gate.py"
       ],
-      "hard_scope": "The finite master projector selects a constraint kernel but is not time; the C8 Page-Wootters clock and R=J remain external positive controls, not physical BQG evolution."
+      "hard_scope": "The finite master projector selects a constraint kernel but is not time; the C8 Page-Wootters clock and R=J remain external positive controls, not physical BQG evolution. No physical conditional propagator or retarded response has yet been derived."
     },
     {
       "id": "PHYSICAL_COMMON_CAUSAL_CONE",
       "status": "open_physical",
       "closure_role": "physical",
-      "claim": "Compute photon, matter, scalar, vector and tensor physical retarded fronts with a common relational clock and physical distance across graph refinements, and establish a common continuum cone.",
+      "claim": "Compute photon, matter, scalar, vector and tensor physical retarded fronts with the same derived relational clock and physical distance across graph refinements, and establish causal support, absence of acausal response and a common regulator-independent continuum cone.",
       "evidence": [
         "BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md",
         "scripts/bqg_physical_history_decoherence_engine.py",
