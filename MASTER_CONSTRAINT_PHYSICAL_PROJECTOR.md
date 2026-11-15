@@ -240,9 +240,9 @@ The first two arrows are exact finite operator mathematics.  The continuum/proje
 
 ---
 
-## 9. Actual finite K5 constraint family: implementation under verification
+## 9. Actual finite K5 constraint family: strict finite gate passed
 
-A separate implementation now assembles the repository's actual finite K5 Thiemann-type local constraint maps rather than using random synthetic matrices:
+The strict CI gate now assembles the repository's actual finite K5 Thiemann-type local constraint maps rather than using random synthetic matrices. It passed twice (runs `43698498561` and `43698505888`; latest tested source HEAD `74a89b47e0a692509f5df4304e8192eb11bbde86`):
 
 \[
 T(v;a,b|c)=
@@ -259,7 +259,7 @@ The declared finite domain is the 32-dimensional fully-active \(j=1/2\) K5 secto
 =\sum_{A,B,o}\overline{(C_A)_{oi}}\,G^{AB}(C_B)_{oj}.
 \]
 
-It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap. It also constructs the induced finite physical form
+It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap. The four zero sectors have rank one, pairwise projector difference below `1.9e-15`, and positive gaps `2712.0945`, `5190.0064`, `5866.2762`, and `6225.8483`. The strict relative master-operator numerical omission bounds are below `3.3e-15`. It also constructs the induced finite physical form
 
 [
 (eta(phi),eta(psi))_{phys}=langlephi|P_{phys}|psiangle
@@ -271,4 +271,6 @@ Implementation: scripts/bqg_k5_actual_master_projector_gate.py
 Regression tests: tests/test_bqg_k5_actual_master_projector_gate.py  
 Workflow: .github/workflows/bqg-k5-actual-master-projector.yml
 
-**Claim boundary:** this is a finite Euclidean/canonical K5 construction on the declared 32D domain. Even if its CI gate passes, it does not establish the full Lorentzian constraint family, invariance of the entire kinematical Hilbert space, anomaly-free arbitrary-graph refinement, continuum rigging map, or physical Born measure. The physical gate PHYSICAL_PROJECTOR_HISTORY remains open until those further constructions are demonstrated.
+**Error-accounting convention:** the declared maps are `C_A=P_G T_A` into the 140D Gauss-invariant codomain. The Gauss-projection loss is recorded independently; it is not counted as a numerical omission from `C_A`. The strict master-operator perturbation bound includes the fixed-basis numerical column-mask omission, whose Frobenius bound is `9.98e-15`; the fixed link-matrix mask removes zero nonzero entries.
+
+**Claim boundary:** this is a finite Euclidean/canonical K5 construction on the declared 32D domain. Even though its strict CI gate passes, it does not establish the full Lorentzian constraint family, invariance of the entire kinematical Hilbert space, anomaly-free arbitrary-graph refinement, continuum rigging map, or physical Born measure. The physical gate PHYSICAL_PROJECTOR_HISTORY remains open until those further constructions are demonstrated.
