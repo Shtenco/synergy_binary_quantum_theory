@@ -43,6 +43,17 @@ class TestActualK5MasterProjectorAlgebra(unittest.TestCase):
         self.assertEqual(rG, 1)
         self.assertLess(np.linalg.norm(P0 - PG), 1e-8)
 
+    def test_projector_induces_positive_physical_inner_product_and_null_quotient(self):
+        P = np.diag([1.0, 0.0]).astype(np.complex128)
+        phi = np.asarray([1.0 + 2j, 3.0 - 1j])
+        psi = np.asarray([-2.0 + 1j, 4.0 + 2j])
+        left = gate.physical_inner_product(P, phi, psi)
+        right = gate.physical_inner_product(P, psi, phi)
+        self.assertAlmostEqual(abs(left - right.conjugate()), 0.0, places=12)
+        self.assertGreater(gate.physical_inner_product(P, phi, phi).real, 0.0)
+        null = np.asarray([0.0, 1.0], dtype=np.complex128)
+        self.assertAlmostEqual(gate.physical_inner_product(P, null, null).real, 0.0, places=12)
+
     def test_nonhermitian_metric_is_rejected(self):
         G = np.asarray([[1, 1], [0, 1]], dtype=np.complex128)
         with self.assertRaisesRegex(ValueError, "Hermitian"):
