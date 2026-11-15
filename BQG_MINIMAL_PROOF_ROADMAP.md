@@ -65,7 +65,7 @@ The operator may mix multiplicity labels. Do not apply this scalar rule to a par
 ### A3. Current evidence and limits
 
 - A production W5 artifact previously reported 172 output states and a wrong-sector fraction around $4.42\times10^{-21}$ for one finite seed/node/cutoff. It is evidence for that artifact only; the no-pruning contribution was not thereby excluded.
-- A direct all-(M) gate exists and is designed to bypass the cached highest-weight wrapper. Its completed all-node result must be inspected before claiming covariance.
+- The direct all-M gate now tests all three magnetic components for two distinct charged recoupling channels at each of the five source nodes, in both production and instrumented-shadow modes. It also checks the finite 6x6 compression of the sine-ordered operator for Hermiticity. This compressed adjointness check is necessary but not a proof of global self-adjointness. Shadow mode bypasses every threshold routed through PRUNE.keep; it is not a complete no-prune proof until the entire transitive import closure is statically inventoried. The cache-on/cache-off workflow is wired to rerun when this direct SU(2) gate changes. Exact-head CI results are still pending.
 - Strict compensated complex accumulation has been integrated at selected V10/V11 boundaries. The repository's own remediation plan still identifies lower-level threshold sites and pruning coverage as incomplete.
 - Finite HDA controls are not the complete physical anomaly-free constraint algebra.
 
