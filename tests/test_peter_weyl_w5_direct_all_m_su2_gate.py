@@ -203,7 +203,7 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
                 for key, amplitude in state.items()
             }, 0.0, 0.0
 
-        with patch.object(gate.SINE, "complete_HE_sine", side_effect=graph_changing_map), \\
+        with patch.object(gate.SINE, "complete_HE_sine", side_effect=graph_changing_map), \
              patch.object(gate.SINE, "complete_HE_sine_state", side_effect=graph_changing_superposition):
             result = gate.run(Jmax2=4, pruning_mode="production", nodes=(0,))
 
