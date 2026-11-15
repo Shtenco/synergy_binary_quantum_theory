@@ -77,7 +77,7 @@ class TestW5CachePairedShardAggregate(unittest.TestCase):
             self.write(directory, report(10, 0, 0, "off", amplitude=2.0))
             result = aggregate(directory)
         self.assertFalse(result["passed"])
-        self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
+        self.assertTrue(any("FAIL_CACHE_EQUIVALENCE" in e for e in result["errors"]))
 
     def test_incomplete_operator_gate_cannot_pass(self):
         with tempfile.TemporaryDirectory() as temp:

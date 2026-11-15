@@ -70,7 +70,7 @@ class TestW5ShadowPairedShardAggregate(unittest.TestCase):
             self.write(directory, bad)
             result = aggregate(directory)
         self.assertFalse(result["finite_matrix_comparison_complete"])
-        self.assertTrue(any("duplicate shard identity" in e for e in result["errors"]))
+        self.assertTrue(any("non-finite matrix comparison" in e for e in result["errors"]))
 
 
 if __name__ == "__main__":
