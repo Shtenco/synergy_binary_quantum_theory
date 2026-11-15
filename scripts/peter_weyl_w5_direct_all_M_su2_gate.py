@@ -127,6 +127,48 @@ def wrong_sector_fraction(state, *, node, expected_j2, expected_m2):
     return fraction
 
 
+def spectator_non_singlet_weight_fractions(state, *, source_node):
+    """Measure non-singlet weight at every spectator vertex of the full output.
+
+    The charged complete-JM basis is needed while each graph-changing term is
+    assembled, but the fully summed scalar H_E must leave every non-source
+    vertex in its Gauss-singlet (J=0) sector. A charged label with J2=0 is also
+    a singlet and is accepted; only J2>0 contributes to leakage.
+    """
+    if not isinstance(source_node, int) or isinstance(source_node, bool) or not 0 <= source_node < 5:
+        raise ValueError("source_node must be an integer in [0, 4]")
+    if not state:
+        raise AssertionError("spectator Gauss check cannot use an empty output")
+    magnitudes = []
+    for amp in state.values():
+        z = complex(amp)
+        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
+            raise ValueError("spectator Gauss check contains a non-finite amplitude")
+        magnitudes.append(abs(z))
+    scale = max(magnitudes, default=0.0)
+    if scale == 0.0 or not math.isfinite(scale):
+        raise AssertionError("spectator Gauss check has zero or invalid output norm")
+    total = math.fsum((magnitude / scale) ** 2 for magnitude in magnitudes)
+    fractions = {}
+    for vertex in range(5):
+        if vertex == source_node:
+            continue
+        wrong = 0.0
+        for ((_, labels), _amp), magnitude in zip(state.items(), magnitudes):
+            label = labels[vertex]
+            if label[0] == "G":
+                continue
+            if label[0] != "C":
+                raise AssertionError(f"operator output has an unknown basis label at spectator node {vertex}")
+            if int(label[1]) != 0:
+                wrong += (magnitude / scale) ** 2
+        fraction = wrong / total
+        if not math.isfinite(fraction):
+            raise AssertionError(f"spectator Gauss leakage is non-finite at node {vertex}")
+        fractions[str(vertex)] = fraction
+    return fractions
+
+
 def make_input(M2, node=0, K12=0, K34=2):
     if not isinstance(node, int) or isinstance(node, bool) or not 0 <= node < 5:
         raise ValueError("node must be an integer in [0, 4]")
@@ -280,6 +322,16 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                     wrong_fraction = wrong_sector_fraction(
                         H_input, node=node, expected_j2=2, expected_m2=M2
                     )
+                    spectator_fractions = spectator_non_singlet_weight_fractions(
+                        H_input, source_node=node
+                    )
+                    raised_spectator_fractions = spectator_non_singlet_weight_fractions(
+                        H_raised, source_node=node
+                    )
+                    max_spectator_fraction = max(
+                        max(spectator_fractions.values(), default=0.0),
+                        max(raised_spectator_fractions.values(), default=0.0),
+                    )
                     cases.append({
                         "source_node": node,
                         "K12": K12,
@@ -300,6 +352,9 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         "jz_comparison_scale": jz_scale,
                         "wrong_JM_weight_fraction": wrong_fraction,
                         "wrong_JM_relative_amplitude": math.sqrt(wrong_fraction),
+                        "spectator_non_singlet_weight_fractions": spectator_fractions,
+                        "raised_spectator_non_singlet_weight_fractions": raised_spectator_fractions,
+                        "max_spectator_non_singlet_weight_fraction": max_spectator_fraction,
                         "volume_leakage": max(
                             he_by_m[M2]["volume_leakage"],
                             he_by_m[M2 + 2 * direction]["volume_leakage"],
@@ -438,6 +493,10 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     max_commutator = max((x["commutator_relative_residual"] for x in cases), default=0.0)
     max_jz_commutator = max((x["jz_commutator_relative_residual"] for x in cases), default=0.0)
     max_wrong_fraction = max((x["wrong_JM_weight_fraction"] for x in cases), default=0.0)
+    max_spectator_non_singlet_fraction = max(
+        (x["max_spectator_non_singlet_weight_fraction"] for x in cases),
+        default=0.0,
+    )
     max_actual_superposition = max((x["relative_residual"] for x in superposition_rows), default=float("inf"))
     passed = (
         len(cases) == 4 * len(channels) * len(nodes)
@@ -453,6 +512,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         # the independent full-codomain SU(2) covariance result.
         and max_jz_commutator < 1e-12
         and max_wrong_fraction < 1e-18
+        and max_spectator_non_singlet_fraction < 1e-18
         and max((x["volume_leakage"] for x in cases), default=0.0) < 1e-10
         and max((x["basis_leakage"] for x in cases), default=0.0) < 1e-10
     )
@@ -480,6 +540,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "max_commutator_relative_residual": max_commutator,
         "max_jz_commutator_relative_residual": max_jz_commutator,
         "max_wrong_JM_weight_fraction": max_wrong_fraction,
+        "max_spectator_non_singlet_weight_fraction": max_spectator_non_singlet_fraction,
         "generators_checked": ["J_plus", "J_minus", "J_z"],
         "cases": cases,
         "operator_columns_sparse": operator_columns_sparse,
