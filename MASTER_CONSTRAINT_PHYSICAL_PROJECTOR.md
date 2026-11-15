@@ -274,3 +274,21 @@ Workflow: .github/workflows/bqg-k5-actual-master-projector.yml
 **Error-accounting convention:** the declared maps are `C_A=P_G T_A` into the 140D Gauss-invariant codomain. The Gauss-projection loss is recorded independently; it is not counted as a numerical omission from `C_A`. The strict master-operator perturbation bound includes the fixed-basis numerical column-mask omission, whose Frobenius bound is `9.98e-15`; the fixed link-matrix mask removes zero nonzero entries.
 
 **Claim boundary:** this is a finite Euclidean/canonical K5 construction on the declared 32D domain. Even though its strict CI gate passes, it does not establish the full Lorentzian constraint family, invariance of the entire kinematical Hilbert space, anomaly-free arbitrary-graph refinement, continuum rigging map, or physical Born measure. The physical gate PHYSICAL_PROJECTOR_HISTORY remains open until those further constructions are demonstrated.
+
+
+---
+
+## 10. Finite rank-one quotient and the missing Lorentzian family
+
+The strict actual K5 gate reports a one-dimensional zero sector and a rank-one induced finite physical Gram form on the declared 32D fully-active j=1/2 domain. This establishes a nonzero finite quotient for that specific Euclidean constraint family. It does not demonstrate a nontrivial physical-observable algebra, relational evolution, or propagating degrees of freedom: those require a sufficiently rich physical state family and gauge-invariant observable matrix elements.
+
+The next refinement study must track the physical quotient dimension, null-space stability, and matrix elements of gauge-invariant observables across graph/spin cutoffs. It must determine whether additional independent physical states survive and whether physical observables act nontrivially on the quotient. A rank-one finite result is not to be rejected automatically, but it cannot be used as evidence for nontrivial dynamics.
+
+The actual finite K5 maps tested here are Euclidean Thiemann-type local maps. The current Lorentzian implementation chain has separate prerequisite components:
+- (K_v=[V_v,H_{E,v}]), explicitly identified in the source as a prerequisite block;
+- individual sine-ordered graph-changing (K K V) triples;
+- the still-unassembled complete Lorentzian Hamiltonian with all orientation/permutation sums, fixed beta-dependent coefficient, common operator domain and adjoint prescription.
+
+The three-node HDA scaling control uses the Euclidean Hamiltonian plus a route-normal term; its own result note leaves full Lorentzian amplitudes open. Consequently, neither that HDA control nor this finite Euclidean master projector supplies the complete Lorentzian constraint family (C_A^{(\epsilon,J)}).
+
+Before constructing the full physical master operator, the candidate theory must freeze the complete Euclidean-plus-Lorentzian constraint family on a common graph-changing domain, define the diffeomorphism/Gauss treatment and adjoints, and test the off-shell constraint algebra against the independent geometry-dependent diffeomorphism target. Only then may the finite common-kernel construction be extended to the theory-specific physical projector/rigging-map limit.
