@@ -219,8 +219,15 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             scaled, _, _ = sine_gate.complete_HE_sine_state(
                 {key: beta}, 0, 4, charged_nodes=(0,)
             )
+            # The single-column and coherent-superposition paths must use
+            # identical term-local charged support.
+            sine_gate.complete_HE_sine(key, 0, 4, charged_nodes=(0,))
 
         self.assertEqual(set(observed_charge_nodes), {(0, 1, 2, 3)})
+        self.assertEqual(
+            sine_gate.projection_charge_nodes((4,), (0, 1, 2, 3)),
+            (4, 0, 1, 2, 3),
+        )
         self.assertEqual(projection_diagnostics[0]["max_relative_leakage"], 0.25)
         self.assertEqual(mixed_leak, 0.25)
 
