@@ -1,6 +1,15 @@
+import math
 import unittest
 
-from scripts.bqg_v11_w5_common_carrier import build_carrier, joint_gram_input
+from scripts.bqg_v11_w5_common_carrier import (
+    _decode_v09_sparse,
+    _decode_v10_column,
+    _norm,
+    _relative_residual,
+    _sum_sparse_maps,
+    build_carrier,
+    joint_gram_input,
+)
 
 
 class FakeV09:
@@ -77,6 +86,45 @@ class FakeV10:
 
 
 class TestW5CommonCarrier(unittest.TestCase):
+    def test_v09_decoder_uses_compensated_complex_sum(self):
+        key = ((4,) * 10, (0, 0, 0, 0, 1))
+        rows = [
+            [repr(key), 1.0e16, 1.0e16],
+            [repr(key), 1.0, 2.0],
+            [repr(key), -1.0e16, -1.0e16],
+        ]
+        self.assertEqual(_decode_v09_sparse(rows, "V09 test")[key], 1.0 + 2.0j)
+
+    def test_v10_decoder_uses_compensated_complex_sum(self):
+        key = ((4,) * 10, (0, 0, 0, 0, 1))
+        basis = [repr(key)]
+        rows = [
+            [0, 1.0e16, 1.0e16],
+            [0, 1.0, 2.0],
+            [0, -1.0e16, -1.0e16],
+        ]
+        self.assertEqual(_decode_v10_column(rows, basis, "V10 test")[key], 1.0 + 2.0j)
+
+    def test_coherent_node_sum_is_compensated_and_order_independent(self):
+        maps = [
+            {"state": 1.0e16 + 1.0e16j},
+            {"state": 1.0 + 2.0j},
+            {"state": -1.0e16 - 1.0e16j},
+        ]
+        expected = {"state": 1.0 + 2.0j}
+        self.assertEqual(_sum_sparse_maps(*maps), expected)
+        self.assertEqual(_sum_sparse_maps(*reversed(maps)), expected)
+
+    def test_norm_and_residual_use_scale_robust_hypot(self):
+        state = {"a": 1.0e200 + 0j, "b": 1.0e200 + 0j}
+        self.assertTrue(math.isfinite(_norm(state)))
+        relative, absolute, scale = _relative_residual(
+            {"a": 1.0e200 + 0j}, {"a": 1.0e200 + 1.0e190j}
+        )
+        self.assertTrue(math.isfinite(relative))
+        self.assertTrue(math.isfinite(absolute))
+        self.assertTrue(math.isfinite(scale))
+
     def test_assembles_common_carrier_and_crosschecks_node_sum(self):
         result = build_carrier(
             source_nodes=(0, 1, 2, 3, 4),
