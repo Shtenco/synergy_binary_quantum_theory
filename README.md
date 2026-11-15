@@ -1007,11 +1007,10 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 
 Целевой формат каждого уровня:
 
-[
+$$
 \mathcal P_l=
 (\mathcal H_l,\Omega_l,W_l,E_l,S_l,R_l,\mathcal M_l),
-]
-
+$$
 где (mathcal H_l) — пространство состояний, (Omega_l) — фиксированный фон/seed, (W_l) — общий carrier, (E_l,S_l,R_l) — три оператора с исходными комплексными амплитудами, а (mathcal M_l) — независимая метрическая калибровка и provenance.
 
 Каждый артефакт должен быть связан с тем же refinement, carrier, background, cutoff, операторными blob SHA и source commit. Импорт результатов с другого уровня или из другого carrier запрещён.
@@ -1022,73 +1021,67 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 
 - L1 Euclidean E-worker использует barycentric refinement первого уровня: 384 fine chambers/nodes и 768 dual links, три edge representatives ([0,1,5]) и 24 вторых действия на каждый представитель.
 - Lorentzian V2/V3 использует отдельную 16-cell/global assembly; он не является тем же L1 barycentric state space.
-- Sparse Fourier route использует конечные двумерные Fourier modes и матричные (2\times2) геометрические блоки; это не тот же базис состояний L1.
-- Поэтому объединение уже полученных чисел из этих путей в (H=-\frac23E-\frac{32}{9}S+R) не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
+- Sparse Fourier route использует конечные двумерные Fourier modes и матричные $2\times2$ геометрические блоки; это не тот же базис состояний L1.
+- Поэтому объединение уже полученных чисел из этих путей в $H=-\frac23E-\frac{32}{9}S+R$ не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
 
 ### Г.3.1. Carrier и leakage
 
 В `COLLECTIVE_KRYLOV_EFFECTIVE_BASIS.md` зафиксирована target-independent конструкция глубины два:
 
-[
+$$
 \mathcal K_l^{(2)}
 =\operatorname{span}\{\Omega_l,O_a\Omega_l,O_bO_a\Omega_l\},
 \qquad O_a,O_b\in\{E,S,R\}.
-]
+$$
+Указанная support wall $j_{\rm face}\leq9$ — граница поддержки конечного построения, а не доказательство динамического замыкания. Для общего ортопроектора $P_l=W_lW_l^\dagger$ должны измеряться:
 
-Указанная support wall (j_{\rm face}\leq9) — граница поддержки конечного построения, а не доказательство динамического замыкания. Для общего ортопроектора (P_l=W_lW_l^\dagger) должны измеряться:
-
-[
+$$
 \eta_A=\|(I-P_l)A W_l\|,
 \qquad
 \eta_{BA}=\|(I-P_l)O_bO_aW_l\|.
-]
-
-Нужны все направления базиса, все (A\in\{E,S,R,H\}), все упорядоченные пары и полные singular spectra. Один seed или одна нулевая утечка на искусственно ограниченном support не заменяют эту проверку.
+$$
+Нужны все направления базиса, все $A\in\{E,S,R,H\}$, все упорядоченные пары и полные singular spectra. Один seed или одна нулевая утечка на искусственно ограниченном support не заменяют эту проверку.
 
 ### Г.3.2. Lorentzian Schur reduction
 
 Для полного блока
 
-[
+$$
 C_l=
 \begin{pmatrix}
 A_l&B_l\\
 B_l^\dagger&D_l
 \end{pmatrix}
-]
-
+$$
 кандидат на эффективный блок при нулевом спектральном параметре:
 
-[
+$$
 C_{\mathrm{eff},l}(0)=A_l-B_lD_l^{-1}B_l^\dagger.
-]
-
+$$
 До обращения (D_l) требуется опубликовать его полный спектр, малые eigenvalues, gap и condition number; при малых/нулевых модах — явно задать допустимую процедуру, а не скрывать их псевдообратной. Результат Schur должен совпадать с независимым решением полной блочной системы в пределах заранее объявленной ошибки.
 
 Ранее зарегистрированный depth-two diagnostic
 
-[
+$$
 X_E=Q_\perp EW_g,\quad X_S=Q_\perp SW_g,
-]
-[
+$$
+$$
 L_{EE}=X_E^\dagger X_E,\quad
 L_{SS}=X_S^\dagger X_S,\quad
 L_{ES}=X_E^\dagger X_S+X_S^\dagger X_E
-]
-
+$$
 и комбинация для (G=-2E/3-32S/9),
 
-[
+$$
 L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
-]
-
+$$
 остаются конечномерным denominator-free leakage diagnostic. Это не полный физический Feshbach/Schur reduction.
 
 ### Г.3.3. Прямой HDA
 
 Для одного и того же production operator и общего (W_l) необходимо построить (H_l[N]^{\rm eff}), (H_l[M]^{\rm eff}), (D_l[\beta]^{\rm eff}) и измерить
 
-[
+$$
 \Delta_{HH,l}=
 \frac{
 \|[H_l[N]^{\rm eff},H_l[M]^{\rm eff}]
@@ -1096,28 +1089,25 @@ L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
 }{
 \|D_l[\beta]^{\rm eff}\|
 }.
-]
-
+$$
 Дополнительно сохраняются микроскопический residual до сжатия, leakage генераторов, discrepancy между bracket-before-compression и bracket-after-compression и ошибка structure function. Проекция не должна искусственно уменьшать остаток и превращать его в мнимое подтверждение HDA.
 
 ### Г.3.4. Независимая метрическая калибровка
 
 В `collective_metric_hessian_extractor.py` предусмотрены два маршрута:
 
-[
+$$
 q=B^{-1}Jh
 \quad\text{или}\quad
 q=M_{hq}^{-1}h,
 \qquad K_h=Q^TK_qQ.
-]
-
+$$
 Выбор (B=I) не является независимой физической калибровкой. В ранее проверенном первом блоке зафиксировано
 
-[
+$$
 M_{hq}^TM_{hq}
 =\frac16(P_{A_1}+P_E)+\frac13P_{T_2},
-]
-
+$$
 то есть (s^2_{A_1}=s^2_E=1/6), (s^2_{T_2}=1/3). Это конечный block result, а не последовательная refinement calibration. Для закрытия пункта нужны независимые (M_{hq}^{(l)}) на L0–L3, все шесть singular values, rank, conditioning, covariance и устойчивость базиса.
 
 ## Г.4. Предыдущие конечные ориентиры — не четыре физических уровня
@@ -1127,7 +1117,7 @@ M_{hq}^TM_{hq}
 - L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около (4.83\times10^{-15}), размерность 17 с seed.
 - L1 E-only worker family: 72 shard triplets (3 edge representatives × 24 nodes). Это вычислительное разбиение одного Euclidean E-path, а не 72 независимых физических уровня.
 - Наличие L0 precursor и L1 E-only shard family не означает наличие четырёх сопоставимых физических refinement levels.
-- Общий (c_{\mathrm{DeWitt}}(\epsilon)) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
+- Общий $c_{\mathrm{DeWitt}}(\epsilon)$ нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
 
 ## Г.5. L1 amplitude package v1: что реализовано
 
@@ -1147,14 +1137,13 @@ M_{hq}^TM_{hq}
 
 Определения worker:
 
-[
+$$
 u_e=\frac12\sum_{4\,\mathrm{chambers}\to e}H_c|\Omega\rangle,
 \qquad
 v_{e,w}=H_wu_e,
 \qquad
 v_e=\sum_{w=0}^{23}v_{e,w}.
-]
-
+$$
 Используется `LocalPLPeterWeylEuclidean exact active-cone`, с (J_{\max}=2.5) в shard metadata. Worker заявляет конечные проверки геометрии, ненулевости состояний, конечности амплитуд, spin wall и seed parity. Эти заявления теперь дополнительно пересчитываются producer/validator по raw NPZ, а не принимаются только из JSON.
 
 ### Г.5.1. Исправление порядка суммирования
