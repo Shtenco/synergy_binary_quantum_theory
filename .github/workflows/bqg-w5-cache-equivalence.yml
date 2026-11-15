@@ -27,22 +27,10 @@ on:
       - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
   workflow_dispatch:
     inputs:
-      jmax2:
-        description: "Twice the maximum spin"
-        required: true
-        default: "10"
-      max_states:
-        description: "Reachable-state cap (ignored with unbounded closure)"
-        required: true
-        default: "500"
-      max_depth:
-        description: "Path-depth cap (ignored with unbounded closure)"
-        required: true
-        default: "8"
       timeout_seconds:
-        description: "Timeout for each fresh process"
+        description: "Timeout for each fresh process in seconds"
         required: true
-        default: "900"
+        default: "3600"
 
 concurrency:
   group: bqg-w5-cache-equivalence-${{ github.ref }}
@@ -53,8 +41,14 @@ permissions:
 
 jobs:
   cache-equivalence:
+    name: Cache equivalence Jmax2=${{ matrix.jmax2 }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        jmax2: [10, 12, 14]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,20 +68,18 @@ jobs:
         shell: bash
         run: |
           mkdir -p verification_results
-          JMAX2="${{ github.event.inputs.jmax2 || '10' }}"
-          MAX_STATES="${{ github.event.inputs.max_states || '500' }}"
-          MAX_DEPTH="${{ github.event.inputs.max_depth || '8' }}"
-          TIMEOUT="${{ github.event.inputs.timeout_seconds || '900' }}"
+          TIMEOUT="${{ github.event.inputs.timeout_seconds || '3600' }}"
           python scripts/bqg_v10_w5_cache_equivalence.py \
-            --nodes 0 --seed-K 0 --Jmax2 "$JMAX2" \
-            --max-states "$MAX_STATES" --max-depth "$MAX_DEPTH" \
+            --nodes 0 1 2 3 4 --seed-K 0 2 4 6 8 \
+            --Jmax2 "${{ matrix.jmax2 }}" \
+            --max-states 500 --max-depth 8 --unbounded-closure \
             --timeout-seconds "$TIMEOUT" \
-            --output verification_results/W5_CACHE_EQUIVALENCE_RUN${{ github.run_id }}.json
+            --output verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
       - name: Upload cache equivalence report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-cache-equivalence-${{ github.run_id }}
-          path: verification_results/W5_CACHE_EQUIVALENCE_RUN${{ github.run_id }}.json
+          name: bqg-w5-cache-equivalence-j${{ matrix.jmax2 }}-${{ github.run_id }}
+          path: verification_results/W5_CACHE_EQUIVALENCE_J${{ matrix.jmax2 }}_RUN${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
