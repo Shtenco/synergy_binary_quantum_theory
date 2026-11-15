@@ -11,6 +11,22 @@ import peter_weyl_covariant_K_sine_composition_gate as sine_gate
 
 
 class TestDirectAllMSU2FailClosed(unittest.TestCase):
+    def test_complex_operator_diagnostics_are_losslessly_json_serializable(self):
+        import json
+        encoded = json.dumps(
+            {"ladder_factor": 1.0 + 2.5j, "amplitude": gate.np.complex128(-3.0 + 0.25j)},
+            default=gate.json_default,
+            allow_nan=False,
+        )
+        decoded = json.loads(encoded)
+        self.assertEqual(decoded["ladder_factor"], [1.0, 2.5])
+        self.assertEqual(decoded["amplitude"], [-3.0, 0.25])
+
+    def test_nonfinite_complex_operator_diagnostics_are_rejected(self):
+        import json
+        with self.assertRaisesRegex(ValueError, "non-finite complex"):
+            json.dumps({"amplitude": complex(float("inf"), 0.0)}, default=gate.json_default, allow_nan=False)
+
     def test_empty_commutator_inputs_are_rejected(self):
         with self.assertRaisesRegex(AssertionError, "empty state"):
             gate.relative_error({}, {})
