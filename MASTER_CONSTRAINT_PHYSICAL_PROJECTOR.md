@@ -12,36 +12,36 @@ The key point is simple: once a finite regulated set of quantum constraints and 
 
 Let the regulated first-class constraints acting on a finite Peter-Weyl habitat be
 
-\[
+$
 C_A,\qquad A=1,\ldots,m,
-\]
+$
 
 after whatever Gauss/diffeomorphism reduction has explicitly been performed at that stage.
 
 Choose any positive-definite Hermitian matrix `G` on the finite constraint-label space and define
 
-\[
+$
 \boxed{
 \mathbb M_G
 =\sum_{A,B} C_A^\dagger G^{AB}C_B.
 }
-\]
+$
 
 Equivalently, if `C psi` denotes the column with entries `C_A psi`,
 
-\[
+$
 \langle\psi|\mathbb M_G|\psi\rangle
 =\lVert G^{1/2}C\psi\rVert^2\ge0.
-\]
+$
 
 Therefore
 
-\[
+$
 \boxed{
 \ker\mathbb M_G
 =\bigcap_A\ker C_A
 }
-\]
+$
 
 for every strictly positive `G`.
 
@@ -58,49 +58,49 @@ Thus the *zero-sector* is independent of the arbitrary positive constraint metri
 
 At finite regulator, when zero is an isolated eigenvalue, define
 
-\[
+$
 \boxed{
 P_{\rm phys}^{(\epsilon)}
 =\mathbf 1_{\{0\}}(\mathbb M_G).
 }
-\]
+$
 
 This is an ordinary orthogonal spectral projector and satisfies
 
-\[
+$
 P_{\rm phys}^2=P_{\rm phys},\qquad
 P_{\rm phys}^\dagger=P_{\rm phys},\qquad
 C_A P_{\rm phys}=0.
-\]
+$
 
 Equivalent regulated approximants include
 
-\[
+$
 P_T=e^{-T\mathbb M_G},\qquad T\to\infty,
-\]
+$
 
 and a spectral-window projector
 
-\[
+$
 P_\delta=\mathbf 1_{[0,\delta)}(\mathbb M_G)
-\]
+$
 
 with `delta` below the first positive eigenvalue.
 
 If the finite gap is
 
-\[
+$
 \Delta_M=\min(\operatorname{spec}\mathbb M_G\setminus\{0\}),
-\]
+$
 
 then in operator norm
 
-\[
+$
 \boxed{
 \lVert e^{-T\mathbb M_G}-P_{\rm phys}\rVert
 =e^{-T\Delta_M}.
 }
-\]
+$
 
 This gives an explicit convergence diagnostic rather than an unspecified lapse measure.
 
@@ -148,29 +148,29 @@ Let `O_g` be the coarse metric observable supplied by the exact logical-shape ->
 
 For physical/semi-classical boundary states define a source-deformed amplitude schematically as
 
-\[
+$
 Z[J]
 =\langle\Psi_{out}|\,
 P_{\rm phys}[J\cdot O_g]\,
 |\Psi_{in}\rangle,
-\]
+$
 
 where the source insertion is implemented by an explicitly frozen symmetric prescription.  Then
 
-\[
+$
 W[J]=-i\hbar\log Z[J],
-\]
+$
 
 and the connected metric correlators are source derivatives of `W`.
 
 After a controlled Legendre transform and gauge/relational reduction,
 
-\[
+$
 \Gamma[g]
 \longrightarrow
 K_{TT}(\omega,\mathbf k)
 =\Pi_{TT}\frac{\delta^2\Gamma}{\delta g\,\delta g}\Pi_{TT}.
-\]
+$
 
 Only this physical-history/boundary object may be matched to the six on-shell quartic Wilson coefficients.
 
@@ -180,11 +180,11 @@ Only this physical-history/boundary object may be matched to the six on-shell qu
 
 A derived deparametrizable matter clock remains an independent legal route:
 
-\[
+$
 P_T+H_{phys}=0
 \quad\Longrightarrow\quad
  i\hbar\partial_T\Psi=H_{phys}\Psi.
-\]
+$
 
 If such a clock is derived, its physical propagator must agree with gauge-invariant boundary/projector observables in their common regime.  The repository does not add an arbitrary clock solely to manufacture a frequency variable.
 
@@ -222,7 +222,7 @@ For this candidate theory itself:
 
 The preferred no-shortcut chain is now
 
-\[
+$
 \boxed{
 \{C_A\}
 \to \mathbb M
@@ -233,7 +233,7 @@ The preferred no-shortcut chain is now
 \to K_{TT}(\omega,\mathbf k)
 \to(c_1,\ldots,c_6)_{IR}.
 }
-\]
+$
 
 The first two arrows are exact finite operator mathematics.  The continuum/projector-history and microscopic six-Wilson evaluation remain calculations to be completed; they are not supplied by notation.
 
@@ -244,20 +244,20 @@ The first two arrows are exact finite operator mathematics.  The continuum/proje
 
 The strict CI gate now assembles the repository's actual finite K5 Thiemann-type local constraint maps rather than using random synthetic matrices. It passed twice (runs `43698498561` and `43698505888`; latest tested source HEAD `74a89b47e0a692509f5df4304e8192eb11bbde86`):
 
-\[
+$
 T(v;a,b|c)=
 \operatorname{Tr}\!\left[
 \left(U_{vabv}-U_{vbav}\right)
 U_{vc}\,[U_{cv},P_{k_v=4}]
 \right].
-\]
+$
 
-The declared finite domain is the 32-dimensional fully-active \(j=1/2\) K5 sector. The output/codomain is the 140-dimensional Gauss-invariant K5 Hilbert space. The implementation constructs all 60 local constraint maps \(C_A:\mathcal H_{active}^{32}\to\mathcal H_{Gauss}^{140}\) on every one of the 32 input basis states, then forms
+The declared finite domain is the 32-dimensional fully-active $j=1/2$ K5 sector. The output/codomain is the 140-dimensional Gauss-invariant K5 Hilbert space. The implementation constructs all 60 local constraint maps $C_A:\mathcal H_{active}^{32}\to\mathcal H_{Gauss}^{140}$ on every one of the 32 input basis states, then forms
 
-\[
+$
 (M_G)_{ij}
 =\sum_{A,B,o}\overline{(C_A)_{oi}}\,G^{AB}(C_B)_{oj}.
-\]
+$
 
 It tests the identity metric and three independently generated strictly positive Hermitian metrics, compares the resulting zero-sector projectors, checks all 60 constraints on the projector and on the independent 4-simplex target, and compares the finite heat-kernel approximation with the exact zero-sector projector using the computed positive gap. The four zero sectors have rank one, pairwise projector difference below `1.9e-15`, and positive gaps `2712.0945`, `5190.0064`, `5866.2762`, and `6225.8483`. The strict relative master-operator numerical omission bounds are below `3.3e-15`. It also constructs the induced finite physical form
 
