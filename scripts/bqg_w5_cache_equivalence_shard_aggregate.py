@@ -21,7 +21,7 @@ def _load(path: Path):
         raise ValueError(f"{path.name}: invalid JSON: {type(exc).__name__}: {exc}") from exc
 
 
-def _sparse_residual(left, right):
+def _sparse_residual(left, right, basis_dimension):
     """Compare encoded column-sparse matrices without dense materialization."""
     if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right):
         raise ValueError("sparse matrix column dimensions differ")
@@ -48,8 +48,8 @@ def _sparse_residual(left, right):
             if not (math.isfinite(value.real) and math.isfinite(value.imag)) or row in b:
                 raise ValueError(f"invalid or duplicate right entry in column {col_index}")
             b[row] = value
-        if any(row < 0 for row in set(a) | set(b)):
-            raise ValueError("negative sparse row index")
+        if any(row < 0 or row >= basis_dimension for row in set(a) | set(b)):
+            raise ValueError("sparse row index is outside the declared closure basis")
         for row in set(a) | set(b):
             av, bv = a.get(row, 0j), b.get(row, 0j)
             delta = av - bv
@@ -97,6 +97,9 @@ def _validate_mode(report, expected_mode, key):
     }
     for field in MATRIX_FIELDS:
         checks[field] = isinstance(params.get(field), list) and bool(params[field])
+    physical = params.get("physical_status") or {}
+    checks["physical_ordering_not_selected"] = physical.get("physical_hermitian_ordering_selected") is False
+    checks["full_physical_HL_not_claimed"] = physical.get("full_physical_HL") is False
     diagnostics = params.get("diagnostics") or {}
     residual = diagnostics.get("direct_adjoint_relative_residual")
     checks["finite_direct_adjoint_residual"] = isinstance(residual, (int, float)) and math.isfinite(float(residual))
@@ -155,7 +158,7 @@ def aggregate(directory: Path, jmax2_values=DEFAULT_JMAX2, tolerance=TOLERANCE):
             if not same_basis:
                 raise ValueError("cache-on/cache-off closure basis identity differs")
             for field in MATRIX_FIELDS:
-                comparisons[field] = _sparse_residual(on[field], off[field])
+                comparisons[field] = _sparse_residual(on[field], off[field], len(on["basis_keys_repr"]))
             matrix_ok = all(
                 item["relative_l2_residual"] <= tolerance
                 for item in comparisons.values()
