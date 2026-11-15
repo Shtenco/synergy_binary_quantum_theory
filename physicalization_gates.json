@@ -19,6 +19,7 @@
   "structural_status_source": "theory_gates.json",
   "required_physical_gates": [
     "PHYSICAL_PROJECTOR_HISTORY",
+    "RELATIONAL_DYNAMICS_CAUSALITY",
     "CONNECTED_INTERBLOCK_HISTORY",
     "PHYSICAL_TT_KERNEL",
     "IR_SIX_VECTOR",
@@ -137,6 +138,19 @@
         "CORE_FALSIFICATION_TESTS.md"
       ],
       "hard_scope": "The exact finite master-projector theorem and the C8 relational positive control do not close this theory-specific physical gate."
+    },
+    {
+      "id": "RELATIONAL_DYNAMICS_CAUSALITY",
+      "status": "open_physical",
+      "closure_role": "physical",
+      "claim": "Derive the physical relational clock or boundary-time observable from the actual graph-changing constraint/physical-history construction, then compute its conditional propagator and retarded response with a demonstrated causal support, stable positive physical norm and agreement with gauge-invariant projector observables.",
+      "evidence": [
+        "MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md",
+        "Q2_RELATIONAL_HISTORY_PROJECTOR.md",
+        "THREE_NODE_GRAPH_HDA_RESULT.md",
+        "CORE_FALSIFICATION_TESTS.md"
+      ],
+      "hard_scope": "The finite C8 Page-Wootters control uses an externally declared clock and R=J; it does not derive physical gravitational time, a Lorentzian retarded kernel, a causal cone or microcausality. Euclidean finite HDA scaling is not a causal-response calculation."
     },
     {
       "id": "CONNECTED_INTERBLOCK_HISTORY",
