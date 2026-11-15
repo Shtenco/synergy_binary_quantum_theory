@@ -70,6 +70,15 @@ def assemble_constraint_family():
     if target_norm == 0.0:
         raise AssertionError("independent K5 target vector is zero")
     target = target / target_norm
+    raw_target = {}
+    for coefficient, basis_index in zip(target, full_order):
+        for raw_index, amplitude in states[basis_index].items():
+            value = raw_target.get(raw_index, 0j) + coefficient * amplitude
+            if value != 0j:
+                raw_target[raw_index] = value
+    raw_target_residuals = [
+        K5C.raw_norm(local(raw_target, *spec)) for spec in specs
+    ]
     return C, specs, target, {
         "gauss_hilbert_dimension": len(meta),
         "active_domain_dimension": len(full_order),
@@ -77,6 +86,8 @@ def assemble_constraint_family():
         "max_gauss_projection_loss_fraction": max(raw_leakage, default=0.0),
         "mean_constraint_max_projection_loss_fraction": float(np.mean(raw_leakage)),
         "constraint_projection_loss_by_operator": raw_leakage,
+        "independent_target_max_raw_constraint_residual": float(max(raw_target_residuals, default=0.0)),
+        "independent_target_mean_raw_constraint_residual": float(np.mean(raw_target_residuals)),
     }
 
 
@@ -162,6 +173,8 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             and constraint_residual < 1e-8
             and target_residual < 1e-8
             and target_projector_error < 1e-7
+            and dimensions["max_gauss_projection_loss_fraction"] < 1e-10
+            and dimensions["independent_target_max_raw_constraint_residual"] < 1e-10
             and min_eig >= -1e-10 * scale
             and gap > 0.0
             and max(row["absolute_error"] for row in heat_rows) < 1e-7
@@ -211,6 +224,8 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
         "all_metrics_same_zero_projector": bool(pairwise < 1e-7),
         "all_constraints_kill_projector": all(row["all_constraint_projector_residual"] < 1e-8 for row in rows),
         "independent_target_residual_max": max(target_residuals, default=0.0),
+        "independent_target_raw_residual_max": dimensions["independent_target_max_raw_constraint_residual"],
+        "gauss_projection_loss_gate_passed": dimensions["max_gauss_projection_loss_fraction"] < 1e-10,
         "passed": bool(all_passed),
     }
 
