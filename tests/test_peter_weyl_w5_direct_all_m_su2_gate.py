@@ -176,6 +176,47 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         for output_key in mixed:
             self.assertAlmostEqual(scaled[output_key], mixed[output_key] * beta / alpha)
 
+    def test_graph_changing_output_uses_full_codomain_norm_not_seed_compression(self):
+        def graph_changing_key(key, source_v):
+            spins, labels = key
+            changed = list(labels)
+            target_v = (source_v + 1) % 5
+            changed[target_v] = ("G", 2)
+            return (spins, tuple(changed))
+
+        def graph_changing_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": 1, "max_relative_leakage": 0.0
+                }
+            return {graph_changing_key(key, source_v): 1.0 + 0j}, 0.0, 0.0
+
+        def graph_changing_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": len(state), "max_relative_leakage": 0.0
+                }
+            return {
+                graph_changing_key(key, source_v): amplitude
+                for key, amplitude in state.items()
+            }, 0.0, 0.0
+
+        with patch.object(gate.SINE, "complete_HE_sine", side_effect=graph_changing_map), \\
+             patch.object(gate.SINE, "complete_HE_sine_state", side_effect=graph_changing_superposition):
+            result = gate.run(Jmax2=4, pruning_mode="production", nodes=(0,))
+
+        self.assertTrue(result["passed"], result)
+        row = result["adjointness_compression_rows"][0]
+        self.assertEqual(row["matrix_frobenius_norm"], 0.0)
+        self.assertFalse(row["adjointness_compression_informative"])
+        self.assertIsNone(row["adjoint_relative_residual"])
+        self.assertGreater(row["full_output_matrix_frobenius_norm"], 1e-14)
+        self.assertEqual(result["adjointness_compression_status"], "INCOMPLETE_SEED_SUBSPACE_COMPRESSION")
+        self.assertIsNone(result["max_adjointness_compression_relative_residual"])
+        self.assertTrue(result["all_full_output_matrices_nonzero"])
+
     def test_full_gate_rejects_empty_production_operator(self):
         with patch.object(gate.SINE, "complete_HE_sine", return_value=({}, 0.0, 0.0)):
             with self.assertRaisesRegex(AssertionError, "H_E.*M2=-2.*empty"):
