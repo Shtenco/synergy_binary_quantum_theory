@@ -84,6 +84,7 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         self.assertEqual(result["input_charged_sector"]["channels_K12_K34"], [[0, 2], [2, 0]])
         self.assertEqual(result["magnetic_components_tested_M2"], [-2, 0, 2])
         self.assertLess(result["max_adjointness_compression_relative_residual"], 1e-12)
+        self.assertLess(result["max_finite_matrix_linearity_relative_residual"], 1e-12)
         self.assertEqual(len(result["cases"]), 40)
         self.assertEqual(
             {case["source_node"] for case in result["cases"]},
