@@ -22,6 +22,8 @@ def matrix_digest(columns):
 
 def summarize(result):
     diagnostics = result.get("diagnostics") or result.get("partial_diagnostics") or {}
+    pruning_ledger = result.get("lower_level_pruning_ledger") or {}
+    pruning_coverage = pruning_ledger.get("coverage") or {}
     forward = result.get("forward_B_columns_sparse")
     adjoint = result.get("direct_Bdag_columns_sparse")
     complete_matrices = isinstance(forward, list) and isinstance(adjoint, list)
@@ -47,7 +49,10 @@ def summarize(result):
         "max_intermediate_spin_reached": diagnostics.get("max_intermediate_spin_reached"),
         "spin_wall_omitted_branch_count": diagnostics.get("spin_wall_omitted_branch_count"),
         "sine_engine_gate_passed": diagnostics.get("sine_engine_gate_passed"),
-        "lower_level_pruning_coverage_complete": result.get("lower_level_pruning_coverage_complete"),
+        "lower_level_pruning_coverage_complete": result.get("lower_level_pruning_coverage_complete") is True,
+        "static_threshold_inventory_complete": pruning_coverage.get("static_threshold_inventory_complete") is True,
+        "runtime_loss_controls_complete": pruning_coverage.get("runtime_loss_controls_complete") is True,
+        "lower_level_pruning_coverage_status": pruning_coverage.get("status"),
         "matrices_present": complete_matrices,
         "forward_matrix_digest_10sig": matrix_digest(forward) if complete_matrices else None,
         "direct_adjoint_matrix_digest_10sig": matrix_digest(adjoint) if complete_matrices else None,
