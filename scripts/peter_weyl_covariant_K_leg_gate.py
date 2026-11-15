@@ -108,7 +108,7 @@ def branch_from_key(key, amp=1+0j):
     return spins, tensors, amp
 
 
-def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
+def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11, diagnostics=None):
     """Project onto the fixed complete-charge basis without input-scaled pruning.
 
     The tol argument is retained for call compatibility. The 1e-13 overlap
@@ -163,8 +163,27 @@ def project_branch_complete_charges(branch, charged_nodes=(0, 1), tol=1e-11):
                     opts.append((label_gauss(K), c))
                     recon += c * B
         nrm = float(np.linalg.norm(X))
-        leak = float(np.linalg.norm(X - recon) / max(nrm, 1e-30))
+        residual_norm = float(np.linalg.norm(X - recon))
+        recon_norm = float(np.linalg.norm(recon))
+        leak = residual_norm / max(nrm, 1e-30)
         max_basis_leak = max(max_basis_leak, leak)
+        if diagnostics is not None:
+            entry = diagnostics.setdefault(v, {
+                "samples": 0,
+                "max_relative_leakage": 0.0,
+                "worst_spins": None,
+                "worst_local_tensor_norm": 0.0,
+                "worst_reconstructed_norm": 0.0,
+                "worst_residual_norm": 0.0,
+                "basis_kind": "charged_complete_JM_recoupling" if v in charged_nodes else "Gauss_intertwiner",
+            })
+            entry["samples"] += 1
+            if leak > entry["max_relative_leakage"]:
+                entry["max_relative_leakage"] = float(leak)
+                entry["worst_spins"] = [int(x) for x in spins]
+                entry["worst_local_tensor_norm"] = nrm
+                entry["worst_reconstructed_norm"] = recon_norm
+                entry["worst_residual_norm"] = residual_norm
         if not opts:
             return {}, max_basis_leak
         opts_by_node.append(tuple(opts))
