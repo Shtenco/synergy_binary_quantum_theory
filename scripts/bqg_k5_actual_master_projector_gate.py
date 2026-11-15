@@ -67,6 +67,11 @@ def assemble_constraint_family():
                 subthreshold_raw_norms.append(raw_n)
                 if projected_n > raw_n + 1e-13:
                     raise AssertionError("subthreshold projected output exceeds raw norm beyond absolute tolerance")
+                # This is a fixed operator-column mask on the declared finite
+                # basis, not an input-state-dependent threshold. Its total
+                # discarded norm is bounded below by the raw (pre-projection)
+                # column norms accumulated in the loss ledger.
+                projected = np.zeros_like(projected)
             C[a, :, col] = projected
         raw_leakage.append(max_leak)
 
@@ -94,6 +99,9 @@ def assemble_constraint_family():
         "projection_leakage_min_raw_norm": projection_leakage_min_raw_norm,
         "subthreshold_raw_output_count": len(subthreshold_raw_norms),
         "max_subthreshold_raw_output_norm": max(subthreshold_raw_norms, default=0.0),
+        "subthreshold_operator_error_frobenius_bound": math.sqrt(
+            math.fsum(value * value for value in subthreshold_raw_norms)
+        ),
         "independent_target_max_raw_constraint_residual": float(max(raw_target_residuals, default=0.0)),
         "independent_target_mean_raw_constraint_residual": float(np.mean(raw_target_residuals)),
     }
@@ -199,6 +207,10 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
                 "absolute_error": abs(observed - predicted),
             })
 
+        C_fro = float(np.linalg.norm(C.reshape(m * C.shape[1], C.shape[2]), "fro"))
+        E_fro = dimensions["subthreshold_operator_error_frobenius_bound"]
+        master_error_bound = float(np.linalg.norm(G, 2) * (2.0 * C_fro * E_fro + E_fro * E_fro))
+        master_scale = max(float(np.linalg.norm(M, 2)), 1.0)
         passed = (
             zero_rank == 1
             and projector_idempotence < 1e-8
@@ -211,6 +223,7 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             and physical_gram["gram_hermiticity_residual"] < 1e-8
             and dimensions["max_gauss_projection_loss_fraction"] < 1e-10
             and dimensions["independent_target_max_raw_constraint_residual"] < 1e-10
+            and master_error_bound < 1e-10 * master_scale
             and min_eig >= -1e-10 * scale
             and gap > 0.0
             and max(row["absolute_error"] for row in heat_rows) < 1e-7
@@ -224,6 +237,8 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             "master_min_eigenvalue": min_eig,
             "master_max_eigenvalue": float(np.max(evals)),
             "master_positive_gap": gap,
+            "fixed_mask_master_operator_error_bound": master_error_bound,
+            "fixed_mask_master_operator_relative_error_bound": master_error_bound / master_scale,
             "zero_sector_rank": zero_rank,
             "master_positivity_margin": positivity_margin,
             "projector_idempotence_residual": projector_idempotence,
