@@ -20,13 +20,15 @@ from pathlib import Path
 W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 
+from bqg_sparse_linear_accumulator import SparseLinearAccumulator
+
 
 def _key_repr(key):
     return repr(key)
 
 
 def _decode_v09_sparse(rows, label):
-    out = {}
+    accumulator = SparseLinearAccumulator()
     for row in rows:
         if len(row) != 3:
             raise ValueError(f"{label}: sparse row must be [key_repr, real, imag]")
@@ -34,14 +36,15 @@ def _decode_v09_sparse(rows, label):
         if not (isinstance(key, tuple) and len(key) == 2):
             raise ValueError(f"{label}: malformed Gauss key {row[0]!r}")
         z = complex(float(row[1]), float(row[2]))
-        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
-            raise ValueError(f"{label}: non-finite amplitude")
-        out[key] = out.get(key, 0j) + z
-    return {k: z for k, z in out.items() if z != 0j}
+        try:
+            accumulator.add({key: z})
+        except ValueError as exc:
+            raise ValueError(f"{label}: invalid amplitude: {exc}") from exc
+    return accumulator.finish()
 
 
 def _decode_v10_column(encoded_column, basis_keys, label):
-    out = {}
+    accumulator = SparseLinearAccumulator()
     for item in encoded_column:
         if len(item) != 3:
             raise ValueError(f"{label}: V10 sparse entry must be [row, real, imag]")
@@ -49,25 +52,37 @@ def _decode_v10_column(encoded_column, basis_keys, label):
         if row < 0 or row >= len(basis_keys):
             raise ValueError(f"{label}: row index outside V10 basis")
         z = complex(float(item[1]), float(item[2]))
-        if not (math.isfinite(z.real) and math.isfinite(z.imag)):
-            raise ValueError(f"{label}: non-finite amplitude")
         key = ast.literal_eval(basis_keys[row])
-        out[key] = out.get(key, 0j) + z
-    return {k: z for k, z in out.items() if z != 0j}
+        try:
+            accumulator.add({key: z})
+        except ValueError as exc:
+            raise ValueError(f"{label}: invalid amplitude: {exc}") from exc
+    return accumulator.finish()
 
 
-def _add(dst, src):
-    for key, z in src.items():
-        dst[key] = dst.get(key, 0j) + z
+def _sum_sparse_maps(*states):
+    accumulator = SparseLinearAccumulator()
+    for state in states:
+        accumulator.add(state)
+    return accumulator.finish()
 
 
 def _norm(state):
-    return math.sqrt(sum(abs(z) ** 2 for z in state.values()))
+    value = 0.0
+    for amplitude in state.values():
+        value = math.hypot(value, abs(complex(amplitude)))
+        if not math.isfinite(value):
+            raise ValueError("sparse-state norm exceeds finite floating-point range")
+    return value
 
 
 def _relative_residual(a, b):
-    keys = set(a) | set(b)
-    delta = math.sqrt(sum(abs(a.get(k, 0j) - b.get(k, 0j)) ** 2 for k in keys))
+    delta = 0.0
+    for key in set(a) | set(b):
+        difference = a.get(key, 0j) - b.get(key, 0j)
+        delta = math.hypot(delta, abs(difference))
+        if not math.isfinite(delta):
+            raise ValueError("sparse-map residual exceeds finite floating-point range")
     scale = max(_norm(a), _norm(b), 1e-30)
     return delta / scale, delta, scale
 
@@ -153,8 +168,8 @@ def build_carrier(
             or len(anti_cols) != len(basis_keys)):
         raise ValueError("V10 matrix column count does not match its basis")
 
-    A_by_K = {K: {} for K in W5_K}
-    B_v09_by_K = {K: {} for K in W5_K}
+    A_node_maps_by_K = {K: [] for K in W5_K}
+    B_node_maps_by_K = {K: [] for K in W5_K}
     v09_diagnostics = []
     for K in W5_K:
         for node in nodes:
@@ -198,8 +213,8 @@ def build_carrier(
             # Preserve every serialized node-local contribution here.
             # V10 applies amp_tol only after the coherent sum over source nodes;
             # filtering each V09 node first would not commute with that sum.
-            _add(A_by_K[K], a)
-            _add(B_v09_by_K[K], b)
+            A_node_maps_by_K[K].append(a)
+            B_node_maps_by_K[K].append(b)
             v09_diagnostics.append({
                 "node": node,
                 "input_K": K,
@@ -213,6 +228,15 @@ def build_carrier(
                 "non_scalar_covariant_ratio": non_scalar_ratio,
                 "max_spin_reached": max_spin_reached,
             })
+
+    # Finish compensated complex sums over every source node before applying
+    # the common post-coherent-sum support threshold.
+    A_by_K = {
+        K: _sum_sparse_maps(*A_node_maps_by_K[K]) for K in W5_K
+    }
+    B_v09_by_K = {
+        K: _sum_sparse_maps(*B_node_maps_by_K[K]) for K in W5_K
+    }
 
     # Apply one identical, post-coherent-sum support threshold to the
     # V09 Euclidean and raw Lorentzian maps. The V09 serializer floor is
@@ -247,8 +271,9 @@ def build_carrier(
 
     decomposition_checks = []
     for K in W5_K:
-        sym_plus_anti = dict(B_sym_by_K[K])
-        _add(sym_plus_anti, B_anti_by_K[K])
+        sym_plus_anti = _sum_sparse_maps(
+            B_sym_by_K[K], B_anti_by_K[K]
+        )
         residual, absolute, scale = _relative_residual(B_forward_by_K[K], sym_plus_anti)
         decomposition_checks.append({
             "input_K": K,
