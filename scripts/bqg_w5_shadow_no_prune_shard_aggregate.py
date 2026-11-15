@@ -7,6 +7,7 @@ instrumented threshold sites are bypassed by the shadow mode.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -91,6 +92,12 @@ def _compare_columns(prod, shadow):
 
 def _validate(report, mode, key):
     status = "PASS_ADJOINT_CONSISTENCY" if mode == "production" else "INCOMPLETE_NO_PRUNING_COVERAGE"
+    basis_keys = report.get("basis_keys_repr")
+    basis_digest = (
+        hashlib.sha256("\\n".join(basis_keys).encode("utf-8")).hexdigest()
+        if isinstance(basis_keys, list) and all(isinstance(item, str) for item in basis_keys)
+        else None
+    )
     checks = {
         "status": report.get("status") == status,
         "algebraic_status": report.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
@@ -101,7 +108,7 @@ def _validate(report, mode, key):
         "unbounded_closure": report.get("unbounded_closure") is True and report.get("max_states") is None and report.get("max_depth") is None,
         "no_omitted_closure_support": report.get("omitted_new_support_keys") == 0,
         "lower_level_coverage_disclosed": report.get("lower_level_pruning_coverage_complete") is False,
-        "basis_hash": isinstance(report.get("basis_id_sha256"), str) and len(report["basis_id_sha256"]) == 64,
+        "basis_hash": isinstance(report.get("basis_id_sha256"), str) and report.get("basis_id_sha256") == basis_digest,
         "basis_keys": isinstance(report.get("basis_keys_repr"), list) and bool(report["basis_keys_repr"]),
         "coefficient_loss_ledger": isinstance(report.get("coefficient_loss_ledger"), dict),
         "coherent_node_sum_ledger": isinstance(report.get("coherent_node_sum_ledger"), list),
