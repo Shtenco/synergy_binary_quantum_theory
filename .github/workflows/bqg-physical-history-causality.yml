@@ -2,7 +2,7 @@ name: BQG physical history and causal response reference gates
 
 on:
   push:
-    branches: [research/physical-history-causality-20261112]
+    branches: [research/physical-history-causality-20261112, research/bqg-w5-production-audit-20261113]
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
@@ -11,7 +11,7 @@ on:
       - 'scripts/verify_physicalization_gates.py'
       - '.github/workflows/bqg-physical-history-causality.yml'
   pull_request:
-    branches: [main, research/lemaitre-bqg-causal-cone-20261110]
+    branches: [main, research/lemaitre-bqg-causal-cone-20261110, research/physical-history-causality-20261112]
     paths:
       - 'scripts/bqg_physical_history_decoherence_engine.py'
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
@@ -24,8 +24,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: bqg-physical-history-causality-${{ github.ref }}
-  cancel-in-progress: true
+  group: bqg-physical-history-causality-v2-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   finite-reference-and-open-physical:
