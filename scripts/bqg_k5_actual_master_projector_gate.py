@@ -43,6 +43,8 @@ def assemble_constraint_family():
     # C[a] maps the 32D active domain into the complete 140D Gauss codomain.
     C = np.zeros((len(specs), 140, len(full_order)), dtype=np.complex128)
     raw_leakage = []
+    subthreshold_raw_norms = []
+    projection_leakage_min_raw_norm = 1e-13
     for a, spec in enumerate(specs):
         max_leak = 0.0
         for col, basis_index in enumerate(full_order):
@@ -50,9 +52,10 @@ def assemble_constraint_family():
             raw_n = K5C.raw_norm(raw)
             projected = K5C.project_state(raw, reverse)
             projected_n = stable_norm(projected)
-            if raw_n > 0.0:
-                # Orthogonal projection cannot increase norm; tolerate only
-                # roundoff-sized overshoot and fail on a genuine violation.
+            if raw_n > projection_leakage_min_raw_norm:
+                # Match the existing K5 constraint gate's declared absolute
+                # floor: ratios for roundoff-only outputs are meaningless.
+                # Their absolute norm is retained in a separate ledger below.
                 ratio = projected_n / raw_n
                 if ratio > 1.0 + 1e-9:
                     raise AssertionError(
@@ -60,8 +63,10 @@ def assemble_constraint_family():
                     )
                 leak = max(0.0, 1.0 - min(1.0, ratio) ** 2)
                 max_leak = max(max_leak, leak)
-            elif projected_n != 0.0:
-                raise AssertionError("zero raw constraint output has nonzero Gauss projection")
+            else:
+                subthreshold_raw_norms.append(raw_n)
+                if projected_n > raw_n + 1e-13:
+                    raise AssertionError("subthreshold projected output exceeds raw norm beyond absolute tolerance")
             C[a, :, col] = projected
         raw_leakage.append(max_leak)
 
@@ -86,6 +91,9 @@ def assemble_constraint_family():
         "max_gauss_projection_loss_fraction": max(raw_leakage, default=0.0),
         "mean_constraint_max_projection_loss_fraction": float(np.mean(raw_leakage)),
         "constraint_projection_loss_by_operator": raw_leakage,
+        "projection_leakage_min_raw_norm": projection_leakage_min_raw_norm,
+        "subthreshold_raw_output_count": len(subthreshold_raw_norms),
+        "max_subthreshold_raw_output_norm": max(subthreshold_raw_norms, default=0.0),
         "independent_target_max_raw_constraint_residual": float(max(raw_target_residuals, default=0.0)),
         "independent_target_mean_raw_constraint_residual": float(np.mean(raw_target_residuals)),
     }
