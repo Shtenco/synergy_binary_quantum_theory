@@ -54,6 +54,7 @@ def assemble_constraint_family():
     C = np.zeros((len(specs), 140, len(full_order)), dtype=np.complex128)
     raw_leakage = []
     subthreshold_raw_norms = []
+    gauss_projection_loss_norms = []
     projection_leakage_min_raw_norm = 1e-13
     for a, spec in enumerate(specs):
         max_leak = 0.0
@@ -73,6 +74,9 @@ def assemble_constraint_family():
                     )
                 leak = max(0.0, 1.0 - min(1.0, ratio) ** 2)
                 max_leak = max(max_leak, leak)
+                gauss_projection_loss_norms.append(
+                    math.sqrt(max(0.0, raw_n * raw_n - projected_n * projected_n))
+                )
             else:
                 subthreshold_raw_norms.append(raw_n)
                 if projected_n > raw_n + 1e-13:
@@ -114,6 +118,13 @@ def assemble_constraint_family():
         "max_subthreshold_raw_output_norm": max(subthreshold_raw_norms, default=0.0),
         "subthreshold_operator_error_frobenius_bound": math.sqrt(
             math.fsum(value * value for value in subthreshold_raw_norms)
+        ),
+        "gauss_projection_omission_frobenius_bound": math.sqrt(
+            math.fsum(value * value for value in gauss_projection_loss_norms)
+        ),
+        "total_constraint_operator_omission_frobenius_bound": math.sqrt(
+            math.fsum(value * value for value in subthreshold_raw_norms)
+            + math.fsum(value * value for value in gauss_projection_loss_norms)
         ),
         "independent_target_max_raw_constraint_residual": float(max(raw_target_residuals, default=0.0)),
         "independent_target_mean_raw_constraint_residual": float(np.mean(raw_target_residuals)),
@@ -221,7 +232,7 @@ def run(seed: int = 1729, relative_zero_tol: float = 1e-10) -> dict:
             })
 
         C_fro = float(np.linalg.norm(C.reshape(m * C.shape[1], C.shape[2]), "fro"))
-        E_fro = dimensions["subthreshold_operator_error_frobenius_bound"]
+        E_fro = dimensions["total_constraint_operator_omission_frobenius_bound"]
         master_error_bound = float(np.linalg.norm(G, 2) * (2.0 * C_fro * E_fro + E_fro * E_fro))
         master_scale = max(float(np.linalg.norm(M, 2)), 1.0)
         passed = (
