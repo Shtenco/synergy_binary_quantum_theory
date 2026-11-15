@@ -20,7 +20,11 @@ from pathlib import Path
 W5_K = (0, 2, 4, 6, 8)
 NODES = (0, 1, 2, 3, 4)
 
-from bqg_sparse_linear_accumulator import SparseLinearAccumulator
+try:
+    from .bqg_sparse_linear_accumulator import SparseLinearAccumulator
+except ImportError:
+    # Support direct execution as "python scripts/bqg_v11_w5_common_carrier.py".
+    from bqg_sparse_linear_accumulator import SparseLinearAccumulator
 
 
 def _key_repr(key):
