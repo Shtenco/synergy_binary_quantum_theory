@@ -586,15 +586,12 @@ def main():
     channels = ((0, 2), (2, 0))
     m_pair = None
     if args.m_pair is not None:
-        pair_parts = args.m_pair.split("_")
-        if len(pair_parts) != 2:
-            parser.error("--m-pair must be -2_0 or 0_2")
-        try:
-            m_pair = tuple(int(value) for value in pair_parts)
-        except ValueError:
-            parser.error("--m-pair values must be integers")
-        if m_pair not in ((-2, 0), (0, 2)):
-            parser.error("--m-pair must be -2_0 or 0_2")
+        if args.m_pair == "neg2_0":
+            m_pair = (-2, 0)
+        elif args.m_pair == "0_2":
+            m_pair = (0, 2)
+        else:
+            parser.error("--m-pair must be neg2_0 or 0_2")
     if args.channel is not None:
         parts = args.channel.replace("_", ",").split(",")
         if len(parts) != 2:
