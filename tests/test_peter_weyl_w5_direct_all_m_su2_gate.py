@@ -208,6 +208,38 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
         self.assertEqual(len(result["operator_columns_sparse"]), 3)
         self.assertEqual(len(result["actual_complex_superposition_rows"]), 1)
 
+
+    def test_adjacent_m_pair_shard_checks_both_ladder_directions(self):
+        def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": 1, "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return {key: 1.0 + 0j}, 0.0, 0.0
+
+        def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": len(state), "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return dict(state), 0.0, 0.0
+
+        for pair, expected_cases in (((-2, 0), {("J_plus", -2), ("J_minus", 0)}),
+                                     ((0, 2), {("J_plus", 0), ("J_minus", 2)})):
+            with self.subTest(pair=pair), \
+                 patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
+                 patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
+                result = gate.run(Jmax2=4, nodes=(0,), channels=((0, 2),), m_pair=pair)
+            self.assertTrue(result["passed"], result)
+            self.assertEqual(result["magnetic_components_tested_M2"], list(pair))
+            self.assertEqual(len(result["operator_columns_sparse"]), 2)
+            self.assertEqual(
+                {(case["direction"], case["input_M2"]) for case in result["cases"]},
+                expected_cases,
+            )
+
     def test_graph_changing_term_keeps_all_touched_vertices_in_complete_charge_basis(self):
         node = 0
         key = gate.make_input(0, node, 0, 2)
