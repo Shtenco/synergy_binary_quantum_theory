@@ -212,6 +212,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     channels = tuple((int(a), int(b)) for a, b in channels)
     if not channels or len(set(channels)) != len(channels):
         raise ValueError("channels must be a non-empty unique set of (K12,K34) pairs")
+    if any(channel not in ((0, 2), (2, 0)) for channel in channels):
+        raise ValueError("W5 charged channels must be selected from ((0,2),(2,0))")
     directions = (1, -1)
     cases = []
     all_outputs = {}
@@ -248,8 +250,17 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             # Independent implementation-level linearity check: place complex
             # coefficients on the input branches, then run the real sequence,
             # recoupling, projection and coherent-accumulation path.
-            key_a = make_input(0, node, 0, 2)
-            key_b = make_input(0, node, 2, 0)
+            # Keep the real operator-composition check inside each shard.
+            # With both recoupling channels selected, mix their M=0 inputs.
+            # With one channel selected, mix its M=-1 and M=+1 inputs instead.
+            if len(channels) >= 2:
+                (ka, kb) = channels[:2]
+                key_a = make_input(0, node, *ka)
+                key_b = make_input(0, node, *kb)
+            else:
+                k12, k34 = channels[0]
+                key_a = make_input(-2, node, k12, k34)
+                key_b = make_input(2, node, k12, k34)
             alpha = 0.7 + 0.2j
             beta = -0.3 + 0.9j
             mixed_projection_diagnostics = {}
@@ -263,7 +274,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             )
             expected_terms = {}
             for key, coefficient in ((key_a, alpha), (key_b, beta)):
-                unit_output = all_outputs[(node, key[1][node][3], key[1][node][4], 0)]
+                label = key[1][node]
+                unit_output = all_outputs[(node, label[3], label[4], label[2])]
                 for output_key, amplitude in unit_output.items():
                     expected_terms.setdefault(output_key, []).append(coefficient * amplitude)
             expected = {
@@ -558,9 +570,23 @@ def main():
     parser.add_argument("--Jmax2", type=int, default=10)
     parser.add_argument("--pruning-mode", choices=("production", "shadow_no_prune"), default="production")
     parser.add_argument("--nodes", type=int, nargs="+", default=[0])
+    parser.add_argument(
+        "--channel", type=str, default=None,
+        help="Optional single W5 recoupling channel as K12,K34 (e.g. 0,2); "
+             "omitting it runs both declared channels.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = run(args.Jmax2, args.pruning_mode, args.nodes)
+    channels = ((0, 2), (2, 0))
+    if args.channel is not None:
+        parts = args.channel.split(",")
+        if len(parts) != 2:
+            parser.error("--channel must have the form K12,K34")
+        try:
+            channels = ((int(parts[0]), int(parts[1])),)
+        except ValueError:
+            parser.error("--channel values must be integers")
+    result = run(args.Jmax2, args.pruning_mode, args.nodes, channels=channels)
     # Complex amplitudes are part of the scientific evidence, not an error.
     # Encode them explicitly as [real, imag], rejecting non-finite values.
     text = json.dumps(result, indent=2, default=json_default, allow_nan=False)
