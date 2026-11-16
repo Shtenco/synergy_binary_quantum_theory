@@ -176,6 +176,38 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             },
         )
 
+
+    def test_single_channel_shard_preserves_all_m_and_real_superposition_check(self):
+        def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": 1, "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return {key: 1.0 + 0j}, 0.0, 0.0
+
+        def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": len(state), "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return dict(state), 0.0, 0.0
+
+        with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \\
+             patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
+            result = gate.run(
+                Jmax2=4, nodes=(0,), channels=((0, 2),)
+            )
+
+        self.assertTrue(result["passed"], result)
+        self.assertEqual(result["input_charged_sector"]["channels_K12_K34"], [[0, 2]])
+        self.assertEqual(len(result["cases"]), 4)
+        self.assertEqual(len(result["operator_columns_sparse"]), 3)
+        self.assertEqual(len(result["actual_complex_superposition_rows"]), 1)
+
     def test_graph_changing_term_keeps_all_touched_vertices_in_complete_charge_basis(self):
         node = 0
         key = gate.make_input(0, node, 0, 2)
