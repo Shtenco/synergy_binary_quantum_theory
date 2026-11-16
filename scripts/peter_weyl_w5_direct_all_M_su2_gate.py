@@ -199,7 +199,7 @@ def json_default(value):
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
-def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0))):
+def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0)), m_pair=None):
     if pruning_mode not in ("production", "shadow_no_prune"):
         raise ValueError("invalid pruning_mode")
     if Jmax2 < 4:
@@ -214,6 +214,9 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         raise ValueError("channels must be a non-empty unique set of (K12,K34) pairs")
     if any(channel not in ((0, 2), (2, 0)) for channel in channels):
         raise ValueError("W5 charged channels must be selected from ((0,2),(2,0))")
+    m_values = (-2, 0, 2) if m_pair is None else tuple(m_pair)
+    if m_values not in ((-2, 0, 2), (-2, 0), (0, 2)):
+        raise ValueError("m_pair must be None, (-2,0), or (0,2)")
     directions = (1, -1)
     cases = []
     all_outputs = {}
@@ -225,7 +228,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             he_by_channel_m = {}
             for K12, K34 in channels:
                 he_by_m = {}
-                for M2 in (-2, 0, 2):
+                for M2 in m_values:
                     projection_diagnostics = {}
                     with PRUNE.capture() as collector:
                         result = SINE.complete_HE_sine(
@@ -259,8 +262,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                 key_b = make_input(0, node, *kb)
             else:
                 k12, k34 = channels[0]
-                key_a = make_input(-2, node, k12, k34)
-                key_b = make_input(2, node, k12, k34)
+                key_a = make_input(m_values[0], node, k12, k34)
+                key_b = make_input(m_values[-1], node, k12, k34)
             alpha = 0.7 + 0.2j
             beta = -0.3 + 0.9j
             mixed_projection_diagnostics = {}
@@ -310,7 +313,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for K12, K34 in channels:
               he_by_m = he_by_channel_m[(K12, K34)]
               for direction in directions:
-                source_M2_values = (-2, 0) if direction > 0 else (0, 2)
+                source_M2_values = tuple(m for m in m_values if m + 2 * direction in m_values)
                 for M2 in source_M2_values:
                     input_key = make_input(M2, node, K12, K34)
                     raised_input = apply_local_ladder({input_key: 1.0 + 0j}, node, direction)
@@ -406,13 +409,13 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     for node in nodes:
         basis_keys = [
             make_input(M2, node, K12, K34)
-            for K12, K34 in channels for M2 in (-2, 0, 2)
+            for K12, K34 in channels for M2 in m_values
         ]
         matrix = np.zeros((len(basis_keys), len(basis_keys)), dtype=np.complex128)
         # Reuse the exact same unit columns that were evaluated under the
         # selected production or shadow-no-prune context.
         for column, (K12, K34, M2) in enumerate(
-            ( (k1, k2, m) for k1, k2 in channels for m in (-2, 0, 2) )
+            ( (k1, k2, m) for k1, k2 in channels for m in m_values )
         ):
             output = all_outputs[(node, K12, K34, M2)]
             for row, key in enumerate(basis_keys):
@@ -511,7 +514,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     )
     max_actual_superposition = max((x["relative_residual"] for x in superposition_rows), default=float("inf"))
     passed = (
-        len(cases) == 4 * len(channels) * len(nodes)
+        len(cases) == 2 * (len(m_values) - 1) * len(channels) * len(nodes)
         and max_commutator < 1e-8
         and full_output_nonzero
         and (max_adjoint is None or max_adjoint < 1e-8)
@@ -536,7 +539,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "source_nodes": list(nodes),
         "input_spins_doubled": [4] * 10,
         "input_charged_sector": {"J2": 2, "channels_K12_K34": [list(x) for x in channels]},
-        "magnetic_components_tested_M2": [-2, 0, 2],
+        "magnetic_components_tested_M2": list(m_values),
         "adjointness_compression_rows": adjoint_rows,
         "adjointness_compression_status": adjointness_status,
         "max_adjointness_compression_relative_residual": max_adjoint,
@@ -575,9 +578,22 @@ def main():
         help="Optional single W5 recoupling channel as K12_K34 (e.g. 0_2); "
              "omitting it runs both declared channels.",
     )
+    parser.add_argument("--m-pair", type=str, default=None,
+                        help="Optional adjacent doubled-M pair: -2_0 or 0_2; omit for all M.")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     channels = ((0, 2), (2, 0))
+    m_pair = None
+    if args.m_pair is not None:
+        pair_parts = args.m_pair.split("_")
+        if len(pair_parts) != 2:
+            parser.error("--m-pair must be -2_0 or 0_2")
+        try:
+            m_pair = tuple(int(value) for value in pair_parts)
+        except ValueError:
+            parser.error("--m-pair values must be integers")
+        if m_pair not in ((-2, 0), (0, 2)):
+            parser.error("--m-pair must be -2_0 or 0_2")
     if args.channel is not None:
         parts = args.channel.replace("_", ",").split(",")
         if len(parts) != 2:
@@ -586,7 +602,7 @@ def main():
             channels = ((int(parts[0]), int(parts[1])),)
         except ValueError:
             parser.error("--channel values must be integers")
-    result = run(args.Jmax2, args.pruning_mode, args.nodes, channels=channels)
+    result = run(args.Jmax2, args.pruning_mode, args.nodes, channels=channels, m_pair=m_pair)
     # Complex amplitudes are part of the scientific evidence, not an error.
     # Encode them explicitly as [real, imag], rejecting non-finite values.
     text = json.dumps(result, indent=2, default=json_default, allow_nan=False)
