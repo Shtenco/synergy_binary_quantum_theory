@@ -227,3 +227,12 @@ Changes on this branch:
 The first CI attempt exposed a syntax error in the newly added single-channel test's context-manager continuation. This was corrected before the latest run. On run `43865401937` at commit `e154d5de270dff54cbb4074295a388eea1cb197e`, the observed matrix job `direct-all-m (production, 0, 2_0)` passed compilation and both unit-test suites and entered the actual operator computation. The other matrix cells have not all completed. Therefore this is **test/compile progress only**, not yet an all-M SU(2) scientific result or production/shadow equivalence result.
 
 Do not use the earlier intermediate runs `43865256181`, `43865260984`, `43865310895`, or `43865341034` as evidence for the final branch state; they were triggered on intermediate commits before the final test correction and/or artifact-path correction.
+
+
+## 11. Runtime correction — adjacent-M checkpoint shards (2026-11-16)
+
+The first channel-sharded workflow repeatedly lost its runners during the actual W5 operator evaluation. Two completed job records show the 19 gate tests and four comparator tests passing, followed by a runner shutdown signal during `complete_HE_sine`; no JSON output or artifact was written. This is an infrastructure interruption, not a measured SU(2) failure or success.
+
+The next reduction is mathematical and resumable: split each fixed node/mode/channel calculation into the two adjacent magnetic pairs `(-2,0)` and `(0,2)`. Each pair shard computes both input columns, checks both applicable ladder directions (raising from the lower M and lowering from the upper M), verifies Jz and sector/Gauss leakage, and executes the real complex-superposition control on those two columns. The two shards overlap at M=0; the aggregate checks that the duplicated M=0 sparse outputs agree before comparing production with shadow. Across the matrix this gives 40 independently uploaded pair artifacts and a reconstructed 30-column comparison.
+
+This changes scheduling granularity, not the operator, input graph, cutoff, channel set, or SU(2) test. A pair artifact cannot pass unless both columns are nonzero and its two directional ladder checks pass. The aggregate cannot pass unless all 40 artifacts exist, all five nodes/two channels/two pruning modes are represented, the overlapping M=0 columns agree, and all 30 reconstructed production/shadow columns satisfy the declared tolerance. Still a finite J=1, Jmax2=10 test only; it does not establish global SU(2), full self-adjointness, physical time, or a BQG causal cone.
