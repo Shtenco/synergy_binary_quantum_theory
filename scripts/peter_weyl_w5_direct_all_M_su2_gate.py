@@ -497,9 +497,10 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     ]
     max_adjoint = max(informative_adjoint, default=None)
     adjointness_status = (
-        "SEED_SUBSPACE_COMPRESSION_CHECKED"
-        if len(informative_adjoint) == len(adjoint_rows)
-        else "INCOMPLETE_SEED_SUBSPACE_COMPRESSION"
+        "NOT_FULL_SEED_SUBSPACE_SHARD_DIAGNOSTIC_ONLY" if m_pair is not None
+        else ("SEED_SUBSPACE_COMPRESSION_CHECKED"
+              if len(informative_adjoint) == len(adjoint_rows)
+              else "INCOMPLETE_SEED_SUBSPACE_COMPRESSION")
     )
     full_output_nonzero = all(
         x["full_output_matrix_frobenius_norm"] > 1e-14 for x in adjoint_rows
@@ -517,7 +518,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         len(cases) == 2 * (len(m_values) - 1) * len(channels) * len(nodes)
         and max_commutator < 1e-8
         and full_output_nonzero
-        and (max_adjoint is None or max_adjoint < 1e-8)
+        and (m_pair is not None or max_adjoint is None or max_adjoint < 1e-8)
         and max_linearity < 1e-12
         and max_actual_superposition < 1e-10
         and len(superposition_rows) == len(nodes)
