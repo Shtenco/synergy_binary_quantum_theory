@@ -572,14 +572,14 @@ def main():
     parser.add_argument("--nodes", type=int, nargs="+", default=[0])
     parser.add_argument(
         "--channel", type=str, default=None,
-        help="Optional single W5 recoupling channel as K12,K34 (e.g. 0,2); "
+        help="Optional single W5 recoupling channel as K12_K34 (e.g. 0_2); "
              "omitting it runs both declared channels.",
     )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     channels = ((0, 2), (2, 0))
     if args.channel is not None:
-        parts = args.channel.split(",")
+        parts = args.channel.replace("_", ",").split(",")
         if len(parts) != 2:
             parser.error("--channel must have the form K12,K34")
         try:
