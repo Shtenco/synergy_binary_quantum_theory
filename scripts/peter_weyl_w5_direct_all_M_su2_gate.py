@@ -562,7 +562,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "operator_columns_sparse": operator_columns_sparse,
         "operator_columns_encoding": "[repr(output_key), real_amplitude, imaginary_amplitude]; complete output support, no seed-subspace projection",
         "scope": (
-            "Direct all-M covariance check on the declared finite charged J=1 recoupling channels at each requested K5 source node. "
+            "Direct complete declared-M covariance check on the finite charged J=1 recoupling channels at each requested K5 source node; a resumable shard checks one adjacent-M pair. "
             "The adjointness result is only the compression to the declared seed subspace; it is not a global self-adjointness proof. "
             "It is not a proof for every W5 seed, charged channel, cutoff, graph refinement, or the physical continuum."
         ),
