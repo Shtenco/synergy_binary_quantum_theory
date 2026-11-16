@@ -69,7 +69,7 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.make_complete_directory(directory)
-            (directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json").unlink()
+            (directory / "direct_all_M_production_node0_channel0_2_mpair-2_0.json").unlink()
             with self.assertRaises(FileNotFoundError):
                 compare_directory(directory)
 
@@ -88,7 +88,7 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.make_complete_directory(directory)
-            path = directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json"
+            path = directory / "direct_all_M_production_node0_channel0_2_mpair-2_0.json"
             report = json.loads(path.read_text())
             report["passed"] = False
             report["status"] = "FAIL_DIRECT_ALL_M_SU2_COMMUTATOR"
