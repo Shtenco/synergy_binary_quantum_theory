@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate channel-sharded W5 production vs shadow_no_prune sparse outputs."""
+"""Aggregate adjacent-M-sharded W5 production vs shadow_no_prune sparse outputs."""
 from __future__ import annotations
 
 import argparse
@@ -10,6 +10,7 @@ from pathlib import Path
 MODES = ("production", "shadow_no_prune")
 NODES = tuple(range(5))
 CHANNELS = ((0, 2), (2, 0))
+M_PAIRS = ((-2, 0), (0, 2))
 M2_VALUES = (-2, 0, 2)
 
 
@@ -43,16 +44,23 @@ def _decode_entries(column, *, context):
     return result
 
 
-def _load_report(directory: Path, mode: str, node: int, channel):
+def _pair_tag(pair):
+    return "neg2_0" if pair == (-2, 0) else "0_2"
+
+
+def _load_pair(directory: Path, mode: str, node: int, channel, pair):
     k12, k34 = channel
-    path = directory / f"direct_all_M_{mode}_node{node}_channel{k12}_{k34}.json"
+    tag = _pair_tag(pair)
+    path = directory / (
+        f"direct_all_M_{mode}_node{node}_channel{k12}_{k34}_mpair{tag}.json"
+    )
     if not path.is_file():
         raise FileNotFoundError(f"missing required artifact: {path.name}")
     report = json.loads(path.read_text(encoding="utf-8"))
     if report.get("schema") != "bqg-w5-direct-all-M-su2-commutator-v1":
         raise ValueError(f"{path.name}: unexpected schema")
     if report.get("status") != "PASS_DIRECT_ALL_M_SU2_COMMUTATOR" or report.get("passed") is not True:
-        raise ValueError(f"{path.name}: underlying SU(2) gate did not pass")
+        raise ValueError(f"{path.name}: underlying adjacent-M SU(2) gate did not pass")
     if report.get("pruning_mode") != mode:
         raise ValueError(f"{path.name}: pruning_mode mismatch")
     if report.get("source_nodes") != [node]:
@@ -62,9 +70,11 @@ def _load_report(directory: Path, mode: str, node: int, channel):
     declared = report.get("input_charged_sector", {}).get("channels_K12_K34")
     if declared != [[k12, k34]]:
         raise ValueError(f"{path.name}: channel provenance mismatch")
+    if report.get("magnetic_components_tested_M2") != list(pair):
+        raise ValueError(f"{path.name}: adjacent-M pair provenance mismatch")
     columns = report.get("operator_columns_sparse")
-    if not isinstance(columns, list) or len(columns) != 3:
-        raise ValueError(f"{path.name}: expected three complete M columns for this channel")
+    if not isinstance(columns, list) or len(columns) != 2:
+        raise ValueError(f"{path.name}: expected exactly two sparse M columns")
     decoded = {}
     for column in columns:
         identity = (
@@ -73,12 +83,12 @@ def _load_report(directory: Path, mode: str, node: int, channel):
         )
         if identity in decoded:
             raise ValueError(f"{path.name}: duplicate input column {identity}")
-        if identity[:3] != (node, k12, k34) or identity[3] not in M2_VALUES:
+        if identity[:3] != (node, k12, k34) or identity[3] not in pair:
             raise ValueError(f"{path.name}: unexpected input column {identity}")
         decoded[identity] = _decode_entries(column, context=f"{path.name} {identity}")
-    expected = {(node, k12, k34, m2) for m2 in M2_VALUES}
+    expected = {(node, k12, k34, m2) for m2 in pair}
     if set(decoded) != expected:
-        raise ValueError(f"{path.name}: incomplete or unexpected input-column set")
+        raise ValueError(f"{path.name}: incomplete adjacent-M column set")
     return report, decoded
 
 
@@ -105,58 +115,78 @@ def compare_column(reference, candidate):
     }
 
 
-def compare_directory(directory: Path, *, tolerance=1e-10):
-    if not math.isfinite(tolerance) or tolerance < 0.0:
-        raise ValueError("tolerance must be finite and nonnegative")
+def compare_directory(directory: Path, *, tolerance=1e-10, duplicate_tolerance=1e-12):
+    if (not math.isfinite(tolerance) or tolerance < 0.0
+            or not math.isfinite(duplicate_tolerance) or duplicate_tolerance < 0.0):
+        raise ValueError("tolerances must be finite and nonnegative")
     reports, decoded = {}, {}
     for node in NODES:
         for channel in CHANNELS:
             for mode in MODES:
-                key = (mode, node, channel)
-                reports[key], decoded[key] = _load_report(directory, mode, node, channel)
+                merged = {}
+                for pair in M_PAIRS:
+                    key = (mode, node, channel, pair)
+                    report, columns = _load_pair(directory, mode, node, channel, pair)
+                    reports[key] = report
+                    for identity, values in columns.items():
+                        m2 = identity[3]
+                        if m2 in merged:
+                            duplicate = compare_column(merged[m2], values)
+                            if duplicate["relative_l2_error"] > duplicate_tolerance:
+                                raise ValueError(
+                                    f"overlapping M2={m2} columns disagree between adjacent-M shards "
+                                    f"for mode={mode}, node={node}, channel={channel}"
+                                )
+                        else:
+                            merged[m2] = values
+                if set(merged) != set(M2_VALUES):
+                    raise ValueError(f"incomplete merged all-M columns for {mode}, node={node}, channel={channel}")
+                decoded[(mode, node, channel)] = merged
 
     pairs, passed = [], True
     for node in NODES:
         for channel in CHANNELS:
             production = decoded[("production", node, channel)]
             shadow = decoded[("shadow_no_prune", node, channel)]
-            for identity in sorted(production):
-                metrics = compare_column(production[identity], shadow[identity])
+            for m2 in M2_VALUES:
+                metrics = compare_column(production[m2], shadow[m2])
                 row_passed = metrics["relative_l2_error"] <= tolerance
                 passed = passed and row_passed
                 pairs.append({
                     "source_node": node, "K12": channel[0], "K34": channel[1],
-                    "input_M2": identity[3], "passed": row_passed, **metrics,
+                    "input_M2": m2, "passed": row_passed, **metrics,
                 })
+    production_reports = [r for (mode, _, _, _), r in reports.items() if mode == "production"]
+    shadow_reports = [r for (mode, _, _, _), r in reports.items() if mode == "shadow_no_prune"]
     return {
-        "schema": "bqg-w5-direct-all-m-shadow-equivalence-v2",
+        "schema": "bqg-w5-direct-all-m-shadow-equivalence-v3-adjacent-m-shards",
         "status": "PASS_PRODUCTION_SHADOW_EQUIVALENCE" if passed else "FAIL_PRODUCTION_SHADOW_EQUIVALENCE",
         "passed": passed,
         "comparison_performed": True,
         "nodes": list(NODES),
         "channels": [list(x) for x in CHANNELS],
+        "adjacent_M_pairs": [list(x) for x in M_PAIRS],
         "pruning_modes": list(MODES),
         "Jmax2": 10,
         "input_columns_compared": len(pairs),
         "expected_input_columns": len(NODES) * len(CHANNELS) * len(M2_VALUES),
+        "adjacent_M_overlap_consistency_tolerance": duplicate_tolerance,
         "relative_l2_tolerance": tolerance,
         "max_relative_l2_error": max((row["relative_l2_error"] for row in pairs), default=0.0),
         "summed_production_case_pruning_event_observations": sum(
-            int(row.get("pruning_events", 0))
-            for (mode, _, _), report in reports.items() if mode == "production"
-            for row in report.get("cases", [])
+            int(row.get("pruning_events", 0)) for r in production_reports for row in r.get("cases", [])
         ),
         "summed_shadow_case_pruning_event_observations": sum(
-            int(row.get("pruning_events", 0))
-            for (mode, _, _), report in reports.items() if mode == "shadow_no_prune"
-            for row in report.get("cases", [])
+            int(row.get("pruning_events", 0)) for r in shadow_reports for row in r.get("cases", [])
         ),
         "pairs": pairs,
         "scope": (
             "Compares complete sparse H_E output maps for the declared J=1 "
-            "recoupling channels and all M at all five K5 source nodes. "
-            "This is a finite seed/cutoff control, not a global pruning theorem, "
-            "all-spin SU(2) proof, or continuum self-adjointness result."
+            "recoupling channels and all M at all five K5 source nodes. Each "
+            "adjacent-M shard checks both ladder directions for its pair; the "
+            "shared M=0 column is cross-checked between shards. This is a finite "
+            "seed/cutoff control, not a global pruning theorem, all-spin SU(2) "
+            "proof, or continuum self-adjointness result."
         ),
     }
 
@@ -165,18 +195,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--tolerance", type=float, default=1e-10)
+    parser.add_argument("--duplicate-tolerance", type=float, default=1e-12)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        result = compare_directory(args.directory, tolerance=args.tolerance)
+        result = compare_directory(
+            args.directory, tolerance=args.tolerance,
+            duplicate_tolerance=args.duplicate_tolerance,
+        )
     except Exception as exc:
         result = {
-            "schema": "bqg-w5-direct-all-m-shadow-equivalence-v2",
+            "schema": "bqg-w5-direct-all-m-shadow-equivalence-v3-adjacent-m-shards",
             "status": "INCOMPLETE_PRODUCTION_SHADOW_EQUIVALENCE",
             "passed": False,
             "comparison_performed": False,
             "error": f"{type(exc).__name__}: {exc}",
-            "scope": "No equivalence claim is possible without all twenty valid channel/node/mode artifacts.",
+            "scope": "No equivalence claim is possible without all forty valid adjacent-M artifacts.",
         }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
