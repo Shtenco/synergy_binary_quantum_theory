@@ -196,8 +196,8 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
                 }
             return dict(state), 0.0, 0.0
 
-        with patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \\
-             patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
+        with (patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map),
+              patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition)):
             result = gate.run(
                 Jmax2=4, nodes=(0,), channels=((0, 2),)
             )
