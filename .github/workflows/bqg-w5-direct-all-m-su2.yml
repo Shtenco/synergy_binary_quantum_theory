@@ -75,13 +75,13 @@ jobs:
             --channel '${{ matrix.channel }}' \
             --m-pair '${{ matrix.m_pair }}' \
             --pruning-mode ${{ matrix.pruning_mode }} \
-            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair == '-2_0' && 'neg2_0' || '0_2' }}.json
+            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair }}.json
       - name: Upload direct all-M covariance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-channel${{ matrix.channel }}-mpair${{ matrix.m_pair == '-2_0' && 'neg2_0' || '0_2' }}-${{ github.run_id }}
-          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair == '-2_0' && 'neg2_0' || '0_2' }}.json
+          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-channel${{ matrix.channel }}-mpair${{ matrix.m_pair }}-${{ github.run_id }}
+          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair }}.json
           if-no-files-found: warn
           retention-days: 30
 
