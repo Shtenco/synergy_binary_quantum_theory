@@ -106,5 +106,28 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
                 compare_directory(directory)
 
 
+    def test_missing_ladder_direction_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.make_complete_directory(directory)
+            path = directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json"
+            report = json.loads(path.read_text())
+            report["cases"] = report["cases"][:1]
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "both adjacent ladder directions"):
+                compare_directory(directory)
+
+    def test_empty_sparse_output_column_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.make_complete_directory(directory)
+            path = directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json"
+            report = json.loads(path.read_text())
+            report["operator_columns_sparse"][0]["entries"] = []
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "zero/empty sparse output column"):
+                compare_directory(directory)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
