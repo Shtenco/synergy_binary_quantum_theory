@@ -31,8 +31,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-direct-all-m-v9-adjacent-m-shards-${{ github.ref }}-${{ github.sha }}
-  cancel-in-progress: false
+  # One active matrix per branch; superseded commits must not pile up 40-job runs.
+  group: bqg-w5-direct-all-m-adjacent-m-shards-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
