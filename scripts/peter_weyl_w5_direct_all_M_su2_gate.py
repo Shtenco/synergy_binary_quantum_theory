@@ -443,7 +443,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                 })
         operator_matrix = np.zeros((len(output_keys), len(basis_keys)), dtype=np.complex128)
         for column, (K12, K34, M2) in enumerate(
-            ((k1, k2, m) for k1, k2 in channels for m in (-2, 0, 2))
+            ((k1, k2, m) for k1, k2 in channels for m in m_values)
         ):
             for key, amplitude in all_outputs[(node, K12, K34, M2)].items():
                 operator_matrix[output_index[key], column] = amplitude
