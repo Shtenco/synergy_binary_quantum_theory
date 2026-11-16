@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-channel${{ matrix.channel }}-${{ github.run_id }}
-          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}.json
+          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}.json
           if-no-files-found: warn
           retention-days: 30
 
@@ -95,13 +95,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Download all ten matrix artifacts
+      - name: Download all twenty channel-sharded matrix artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: bqg-w5-direct-all-m-*-node*-channel*-${{ github.run_id }}
           path: verification_results
           merge-multiple: true
-      - name: Compare all five production/shadow pairs
+      - name: Compare all five-node, two-channel production/shadow pairs
         if: always()
         run: |
           python scripts/bqg_w5_direct_all_m_shadow_equivalence.py \
