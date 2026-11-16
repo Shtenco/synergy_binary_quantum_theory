@@ -49,7 +49,7 @@ jobs:
         pruning_mode: [production, shadow_no_prune]
         node: [0, 1, 2, 3, 4]
         channel: ['0_2', '2_0']
-        m_pair: ['-2_0', '0_2']
+        m_pair: ['neg2_0', '0_2']
     steps:
       - uses: actions/checkout@v4
         with:
