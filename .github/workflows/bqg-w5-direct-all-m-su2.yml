@@ -31,7 +31,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: bqg-w5-direct-all-m-v5-channel-shards-${{ github.ref }}-${{ github.sha }}
+  group: bqg-w5-direct-all-m-v6-adjacent-m-shards-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:
