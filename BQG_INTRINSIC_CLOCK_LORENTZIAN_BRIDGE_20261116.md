@@ -210,3 +210,20 @@ This branch does not claim:
 - that the full BQG light cone has been proved or experimentally confirmed.
 
 **Current scientific verdict:** the reduced cone and finite graph-causality theorem remain valid within their stated scopes. The bridge to full physical Lorentzian BQG remains open. The immediate computational bottleneck is completion of reproducible W5 operator evidence; the immediate conceptual bottleneck is deriving a physical clock or clock-free boundary-history order from the actual constraints.
+
+
+## 10. Implementation update — resumable W5 SU(2) shards (2026-11-16)
+
+The first production/shadow all-M workflow grouped both recoupling channels into each node/mode job. The latest run history showed that expensive matrix jobs did not consistently finish and the aggregate therefore received no complete matrix artifacts. The direct all-M gate already accepted a `channels` argument internally, so the workflow has now been split by that existing mathematical decomposition rather than changing the operator.
+
+Changes on this branch:
+
+- `scripts/peter_weyl_w5_direct_all_M_su2_gate.py` accepts one optional `--channel K12_K34` shard. Each shard still computes all three magnetic components (M_2=-2,0,2), both adjacent ladder directions, (J_z), the full sparse output and an actual complex-superposition check.
+- For a one-channel shard, the superposition control uses the (M_2=-2) and (M_2=+2) inputs of that same channel. The two-channel default retains the original cross-channel (M_2=0) control.
+- `bqg-w5-direct-all-m-su2.yml` now creates 20 jobs: 5 source nodes × 2 pruning modes × 2 recoupling channels.
+- The comparator requires all 20 valid node/mode/channel artifacts and compares 30 complete sparse (H_E) columns (3 magnetic components × 5 nodes × 2 channels). Missing shards remain `INCOMPLETE`, never PASS.
+- The artifact filename and provenance both encode the channel to prevent one shard overwriting or being mistaken for another.
+
+The first CI attempt exposed a syntax error in the newly added single-channel test's context-manager continuation. This was corrected before the latest run. On run `43865401937` at commit `e154d5de270dff54cbb4074295a388eea1cb197e`, the observed matrix job `direct-all-m (production, 0, 2_0)` passed compilation and both unit-test suites and entered the actual operator computation. The other matrix cells have not all completed. Therefore this is **test/compile progress only**, not yet an all-M SU(2) scientific result or production/shadow equivalence result.
+
+Do not use the earlier intermediate runs `43865256181`, `43865260984`, `43865310895`, or `43865341034` as evidence for the final branch state; they were triggered on intermediate commits before the final test correction and/or artifact-path correction.
