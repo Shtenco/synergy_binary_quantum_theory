@@ -47,6 +47,7 @@ jobs:
       matrix:
         pruning_mode: [production, shadow_no_prune]
         node: [0, 1, 2, 3, 4]
+        channel: ['0,2', '2,0']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,13 +70,14 @@ jobs:
           python scripts/peter_weyl_w5_direct_all_M_su2_gate.py \
             --Jmax2 10 \
             --nodes ${{ matrix.node }} \
+            --channel '${{ matrix.channel }}' \
             --pruning-mode ${{ matrix.pruning_mode }} \
-            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}.json
+            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}.json
       - name: Upload direct all-M covariance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-${{ github.run_id }}
+          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-channel${{ matrix.channel }}-${{ github.run_id }}
           path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}.json
           if-no-files-found: warn
           retention-days: 30
@@ -95,10 +97,9 @@ jobs:
       - name: Download all ten matrix artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: bqg-w5-direct-all-m-*-node*-${{ github.run_id }}
+          pattern: bqg-w5-direct-all-m-*-node*-channel*-${{ github.run_id }}
           path: verification_results
           merge-multiple: true
-          if-no-artifact-found: warn
       - name: Compare all five production/shadow pairs
         if: always()
         run: |
