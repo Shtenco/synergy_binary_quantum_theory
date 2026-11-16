@@ -11,10 +11,11 @@ from bqg_w5_direct_all_m_shadow_equivalence import compare_directory
 
 
 class TestDirectAllMShadowEquivalence(unittest.TestCase):
-    def write_matrix(self, directory, *, node, mode, channel, perturb=0.0):
+    def write_pair(self, directory, *, node, mode, channel, pair, perturb=0.0):
         k12, k34 = channel
+        tag = "neg2_0" if pair == (-2, 0) else "0_2"
         columns = []
-        for m2 in (-2, 0, 2):
+        for m2 in pair:
             columns.append({
                 "source_node": node, "K12": k12, "K34": k34, "input_M2": m2,
                 "entries": [
@@ -27,19 +28,23 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
             "status": "PASS_DIRECT_ALL_M_SU2_COMMUTATOR",
             "passed": True, "Jmax2": 10, "source_nodes": [node],
             "input_charged_sector": {"channels_K12_K34": [[k12, k34]]},
+            "magnetic_components_tested_M2": list(pair),
             "pruning_mode": mode, "operator_columns_sparse": columns,
-            "cases": [{"pruning_events": 3}],
+            "cases": [{"pruning_events": 3}, {"pruning_events": 4}],
         }
-        (directory / f"direct_all_M_{mode}_node{node}_channel{k12}_{k34}.json").write_text(
-            json.dumps(report), encoding="utf-8"
-        )
+        (directory / (
+            f"direct_all_M_{mode}_node{node}_channel{k12}_{k34}_mpair{tag}.json"
+        )).write_text(json.dumps(report), encoding="utf-8")
 
     def make_complete_directory(self, directory, *, perturb=0.0):
         for node in range(5):
             for channel in ((0, 2), (2, 0)):
-                self.write_matrix(directory, node=node, mode="production", channel=channel)
-                self.write_matrix(directory, node=node, mode="shadow_no_prune",
-                                  channel=channel, perturb=perturb)
+                for mode in ("production", "shadow_no_prune"):
+                    for pair in ((-2, 0), (0, 2)):
+                        self.write_pair(
+                            directory, node=node, mode=mode, channel=channel,
+                            pair=pair, perturb=perturb if mode == "shadow_no_prune" else 0.0,
+                        )
 
     def test_compares_all_nodes_channels_and_all_m_columns(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -60,19 +65,30 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL_PRODUCTION_SHADOW_EQUIVALENCE")
         self.assertGreater(result["max_relative_l2_error"], 1e-10)
 
-    def test_missing_channel_shard_is_not_treated_as_pass(self):
+    def test_missing_adjacent_m_shard_is_not_treated_as_pass(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.make_complete_directory(directory)
-            (directory / "direct_all_M_production_node0_channel0_2.json").unlink()
+            (directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json").unlink()
             with self.assertRaises(FileNotFoundError):
+                compare_directory(directory)
+
+    def test_disagreeing_overlapping_m0_columns_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            self.make_complete_directory(directory)
+            path = directory / "direct_all_M_production_node0_channel0_2_mpair0_2.json"
+            report = json.loads(path.read_text())
+            report["operator_columns_sparse"][0]["entries"][0][1] += 0.1
+            path.write_text(json.dumps(report), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "overlapping M2=0"):
                 compare_directory(directory)
 
     def test_failed_underlying_gate_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp)
             self.make_complete_directory(directory)
-            path = directory / "direct_all_M_production_node0_channel0_2.json"
+            path = directory / "direct_all_M_production_node0_channel0_2_mpairneg2_0.json"
             report = json.loads(path.read_text())
             report["passed"] = False
             report["status"] = "FAIL_DIRECT_ALL_M_SU2_COMMUTATOR"
