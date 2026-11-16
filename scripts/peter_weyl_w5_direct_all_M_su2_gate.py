@@ -421,7 +421,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
             for row, key in enumerate(basis_keys):
                 matrix[row, column] = output.get(key, 0j)
         output_keys = sorted({
-            key for K12, K34 in channels for M2 in (-2, 0, 2)
+            key for K12, K34 in channels for M2 in m_values
             for key in all_outputs[(node, K12, K34, M2)]
         }, key=repr)
         output_index = {key: row for row, key in enumerate(output_keys)}
@@ -429,7 +429,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         # declared seed subspace. The downstream CI aggregator compares each
         # production column with its shadow_no_prune counterpart.
         for K12, K34 in channels:
-            for M2 in (-2, 0, 2):
+            for M2 in m_values:
                 sparse_output = all_outputs[(node, K12, K34, M2)]
                 operator_columns_sparse.append({
                     "source_node": node,
