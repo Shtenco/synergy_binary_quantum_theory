@@ -45,7 +45,7 @@ def _decode_entries(column, *, context):
 
 
 def _pair_tag(pair):
-    return "-2_0" if pair == (-2, 0) else "0_2"
+    return "neg2_0" if pair == (-2, 0) else "0_2"
 
 
 def _load_pair(directory: Path, mode: str, node: int, channel, pair):
