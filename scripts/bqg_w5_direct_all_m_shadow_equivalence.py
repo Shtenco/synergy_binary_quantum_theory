@@ -72,6 +72,25 @@ def _load_pair(directory: Path, mode: str, node: int, channel, pair):
         raise ValueError(f"{path.name}: channel provenance mismatch")
     if report.get("magnetic_components_tested_M2") != list(pair):
         raise ValueError(f"{path.name}: adjacent-M pair provenance mismatch")
+    expected_cases = {("J_plus", pair[0]), ("J_minus", pair[1])}
+    cases = report.get("cases")
+    if not isinstance(cases, list) or {
+        (row.get("direction"), int(row.get("input_M2", 999))) for row in cases
+    } != expected_cases:
+        raise ValueError(f"{path.name}: both adjacent ladder directions are required")
+    if report.get("all_full_output_matrices_nonzero") is not True:
+        raise ValueError(f"{path.name}: full sparse operator output is not certified nonzero")
+    numeric_gates = (
+        ("max_commutator_relative_residual", 1e-8),
+        ("max_jz_commutator_relative_residual", 1e-12),
+        ("max_wrong_JM_weight_fraction", 1e-18),
+        ("max_spectator_non_singlet_weight_fraction", 1e-18),
+        ("max_actual_complex_superposition_relative_residual", 1e-10),
+    )
+    for field, limit in numeric_gates:
+        value = float(report.get(field, float("inf")))
+        if not math.isfinite(value) or value >= limit:
+            raise ValueError(f"{path.name}: failed or missing {field}")
     columns = report.get("operator_columns_sparse")
     if not isinstance(columns, list) or len(columns) != 2:
         raise ValueError(f"{path.name}: expected exactly two sparse M columns")
@@ -86,6 +105,8 @@ def _load_pair(directory: Path, mode: str, node: int, channel, pair):
         if identity[:3] != (node, k12, k34) or identity[3] not in pair:
             raise ValueError(f"{path.name}: unexpected input column {identity}")
         decoded[identity] = _decode_entries(column, context=f"{path.name} {identity}")
+        if not decoded[identity]:
+            raise ValueError(f"{path.name}: zero/empty sparse output column {identity}")
     expected = {(node, k12, k34, m2) for m2 in pair}
     if set(decoded) != expected:
         raise ValueError(f"{path.name}: incomplete adjacent-M column set")
