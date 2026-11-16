@@ -30,10 +30,8 @@ on:
       - 'tests/test_bqg_w5_direct_all_m_shadow_equivalence.py'
   workflow_dispatch:
 
-concurrency:
-  # One active matrix per branch; superseded commits must not pile up 40-job runs.
-  group: bqg-w5-direct-all-m-adjacent-m-shards-${{ github.ref }}
-  cancel-in-progress: true
+# The preflight job cancels stale runs through the Actions API; do not use
+# workflow-level concurrency here because an older queued run can block cleanup.
 
 permissions:
   contents: read
