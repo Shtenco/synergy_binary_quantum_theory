@@ -30,7 +30,16 @@ class TestDirectAllMShadowEquivalence(unittest.TestCase):
             "input_charged_sector": {"channels_K12_K34": [[k12, k34]]},
             "magnetic_components_tested_M2": list(pair),
             "pruning_mode": mode, "operator_columns_sparse": columns,
-            "cases": [{"pruning_events": 3}, {"pruning_events": 4}],
+            "all_full_output_matrices_nonzero": True,
+            "max_commutator_relative_residual": 0.0,
+            "max_jz_commutator_relative_residual": 0.0,
+            "max_wrong_JM_weight_fraction": 0.0,
+            "max_spectator_non_singlet_weight_fraction": 0.0,
+            "max_actual_complex_superposition_relative_residual": 0.0,
+            "cases": [
+                {"direction": "J_plus", "input_M2": pair[0], "pruning_events": 3},
+                {"direction": "J_minus", "input_M2": pair[1], "pruning_events": 4},
+            ],
         }
         (directory / (
             f"direct_all_M_{mode}_node{node}_channel{k12}_{k34}_mpair{tag}.json"
