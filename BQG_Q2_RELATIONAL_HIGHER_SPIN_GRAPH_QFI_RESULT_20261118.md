@@ -55,3 +55,8 @@ pure-boundary-state QFI. They are not the spectrum of the full (12V\times12V)
 half-link QFI and do not by themselves classify vertex-Gauss or edge-frame
 null modes.
 
+The higher-spin graph contraction validator was also hardened to reject
+fractional, boolean, string, and otherwise non-integer endpoint/half-link
+indices before tensor contraction. Regression cases were added for these
+invalid inputs; they remain subject to the pending CI execution.
+
