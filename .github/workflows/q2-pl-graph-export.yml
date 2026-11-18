@@ -56,6 +56,9 @@ on:
       - 'BQG_Q2_VERTEX_FUSION_HAAR_PUSHFORWARD_20261118.md'
       - 'tests/test_q2_vertex_fusion_haar_pushforward.py'
       - 'scripts/q2_vertex_fusion_haar_pushforward.py'
+      - 'scripts/q2_vertex_fusion_graph_gram.py'
+      - 'tests/test_q2_vertex_fusion_graph_gram.py'
+      - 'BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md'
       - 'tests/test_q2_vertex_fusion_coarse_graining.py'
       - 'BQG_Q2_VERTEX_FUSION_COARSE_GRAINING_RESULT_20261118.md'
       - 'BQG_Q2_RELATIONAL_GRAPH_QFI_RESULT_20261118.md'
@@ -135,6 +138,14 @@ jobs:
         run: python -m pytest -q tests/test_q2_vertex_fusion_haar_pushforward.py
       - name: Export local-Haar pushforward under vertex fusion control
         run: python -m scripts.q2_vertex_fusion_haar_pushforward --output verification_results/Q2_VERTEX_FUSION_HAAR_PUSHFORWARD.json
+      - name: Run tree and loop vertex-fusion Gram tests
+        run: python -m pytest -q tests/test_q2_vertex_fusion_graph_gram.py
+      - name: Export star-tree vertex-fusion Gram control
+        run: python -m scripts.q2_vertex_fusion_graph_gram --graph star_4 --two-j 1 --output verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_STAR_JHALF.json
+      - name: Export cycle vertex-fusion Gram control at spin one-half
+        run: python -m scripts.q2_vertex_fusion_graph_gram --graph cycle_4 --two-j 1 --output verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_CYCLE_JHALF.json
+      - name: Export cycle vertex-fusion Gram control at spin one
+        run: python -m scripts.q2_vertex_fusion_graph_gram --graph cycle_4 --two-j 2 --output verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_CYCLE_J1.json
       - name: Run Haar-averaged star QFI tests
         run: python -m pytest -q tests/test_q2_relational_haar_averaged_star_qfi_gate.py
       - name: Export Haar-averaged star QFI control
@@ -187,4 +198,7 @@ jobs:
             verification_results/Q2_VERTEX_FUSION_REDUCED_BOUNDARY_QFI.json
             verification_results/Q2_VERTEX_FUSION_BOUNDARY_SUBSYSTEM_SWEEP.json
             verification_results/Q2_VERTEX_FUSION_HAAR_PUSHFORWARD.json
+            verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_STAR_JHALF.json
+            verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_CYCLE_JHALF.json
+            verification_results/Q2_VERTEX_FUSION_GRAPH_GRAM_CYCLE_J1.json
           if-no-files-found: error
