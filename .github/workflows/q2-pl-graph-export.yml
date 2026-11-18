@@ -21,6 +21,9 @@ on:
       - 'scripts/q2_relational_star_qfi_gate.py'
       - 'tests/test_q2_relational_star_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_STAR_QFI_RESULT_20261118.md'
+      - 'scripts/q2_relational_graph_qfi_gate.py'
+      - 'tests/test_q2_relational_graph_qfi_gate.py'
+      - 'BQG_Q2_RELATIONAL_GRAPH_QFI_RESULT_20261118.md'
       - '.github/workflows/q2-pl-graph-export.yml'
 
 permissions:
@@ -47,6 +50,10 @@ jobs:
         run: python -m pytest -q tests/test_q2_relational_edge_qfi_gate.py
       - name: Run relational network QFI tests
         run: python -m pytest -q tests/test_q2_relational_network_qfi_gate.py
+      - name: Run finite graph relational QFI tests
+        run: python -m pytest -q tests/test_q2_relational_graph_qfi_gate.py
+      - name: Export finite graph relational QFI control
+        run: python scripts/q2_relational_graph_qfi_gate.py --output verification_results/Q2_RELATIONAL_GRAPH_QFI.json
       - name: Run four-valent star QFI tests
         run: python -m pytest -q tests/test_q2_relational_star_qfi_gate.py
       - name: Export four-valent star QFI control
@@ -72,4 +79,5 @@ jobs:
             verification_results/Q2_RELATIONAL_EDGE_QFI.json
             verification_results/Q2_RELATIONAL_NETWORK_QFI.json
             verification_results/Q2_RELATIONAL_STAR_QFI.json
+            verification_results/Q2_RELATIONAL_GRAPH_QFI.json
           if-no-files-found: error
