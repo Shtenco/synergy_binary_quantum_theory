@@ -614,3 +614,37 @@ projective boundary-state stabilizer with the holonomy stabilizer, nor derive
 the physical QFI conductance or a continuum limit. The next step is to
 compare the differential of the actual contraction map with the holonomy
 quotient map, rather than identify their null spaces by assumption.
+
+
+## Follow-up: holonomy-to-boundary tangent pullback (2026-11-18)
+
+A new explicit linear map now connects the existing internal-edge probe
+convention to the full half-link projective tangent. For each oriented
+edge (e=(u,l_u,v,l_v)), the current graph-QFI convention inserts its
+three generators at the first endpoint ((u,l_u)). The injection
+(P:\mathbb R^{3E}\to\mathbb R^{12V}) selects exactly those coordinates.
+For the projective boundary-state differential (D_\partial),
+\[
+D_e=D_\partial P,\qquad
+F_e=P^T F_{\rm half}P
+=4\mathcal R(D_e)^T\mathcal R(D_e).
+\]
+The new gate compares this pullback with the direct edge-QFI contraction
+on the path and cycle fixtures and checks tangent/QFI rank agreement and
+positive semidefiniteness. It reports the kinematic holonomy gauge-orbit
+rank separately; it does not subtract it from the boundary tangent.
+
+Files:
+- `scripts/q2_relational_holonomy_boundary_tangent_gate.py`
+- `tests/test_q2_relational_holonomy_boundary_tangent_gate.py`
+- `BQG_Q2_RELATIONAL_HOLONOMY_BOUNDARY_TANGENT_RESULT_20261118.md`
+
+The CI workflow now runs the focused tests and exports
+`verification_results/Q2_RELATIONAL_HOLONOMY_BOUNDARY_TANGENT.json`.
+
+**Scope remains deliberately narrow:** the pullback is exact for the
+existing first-endpoint probe section. Endpoint-section independence and
+the simultaneous vertex action on internal holonomies plus boundary frames
+are not yet derived. Consequently the holonomy quotient and projective
+boundary-state stabilizer remain distinct mathematical objects; no physical
+coarse conductance or continuum result is claimed.
