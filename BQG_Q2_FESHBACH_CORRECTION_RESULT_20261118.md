@@ -132,21 +132,21 @@ Z_{\mathrm{eff}}=I_P+\Sigma'(0)\succeq I_P.
 \]
 Thus the eliminated modes renormalize the coarse spectral normalization, not just the static stiffness. The spectral parameter here is the eigenvalue of the unweighted graph Laplacian; it is not yet a physical frequency or a calibrated spacetime energy.
 
-For \(|\lambda|<\Delta_Q\), a conservative remainder estimate is
+For \(|\lambda|<\Delta_Q\), where \(\Delta_Q\) is the true Q-sector gap, a rigorous remainder estimate is
 \[
 \|\Sigma(\lambda)-\Sigma(0)-\lambda\Sigma'(0)\|_2
 \leq
 \frac{\lambda^2\|B\|_2^2}
 {\Delta_Q^3(1-|\lambda|/\Delta_Q)}.
 \]
-The implementation reports the coefficient \(\|B\|_2^2/\Delta_Q^3\). From the recorded finite-level values it is approximately
+The implementation reports the diagnostic coefficient \(\|B\|_2^2/\widehat\Delta_Q^3\), where \(\widehat\Delta_Q\) is the smallest Ritz value returned by Lanczos. From the recorded finite-level estimates it is approximately
 \[
 g=1:\ 1.008\times10^3,\qquad
 g=2:\ 2.087\times10^6.
 \]
-This roughly 2,070-fold increase is a warning that the linearized energy-dependent approximation may be valid only in a progressively narrower spectral window. It is a conservative upper-bound coefficient, not a measured remainder and not evidence by itself that the exact self-energy diverges.
+This roughly 2,070-fold increase warns that the linearized energy-dependent approximation may be valid only in a progressively narrower spectral window. Important qualification: the Ritz value is an eigenvalue estimate, not a certified lower bound on the true Q-sector gap. Therefore these numerical coefficients are conditioning diagnostics, **not certified upper bounds** on the remainder. The analytic remainder inequality is rigorous when supplied with a proven lower bound \(\Delta_Q\); obtaining such a bound remains open. The coefficient increase is not evidence by itself that the exact self-energy diverges.
 
-The code and tests report the norm, trace, extremal eigenvalues, and linear-solve residual for \(\Sigma'(0)\), as well as the positive induced metric \(Z_{\mathrm{eff}}\) and its generalized spectrum. These new derivative and generalized-spectrum values are not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
+The code and tests report the norm, trace, extremal eigenvalues, and linear-solve residual for \(\Sigma'(0)\), as well as the positive induced metric \(Z_{\mathrm{eff}}\) and its generalized spectrum. The code also records Ritz residuals for the smallest and largest eigenvalue estimates. A small Ritz residual checks the returned approximate eigenpair but does not, by itself, certify that no smaller eigenvalue was missed. The true gap lower bound is therefore explicitly marked unavailable, and the numerical remainder coefficient is explicitly marked uncertified. The derivative and generalized-spectrum values are also not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
 
 ## Exact finite variational meaning
 
