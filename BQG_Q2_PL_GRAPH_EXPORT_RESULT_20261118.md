@@ -67,3 +67,24 @@ blocked until those physical state/operator assignments are derived.
 - **No new physical dimension claim:** the exact causal-volume fixed point
   remains a result about the frozen rewrite, and the PL graph export does not
   upgrade it to a QFI spectral-dimension derivation.
+
+
+## Added tetrahedral dual graph export
+
+The exporter was extended to preserve not only the primal 1-skeleton but also
+the tetrahedral dual graph. Each tetrahedron is a dual vertex; each shared
+triangle is a dual edge. The omitted face-rank is carried as the route colour
+(00,01,10,11), and every shared face is checked for exactly two incident
+tetrahedra with matching colour.
+
+| PL generation | Dual vertices (tetrahedra) | Dual edges | Degree |
+|---:|---:|---:|---:|
+| 0 | 16 | 32 | 4 |
+| 1 | 384 | 768 | 4 |
+| 2 | 9,216 | 18,432 | 4 |
+
+All dual graphs are connected and exactly 4-regular. GitHub Actions run
+`44271050772` passed all 5 tests and uploaded the updated 432,503-byte
+artifact. This is the natural candidate adjacency for a future relational
+QFI calculation, but its edge weights remain unset until physical
+two-block states and generators are derived.
