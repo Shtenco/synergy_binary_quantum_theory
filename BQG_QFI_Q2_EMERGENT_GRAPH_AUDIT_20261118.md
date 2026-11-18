@@ -848,3 +848,33 @@ Successful CI:
 - Higher-spin network QFI: run `44337958660`.
 - Haar-averaged star and spin-ensemble QFI: run
   `44338229507`.
+
+
+## Follow-up: higher-spin path and cycle graph contractions (2026-11-18)
+
+The higher-spin implementation now contracts both the three-node path and
+four-cycle directly for (j=1/2) and (j=1). Each internal edge uses the
+normalized invariant spin-(j) tensor; the complete correlated boundary
+QFI is evaluated without an edge-additivity assumption. The (j=1/2)
+specialization is cross-checked against the pre-existing graph-QFI module.
+
+For the path fixture, the code's edge parameters are inserted at each
+edge's first endpoint. Singlet invariance therefore contributes an
+orientation sign when pulling the first edge twist from the outer node to
+the middle node:
+\[
+F_{12}=-\frac43
+\langle\mathbf J_{B0}\cdot\mathbf J_{B3}\rangle I_3.
+\]
+The diagonal path blocks retain the isolated-link value
+(4j(j+1)I_3/3). The cycle has no imposed path formula; its full QFI is
+computed directly and checked for PSD, symmetry and nonzero cross-edge
+correlations.
+
+New files:
+- `scripts/q2_relational_higher_spin_graph_qfi_gate.py`
+- `tests/test_q2_relational_higher_spin_graph_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI_RESULT_20261118.md`
+
+The workflow exports
+`verification_results/Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI.json`.
