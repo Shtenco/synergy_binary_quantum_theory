@@ -284,11 +284,22 @@ def run_coarse_graining_suite(two_j=1):
         name: deterministic_case(name, two_j=two_j, blocks=blocks)
         for name, blocks in cases.items()
     }
+    nodes, edges = graph_fixtures()["path_5"]
+    rng = np.random.default_rng(20261119 + two_j)
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    staged = compare_staged_and_direct_fusion(
+        states, edges, invariant_singlet_tensor(two_j),
+        first_blocks=((0, 1), (2,), (3, 4)),
+        second_blocks=((0, 1), (2,)),
+        direct_blocks=((0, 1, 2), (3, 4)),
+    )
     return {
         "status": "exact finite vertex-fusion coarse-graining",
         "two_j": int(two_j),
         "spin": float(two_j) / 2.0,
-        "passed": all(row["passed"] for row in results.values()),
+        "passed": all(row["passed"] for row in results.values()) and staged["passed"],
+        "staged_vs_direct_two_level_fusion": staged,
         "claim_boundary": (
             "Exact equality of finite tensor contractions and retained-edge pure-state "
             "QFI under vertex-block fusion. This is not an RG fixed-point or continuum result."
