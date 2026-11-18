@@ -159,3 +159,35 @@ Commits:
 combined-status endpoint currently reports no status checks for the latest
 commit. Therefore the tests must still be treated as *not verified by CI*;
 this audit does not report them as passing.
+
+## Generation-3 capacity preflight (2026-11-18)
+
+Before attempting a full generation-3 export, an allocation-free exact
+f-vector calculation was added in `scripts/q2_pl_generation3_preflight.py`.
+Starting from the audited generation-2 f-vector
+`(f0,f1,f2,f3)=(1696,10912,18432,9216)`, barycentric subdivision gives
+
+[
+(f'_0,f'_1,f'_2,f'_3)
+=(40256,261440,442368,221184).
+]
+
+Here (f'_0) is the generation-3 PL primal vertex count,
+(f'_1) its 1-skeleton edge count, and (f'_3) the tetrahedral dual-vertex
+count. Since the closed tetrahedral 3-manifold has two tetrahedra at every
+triangle, the generation-3 PL dual graph has 442,368 edges. The q=2 causal
+active-edge count is (8^3=512).
+
+The preflight also quantifies a numerical bottleneck: a dense 512-by-512
+float64 spectral matrix occupies 2,097,152 raw bytes, but the current cyclic
+Jacobi implementation can require on the order of 6,697,779,200 scalar
+rotation/update operations under the conservative 100-sweep work estimate.
+This estimate is not a benchmark; it is a warning against extending the
+current dense eigensolver blindly.
+
+The CI workflow now runs the allocation-free preflight tests and uploads its
+JSON artifact. This does **not** mean generation 3 has been exported or that
+the causal-PL correspondence has been checked at generation 3. The next
+implementation step is a compact/streaming dual-incidence representation and
+a scalable sparse spectral method; until then the correspondence gate remains
+capped at generation 2.
