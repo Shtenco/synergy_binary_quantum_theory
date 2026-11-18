@@ -344,3 +344,47 @@ nontrivial RG transformation on couplings, a fixed point, universality, or
 a continuum limit. Those require a specified microscopic ensemble/measure,
 coarse variables and induced effective measure, and an explicit scale-flow
 observable.
+
+## Exhaustive small-boundary subsystem sweep and batched implementation (verified 2026-11-18)
+
+The reduced-boundary analysis was extended from two selected subsystems to
+every one-leg and two-leg subsystem of the eight external half-links in
+path_3 and cycle_4. For each subsystem, every vertex partition is tested,
+including reversal of block order and the order inside each block. Both
+\(j=1/2\) and \(j=1\) are included.
+
+| Quantity | Verified value |
+|---|---:|
+| Graph fixtures | path_3, cycle_4 |
+| Spin sectors | \(j=1/2,1\) |
+| External half-links per graph | 8 |
+| Retained subsystems per graph and spin | 36 |
+| Total retained subsystems | 144 |
+| Partition/order evaluations | 2,880 |
+| Maximum reduced-density error | 3.886e-16 |
+| Maximum reduced-derivative error | 1.403e-16 |
+| Maximum mixed-QFI error | 6.106e-16 |
+| Minimum eigenvalue of pure-minus-reduced QFI | 0.0 |
+
+All sweep controls report `passed: true`. The implementation batches many
+retained subsystems against one fused/microscopic contraction per partition,
+rather than rebuilding the same tensor-network state for every subsystem.
+A dedicated regression test compares the batched results against the
+single-subsystem reference implementation. The complete vertex-fusion test
+module reports **36 passed** in 46.02 seconds.
+
+Final verified run:
+[44377801973](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44377801973),
+commit `2d2f40b90c58d294dd4ec0f7f7dfa6a0180e3bc9`. All 48/48 workflow
+steps passed. The downloaded artifact (ID `14462222520`) was parsed
+independently; all five vertex-fusion JSON exports report top-level
+`passed: true`.
+
+The nonnegative QFI-gap check is a finite-dimensional data-processing
+control, not evidence of a physical RG flow. In particular, exact vertex
+fusion is still an exact tensor contraction/reorganization; it does not by
+itself integrate out a probabilistically specified set of microscopic
+degrees of freedom or define running couplings. The next mathematical
+milestone is to specify an ensemble/measure and a coarse-variable map, derive
+the induced effective boundary measure, and then test whether any
+scale-dependent couplings close under repeated blocking.
