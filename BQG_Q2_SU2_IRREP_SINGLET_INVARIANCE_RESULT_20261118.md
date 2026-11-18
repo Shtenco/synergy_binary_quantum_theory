@@ -44,3 +44,12 @@ SU(2) irreducible representations. It does not construct higher-spin
 four-valent intertwiners, spin sums, graph contractions, higher-spin QFI,
 or BQG history-weighted conductances. Those require a separate network-level
 implementation and validation.
+
+
+## Verified CI results
+
+In GitHub Actions run `44336897934`, all 16 focused tests passed and the
+export completed. For the six reported spins (j=1/2,1,3/2,2,5/2,3), the
+largest finite-group invariance residual was (1.59\times10^{-15}), while
+the largest Lie-algebra invariance residual was zero at the exported
+precision. The test suite additionally covers (j=4).
