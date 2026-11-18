@@ -162,6 +162,61 @@ def _lumpability_diagnostics(tetrahedra, parent_map, dual):
     }
 
 
+def _quotient_operator_diagnostics(tetrahedra, parent_map, causal_edges, dual):
+    """Build the sparse Galerkin conductances induced by PL dual adjacency."""
+    weights = Counter()
+    internal = 0
+    for edge in dual["edges"]:
+        a = tuple(dual["vertices"][edge["source"]]["tetrahedron"])
+        b = tuple(dual["vertices"][edge["target"]]["tetrahedron"])
+        ea, eb = parent_map[a], parent_map[b]
+        if ea == eb:
+            internal += 1
+        else:
+            weights[tuple(sorted((ea, eb)))] += 1
+
+    nodes = sorted(causal_edges)
+    adjacency = {node: set() for node in nodes}
+    weighted_degree = {node: 0 for node in nodes}
+    sparse_edges = []
+    for (a, b), weight in sorted(weights.items()):
+        adjacency[a].add(b)
+        adjacency[b].add(a)
+        weighted_degree[a] += weight
+        weighted_degree[b] += weight
+        sparse_edges.append({"source": a, "target": b, "weight": weight})
+
+    seen = set()
+    components = 0
+    for root in nodes:
+        if root in seen:
+            continue
+        components += 1
+        seen.add(root)
+        stack = [root]
+        while stack:
+            current = stack.pop()
+            for neighbour in adjacency[current]:
+                if neighbour not in seen:
+                    seen.add(neighbour)
+                    stack.append(neighbour)
+
+    return {
+        "quotient_connected": components == 1,
+        "quotient_components": components,
+        "quotient_weighted_edge_pairs": len(sparse_edges),
+        "quotient_cross_fibre_adjacencies": sum(weights.values()),
+        "internal_pl_dual_adjacencies": internal,
+        "quotient_weighted_degree_min": min(weighted_degree.values()),
+        "quotient_weighted_degree_max": max(weighted_degree.values()),
+        "quotient_conductances": sparse_edges,
+        "conductance_semantics": (
+            "number of PL-dual edges between the two causal-edge fibres; "
+            "Galerkin stiffness weights, not QFI conductances"
+        ),
+    }
+
+
 def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
     adjacency_ok = True
@@ -175,6 +230,9 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     histogram = Counter(fibres.values())
     measure_scale = 24 ** generation
     lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
+    quotient = _quotient_operator_diagnostics(
+        tetrahedra, parent_map, causal_edges, dual
+    )
     return {
         "generation": generation,
         "pl_tetrahedra": len(tetrahedra),
@@ -190,6 +248,7 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
         "pl_dual_adjacencies": len(dual["edges"]),
         "adjacency_preserved": adjacency_ok,
         **lumpability,
+        **quotient,
     }
 
 def run(max_generation=2):
