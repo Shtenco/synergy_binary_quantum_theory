@@ -42,6 +42,29 @@ def apply_generator_axis(
     return np.moveaxis(np.tensordot(generator, tensor, axes=(1, axis)), 0, axis)
 
 
+
+def product_vs_global_haar_two_copy_moment(two_j: int, vertex_count: int) -> dict[str, float]:
+    """Exact Hilbert-Schmidt comparison of product-Haar and global-Haar 2-copy moments."""
+    dimension = two_j + 1
+    input_dimension = dimension**vertex_count
+    product_purity = (
+        2.0 / (dimension * (dimension + 1.0))
+    ) ** vertex_count
+    global_haar_purity = 2.0 / (
+        input_dimension * (input_dimension + 1.0)
+    )
+    squared_distance = product_purity - global_haar_purity
+    if squared_distance < -1e-12:
+        raise AssertionError("two-copy moment distance squared became negative")
+    return {
+        "product_haar_two_copy_moment_purity": product_purity,
+        "global_haar_on_input_two_copy_moment_purity": global_haar_purity,
+        "two_copy_moment_hilbert_schmidt_distance": float(
+            np.sqrt(max(0.0, squared_distance))
+        ),
+    }
+
+
 def analyze_independent_haar_fusion(
     two_j: int = 1, vertex_count: int = 2
 ) -> dict[str, object]:
@@ -113,6 +136,9 @@ def analyze_independent_haar_fusion(
     non_haar_distance = float(np.sqrt(
         1.0 / input_dimension - 1.0 / full_invariant_dimension
     ))
+    two_copy_moment = product_vs_global_haar_two_copy_moment(
+        two_j, vertex_count
+    )
 
     return {
         "status": "exact pushforward of independent local Haar intertwiners",
@@ -139,6 +165,7 @@ def analyze_independent_haar_fusion(
         "pushforward_covariance_purity": covariance_purity,
         "full_boundary_haar_covariance_purity": haar_purity,
         "pushforward_vs_full_haar_covariance_frobenius_distance": non_haar_distance,
+        **two_copy_moment,
         "passed": (
             local_basis.shape[1] == dimension
             and map_rank == input_dimension
@@ -152,14 +179,17 @@ def analyze_independent_haar_fusion(
             and abs(covariance_purity - 1.0 / input_dimension) < 2e-9
             and abs(haar_purity - 1.0 / full_invariant_dimension) < 2e-9
             and non_haar_distance > 1e-3
+            and two_copy_moment["two_copy_moment_hilbert_schmidt_distance"] > 1e-3
         ),
         "interpretation": (
             "For this explicitly chosen independent local-Haar ensemble, "
             "A connected chain block maps the product input isometrically "
             "up to scale into a proper subspace of its boundary invariant "
             "space. Its exact pushforward covariance is therefore not the "
-            "full boundary-Haar covariance. This demonstrates non-closure "
-            "of this toy measure, not a statement about the unspecified "
+            "full boundary-Haar covariance. The exact two-copy moment also "
+            "differs from Haar on the image subspace, so the pushforward is "
+            "not Haar even after restricting to its support. This demonstrates "
+            "non-closure of this toy measure, not a statement about the unspecified "
             "physical BQG measure."
         ),
         "claim_boundary": (
