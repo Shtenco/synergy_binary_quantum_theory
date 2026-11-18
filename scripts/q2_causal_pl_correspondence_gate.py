@@ -348,7 +348,111 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
     }
 
 
-def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
+def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual):
+    """Compute the finite zero-energy Feshbach correction matrix-free on Q."""
+    try:
+        import numpy as np
+        from scipy.sparse import csr_matrix
+        from scipy.sparse.linalg import LinearOperator, cg
+    except ImportError as exc:
+        raise RuntimeError("Feshbach diagnostics require numpy and scipy") from exc
+
+    n = len(tetrahedra)
+    nodes = sorted(causal_edges)
+    m = len(nodes)
+    node_index = {node: index for index, node in enumerate(nodes)}
+    fibre_sizes = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
+    U = np.zeros((n, m), dtype=float)
+    for row, tet in enumerate(tetrahedra):
+        edge = parent_map[tuple(tet)]
+        U[row, node_index[edge]] = 1.0 / math.sqrt(fibre_sizes[edge])
+
+    rows, cols = [], []
+    for edge in dual["edges"]:
+        a, b = edge["source"], edge["target"]
+        rows.extend((a, b))
+        cols.extend((b, a))
+    adjacency = csr_matrix(
+        (np.ones(len(rows), dtype=float), (rows, cols)), shape=(n, n)
+    )
+
+    def laplacian_apply(vector):
+        return 4.0 * vector - adjacency @ vector
+
+    def project_q(vector):
+        return vector - U @ (U.T @ vector)
+
+    LU = laplacian_apply(U)
+    B = project_q(LU)
+    gram = B.T @ B
+    gram = 0.5 * (gram + gram.T)
+    leakage_eigenvalues = np.linalg.eigvalsh(gram)
+    leakage_frobenius = float(np.linalg.norm(B, ord="fro"))
+    leakage_operator = math.sqrt(max(0.0, float(leakage_eigenvalues[-1])))
+    A_PP = U.T @ LU
+    A_PP = 0.5 * (A_PP + A_PP.T)
+
+    if leakage_frobenius <= 1e-14:
+        correction = np.zeros((m, m), dtype=float)
+        solve_residual_max = 0.0
+        solve_count = 0
+    else:
+        def qlq_plus_p(vector):
+            p_vector = U @ (U.T @ vector)
+            q_vector = vector - p_vector
+            return project_q(laplacian_apply(q_vector)) + p_vector
+
+        operator = LinearOperator((n, n), matvec=qlq_plus_p, dtype=float)
+        solutions = np.zeros((n, m), dtype=float)
+        residuals = []
+        for column in range(m):
+            solution, info = cg(
+                operator, B[:, column], rtol=1e-10, atol=1e-12, maxiter=20000
+            )
+            if info != 0:
+                raise RuntimeError(
+                    f"Feshbach CG failed at generation {generation}, "
+                    f"column {column}, info={info}"
+                )
+            solutions[:, column] = solution
+            residuals.append(float(np.linalg.norm(qlq_plus_p(solution) - B[:, column])))
+        solve_residual_max = max(residuals, default=0.0)
+        solve_count = m
+        correction = B.T @ solutions
+        correction = 0.5 * (correction + correction.T)
+
+    correction_eigenvalues = np.linalg.eigvalsh(correction)
+    effective = A_PP - correction
+    effective = 0.5 * (effective + effective.T)
+    effective_eigenvalues = np.linalg.eigvalsh(effective)
+    app_norm = float(np.linalg.norm(A_PP, ord=2))
+    correction_norm = float(np.linalg.norm(correction, ord=2))
+    return {
+        "method": "matrix-free CG for QLQ+P; dense coarse correction only",
+        "pl_vertices": n,
+        "coarse_modes": m,
+        "leakage_frobenius_norm": leakage_frobenius,
+        "leakage_operator_norm": leakage_operator,
+        "leakage_rms_per_coarse_mode": leakage_frobenius / math.sqrt(m),
+        "A_PP_operator_norm": app_norm,
+        "feshbach_correction_operator_norm": correction_norm,
+        "feshbach_correction_frobenius_norm": float(np.linalg.norm(correction, ord="fro")),
+        "feshbach_to_galerkin_operator_ratio": correction_norm / app_norm if app_norm > 0 else None,
+        "feshbach_correction_min_eigenvalue": float(correction_eigenvalues[0]),
+        "feshbach_correction_max_eigenvalue": float(correction_eigenvalues[-1]),
+        "effective_operator_min_eigenvalue": float(effective_eigenvalues[0]),
+        "effective_operator_max_eigenvalue": float(effective_eigenvalues[-1]),
+        "max_linear_solve_residual": solve_residual_max,
+        "linear_solve_columns": solve_count,
+        "all_linear_solves_converged": True,
+        "interpretation": (
+            "finite-level zero-energy Feshbach correction for the unweighted "
+            "PL dual Laplacian; not a continuum or physical QFI result"
+        ),
+    }
+
+
+def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_feshbach=False):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
     adjacency_ok = True
     for edge in dual["edges"]:
@@ -387,9 +491,12 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
         **lumpability,
         **quotient,
         **spectrum,
+        **({"feshbach": _feshbach_diagnostics(
+            generation, tetrahedra, parent_map, causal_edges, dual
+        )} if compute_feshbach else {}),
     }
 
-def run(max_generation=2):
+def run(max_generation=2, compute_feshbach=False):
     if not 0 <= max_generation <= 2:
         raise ValueError("audited PL exporter supports generations 0..2")
 
@@ -414,7 +521,8 @@ def run(max_generation=2):
         )
         vertex_colours = _vertex_face_colours(dual)
         levels.append(_summarise(
-            generation, tetrahedra, parent_map, causal_edges, dual
+            generation, tetrahedra, parent_map, causal_edges, dual,
+            compute_feshbach=compute_feshbach,
         ))
         if generation == max_generation:
             break
@@ -551,8 +659,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--max-generation", type=int, default=2)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--feshbach", action="store_true",
+                        help="compute matrix-free finite-level Feshbach corrections")
     args = parser.parse_args()
-    result = run(args.max_generation)
+    result = run(args.max_generation, compute_feshbach=args.feshbach)
     rendered = json.dumps(result, indent=2)
     print(rendered)
     if args.output:
