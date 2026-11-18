@@ -553,6 +553,10 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "feshbach_correction_min_eigenvalue": float(correction_eigenvalues[0]),
         "feshbach_correction_max_eigenvalue": float(correction_eigenvalues[-1]),
         "effective_operator_min_eigenvalue": float(effective_eigenvalues[0]),
+        "effective_operator_gap": (
+            float(effective_eigenvalues[1]) if len(effective_eigenvalues) > 1 else None
+        ),
+        "effective_operator_zero_mode_count": int(np.sum(np.abs(effective_eigenvalues) <= 1e-9)),
         "effective_operator_max_eigenvalue": float(effective_eigenvalues[-1]),
         "effective_metric_min_eigenvalue": float(metric_eigenvalues[0]),
         "effective_metric_max_eigenvalue": float(metric_eigenvalues[-1]),
