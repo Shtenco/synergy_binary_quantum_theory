@@ -388,21 +388,24 @@ def compare_micro_and_fused_reduced_qfi(
             micro_derivatives.append(dm)
             coarse_derivatives.append(dc)
 
-    micro_rho, micro_drhos = None, []
-    coarse_rho, coarse_drhos = None, []
+    zero_micro = np.zeros_like(micro_state)
+    zero_coarse = np.zeros_like(coarse_state)
+    micro_rho, _ = _reduced_density_and_derivative(
+        micro_state, zero_micro, dimension, keep_axes
+    )
+    coarse_rho, _ = _reduced_density_and_derivative(
+        coarse_state, zero_coarse, dimension, keep_axes
+    )
+    micro_drhos, coarse_drhos = [], []
     for derivative in micro_derivatives:
-        rho, drho = _reduced_density_and_derivative(
+        _rho, drho = _reduced_density_and_derivative(
             micro_state, derivative, dimension, keep_axes
         )
-        if micro_rho is None:
-            micro_rho = rho
         micro_drhos.append(drho)
     for derivative in coarse_derivatives:
-        rho, drho = _reduced_density_and_derivative(
+        _rho, drho = _reduced_density_and_derivative(
             coarse_state, derivative, dimension, keep_axes
         )
-        if coarse_rho is None:
-            coarse_rho = rho
         coarse_drhos.append(drho)
 
     micro_qfi = _sld_mixed_qfi(micro_rho, micro_drhos)
