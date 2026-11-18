@@ -1,34 +1,60 @@
 import numpy as np
 import pytest
 
-from scripts.q2_vertex_fusion_haar_pushforward import analyze_independent_haar_fusion
+from scripts.q2_vertex_fusion_haar_pushforward import (
+    analyze_independent_haar_fusion,
+    analyze_spin_family,
+)
 
 
-def test_two_vertex_local_haar_pushforward_is_rank_four_inside_six_valent_invariants():
-    result = analyze_independent_haar_fusion()
-    assert result["local_intertwiner_dimension"] == 2
-    assert result["product_input_dimension"] == 4
+@pytest.mark.parametrize(
+    "two_j,expected_invariant_dimension",
+    [(1, 5), (2, 15), (3, 34), (4, 65)],
+)
+def test_local_haar_pushforward_has_proper_six_valent_invariant_support(
+    two_j, expected_invariant_dimension
+):
+    result = analyze_independent_haar_fusion(two_j)
+    local_dimension = two_j + 1
+    input_dimension = local_dimension**2
+    assert result["local_intertwiner_dimension"] == local_dimension
+    assert result["product_input_dimension"] == input_dimension
     assert result["fused_boundary_leg_count"] == 6
-    assert result["full_six_valent_invariant_dimension"] == 5
-    assert result["fusion_map_rank"] == 4
-    assert np.allclose(result["fusion_map_singular_values"], [0.5] * 4, atol=2e-10)
-    assert result["fusion_map_gram_max_abs_error_from_I_over_4"] < 2e-10
-    assert result["fusion_image_invariant_subspace_residual"] < 2e-10
-    assert result["pushforward_covariance_rank"] == 4
+    assert result["full_six_valent_invariant_dimension"] == expected_invariant_dimension
+    assert result["fusion_map_rank"] == input_dimension
+    assert np.allclose(
+        result["fusion_map_singular_values"],
+        [1.0 / local_dimension] * input_dimension,
+        atol=2e-9,
+    )
+    assert result["fusion_map_gram_max_abs_error_from_I_over_d_squared"] < 2e-9
+    assert result["six_valent_gauss_max_relative_residual"] < 2e-9
+    assert result["pushforward_covariance_rank"] == input_dimension
     assert np.allclose(
         result["pushforward_nonzero_covariance_eigenvalues"],
-        [0.25] * 4,
-        atol=2e-10,
+        [1.0 / input_dimension] * input_dimension,
+        atol=2e-9,
     )
-    assert result["pushforward_covariance_purity"] == pytest.approx(0.25, abs=2e-10)
-    assert result["full_six_valent_haar_covariance_purity"] == pytest.approx(0.2, abs=2e-10)
+    assert result["pushforward_covariance_purity"] == pytest.approx(
+        1.0 / input_dimension, abs=2e-9
+    )
+    assert result["full_six_valent_haar_covariance_purity"] == pytest.approx(
+        1.0 / expected_invariant_dimension, abs=2e-9
+    )
+    expected_distance = np.sqrt(
+        1.0 / input_dimension - 1.0 / expected_invariant_dimension
+    )
     assert result["pushforward_vs_full_haar_covariance_frobenius_distance"] == pytest.approx(
-        np.sqrt(0.05), abs=2e-10
+        expected_distance, abs=2e-9
     )
     assert result["passed"], result
 
 
-def test_pushforward_report_does_not_claim_physical_bqg_measure():
-    result = analyze_independent_haar_fusion()
-    assert "not a statement about the unspecified physical BQG measure" in result["interpretation"]
-    assert "only" in result["claim_boundary"]
+def test_higher_spin_family_export_passes_and_keeps_physical_measure_claim_boundary():
+    result = analyze_spin_family()
+    assert result["tested_spins"] == [0.5, 1.0, 1.5, 2.0]
+    assert result["passed"], result
+    assert all(row["passed"] for row in result["controls"].values())
+    assert "not the physical BQG measure" in result["claim_boundary"]
+    for row in result["controls"].values():
+        assert "not a statement about the unspecified physical BQG measure" in row["interpretation"]
