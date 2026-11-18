@@ -271,6 +271,82 @@ def compare_staged_and_direct_fusion(node_states, edges, singlet,
         ),
     }
 
+
+def _set_partitions(items):
+    """Generate every set partition exactly once."""
+    items = tuple(items)
+    if not items:
+        yield ()
+        return
+    first, rest = items[0], items[1:]
+    for partition in _set_partitions(rest):
+        yield ((first,),) + partition
+        for index in range(len(partition)):
+            yield (
+                partition[:index]
+                + ((first,) + partition[index],)
+                + partition[index + 1:]
+            )
+
+
+def exhaustive_path5_partition_control(two_j=1, seed=20261120):
+    """Check every set partition of path_5 and invariance under block ordering."""
+    nodes, edges = graph_fixtures()["path_5"]
+    rng = np.random.default_rng(seed)
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    singlet = invariant_singlet_tensor(two_j)
+    partitions = list(_set_partitions(range(nodes)))
+    max_amplitude_error = 0.0
+    max_qfi_error = 0.0
+    for blocks in partitions:
+        result = compare_micro_and_fused_qfi(states, edges, singlet, blocks)
+        reordered_blocks = tuple(tuple(reversed(block)) for block in reversed(blocks))
+        reordered = compare_micro_and_fused_qfi(
+            states, edges, singlet, reordered_blocks
+        )
+        if not result["passed"] or not reordered["passed"]:
+            return {
+                "partition_count": len(partitions),
+                "expected_partition_count": 52,
+                "passed": False,
+                "failed_partition": blocks,
+                "reordered_partition": reordered_blocks,
+            }
+        if result["retained_edge_indices"] != reordered["retained_edge_indices"]:
+            return {
+                "partition_count": len(partitions),
+                "expected_partition_count": 52,
+                "passed": False,
+                "failed_partition": blocks,
+                "reason": "retained edge identity depends on block ordering",
+            }
+        max_amplitude_error = max(
+            max_amplitude_error,
+            result["amplitude_error_up_to_global_phase"],
+            reordered["amplitude_error_up_to_global_phase"],
+        )
+        max_qfi_error = max(
+            max_qfi_error,
+            result["qfi_max_abs_error"],
+            reordered["qfi_max_abs_error"],
+        )
+    return {
+        "graph": "path_5",
+        "two_j": int(two_j),
+        "spin": float(two_j) / 2.0,
+        "partition_count": len(partitions),
+        "expected_partition_count": 52,
+        "includes_block_order_reversal": True,
+        "max_amplitude_error_up_to_global_phase": max_amplitude_error,
+        "max_qfi_error": max_qfi_error,
+        "passed": (
+            len(partitions) == 52
+            and max_amplitude_error < 2e-9
+            and max_qfi_error < 2e-8
+        ),
+    }
+
 def run_coarse_graining_suite(two_j=1):
     """Run the deterministic block-fusion controls on all supported graph fixtures."""
     cases = {
@@ -294,11 +370,17 @@ def run_coarse_graining_suite(two_j=1):
         second_blocks=((0, 1), (2,)),
         direct_blocks=((0, 1, 2), (3, 4)),
     )
+    exhaustive = exhaustive_path5_partition_control(two_j=1)
     return {
         "status": "exact finite vertex-fusion coarse-graining",
         "two_j": int(two_j),
         "spin": float(two_j) / 2.0,
-        "passed": all(row["passed"] for row in results.values()) and staged["passed"],
+        "passed": (
+            all(row["passed"] for row in results.values())
+            and staged["passed"]
+            and exhaustive["passed"]
+        ),
+        "exhaustive_path5_partition_control": exhaustive,
         "staged_vs_direct_two_level_fusion": staged,
         "claim_boundary": (
             "Exact equality of finite tensor contractions and retained-edge pure-state "
