@@ -30,6 +30,7 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements(fesh
         assert level["effective_metric_min_eigenvalue"] >= 1.0 - 1e-8
         assert level["linearized_generalized_gap"] is not None
         assert level["linearized_generalized_gap"] >= -1e-8
+        assert level["self_energy_linearization_remainder_coefficient"] > 0.0
         assert len(level["linearized_generalized_spectrum"]) == level["coarse_modes"]
         assert level["self_energy_slope_operator_norm"] > 0.0
         assert level["max_second_resolvent_solve_residual"] < 1e-8
