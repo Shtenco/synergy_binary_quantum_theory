@@ -130,3 +130,22 @@ def test_q2_generation_zero_spectrum_has_only_constant_zero_mode():
     assert row["operator_zero_mode_count"] == 1
     assert row["operator_spectral_gap"] is None
     assert all(item["normalized_heat_trace"] == 1.0 for item in row["heat_trace"])
+
+def test_q2_large_symmetric_spectrum_uses_lapack_backend():
+    import numpy as np
+    from scripts.q2_causal_pl_correspondence_gate import _symmetric_eigenvalues
+
+    matrix = np.diag(np.arange(128, dtype=float))
+    values = _symmetric_eigenvalues(matrix.tolist())
+    assert np.allclose(values, np.arange(128, dtype=float), atol=1e-12)
+
+
+def test_q2_large_symmetric_eigensolver_rejects_asymmetric_input():
+    import numpy as np
+    import pytest
+    from scripts.q2_causal_pl_correspondence_gate import _symmetric_eigenvalues
+
+    matrix = np.eye(128)
+    matrix[0, 1] = 0.5
+    with pytest.raises(ValueError, match="matrix is not symmetric"):
+        _symmetric_eigenvalues(matrix.tolist())
