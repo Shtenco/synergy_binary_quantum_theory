@@ -34,3 +34,29 @@ def test_q2_pl_graph_export_does_not_fabricate_quantum_data():
         assert row["quantum_state_assignment"] is None
         assert row["qfi_edge_conductances"] is None
         assert len(row["graph_sha256"]) == 64
+
+
+
+def test_q2_pl_export_includes_four_regular_tetrahedral_dual_graphs():
+    result = run(max_generation=2)
+    assert [
+        (row["dual_graph"]["vertex_count"], row["dual_graph"]["edge_count"])
+        for row in result["generations"]
+    ] == [(16, 32), (384, 768), (9216, 18432)]
+    for row in result["generations"]:
+        dual = row["dual_graph"]
+        assert dual["component_count"] == 1
+        assert dual["degree_min"] == dual["degree_max"] == 4
+        assert dual["all_faces_two_sided_and_colour_consistent"] is True
+        assert len(dual["graph_sha256"]) == 64
+        assert all(edge["route_label"] in ("00", "01", "10", "11") for edge in dual["edges"])
+
+
+def test_q2_pl_dual_refinement_records_parent_tetrahedra():
+    result = run(max_generation=2)
+    for row in result["generations"][1:]:
+        assert all(
+            len(vertex["flag_chain"]) == 4
+            and len(vertex["parent_tetrahedron"]) == 4
+            for vertex in row["dual_graph"]["vertices"]
+        )
