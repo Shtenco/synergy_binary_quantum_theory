@@ -17,6 +17,7 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements(fesh
     assert level0["feshbach_correction_operator_norm"] == 0.0
 
     for level in (level1, level2):
+        assert level["fine_by_coarse_dense_embedding_allocated"] is False
         assert level["leakage_frobenius_norm"] > 0.0
         assert level["leakage_operator_norm"] > 0.0
         assert level["feshbach_correction_operator_norm"] > 0.0
