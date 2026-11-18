@@ -187,6 +187,12 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
     }
 
 
+def _json_default(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=20261118)
@@ -194,7 +200,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run(args.seed, args.trials)
-    rendered = json.dumps(result, indent=2)
+    rendered = json.dumps(result, indent=2, default=_json_default)
     print(rendered)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
