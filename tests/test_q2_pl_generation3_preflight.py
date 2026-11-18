@@ -21,3 +21,9 @@ def test_preflight_marks_dense_spectral_cost_as_nontrivial():
     assert result["dense_spectral_matrix_raw_float64_bytes"] == 8 * 512 * 512
     assert result["jacobi_rotation_work_estimate_at_100_sweeps"] == 6697779200
     assert "No generation-3 complex" in result["claim_boundary"]
+
+def test_barycentric_f_vector_rejects_wrong_dimension():
+    import pytest
+
+    with pytest.raises(ValueError, match="four f-vector entries"):
+        barycentric_f_vector_3d((1, 2, 3))
