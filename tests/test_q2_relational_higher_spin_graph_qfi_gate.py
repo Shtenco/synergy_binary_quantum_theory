@@ -40,3 +40,25 @@ def test_invalid_graph_reuses_half_link_rejected():
     singlet = invariant_singlet_tensor(1)
     with pytest.raises(ValueError):
         contract_graph(states, [(0, 0, 1, 1), (0, 0, 1, 2)], singlet)
+
+def test_extended_graph_family_reports_complete_qfi_spectral_partition():
+    result = run(two_j_values=(1, 2), trials=2)
+    assert result["passed"]
+    assert {"path_3", "path_4", "star_4", "cycle_4"} <= set(result["graphs"]["0.5"])
+    expected_boundary_legs = {
+        "path_3": 8,
+        "path_4": 10,
+        "star_4": 10,
+        "cycle_4": 8,
+    }
+    for spin, graph_rows in result["graphs"].items():
+        for name, expected_boundary in expected_boundary_legs.items():
+            row = graph_rows[name]
+            assert row["boundary_half_links"] == expected_boundary
+            assert row["qfi_parameter_dimension"] == 3 * row["edges"]
+            assert row["qfi_rank_max_over_trials"] <= row["qfi_parameter_dimension"]
+            assert row["qfi_rank_min_over_trials"] >= 0
+            assert row["qfi_rank_min_over_trials"] + row["qfi_nullity_min_over_trials"] <= row["qfi_parameter_dimension"]
+            assert row["qfi_rank_nullity_partition_is_consistent"] if "qfi_rank_nullity_partition_is_consistent" in row else all(row["checks"].values())
+            assert row["qfi_spectral_maximum_over_trials"] >= row["qfi_spectral_minimum_over_trials"]
+
