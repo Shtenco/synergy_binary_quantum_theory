@@ -4,6 +4,7 @@ import pytest
 from scripts.q2_vertex_fusion_coarse_graining import (
     exhaustive_graph_partition_control,
     exhaustive_reduced_boundary_partition_control,
+    exhaustive_boundary_subsystem_sweep,
     run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
     compare_micro_and_fused_qfi,
@@ -168,4 +169,15 @@ def test_sld_mixed_qfi_reduces_to_pure_qfi_when_no_boundary_leg_is_traced():
     )
     assert mixed["pure_minus_mixed_qfi_min_eigenvalue"] > -2e-8
     assert mixed["passed"], mixed
+
+def test_all_one_and_two_leg_boundary_subsystems_preserve_fused_mixed_qfi():
+    result = exhaustive_boundary_subsystem_sweep()
+    assert result["tested_spins"] == [0.5, 1.0]
+    assert result["total_subsystems"] == 144
+    assert result["partition_order_evaluations"] == 2880
+    assert result["max_reduced_density_error"] < 2e-9
+    assert result["max_reduced_derivative_error"] < 2e-8
+    assert result["max_mixed_qfi_error"] < 2e-8
+    assert result["minimum_pure_minus_mixed_qfi_eigenvalue"] > -2e-8
+    assert result["passed"], result
 
