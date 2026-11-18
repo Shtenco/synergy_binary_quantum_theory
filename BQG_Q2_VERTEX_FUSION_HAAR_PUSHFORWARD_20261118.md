@@ -154,3 +154,55 @@ controls as `passed: true`.
 The conclusion remains restricted to independent local Haar measures and
 two-vertex one-edge fusion. It is a concrete non-closure example for that
 ansatz, not a claim that the physical BQG measure is Haar or fails to close.
+
+## Connected chain blocks: three and four vertices (verified 2026-11-18)
+
+The same pushforward calculation now covers longer path blocks. For a chain
+of \(N\) four-valent vertices, the number of internal singlet edges is
+\(N-1\), and the open boundary has \(2N+2\) half-links. The tested
+combinations are:
+
+| Spin | Vertices \(N\) | Product input dimension \(d^N\) | Boundary invariant dimension \(D_{2N+2}\) | Fusion-map rank |
+|---|---:|---:|---:|---:|
+| j=1/2 | 2 | 4 | 5 | 4 |
+| j=1/2 | 3 | 8 | 14 | 8 |
+| j=1/2 | 4 | 16 | 42 | 16 |
+| j=1 | 2 | 9 | 15 | 9 |
+| j=1 | 3 | 27 | 91 | 27 |
+| j=3/2 | 2 | 16 | 34 | 16 |
+| j=2 | 2 | 25 | 65 | 25 |
+
+For every tested chain, the Gram matrix of the unnormalized contraction
+map obeys
+
+\[
+C_N^\dagger C_N=d^{-2(N-1)}I_{d^N},
+\]
+
+so \(V_N=d^{N-1}C_N\) is an isometry. This is consistent with leaf
+elimination in the double-layer contraction: the one-leg transition
+operator of an invariant tensor is proportional to the identity by
+Schur's lemma, and its trace fixes the factor to \(1/d\). Peeling a
+leaf and its normalized singlet edge contributes \(1/d^2\); iteration
+over the \(N-1\) edges gives the Gram identity.
+
+The product of \(N\) independent local Haar vectors has second moment
+\(I/d^N\). Therefore the normalized pushforward covariance is
+\(P_{\mathrm{image}}/d^N\), while a fresh Haar vector in the full
+\((2N+2)\)-valent invariant space has covariance \(P_{2N+2}/D_{2N+2}\).
+The ranks in the table show that the image is a proper subspace in every
+case. The computed Gram and boundary-Gauss residuals are all below
+\(5e-15\), and every exported control passes.
+
+Verified run:
+[44380637440](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44380637440),
+commit `d131762a977866fef522d768117b2d26247c1050`. All 50/50 workflow
+steps passed. The Haar-pushforward test module, including the three- and
+four-vertex chain cases, passed; the exported artifact
+(ID `14462577661`) reports all seven spin/block controls as
+`passed: true`.
+
+This supports a precise non-closure statement for independent local-Haar
+measures on these connected path blocks. It still does not determine the
+physical BQG measure, and it does not prove that every possible measure or
+every graph-block topology fails to close.
