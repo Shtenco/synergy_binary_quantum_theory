@@ -88,7 +88,7 @@ edge, while the PL carrier starts from a closed 3-manifold triangulation.
 
 No physical edge conductance follows from either topology export. The Walsh
 local-QFI control gives an isotropic local frame and a reduced product-state
-probe value `F_Q/4 = 1/3), but after Gauss-singlet projection the global
+probe value `F_Q/4 = 1/3`, but after Gauss-singlet projection the global
 SU(2) gauge-orbit QFI vanishes. The value 1/3 is not an inter-block physical
 edge weight.
 
