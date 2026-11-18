@@ -64,3 +64,43 @@ causal-PL pushforward, or a continuum spectral dimension.
 The executable exports one JSON record for the path and cycle fixtures.
 The workflow runs the new tests and exports
 `verification_results/Q2_RELATIONAL_GAUGE_QUOTIENT.json`.
+
+
+## Classification of the residual null modes
+
+A further diagnostic constructs the real-parameter tangent map of the
+normalized boundary-state ray. For each of the 12V half-link/axis
+parameters, the derivative of the contracted boundary state is projected
+orthogonally to the complete complex state vector. This removes both the
+normalization direction and an unobservable global phase.
+
+Writing the resulting complex tangent matrix as D, its realification is
+
+```text
+R(D) = [ Re(D) ]
+       [ Im(D) ] .
+```
+
+The pure-state multiparameter QFI must satisfy the exact identity
+
+```text
+F_half = 4 R(D)^T R(D).
+```
+
+A dedicated regression test checks this matrix identity, not merely equality
+of numerical ranks. The tangent map is then restricted to the orthogonal
+gauge quotient. Its SVD rank and nullity are compared with the quotient-QFI
+rank and nullity.
+
+The additional null vectors are therefore identified, within this finite
+model, as infinitesimal stabilizers of the normalized boundary-state ray:
+they generate no first-order change of the projective boundary state.
+Their half-link participation by vertex and leg is recorded to expose where
+the stabilizer directions live. This is a precise local classification, not
+a claim that every such direction is a fundamental gauge symmetry of BQG.
+The interpretation may depend on the intertwiner state, graph contraction,
+and retained boundary.
+
+The new regression checks the tangent/QFI identity and equality of
+quotient tangent and QFI nullities. No numerical values are asserted here
+until the workflow executes this new gate.
