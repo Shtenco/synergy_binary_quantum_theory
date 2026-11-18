@@ -125,7 +125,7 @@ The partition is **not** an exact Markov lumping of the PL-dual random walk: the
 
 **Not proved:**
 - extension to all generations or a coherent infinite inverse/direct limit;
-- uniform bounded fibres (already false at generation 2);
+- equal-size fibres (already false at generation 2); uniform bounded fibre multiplicity across all generations remains unproved;
 - a compatible PL/casual vertex or incidence measure;
 - a self-adjoint continuum operator or heat-kernel limit;
 - a physical inter-block relational state and generator;
