@@ -153,3 +153,17 @@ def test_non_integer_half_link_indices_are_rejected(edge):
     with pytest.raises(ValueError, match="indices must be integers"):
         graph_topological_gauge_rank(2, [edge])
 
+def test_joint_gauge_quotient_extends_to_path4_and_branched_star():
+    from scripts.q2_relational_gauge_quotient_gate import extended_open_graph_fixtures
+
+    result = run(seed=20261121, trials=2)
+    fixtures = extended_open_graph_fixtures()
+    assert {"path_3", "path_4", "star_4", "cycle_4"} <= set(result["graphs"])
+    for name, (nodes, edges) in fixtures.items():
+        row = result["graphs"][name]
+        assert row["nodes"] == nodes
+        assert row["internal_edges"] == len(edges)
+        assert row["joint_quotient_dimension"] == 9 * nodes - 3 * len(edges)
+        assert row["joint_generator_rank"] == 3 * (nodes + len(edges))
+        assert row["all_checks_pass"]
+
