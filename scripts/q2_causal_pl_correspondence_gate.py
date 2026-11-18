@@ -526,7 +526,7 @@ def run(max_generation=2):
         "claim_boundary": (
             "Finite combinatorial graph correspondence only. Nonuniform fibres "
             "at generation 2 are reported, not hidden or reweighted. This does "
-            "not derive a physical measure, QFI conductance, spectral dimension, "
+            "not derive a physical continuum measure, QFI conductance, spectral dimension, "
             "semiclassical dynamics, or spacetime."
         ),
     }
