@@ -141,3 +141,12 @@ along selected collective edge-twist directions. It does not establish a
 vertex-blocking renormalization, invariance under graph refinement, or a
 continuum fixed point. The next step is to compare alternative partitions and
 construct an actual fused-block boundary tensor before making those claims.
+
+
+### Validation refinement
+
+Empty collective blocks are rejected so that a nominal coarse parameter
+cannot be introduced without acting on any microscopic edge. Symmetry is
+measured on the unsymmetrized pullback (B^T F B); only its symmetric part is
+used for the stable eigenvalue calculation. This prevents the symmetry check
+from becoming tautological through premature symmetrization.
