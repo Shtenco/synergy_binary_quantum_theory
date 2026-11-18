@@ -80,17 +80,20 @@ A proposed bridge must give, for every generation:
 - compatibility diagrams between successive refinement maps;
 - invariants checked by code, including fibre sizes and local degree bounds.
 
-A precise *local* correspondence is now established in code: at every exported
-PL-dual vertex, its four incident dual edges have route colours exactly
-{00, 01, 10, 11}, each once. The PL exporter checks this at generations 0–2.
-This identifies the four alternatives of a q=2 rewrite cell with the four
-coloured face-directions around one tetrahedral dual vertex. It is a local
-star correspondence, not a map of the full causal graph: it does not assign
-causal vertices/edges to PL tetrahedra/shared faces, nor prove refinement
-naturality between the two constructions.
+A local route-colour correspondence is established at every exported
+PL-dual vertex: its four incident dual edges have colours {00, 01, 10, 11},
+each once. Beyond this local star check, a recursive many-to-one map from PL
+tetrahedra to active causal edges has now been constructed and checked through
+generations 0–2 in
+`scripts/q2_causal_pl_correspondence_gate.py`. It preserves PL-dual adjacency
+as endpoint incidence of the mapped causal edges and maps each barycentric
+child tetrahedron to a causal child of its parent image. The map is surjective,
+but not an isomorphism or covering; its fibres are nonuniform from generation
+2 onward. See `BQG_Q2_CAUSAL_PL_CORRESPONDENCE_GATE_RESULT_20261118.md`.
 
 The scalar causal DAG starts from one directed edge, while the PL carrier
-starts from a closed 3-manifold triangulation.
+starts from a closed 3-manifold triangulation. The finite correspondence does
+not identify these graph families or yet define a continuum geometry.
 
 ## 5. QFI consequence
 
