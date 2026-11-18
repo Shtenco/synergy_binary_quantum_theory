@@ -70,9 +70,14 @@ def contract_graph(
     node_states: list[np.ndarray],
     edges: list[tuple[int, int, int, int]],
     twist: tuple[int, int, np.ndarray] | None = None,
+    half_link_twist: tuple[int, int, np.ndarray] | None = None,
 ) -> tuple[np.ndarray, list[tuple[int, int]]]:
-    """Contract all graph edges; optional twist=(edge_index, axis, generator)."""
+    """Contract graph; twist=(edge_index, axis, generator) or
+    half_link_twist=(node_index, leg_index, generator).
+    """
     edges = validate_graph(node_states, edges)
+    if twist is not None and half_link_twist is not None:
+        raise ValueError("specify either edge twist or half-link twist, not both")
     tensors = [np.asarray(state, dtype=complex).reshape((2,) * 4).copy()
                for state in node_states]
     if twist is not None:
@@ -80,7 +85,12 @@ def contract_graph(
         if not 0 <= edge_index < len(edges):
             raise ValueError("twist edge index is out of range")
         u, leg_u, _v, _leg_v = edges[edge_index]
-        tensors[u] = (-1j * (node_generator(generator, leg_u) @ tensors[u].reshape(16))).reshape((2,) * 4)
+        half_link_twist = (u, leg_u, generator)
+    if half_link_twist is not None:
+        node, leg, generator = half_link_twist
+        if not 0 <= node < len(node_states) or not 0 <= leg < 4:
+            raise ValueError("half-link twist location is out of range")
+        tensors[node] = (-1j * (node_generator(generator, leg) @ tensors[node].reshape(16))).reshape((2,) * 4)
 
     labels = [[None] * 4 for _ in node_states]
     next_label = 0
@@ -138,6 +148,65 @@ def graph_qfi(
     return probability, qfi, float(np.linalg.norm(qfi - qfi.T)), boundary
 
 
+
+def full_half_link_qfi(
+    node_states: list[np.ndarray],
+    edges: list[tuple[int, int, int, int]],
+) -> tuple[float, np.ndarray, float, list[tuple[int, int]]]:
+    """Full QFI for all 4 half-links at every node, including boundary legs."""
+    edges = validate_graph(node_states, edges)
+    raw, boundary = contract_graph(node_states, edges)
+    probability = float(np.vdot(raw, raw).real)
+    if probability <= 1e-14:
+        raise ValueError("graph singlet contraction has zero support")
+    state = raw / math.sqrt(probability)
+    derivatives = []
+    for node in range(len(node_states)):
+        for leg in range(4):
+            for pauli in PAULI:
+                derivative_raw, derivative_boundary = contract_graph(
+                    node_states, edges, half_link_twist=(node, leg, pauli)
+                )
+                if derivative_boundary != boundary:
+                    raise AssertionError("boundary ordering changed under half-link twist")
+                radial = float(np.vdot(raw, derivative_raw).real) / probability
+                derivatives.append(derivative_raw / math.sqrt(probability) - radial * state)
+    overlaps = [np.vdot(state, derivative) for derivative in derivatives]
+    qfi = np.zeros((12 * len(node_states), 12 * len(node_states)), dtype=float)
+    for i, j in itertools.product(range(len(derivatives)), repeat=2):
+        qfi[i, j] = 4.0 * float(np.real(
+            np.vdot(derivatives[i], derivatives[j])
+            - np.conjugate(overlaps[i]) * overlaps[j]
+        ))
+    return probability, qfi, float(np.linalg.norm(qfi - qfi.T)), boundary
+
+
+def gauss_gauge_diagnostics(qfi: np.ndarray, node_count: int) -> dict[str, object]:
+    """Check three common-rotation null vectors per invariant node."""
+    null_residuals = []
+    for node in range(node_count):
+        for axis in range(3):
+            direction = np.zeros(12 * node_count, dtype=float)
+            for leg in range(4):
+                direction[12 * node + 3 * leg + axis] = 1.0
+            null_residuals.append(float(np.linalg.norm(qfi @ direction)))
+    keep = [
+        12 * node + 3 * leg + axis
+        for node in range(node_count)
+        for leg in range(3)
+        for axis in range(3)
+    ]
+    reduced = qfi[np.ix_(keep, keep)]
+    eigenvalues = np.linalg.eigvalsh(reduced)
+    return {
+        "max_node_gauss_null_residual": max(null_residuals),
+        "gauge_fixed_parameter_count": len(keep),
+        "gauge_fixed_minimum_eigenvalue": float(eigenvalues[0]),
+        "gauge_fixed_maximum_eigenvalue": float(eigenvalues[-1]),
+        "gauge_fixed_numerical_rank": int(np.sum(eigenvalues > 1e-9)),
+        "gauge_fixed_metric_is_psd": bool(eigenvalues[0] > -1e-9),
+    }
+
 def random_intertwiner(rng: np.random.Generator) -> np.ndarray:
     coefficients = rng.normal(size=2) + 1j * rng.normal(size=2)
     coefficients /= np.linalg.norm(coefficients)
@@ -164,10 +233,17 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
         minimum_eigenvalues = []
         cross_norms = []
         diagonal_errors = []
+        gauge_diagnostics = []
         for _ in range(trials):
             states = [random_intertwiner(rng) for _ in range(node_count)]
             probability, qfi, sym_error, _boundary = graph_qfi(states, edges)
+            half_probability, half_qfi, half_symmetry, _ = full_half_link_qfi(states, edges)
+            if not np.isclose(probability, half_probability, atol=1e-12):
+                raise AssertionError("edge and half-link contractions disagree")
             probabilities.append(probability)
+            gauge = gauss_gauge_diagnostics(half_qfi, node_count)
+            gauge["full_half_link_symmetry_error"] = half_symmetry
+            gauge_diagnostics.append(gauge)
             symmetry.append(sym_error)
             minimum_eigenvalues.append(float(np.linalg.eigvalsh(qfi)[0]))
             block_diagonal = np.zeros_like(qfi)
@@ -185,6 +261,20 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
             "gluing_probability_max": max(probabilities),
             "max_symmetry_error": max(symmetry),
             "minimum_qfi_eigenvalue": min(minimum_eigenvalues),
+            "full_half_link_qfi_shape": [12 * node_count, 12 * node_count],
+            "max_full_half_link_qfi_symmetry_error": max(
+                item["full_half_link_symmetry_error"] for item in gauge_diagnostics
+            ),
+            "max_node_gauss_null_residual": max(
+                item["max_node_gauss_null_residual"] for item in gauge_diagnostics
+            ),
+            "gauge_fixed_parameter_count": gauge_diagnostics[0]["gauge_fixed_parameter_count"],
+            "gauge_fixed_minimum_eigenvalue": min(
+                item["gauge_fixed_minimum_eigenvalue"] for item in gauge_diagnostics
+            ),
+            "gauge_fixed_numerical_rank_min": min(
+                item["gauge_fixed_numerical_rank"] for item in gauge_diagnostics
+            ),
             "max_diagonal_link_block_error_from_identity": max(diagonal_errors),
             "diagonal_link_blocks_equal_identity": max(diagonal_errors) < 1e-9,
             "cross_link_qfi_frobenius_norm_min": min(cross_norms),
@@ -194,6 +284,15 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
                 "qfi_positive_semidefinite": min(minimum_eigenvalues) > -1e-10,
                 "diagonal_link_blocks_are_finite": bool(np.isfinite(diagonal_errors).all()),
                 "cross_link_terms_present": max(cross_norms) > 1e-3,
+                "nodewise_gauss_directions_are_null": max(
+                    item["max_node_gauss_null_residual"] for item in gauge_diagnostics
+                ) < 1e-9,
+                "full_half_link_qfi_is_symmetric": max(
+                    item["full_half_link_symmetry_error"] for item in gauge_diagnostics
+                ) < 1e-9,
+                "gauge_fixed_half_link_qfi_is_psd": all(
+                    item["gauge_fixed_metric_is_psd"] for item in gauge_diagnostics
+                ),
             },
         }
         rows[name]["passed"] = all(rows[name]["checks"].values())
