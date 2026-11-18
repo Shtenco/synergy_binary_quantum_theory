@@ -1,7 +1,11 @@
 import numpy as np
 import pytest
 
-from scripts.q2_vertex_fusion_coarse_graining import deterministic_case, fuse_vertex_blocks
+from scripts.q2_vertex_fusion_coarse_graining import (
+    compare_staged_and_direct_fusion,
+    deterministic_case,
+    fuse_vertex_blocks,
+)
 from scripts.q2_relational_higher_spin_graph_qfi_gate import graph_fixtures, invariant_singlet_tensor, random_intertwiner
 from scripts.q2_relational_higher_spin_network_qfi_gate import four_valent_intertwiner_basis
 
@@ -52,3 +56,23 @@ def test_vertex_fusion_rejects_reused_half_link():
     with pytest.raises(ValueError, match="more than once"):
         fuse_vertex_blocks(states, [(0, 0, 1, 0), (0, 0, 2, 1)],
                            invariant_singlet_tensor(1), ((0, 1), (2,)))
+
+@pytest.mark.parametrize("two_j", [1, 2])
+def test_two_stage_vertex_fusion_equals_direct_fusion(two_j):
+    nodes, edges = graph_fixtures()["path_5"]
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    rng = np.random.default_rng(20261119 + two_j)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    singlet = invariant_singlet_tensor(two_j)
+    result = compare_staged_and_direct_fusion(
+        states,
+        edges,
+        singlet,
+        first_blocks=((0, 1), (2,), (3, 4)),
+        second_blocks=((0, 1), (2,)),
+        direct_blocks=((0, 1, 2), (3, 4)),
+    )
+    assert result["passed"], result
+    assert result["staged_retained_edge_indices"] == [2]
+    assert result["direct_retained_edge_indices"] == [2]
+
