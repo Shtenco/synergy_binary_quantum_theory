@@ -743,35 +743,34 @@ def exhaustive_boundary_subsystem_sweep(
             graph_min_dp = float("inf")
             graph_evaluations = 0
             for subset in subsets:
-                for blocks in partitions:
-                    result = exhaustive_reduced_boundary_partition_control(
-                        graph_name, two_j, subset,
-                        seed=20261220 + nodes
-                    )
-                    # The control above exhausts all partitions and their
-                    # reversed-order counterparts for this exact subsystem.
-                    if not result["passed"]:
-                        return {
-                            "passed": False,
-                            "failed_graph": graph_name,
-                            "failed_spin": spin_key,
-                            "failed_boundary_subset": [list(k) for k in subset],
-                            "failed_control": result,
-                        }
-                    graph_max["density"] = max(
-                        graph_max["density"], result["max_reduced_density_error"]
-                    )
-                    graph_max["derivative"] = max(
-                        graph_max["derivative"], result["max_reduced_derivative_error"]
-                    )
-                    graph_max["qfi"] = max(
-                        graph_max["qfi"], result["max_mixed_qfi_error"]
-                    )
-                    graph_min_dp = min(
-                        graph_min_dp,
-                        result["minimum_pure_minus_mixed_qfi_eigenvalue"],
-                    )
-                    graph_evaluations += 2 * result["partition_count"]
+                result = exhaustive_reduced_boundary_partition_control(
+                    graph_name, two_j, subset,
+                    seed=20261220 + nodes
+                )
+                # The control exhausts all partitions and reversed-order
+                # counterparts for this exact subsystem.
+                if not result["passed"]:
+                    return {
+                        "passed": False,
+                        "failed_graph": graph_name,
+                        "failed_spin": spin_key,
+                        "failed_boundary_subset": [list(k) for k in subset],
+                        "failed_control": result,
+                    }
+                graph_max["density"] = max(
+                    graph_max["density"], result["max_reduced_density_error"]
+                )
+                graph_max["derivative"] = max(
+                    graph_max["derivative"], result["max_reduced_derivative_error"]
+                )
+                graph_max["qfi"] = max(
+                    graph_max["qfi"], result["max_mixed_qfi_error"]
+                )
+                graph_min_dp = min(
+                    graph_min_dp,
+                    result["minimum_pure_minus_mixed_qfi_eigenvalue"],
+                )
+                graph_evaluations += 2 * result["partition_count"]
             total_subsystems += len(subsets)
             total_partition_order_evaluations += graph_evaluations
             for key in maxima:
