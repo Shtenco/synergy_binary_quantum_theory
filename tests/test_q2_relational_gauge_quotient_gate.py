@@ -73,3 +73,14 @@ def test_extra_quotient_nulls_match_projective_boundary_state_stabilizers():
         result = stabilizer_diagnostics(tangent, node_count, qfi)
         assert result["tangent_qfi_rank_agrees"] is True
         assert result["quotient_tangent_nullity"] == 9 * node_count - result["quotient_tangent_rank"]
+
+def test_projective_tangent_jacobian_reconstructs_full_half_link_qfi():
+    from scripts.q2_relational_gauge_quotient_gate import projective_tangent_jacobian
+    rng = np.random.default_rng(77)
+    node_count, edges = graph_fixtures()["path_3"]
+    states = [random_intertwiner(rng) for _ in range(node_count)]
+    _p, qfi, _sym, _boundary = full_half_link_qfi(states, edges)
+    tangent, _probability = projective_tangent_jacobian(states, edges)
+    realified = np.concatenate([tangent.real, tangent.imag], axis=0)
+    reconstructed = 4.0 * (realified.T @ realified)
+    assert np.allclose(reconstructed, qfi, atol=2e-10, rtol=2e-10)
