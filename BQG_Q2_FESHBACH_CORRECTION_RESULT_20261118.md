@@ -60,6 +60,30 @@ Generation zero is a useful null control: all PL tetrahedra belong to one causal
 3. The Q-sector gap decreases by a factor of about 13 between generations 1 and 2, while the correction ratio grows by a factor of about 2.29. This is consistent with the excluded sector becoming more important, but two refinement steps cannot establish an asymptotic law.
 4. The ratios are dimensionless and use a common graph-Laplacian normalization. They are useful finite-level diagnostics, but they do not establish a continuum scaling limit, a physical relational QFI metric, or the correct physical renormalization.
 
+## Energy dependence and induced coarse kinetic metric
+
+The calculation now also evaluates the first derivative of the Feshbach self-energy:
+\[
+\Sigma(\lambda)=B^T(H_Q-\lambda I)^{-1}B,\qquad
+H_Q=QLQ|_{Q\mathcal H},
+\]
+\[
+\Sigma'(0)=B^TH_Q^{-2}B\succeq0.
+\]
+It is obtained by a second matrix-free solve with the same positive operator. This is not an arbitrary extra term: expanding the exact Schur complement gives
+\[
+A_{PP}-\lambda I-\Sigma(\lambda)
+=
+(A_{PP}-\Sigma(0))
+-\lambda(I+\Sigma'(0))+O(\lambda^2).
+\]
+Thus the first energy-dependent approximation is a generalized eigenvalue problem
+\[
+A_{eff}(0)v=\lambda Z_{eff}v,\qquad
+Z_{eff}=I+\Sigma'(0)\succcurlyeq I.
+\]
+The code reports the spectrum of this positive induced metric and the generalized spectrum. This captures the leading low-energy normalization induced by eliminated PL modes. It does not replace the exact energy-dependent kernel; its validity is restricted to energies small compared with the Q-sector gap. Because that gap is already small at generation 2, the radius of a useful low-energy expansion may shrink with refinement.
+
 ## Claim boundary and next gate
 
 **Established numerically for the two finite levels:** the projected off-diagonal block is nonzero; the zero-energy Feshbach correction is nonzero and positive; its relative operator norm is substantial; the Q-sector solve is numerically well-conditioned enough to converge at these two sizes, though the condition estimate worsens sharply.
