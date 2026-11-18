@@ -23,6 +23,11 @@ import itertools
 import json
 from collections import Counter
 from pathlib import Path
+import sys
+
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
 
 from q2_pl_graph_export import (
     barycentric_subdivision,
