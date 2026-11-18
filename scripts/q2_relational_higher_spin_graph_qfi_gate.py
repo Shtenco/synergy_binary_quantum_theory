@@ -27,6 +27,7 @@ def graph_fixtures():
     return {
         "path_3": (3, [(0, 3, 1, 0), (1, 3, 2, 0)]),
         "path_4": (4, [(0, 3, 1, 0), (1, 3, 2, 0), (2, 3, 3, 0)]),
+        "path_5": (5, [(0, 3, 1, 0), (1, 3, 2, 0), (2, 3, 3, 0), (3, 3, 4, 0)]),
         "star_4": (4, [(0, 0, 1, 0), (0, 1, 2, 0), (0, 2, 3, 0)]),
         "cycle_4": (4, [(0, 0, 1, 1), (1, 2, 2, 1),
                        (2, 2, 3, 1), (3, 2, 0, 2)]),
@@ -146,6 +147,9 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     probabilities, symmetries, minima, cross_norms, diagonal_errors = [], [], [], [], []
     spectral_minima, spectral_maxima, spectral_ranks, spectral_nullities = [], [], [], []
     path_casimir_errors = []
+    normalized_moments = {str(order): [] for order in (1, 2, 3, 4)}
+    normalized_quantiles = []
+    rank_fractions = []
     pair_op = sum(
         (node_generator(g, 0, two_j + 1) @ node_generator(g, 3, two_j + 1)
          for g in generators),
@@ -164,6 +168,15 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         spectral_maxima.append(float(eigenvalues[-1]))
         spectral_ranks.append(int(np.sum(eigenvalues > spectral_tolerance)))
         spectral_nullities.append(int(np.sum(np.abs(eigenvalues) <= spectral_tolerance)))
+        normalized_eigenvalues = eigenvalues / isolated_qfi
+        for order in (1, 2, 3, 4):
+            normalized_moments[str(order)].append(
+                float(np.mean(normalized_eigenvalues ** order))
+            )
+        normalized_quantiles.append(
+            np.quantile(normalized_eigenvalues, [0.0, 0.25, 0.5, 0.75, 1.0]).tolist()
+        )
+        rank_fractions.append(float(spectral_ranks[-1] / (3 * len(edges))))
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
             sl = slice(3 * edge_index, 3 * edge_index + 3)
@@ -193,6 +206,18 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         "qfi_nullity_min_over_trials": min(spectral_nullities),
         "qfi_nullity_max_over_trials": max(spectral_nullities),
         "qfi_parameter_dimension": 3 * len(edges),
+        "qfi_rank_fraction_mean": float(np.mean(rank_fractions)),
+        "qfi_spectral_normalization": "eigenvalues divided by isolated-link scale 4*j*(j+1)/3",
+        "normalized_spectral_moments_mean": {
+            order: float(np.mean(values)) for order, values in normalized_moments.items()
+        },
+        "normalized_spectral_quantiles_mean": np.mean(
+            np.asarray(normalized_quantiles), axis=0
+        ).tolist(),
+        "normalized_spectral_quantiles_probability_levels": [0.0, 0.25, 0.5, 0.75, 1.0],
+        "normalized_spectral_variance_mean": float(
+            np.mean(normalized_moments["2"]) - np.mean(normalized_moments["1"]) ** 2
+        ),
         "max_diagonal_block_error_from_isolated_spin_qfi": max(diagonal_errors),
         "cross_edge_qfi_frobenius_norm_min": min(cross_norms),
         "cross_edge_qfi_frobenius_norm_max": max(cross_norms),
@@ -220,6 +245,10 @@ def run(two_j_values=(1, 2), trials=3):
     for two_j in two_j_values:
         rows[str(two_j / 2.0)] = {}
         for name, (nodes, edges) in graph_fixtures().items():
+            # The path_5 boundary has 12 open legs. Keep its dense boundary
+            # vector to j<=1; higher spins remain covered on <=10-leg fixtures.
+            if name == "path_5" and two_j > 2:
+                continue
             rows[str(two_j / 2.0)][name] = analyze_graph(
                 two_j, name, nodes, edges, trials=trials
             )
@@ -232,11 +261,19 @@ def run(two_j_values=(1, 2), trials=3):
         "tested_spins": [int(value) / 2.0 for value in two_j_values],
         "trials_per_graph_and_spin": trials,
         "graphs": rows,
+        "graph_spin_coverage": {
+            name: [float(two_j / 2.0) for two_j in two_j_values
+                   if name in rows[str(two_j / 2.0)]]
+            for name in graph_fixtures()
+        },
         "interpretation": (
-            "Path and cycle graph contractions are evaluated directly. The path "
-            "has the exact signed middle-node Casimir cross block and isolated-link "
-            "diagonal scale. Cycle metrics are not assumed additive or equal to "
-            "the path; their complete QFI is computed from the contracted state."
+            "All spectra are also reported after division by the exact isolated-link "
+            "Casimir scale 4*j*(j+1)/3. Moments, quantiles, rank fraction, and "
+            "variance provide dimensionless diagnostics; they are not asserted "
+            "to be coarse-graining invariants. Path_5 is restricted to j<=1 because "
+            "its 12-leg dense boundary vector grows rapidly with representation "
+            "dimension. Cycle and branched graph metrics are computed directly, "
+            "without path additivity assumptions."
         ),
         "claim_boundary": (
             "Finite pure-state higher-spin graph contractions only. No spin sum, "
