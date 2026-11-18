@@ -117,8 +117,9 @@ def analyze_independent_haar_fusion(
     return {
         "status": "exact pushforward of independent local Haar intertwiners",
         "ensemble": (
-            "two independent Haar-random unit vectors in the four-valent "
-            "intertwiner space, contracted through one invariant singlet"
+            f"{vertex_count} independent Haar-random unit vectors in the "
+            "four-valent intertwiner space, fused along a chain of "
+            f"{vertex_count - 1} invariant singlets"
         ),
         "two_j": int(two_j),
         "spin": float(two_j) / 2.0,
@@ -136,7 +137,7 @@ def analyze_independent_haar_fusion(
         "pushforward_covariance_rank": int(positive.size),
         "pushforward_nonzero_covariance_eigenvalues": positive.tolist(),
         "pushforward_covariance_purity": covariance_purity,
-        "full_six_valent_haar_covariance_purity": haar_purity,
+        "full_boundary_haar_covariance_purity": haar_purity,
         "pushforward_vs_full_haar_covariance_frobenius_distance": non_haar_distance,
         "passed": (
             local_basis.shape[1] == dimension
@@ -149,7 +150,7 @@ def analyze_independent_haar_fusion(
             and positive.size == input_dimension
             and np.max(np.abs(positive - 1.0 / input_dimension)) < 2e-9
             and abs(covariance_purity - 1.0 / input_dimension) < 2e-9
-            and abs(haar_purity - 1.0 / six_valent_invariant_dimension) < 2e-9
+            and abs(haar_purity - 1.0 / full_invariant_dimension) < 2e-9
             and non_haar_distance > 1e-3
         ),
         "interpretation": (
@@ -172,6 +173,8 @@ def analyze_independent_haar_fusion(
 def analyze_block_family(
     specifications=((1, 2), (1, 3), (1, 4), (2, 2), (2, 3), (3, 2), (4, 2))
 ) -> dict[str, object]:
+    if specifications is None:
+        specifications = ((1, 2), (1, 3), (1, 4), (2, 2), (2, 3), (3, 2), (4, 2))
     controls = {
         f"j={two_j / 2.0};vertices={vertex_count}": analyze_independent_haar_fusion(
             two_j, vertex_count
