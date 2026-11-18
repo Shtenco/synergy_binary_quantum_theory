@@ -354,6 +354,7 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         import numpy as np
         from scipy.sparse import csr_matrix
         from scipy.sparse.linalg import LinearOperator, cg, eigsh
+        from scipy.linalg import eigh
     except ImportError as exc:
         raise RuntimeError("Feshbach diagnostics require numpy and scipy") from exc
 
@@ -466,6 +467,16 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     effective = A_PP - correction
     effective = 0.5 * (effective + effective.T)
     effective_eigenvalues = np.linalg.eigvalsh(effective)
+    # Linearize the energy-dependent Schur complement:
+    # A_eff(0) v = lambda [I + Sigma'(0)] v + O(lambda^2).
+    # The positive matrix I+Sigma'(0) is the induced low-energy
+    # normalization/kinetic metric on the coarse sector.
+    effective_metric = np.eye(m) + self_energy_slope
+    effective_metric = 0.5 * (effective_metric + effective_metric.T)
+    metric_eigenvalues = np.linalg.eigvalsh(effective_metric)
+    generalized_eigenvalues = eigh(
+        effective, effective_metric, eigvals_only=True, check_finite=True
+    )
     app_norm = float(np.linalg.norm(A_PP, ord=2))
     correction_norm = float(np.linalg.norm(correction, ord=2))
     return {
@@ -493,6 +504,14 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "feshbach_correction_max_eigenvalue": float(correction_eigenvalues[-1]),
         "effective_operator_min_eigenvalue": float(effective_eigenvalues[0]),
         "effective_operator_max_eigenvalue": float(effective_eigenvalues[-1]),
+        "effective_metric_min_eigenvalue": float(metric_eigenvalues[0]),
+        "effective_metric_max_eigenvalue": float(metric_eigenvalues[-1]),
+        "linearized_generalized_spectrum": generalized_eigenvalues.tolist(),
+        "linearized_generalized_gap": (
+            float(generalized_eigenvalues[1])
+            if len(generalized_eigenvalues) > 1 else None
+        ),
+        "linearized_generalized_largest_eigenvalue": float(generalized_eigenvalues[-1]),
         "q_sector_gap_estimate": q_sector_gap_estimate,
         "q_plus_p_largest_eigenvalue": q_plus_p_largest_eigenvalue,
         "q_plus_p_condition_estimate": (
