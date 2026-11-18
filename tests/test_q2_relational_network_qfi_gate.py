@@ -38,3 +38,27 @@ def test_each_shared_half_link_twist_obeys_middle_node_gauss_pullthrough():
 def test_network_gate_requires_multiple_samples_for_correlation_variability():
     with pytest.raises(ValueError, match="at least two trials"):
         run(trials=1)
+
+def test_cross_qfi_matches_exact_middle_node_pair_casimir():
+    from scripts.q2_relational_network_qfi_gate import middle_link_correlation_scalar
+
+    rng = np.random.default_rng(4401)
+    for _ in range(12):
+        a, b, c = (random_intertwiner(rng) for _ in range(3))
+        _, qfi, _ = network_relational_qfi(a, b, c)
+        predicted = middle_link_correlation_scalar(b)
+        assert qfi[0, 3] == pytest.approx(predicted, abs=1e-10)
+        assert qfi[:3, 3:] == pytest.approx(predicted * np.eye(3), abs=1e-10)
+        assert -1.0 - 1e-10 <= predicted <= 1.0 / 3.0 + 1e-10
+
+
+def test_middle_pair_casimir_has_singlet_and_triplet_eigenvalues():
+    from scripts.q2_relational_network_qfi_gate import SQ, node_generator, PAULI
+
+    pair = sum(
+        (node_generator(PAULI[axis], 0) @ node_generator(PAULI[axis], 3)
+         for axis in range(3)),
+        np.zeros((16, 16), dtype=complex),
+    )
+    projected = SQ.logical_basis().conj().T @ pair @ SQ.logical_basis()
+    assert np.linalg.eigvalsh(projected) == pytest.approx([-0.75, 0.25], abs=1e-12)
