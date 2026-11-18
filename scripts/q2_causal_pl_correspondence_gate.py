@@ -117,13 +117,19 @@ def _parent_face_sides(tetrahedra, parent_map, causal_edges, orientations, dual)
 
 def _causal_children(causal_edges, generation, next_vertex):
     children = {}
+    parent_by_child = {}
     for parent_id, (source, target) in causal_edges.items():
         for label in ROUTE_LABELS:
             midpoint = next_vertex
             next_vertex += 1
-            children[f"g{generation}:{parent_id}:{label}:L"] = (source, midpoint)
-            children[f"g{generation}:{parent_id}:{label}:R"] = (midpoint, target)
-    return children, next_vertex
+            for side, endpoints in (
+                ("L", (source, midpoint)),
+                ("R", (midpoint, target)),
+            ):
+                child_id = f"g{generation}:{parent_id}:{label}:{side}"
+                children[child_id] = endpoints
+                parent_by_child[child_id] = parent_id
+    return children, parent_by_child, next_vertex
 
 
 def _lumpability_diagnostics(tetrahedra, parent_map, dual):
@@ -407,7 +413,7 @@ def run(max_generation=2):
 
         children, faces, child_chains = barycentric_subdivision(tetrahedra)
         parent_index = {tuple(tet): i for i, tet in enumerate(tetrahedra)}
-        child_causal_edges, next_vertex = _causal_children(
+        child_causal_edges, parent_by_child, next_vertex = _causal_children(
             causal_edges, generation + 1, next_vertex
         )
         child_map = {}
@@ -456,9 +462,7 @@ def run(max_generation=2):
         child_fibres = Counter(child_map[tuple(tet)] for tet in children)
         child_mass_by_parent = Counter()
         for child_edge, count in child_fibres.items():
-            parts = child_edge.split(":")
-            parent_edge = ":".join(parts[1:-2])
-            child_mass_by_parent[parent_edge] += count
+            child_mass_by_parent[parent_by_child[child_edge]] += count
         mass_errors = {}
         for parent_edge, parent_count in parent_fibres.items():
             parent_mass = parent_count / (24 ** generation)
