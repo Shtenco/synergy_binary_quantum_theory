@@ -58,3 +58,18 @@ def test_end_to_end_path_and_cycle_gate_passes():
         assert row["checks"]["reference_section_independence"]
         assert row["checks"]["two_sided_endpoint_parameters_present"]
         assert row["quotient_numerical_rank_min"] <= row["quotient_dimension"]
+
+def test_extra_quotient_nulls_match_projective_boundary_state_stabilizers():
+    from scripts.q2_relational_gauge_quotient_gate import (
+        projective_tangent_jacobian,
+        stabilizer_diagnostics,
+    )
+    rng = np.random.default_rng(20261118)
+    for name in ("path_3", "cycle_4"):
+        node_count, edges = graph_fixtures()[name]
+        states = [random_intertwiner(rng) for _ in range(node_count)]
+        _p, qfi, _sym, _boundary = full_half_link_qfi(states, edges)
+        tangent, _p2 = projective_tangent_jacobian(states, edges)
+        result = stabilizer_diagnostics(tangent, node_count, qfi)
+        assert result["tangent_qfi_rank_agrees"] is True
+        assert result["quotient_tangent_nullity"] == 9 * node_count - result["quotient_tangent_rank"]
