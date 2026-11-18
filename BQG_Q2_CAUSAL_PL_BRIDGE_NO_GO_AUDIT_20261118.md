@@ -141,10 +141,16 @@ dual-edge multiplicities. Its quotient graphs are connected at generations 1
 and 2 (8 and 64 nodes; 16 and 180 weighted edge pairs respectively). These
 weights are combinatorial PL conductances, not QFI conductances.
 
-The next gate must study the spectrum and refinement stability of this
-compressed operator, determine whether the non-equitable projection admits a
-controlled correction, and separate finite combinatorial conductance from
-physical QFI conductance.
+A finite generalized spectrum and heat-trace diagnostic has now been added
+using the mass-symmetrized operator `M^{-1/2} K M^{-1/2}`. The code reports
+the zero-mode count, finite spectral gap, heat trace, and finite-time effective
+spectral dimension for each audited generation. This is only a finite
+diagnostic; no spectral plateau or convergence result is claimed.
+
+The next gate must extend the PL/causal construction to further generations,
+test spectral stability across both refinement and diffusion scales, determine
+whether the non-equitable projection admits a controlled correction, and
+separate finite combinatorial conductance from physical QFI conductance.
 Do not insert inverse-fibre weights as if they were already physically
 derived.
 
