@@ -23,6 +23,7 @@ from q2_relational_graph_qfi_gate import (
     full_half_link_qfi,
     graph_fixtures,
     random_intertwiner,
+    contract_graph,
 )
 
 
@@ -162,6 +163,98 @@ def quotient_diagnostics(
     }
 
 
+
+def projective_tangent_jacobian(
+    node_states: list[np.ndarray],
+    edges: list[tuple[int, int, int, int]],
+) -> tuple[np.ndarray, float]:
+    """Real-parameter tangent map of the normalized boundary ray.
+
+    The returned complex matrix has one column per half-link/axis parameter.
+    Each column is projected orthogonally to the state, removing both radial
+    normalization and physically irrelevant global phase.
+    """
+    raw, boundary = contract_graph(node_states, edges)
+    probability = float(np.vdot(raw, raw).real)
+    if probability <= 1e-14:
+        raise ValueError("graph singlet contraction has zero support")
+    state = raw / np.sqrt(probability)
+    columns = []
+    from q2_relational_graph_qfi_gate import PAULI
+    for node in range(len(node_states)):
+        for leg in range(4):
+            for pauli in PAULI:
+                derivative_raw, derivative_boundary = contract_graph(
+                    node_states, edges,
+                    half_link_twist=(node, leg, pauli),
+                )
+                if derivative_boundary != boundary:
+                    raise AssertionError("boundary ordering changed under tangent variation")
+                derivative = derivative_raw / np.sqrt(probability)
+                # Project out the complete complex state direction, including phase.
+                derivative = derivative - state * np.vdot(state, derivative)
+                columns.append(derivative)
+    return np.column_stack(columns), probability
+
+
+def stabilizer_diagnostics(
+    tangent: np.ndarray, node_count: int, qfi: np.ndarray
+) -> dict[str, object]:
+    """Identify extra null directions as infinitesimal stabilizers of the boundary ray."""
+    if tangent.shape[1] != 12 * node_count:
+        raise ValueError("tangent column count must equal 12V")
+    gauge = vertex_gauge_generators(node_count)
+    gauge_basis = gauge / 2.0
+    complete, _ = np.linalg.qr(gauge_basis, mode="complete")
+    quotient_basis = complete[:, 3 * node_count:]
+    quotient_tangent = tangent @ quotient_basis
+    realified = np.concatenate(
+        [quotient_tangent.real, quotient_tangent.imag], axis=0
+    )
+    _u, singular_values, vh = np.linalg.svd(realified, full_matrices=False)
+    largest = float(singular_values[0]) if singular_values.size else 0.0
+    tolerance = 1e-9 * max(1.0, largest)
+    rank = int(np.sum(singular_values > tolerance))
+    quotient_dimension = 9 * node_count
+    nullity = quotient_dimension - rank
+    qfi_quotient = quotient_basis.T @ qfi @ quotient_basis
+    qfi_quotient = 0.5 * (qfi_quotient + qfi_quotient.T)
+    qfi_eigenvalues = np.linalg.eigvalsh(qfi_quotient)
+    qfi_rank = int(np.sum(qfi_eigenvalues > 1e-9 * max(
+        1.0, float(np.max(np.abs(qfi_eigenvalues)))
+    )))
+    participation = []
+    if nullity:
+        null_coordinates = vh[-nullity:, :]
+        null_full = quotient_basis @ null_coordinates.T
+        for node in range(node_count):
+            leg_weights = []
+            for leg in range(4):
+                indices = [12 * node + 3 * leg + axis for axis in range(3)]
+                leg_weights.append(float(np.sum(null_full[indices, :] ** 2)))
+            participation.append({
+                "node": node,
+                "half_link_weights": leg_weights,
+                "total_weight": float(sum(leg_weights)),
+            })
+    return {
+        "projective_tangent_shape": list(tangent.shape),
+        "quotient_tangent_rank": rank,
+        "quotient_qfi_rank": qfi_rank,
+        "quotient_tangent_nullity": nullity,
+        "tangent_qfi_rank_agrees": rank == qfi_rank,
+        "smallest_tangent_singular_value": (
+            float(singular_values[-1]) if singular_values.size else 0.0
+        ),
+        "largest_tangent_singular_value": largest,
+        "null_mode_half_link_participation": participation,
+        "interpretation": (
+            "Additional null vectors are infinitesimal stabilizers of the "
+            "normalized boundary-state ray in the chosen finite contraction. "
+            "Their physical status beyond this model is not established."
+        ),
+    }
+
 def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
     if trials < 2:
         raise ValueError("at least two trials are required")
@@ -174,6 +267,9 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
             states = [random_intertwiner(rng) for _ in range(node_count)]
             _probability, full_qfi, symmetry, _boundary = full_half_link_qfi(states, edges)
             gauge = quotient_diagnostics(full_qfi, node_count)
+            tangent, _ = projective_tangent_jacobian(states, edges)
+            stabilizers = stabilizer_diagnostics(tangent, node_count, full_qfi)
+            gauge["stabilizer_diagnostics"] = stabilizers
             mapping = two_sided_edge_parameter_map(node_count, edges)
             endpoint_qfi = mapping.T @ full_qfi @ mapping
             endpoint_qfi = 0.5 * (endpoint_qfi + endpoint_qfi.T)
@@ -213,6 +309,15 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
                 row["reference_section_spectra_agree"] for row in gauge_rows
             ),
             "reference_sections": gauge_rows[0]["reference_sections"],
+            "quotient_tangent_rank_min": min(
+                row["stabilizer_diagnostics"]["quotient_tangent_rank"] for row in gauge_rows
+            ),
+            "projective_stabilizer_nullity_max": max(
+                row["stabilizer_diagnostics"]["quotient_tangent_nullity"] for row in gauge_rows
+            ),
+            "stabilizer_rank_consistency": all(
+                row["stabilizer_diagnostics"]["tangent_qfi_rank_agrees"] for row in gauge_rows
+            ),
             "endpoint_qfi_minimum_eigenvalue": min(
                 row["minimum_eigenvalue"] for row in endpoint_rows
             ),
@@ -235,6 +340,12 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
                 "two_sided_endpoint_qfi_psd": min(
                     row["minimum_eigenvalue"] for row in endpoint_rows
                 ) > -1e-9,
+                "extra_nulls_are_projective_state_stabilizers": all(
+                    row["stabilizer_diagnostics"]["tangent_qfi_rank_agrees"]
+                    and row["stabilizer_diagnostics"]["quotient_tangent_nullity"]
+                    == row["quotient_nullity_beyond_gauge"]
+                    for row in gauge_rows
+                ),
             },
         }
         results[name]["passed"] = all(results[name]["checks"].values())
