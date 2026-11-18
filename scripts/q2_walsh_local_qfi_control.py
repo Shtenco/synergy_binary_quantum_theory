@@ -137,7 +137,7 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run()
-    rendered = json.dumps(result, indent=2)
+    rendered = json.dumps(result, indent=2, default=lambda value: value.item() if isinstance(value, np.generic) else str(value))
     print(rendered)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
