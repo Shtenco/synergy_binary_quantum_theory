@@ -3,7 +3,7 @@
 This filename is retained for compatibility with historical links.  The repository now distinguishes three logically different layers that must not be collapsed into one Boolean:
 
 ```text
-structural_candidate_closed              = true
+structural_candidate_closed              = false
 physical_projector_history_closed        = false
 physical_TT_kernel_frozen                = false
 IR_six_wilson_vector_frozen              = false
@@ -12,6 +12,8 @@ experimentally_confirmed                 = false
 ```
 
 The first statement refers only to the declared exact/finite/conditional **structural candidate** recorded in `theory_gates.json`.  The remaining statements describe the stronger physicalization and experimental frontier recorded in `physicalization_gates.json`.
+
+The current `theory_gates.json` deliberately declares `core_theory_closed_declared=false`. The verifier therefore reports `structural_candidate_closed=false`: 49 of 50 core gates are in accepted statuses (`proved`, `tested_finite`, or `conditional`), while `PURE_ANCILLA_NODE_REFINEMENT` is a core `no_go`. This no-go rejects the fixed pure four-qubit Gauss-singlet ancilla route; it must not be silently counted as a closed core gate. Any replacement route needs a separately stated construction and evidence.
 
 A GREEN structural CI therefore means that the declared mathematical/computational candidate has reproduced its registered internal arrows.  It does **not** mean that the theory-specific physical inner product, interacting graviton propagator or experimental truth has been established.
 
