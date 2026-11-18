@@ -95,17 +95,29 @@ The scalar causal DAG starts from one directed edge, while the PL carrier
 starts from a closed 3-manifold triangulation. The finite correspondence does
 not identify these graph families or yet define a continuum geometry.
 
-## 5. QFI consequence
+## 5. QFI consequence — updated relational-link control
 
-No physical edge conductance follows from either topology export. The Walsh
-local-QFI control gives an isotropic local frame and a reduced product-state
-probe value `F_Q/4 = 1/3`, but after Gauss-singlet projection the global
-SU(2) gauge-orbit QFI vanishes. The value 1/3 is not an inter-block physical
-edge weight.
+The unprojected Walsh product-state probe value `F_Q/4 = 1/3` remains only a
+local control, and the global SU(2) gauge-orbit QFI still vanishes after
+Gauss-singlet projection. A separate two-block spin-network gluing gate now
+constructs two arbitrary four-valent spin-`1/2` intertwiners, contracts one
+shared pair of half-links with the invariant epsilon tensor, retains the six
+external half-links, and inserts a relative twist on one shared half-link
+before contraction.
 
-Until a shared-face relational state `rho_e` and physical relational
-generator `K_e` are derived, a QFI Laplacian on the PL dual graph is a
-placeholder, not a BQG prediction.
+For this specified gluing channel, the singlet-contraction probability is
+exactly (1/4), independent of the two intertwiner states, and the boundary
+pure-state QFI is (F^{(e)}_{ab}=\delta_{ab}). With the convention
+(g^{(e)}=F^{(e)}/4), the normalized microscopic link metric is
+(\delta_{ab}/4). The calculation and its scope are documented in
+`BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md`.
+
+This is a derived relational QFI for a concrete spin-network gluing channel,
+not yet a unique BQG dynamical edge weight. The independent boundary-gauge
+reduction, boundary tracing/coarse-graining, spin sums, history-amplitude
+distribution, and pushforward through the non-equitable causal-to-PL fibres
+remain open. Consequently a QFI Laplacian on the PL dual graph is still not
+derived.
 
 ## 6. Updated decision: finite global correspondence found
 
