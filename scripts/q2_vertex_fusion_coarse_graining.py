@@ -412,7 +412,7 @@ def compare_micro_and_fused_reduced_qfi(
     coarse_qfi = _sld_mixed_qfi(coarse_rho, coarse_drhos)
     pure = np.asarray(compare_micro_and_fused_qfi(
         node_states, edges, singlet, blocks, generators
-    )["micro_qfi"], dtype=float)
+    )["micro_qfi"], dtype=float).reshape(len(micro_derivatives), len(micro_derivatives))
     qfi_gap = 0.5 * ((pure - micro_qfi) + (pure - micro_qfi).T)
     data_processing_min_eigenvalue = (
         float(np.linalg.eigvalsh(qfi_gap)[0]) if qfi_gap.size else 0.0
@@ -597,6 +597,85 @@ def run_coarse_graining_suite(two_j=1):
 
 
 
+
+def exhaustive_reduced_boundary_partition_control(
+    graph_name, two_j, keep_boundary_keys, seed=20261202
+):
+    """Exhaust all graph partitions for a fixed reduced boundary subsystem."""
+    if graph_name not in graph_fixtures():
+        raise ValueError(f"unknown graph fixture: {graph_name}")
+    nodes, edges = graph_fixtures()[graph_name]
+    rng = np.random.default_rng(seed + two_j)
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    singlet = invariant_singlet_tensor(two_j)
+    partitions = list(_set_partitions(range(nodes)))
+    maxima = {
+        "density": 0.0,
+        "derivative": 0.0,
+        "qfi": 0.0,
+    }
+    minimum_data_processing_eigenvalue = float("inf")
+    for blocks in partitions:
+        result = compare_micro_and_fused_reduced_qfi(
+            states, edges, singlet, blocks, keep_boundary_keys
+        )
+        reversed_blocks = tuple(tuple(reversed(block)) for block in reversed(blocks))
+        reordered = compare_micro_and_fused_reduced_qfi(
+            states, edges, singlet, reversed_blocks, keep_boundary_keys
+        )
+        if not result["passed"] or not reordered["passed"]:
+            return {
+                "graph": graph_name,
+                "two_j": int(two_j),
+                "partition_count": len(partitions),
+                "expected_partition_count": _bell_number(nodes),
+                "passed": False,
+                "failed_partition": blocks,
+                "reordered_partition": reversed_blocks,
+            }
+        maxima["density"] = max(
+            maxima["density"],
+            result["reduced_density_max_abs_error"],
+            reordered["reduced_density_max_abs_error"],
+        )
+        maxima["derivative"] = max(
+            maxima["derivative"],
+            result["reduced_derivative_max_abs_error"],
+            reordered["reduced_derivative_max_abs_error"],
+        )
+        maxima["qfi"] = max(
+            maxima["qfi"],
+            result["mixed_qfi_max_abs_error"],
+            reordered["mixed_qfi_max_abs_error"],
+        )
+        minimum_data_processing_eigenvalue = min(
+            minimum_data_processing_eigenvalue,
+            result["pure_minus_mixed_qfi_min_eigenvalue"],
+            reordered["pure_minus_mixed_qfi_min_eigenvalue"],
+        )
+    return {
+        "graph": graph_name,
+        "two_j": int(two_j),
+        "spin": float(two_j) / 2.0,
+        "partition_count": len(partitions),
+        "expected_partition_count": _bell_number(nodes),
+        "includes_block_order_reversal": True,
+        "kept_boundary_keys": [list(key) for key in keep_boundary_keys],
+        "max_reduced_density_error": maxima["density"],
+        "max_reduced_derivative_error": maxima["derivative"],
+        "max_mixed_qfi_error": maxima["qfi"],
+        "minimum_pure_minus_mixed_qfi_eigenvalue": minimum_data_processing_eigenvalue,
+        "passed": (
+            len(partitions) == _bell_number(nodes)
+            and maxima["density"] < 2e-9
+            and maxima["derivative"] < 2e-8
+            and maxima["qfi"] < 2e-8
+            and minimum_data_processing_eigenvalue > -2e-8
+        ),
+    }
+
+
 def run_reduced_boundary_suite(two_j_values=(1, 2)):
     """Compare mixed-state QFI after tracing boundary legs on two graph families."""
     specifications = {
@@ -618,9 +697,9 @@ def run_reduced_boundary_suite(two_j_values=(1, 2)):
             basis, _ = four_valent_intertwiner_basis(two_j)
             states = [random_intertwiner(rng, basis) for _ in range(nodes)]
             controls[str(two_j / 2.0)][graph_name] = (
-                compare_micro_and_fused_reduced_qfi(
-                    states, edges, invariant_singlet_tensor(two_j),
-                    spec["blocks"], spec["keep_boundary_keys"]
+                exhaustive_reduced_boundary_partition_control(
+                    graph_name, two_j, spec["keep_boundary_keys"],
+                    seed=20261201 + nodes
                 )
             )
     return {
