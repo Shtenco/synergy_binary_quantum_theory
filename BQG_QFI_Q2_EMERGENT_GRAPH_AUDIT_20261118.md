@@ -329,10 +329,13 @@ An allocation-free exact f-vector preflight predicts
 [
 (f'_0,f'_1,f'_2,f'_3)=(40256,261440,442368,221184),
 ]
-with 442,368 PL-dual edges and 512 causal active edges at g=3. The current
-dense Jacobi spectral routine is not suitable for blind extension to 512
-nodes; a compact/streaming correspondence representation and sparse spectral
-method are required before attempting a full g=3 gate.
+with 442,368 PL-dual edges and 512 causal active edges at g=3. The
+correspondence gate now switches to NumPy/LAPACK `eigvalsh` at 128+ quotient
+nodes, retaining the stdlib Jacobi method as a fallback. The spectral
+diagonalization bottleneck is therefore reduced, but a compact/streaming PL
+and dual-incidence representation is still required before attempting a
+full g=3 correspondence export; its memory and serialization cost has not
+yet been benchmarked.
 
 ### Execution status
 
