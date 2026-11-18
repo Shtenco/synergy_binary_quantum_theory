@@ -104,3 +104,29 @@ def test_q2_finite_heat_trace_is_monotone_but_not_claimed_as_dimension_limit():
         assert all(item["effective_spectral_dimension"] >= -1e-8
                    for item in row["effective_spectral_dimension"])
         assert "continuum limit are not established" in row["spectral_interpretation"]
+
+
+def test_q2_jacobi_eigensolver_matches_exact_two_by_two_spectrum():
+    from scripts.q2_causal_pl_correspondence_gate import _jacobi_eigenvalues_symmetric
+
+    values = _jacobi_eigenvalues_symmetric([[2.0, 1.0], [1.0, 2.0]])
+    assert len(values) == 2
+    assert abs(values[0] - 1.0) < 1e-12
+    assert abs(values[1] - 3.0) < 1e-12
+
+
+def test_q2_jacobi_eigensolver_rejects_non_symmetric_input():
+    import pytest
+    from scripts.q2_causal_pl_correspondence_gate import _jacobi_eigenvalues_symmetric
+
+    with pytest.raises(ValueError, match="matrix is not symmetric"):
+        _jacobi_eigenvalues_symmetric([[1.0, 2.0], [0.0, 1.0]])
+
+
+def test_q2_generation_zero_spectrum_has_only_constant_zero_mode():
+    result = run(max_generation=0)
+    row = result["levels"][0]
+    assert row["operator_spectrum"] == [0.0]
+    assert row["operator_zero_mode_count"] == 1
+    assert row["operator_spectral_gap"] is None
+    assert all(item["normalized_heat_trace"] == 1.0 for item in row["heat_trace"])
