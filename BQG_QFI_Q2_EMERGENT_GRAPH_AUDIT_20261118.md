@@ -495,3 +495,42 @@ introduced.
 The graph-level gate now tests both edge-parameter QFI and full half-link
 QFI. Its artifact remains a finite spin-1/2 control; the causal-PL
 pushforward and BQG history measure are still outstanding.
+
+
+## Follow-up: global vertex-gauge quotient and two-sided endpoint parameters (2026-11-18)
+
+The finite graph QFI work now has a separate global quotient gate,
+`scripts/q2_relational_gauge_quotient_gate.py`. It uses the complete
+12V-dimensional half-link parameter space and constructs the 3V-dimensional
+vertex Gauss subspace explicitly. The orthogonal quotient has dimension 9V
+and metric
+
+```text
+F_quot = Q^T F_half Q,
+```
+
+where Q spans the orthogonal complement of the vertex gauge directions.
+The gate checks the matrix identity F_half G = 0, quotient PSD up to
+roundoff, and the quotient nullity that remains after removing the known
+Gauss modes.
+
+Two reference sections are compared (fixing half-link 0 versus half-link 3
+at every vertex). Their raw coordinate matrices are not compared by
+ordinary eigenvalues: the test uses generalized spectra with the induced
+quotient Gram matrix. This is the coordinate-invariant comparison. The
+result therefore tests whether the quotient spectrum is independent of
+which half-link is chosen as a reference.
+
+Internal edges now also have an explicit two-sided endpoint parameter map:
+three independent axes at each endpoint, or 6E parameters. Its QFI is
+defined as the pullback of the full half-link QFI. It is intentionally not
+called the global quotient: boundary half-links must remain in the base
+space because the vertex Gauss action rotates all four legs.
+
+The new tests and JSON export are wired into
+`.github/workflows/q2-pl-graph-export.yml`. The report
+`BQG_Q2_RELATIONAL_GAUGE_QUOTIENT_RESULT_20261118.md` records the
+definitions and claim limits. Additional quotient null modes remain an
+explicit result, not something removed by regularization. This does not yet
+derive a physical edge-frame redundancy, a holonomy dynamics, a BQG history
+measure, or the causal-PL QFI pushforward.
