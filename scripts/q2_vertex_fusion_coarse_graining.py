@@ -692,6 +692,20 @@ def exhaustive_boundary_subsystem_sweep(
     retained_sizes=(1, 2),
 ):
     """Sweep every 1- and 2-leg boundary subsystem and every vertex partition."""
+    graph_names = tuple(graph_names)
+    two_j_values = tuple(two_j_values)
+    retained_sizes = tuple(retained_sizes)
+    if not graph_names or len(set(graph_names)) != len(graph_names):
+        raise ValueError("graph_names must be non-empty and unique")
+    if any(name not in graph_fixtures() for name in graph_names):
+        raise ValueError("unknown graph fixture in subsystem sweep")
+    if not two_j_values or any(
+        isinstance(value, bool) or not isinstance(value, (int, np.integer)) or value < 1
+        for value in two_j_values
+    ):
+        raise ValueError("two_j_values must contain positive integers")
+    if not retained_sizes or len(set(retained_sizes)) != len(retained_sizes):
+        raise ValueError("retained_sizes must be non-empty and unique")
     summary = {}
     total_subsystems = 0
     total_partition_order_evaluations = 0
@@ -713,6 +727,12 @@ def exhaustive_boundary_subsystem_sweep(
                 for leg in range(4)
                 if (v, leg) not in occupied
             )
+            if any(
+                isinstance(size, bool) or not isinstance(size, (int, np.integer))
+                or size < 1 or size > len(boundary)
+                for size in retained_sizes
+            ):
+                raise ValueError("retained subsystem sizes must fit the boundary")
             subsets = tuple(
                 subset
                 for size in retained_sizes
@@ -724,9 +744,6 @@ def exhaustive_boundary_subsystem_sweep(
             graph_evaluations = 0
             for subset in subsets:
                 for blocks in partitions:
-                    reverse = tuple(
-                        tuple(reversed(block)) for block in reversed(blocks)
-                    )
                     result = exhaustive_reduced_boundary_partition_control(
                         graph_name, two_j, subset,
                         seed=20261220 + nodes
