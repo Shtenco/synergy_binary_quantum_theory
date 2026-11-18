@@ -81,3 +81,16 @@ provide a nontrivial boundary pure-state QFI.
 Tests compare the SVD rank with the formula on the open path and cycle,
 a closed complete five-node graph (10 internal edges), and two disconnected
 closed components plus an isolated open node.
+
+## Deterministic randomized rank stress test (added 2026-11-18)
+
+The test suite now constructs 32 reproducible valid half-link matching graphs
+with 2–8 vertices, varying edge counts, disconnected components, and unused
+boundary slots. For every generated graph it compares the numerical SVD rank
+of the explicit joint generator matrix against the topological formula above,
+and checks the resulting quotient dimension.
+
+This is additional test coverage, not yet a reported passing execution:
+the commit containing the test must receive a fresh GitHub Actions result
+before the randomized check is marked PASS.
+
