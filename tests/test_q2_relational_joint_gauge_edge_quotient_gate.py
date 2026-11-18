@@ -167,3 +167,32 @@ def test_joint_gauge_quotient_extends_to_path4_and_branched_star():
         assert row["joint_generator_rank"] == 3 * (nodes + len(edges))
         assert row["all_checks_pass"]
 
+def test_topological_rank_theorem_exhaustive_two_vertex_matchings():
+    """Exhaust all 209 partial matchings between two four-valent vertices."""
+    from itertools import combinations, permutations
+    from scripts.q2_relational_joint_gauge_edge_quotient_gate import (
+        graph_topological_gauge_rank,
+    )
+
+    checked = 0
+    slots = range(4)
+    for size in range(5):
+        for left_slots in combinations(slots, size):
+            for right_slots in combinations(slots, size):
+                for right_order in permutations(right_slots):
+                    edges = [
+                        (0, left_slot, 1, right_slot)
+                        for left_slot, right_slot in zip(left_slots, right_order)
+                    ]
+                    _basis, svd = joint_quotient_basis(2, edges)
+                    topology = graph_topological_gauge_rank(2, edges)
+                    assert svd["svd_rank_matches_topology"]
+                    assert svd["joint_generator_rank"] == 3 * (
+                        2 + size - topology["closed_components"]
+                    )
+                    assert svd["joint_quotient_dimension"] == (
+                        24 - topology["topological_joint_generator_rank"]
+                    )
+                    checked += 1
+    assert checked == 209
+
