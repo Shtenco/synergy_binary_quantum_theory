@@ -370,7 +370,7 @@ def run_coarse_graining_suite(two_j=1):
         second_blocks=((0, 1), (2,)),
         direct_blocks=((0, 1, 2), (3, 4)),
     )
-    exhaustive = exhaustive_path5_partition_control(two_j=1)
+    exhaustive = exhaustive_path5_partition_control(two_j=two_j)
     return {
         "status": "exact finite vertex-fusion coarse-graining",
         "two_j": int(two_j),
