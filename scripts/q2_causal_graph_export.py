@@ -110,6 +110,7 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
             "path_length": 2 ** generation,
             "degree_min": min((indegree[i] + outdegree[i] for i in range(len(vertices))), default=0),
             "degree_max": max((indegree[i] + outdegree[i] for i in range(len(vertices))), default=0),
+            "degree_max_expected": branches ** generation,
             "graph_sha256": hashlib.sha256(canonical).hexdigest(),
             "vertices": list(vertices),
             "active_edges": edges,
@@ -159,6 +160,9 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
         ),
         "all_levels_connected": all(row["connected"] for row in rows),
         "all_levels_are_dags": all(row["directed_acyclic"] for row in rows),
+        "max_degree_matches_branching_law": all(
+            row["degree_max"] == row["degree_max_expected"] for row in rows
+        ),
         "source_sink_paths_are_four_to_the_generation": all(
             row["source_to_sink_path_count"] == 4 ** (2 ** row["generation"] - 1) for row in rows
         ),
@@ -184,6 +188,12 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
         "checks": checks,
         "pl_identification": None,
         "qfi_state_assignment": None,
+        "local_finiteness_warning": (
+            "The degree of every retained old vertex is multiplied by 4 at each "
+            "refinement. Thus the direct limit of this literal rewrite is not "
+            "uniformly locally finite; a physical continuum limit needs a derived "
+            "measure/normalization or a different gluing rule."
+        ),
         "claim_boundary": (
             "The graph is a canonical realization of the frozen scalar route rewrite. "
             "It is not yet identified with the selected S3 PL complex, and carries "
