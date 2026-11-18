@@ -59,11 +59,9 @@ def realify(matrix: np.ndarray) -> np.ndarray:
     return np.concatenate([matrix.real, matrix.imag], axis=0)
 
 
-def rank_and_spectrum(matrix: np.ndarray, relative_tolerance: float = 1e-9):
+def rank_and_spectrum(matrix: np.ndarray, absolute_tolerance: float):
     singular = np.linalg.svd(matrix, compute_uv=False)
-    scale = float(singular[0]) if singular.size else 0.0
-    tolerance = relative_tolerance * max(1.0, scale)
-    return int(np.sum(singular > tolerance)), singular, tolerance
+    return int(np.sum(singular > absolute_tolerance)), singular, absolute_tolerance
 
 
 def compare_one(
@@ -75,13 +73,17 @@ def compare_one(
     half_tangent, _probability = projective_tangent_jacobian(node_states, edges)
     injection = edge_probe_injection(node_count, edges)
     pulled_tangent = half_tangent @ injection
-    edge_rank, edge_singular, edge_tol = rank_and_spectrum(realify(pulled_tangent))
     edge_qfi_from_pullback = injection.T @ full_qfi @ injection
     edge_qfi_from_pullback = 0.5 * (edge_qfi_from_pullback + edge_qfi_from_pullback.T)
     _probability2, direct_edge_qfi, direct_symmetry, _boundary2 = graph_qfi(node_states, edges)
     qfi_eigenvalues = np.linalg.eigvalsh(edge_qfi_from_pullback)
     qfi_scale = max(1.0, float(np.max(np.abs(qfi_eigenvalues))))
-    qfi_rank = int(np.sum(qfi_eigenvalues > 1e-9 * qfi_scale))
+    qfi_tolerance = 1e-9 * qfi_scale
+    # F = 4 R(D)^T R(D): singular-value cutoff must be sqrt(lambda cutoff / 4).
+    edge_rank, edge_singular, edge_tol = rank_and_spectrum(
+        realify(pulled_tangent), float(np.sqrt(qfi_tolerance / 4.0))
+    )
+    qfi_rank = int(np.sum(qfi_eigenvalues > qfi_tolerance))
     reconstructed = 4.0 * realify(pulled_tangent).T @ realify(pulled_tangent)
 
     # The holonomy-space gauge Jacobian is deliberately reported separately.
