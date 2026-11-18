@@ -8,6 +8,8 @@ on:
     paths:
       - 'scripts/q2_pl_graph_export.py'
       - 'tests/test_q2_pl_graph_export.py'
+      - 'scripts/q2_causal_pl_correspondence_gate.py'
+      - 'tests/test_q2_causal_pl_correspondence_gate.py'
       - '.github/workflows/q2-pl-graph-export.yml'
 
 permissions:
@@ -26,11 +28,17 @@ jobs:
         run: python -m pip install pytest
       - name: Run deterministic graph export tests
         run: python -m pytest -q tests/test_q2_pl_graph_export.py
+      - name: Run causal-to-PL correspondence tests
+        run: python -m pytest -q tests/test_q2_causal_pl_correspondence_gate.py
+      - name: Export finite causal-to-PL correspondence
+        run: python scripts/q2_causal_pl_correspondence_gate.py --max-generation 2 --output verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
       - name: Export all audited PL refinement levels
         run: python scripts/q2_pl_graph_export.py --max-generation 2 --output verification_results/Q2_PL_GRAPH_EXPORT.json
       - name: Upload graph identity and adjacency artifact
         uses: actions/upload-artifact@v4
         with:
           name: q2-pl-graph-export
-          path: verification_results/Q2_PL_GRAPH_EXPORT.json
+          path: |
+            verification_results/Q2_PL_GRAPH_EXPORT.json
+            verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
           if-no-files-found: error
