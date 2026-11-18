@@ -22,6 +22,8 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements(fesh
         assert level["feshbach_correction_operator_norm"] > 0.0
         assert level["feshbach_correction_min_eigenvalue"] >= -1e-9
         assert level["effective_operator_min_eigenvalue"] >= -1e-8
+        assert level["effective_operator_zero_mode_count"] == 1
+        assert level["effective_operator_gap"] > 0.0
         assert level["all_linear_solves_converged"] is True
         assert level["max_linear_solve_residual"] < 1e-8
         assert level["q_sector_gap_estimate"] is not None
