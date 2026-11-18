@@ -53,18 +53,26 @@ def relational_boundary_generator(pauli: np.ndarray) -> np.ndarray:
     )
 
 
-def relational_qfi_matrix(
+def relational_boundary_state(
     intertwiner_a: np.ndarray,
     intertwiner_b: np.ndarray,
-) -> tuple[float, np.ndarray, float]:
-    """QFI of the six-qubit state under its Gauss-reduced relational generator."""
+) -> tuple[np.ndarray, float]:
+    """Return |Psi_e> on six boundary qubits and its singlet-gluing probability."""
     psi = np.kron(intertwiner_a, intertwiner_b)
     glued = contract_shared_face(psi)
     probability = float(np.vdot(glued, glued).real)
     if probability <= 1e-14:
         raise ValueError("shared-face singlet contraction has zero support")
+    return glued / math.sqrt(probability), probability
 
-    state = glued / math.sqrt(probability)
+
+def relational_qfi_matrix(
+    intertwiner_a: np.ndarray,
+    intertwiner_b: np.ndarray,
+) -> tuple[float, np.ndarray, float]:
+    """QFI of rho_e=|Psi_e><Psi_e| under its Gauss-reduced relational generator."""
+    state, probability = relational_boundary_state(intertwiner_a, intertwiner_b)
+    glued = state * math.sqrt(probability)
     derivatives = []
     pullthrough_residuals = []
     for pauli in PAULI:
