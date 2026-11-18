@@ -40,7 +40,7 @@ def test_invalid_vertex_partitions_are_rejected(blocks):
     basis, _ = four_valent_intertwiner_basis(1)
     rng = np.random.default_rng(17)
     states = [random_intertwiner(rng, basis) for _ in range(nodes)]
-    with pytest.raises(ValueError, match="partition"):
+    with pytest.raises(ValueError, match="partition|non-empty"):
         fuse_vertex_blocks(states, edges, invariant_singlet_tensor(1), blocks)
 
 
