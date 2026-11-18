@@ -13,6 +13,7 @@ import json
 import math
 from pathlib import Path
 import sys
+from functools import lru_cache
 
 import numpy as np
 
@@ -52,6 +53,7 @@ def invariant_singlet_tensor(two_j: int) -> np.ndarray:
     return tensor
 
 
+@lru_cache(maxsize=None)
 def four_valent_intertwiner_basis(two_j: int) -> tuple[np.ndarray, float]:
     """Orthonormal columns span the kernel of all three total node generators."""
     generators = spin_generators(two_j)
@@ -167,7 +169,7 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
     projected_pair = basis.conj().T @ pair_operator @ basis
     pair_spectrum = np.linalg.eigvalsh(projected_pair)
     probabilities, diagonal_errors, cross_errors, pullthrough_errors = [], [], [], []
-    min_qfi_eigenvalues, cross_values = [], []
+    min_qfi_eigenvalues, cross_values, analytic_cross_errors = [], [], []
     for _ in range(trials):
         states = [random_intertwiner(rng, basis) for _ in range(3)]
         probability, qfi, symmetry = path_qfi(states, singlet, generators)
@@ -179,6 +181,10 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
         cross = qfi[:3, 3:]
         scalar = float(np.trace(cross) / 3.0)
         cross_values.append(scalar)
+        predicted_cross = (4.0 / 3.0) * float(
+            np.vdot(states[1], pair_operator @ states[1]).real
+        )
+        analytic_cross_errors.append(abs(scalar - predicted_cross))
         cross_errors.append(float(np.linalg.norm(cross - scalar * np.eye(3))))
         min_qfi_eigenvalues.append(float(np.linalg.eigvalsh(qfi)[0]))
         # The shared-node Gauss law moves the twist to the other three legs.
@@ -195,19 +201,6 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
             pullthrough_errors.append(float(np.linalg.norm(direct - pulled)))
         if symmetry > 1e-10:
             raise AssertionError("higher-spin path QFI is not symmetric")
-    # Invariant theory predicts cross block = (4/3)<J_0 dot J_3> I.
-    analytic_errors = []
-    for _ in range(trials):
-        middle = random_intertwiner(rng, basis)
-        predicted = (4.0 / 3.0) * float(
-            np.vdot(middle, pair_operator @ middle).real
-        )
-        # Cross scalar is sampled independently above; use its allowed spectral interval.
-        analytic_errors.append(max(
-            0.0,
-            max(cross_values) - (4.0 / 3.0) * float(pair_spectrum[-1]),
-            (4.0 / 3.0) * float(pair_spectrum[0]) - min(cross_values),
-        ))
     expected_pair_values = np.array([
         0.5 * (k * (k + 1.0) - 2.0 * j * (j + 1.0))
         for k in range(two_j + 1)
@@ -228,6 +221,7 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
         "cross_block_isotropy_max_error": max(cross_errors),
         "cross_block_scalar_min": min(cross_values),
         "cross_block_scalar_max": max(cross_values),
+        "cross_block_casimir_formula_max_error": max(analytic_cross_errors),
         "middle_pair_casimir_eigenvalues": pair_spectrum.tolist(),
         "expected_pair_casimir_eigenvalues": expected_pair_values.tolist(),
         "pair_casimir_spectrum_error": float(np.linalg.norm(pair_spectrum - expected_pair_values)),
@@ -243,6 +237,7 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
             ),
             "single_link_qfi_is_isotropic_and_exact": bool(max(diagonal_errors) < 2e-9),
             "network_cross_block_is_isotropic": bool(max(cross_errors) < 2e-9),
+            "network_cross_block_matches_middle_node_casimir": bool(max(analytic_cross_errors) < 2e-9),
             "pair_casimir_spectrum_is_exact": bool(np.linalg.norm(pair_spectrum - expected_pair_values) < 2e-9),
             "gauss_pullthrough_holds": bool(max(pullthrough_errors) < 2e-9),
             "network_qfi_is_psd": bool(min(min_qfi_eigenvalues) > -2e-9),
