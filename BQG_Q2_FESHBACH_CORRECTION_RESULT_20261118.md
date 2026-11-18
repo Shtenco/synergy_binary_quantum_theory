@@ -139,14 +139,21 @@ For \(|\lambda|<\Delta_Q\), where \(\Delta_Q\) is the true Q-sector gap, a rigor
 \frac{\lambda^2\|B\|_2^2}
 {\Delta_Q^3(1-|\lambda|/\Delta_Q)}.
 \]
-The implementation reports the diagnostic coefficient \(\|B\|_2^2/\widehat\Delta_Q^3\), where \(\widehat\Delta_Q\) is the smallest Ritz value returned by Lanczos. From the recorded finite-level estimates it is approximately
-\[
-g=1:\ 1.008\times10^3,\qquad
-g=2:\ 2.087\times10^6.
-\]
-This roughly 2,070-fold increase warns that the linearized energy-dependent approximation may be valid only in a progressively narrower spectral window. Important qualification: the Ritz value is an eigenvalue estimate, not a certified lower bound on the true Q-sector gap. Therefore these numerical coefficients are conditioning diagnostics, **not certified upper bounds** on the remainder. The analytic remainder inequality is rigorous when supplied with a proven lower bound \(\Delta_Q\); obtaining such a bound remains open. The coefficient increase is not evidence by itself that the exact self-energy diverges.
+The implementation reports both the diagnostic coefficient \(\|B\|_2^2/\widehat\Delta_Q^3\), using the smallest Lanczos Ritz estimate, and a **certified but conservative** coefficient based on a graph-theoretic lower bound for the gap.
 
-The code and tests report the norm, trace, extremal eigenvalues, and linear-solve residual for \(\Sigma'(0)\), as well as the positive induced metric \(Z_{\mathrm{eff}}\) and its generalized spectrum. The code also records Ritz residuals for the smallest and largest eigenvalue estimates. A small Ritz residual checks the returned approximate eigenpair but does not, by itself, certify that no smaller eigenvalue was missed. The true gap lower bound is therefore explicitly marked unavailable, and the numerical remainder coefficient is explicitly marked uncertified. The derivative and generalized-spectrum values are also not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
+For a connected graph with \(n\) vertices and diameter \(D\), pathwise Cauchy-Schwarz gives
+\[
+\lambda_2(L)\geq \frac{2}{(n-1)D}.
+\]
+A breadth-first search from any root gives its eccentricity \(e\), and \(D\leq 2e\). Therefore
+\[
+\boxed{\Delta_Q=\lambda_{\min}(QLQ|_Q)
+\geq \lambda_2(L)
+\geq \frac{1}{(n-1)e}.}
+\]
+The first inequality holds because the constant mode lies in the fibre-constant sector \(P\), so every vector in \(Q\) is orthogonal to constants. The implementation computes \(e\) by one BFS and uses this proven lower bound to produce a valid, though potentially very loose, upper bound on the energy-expansion remainder coefficient. The Lanczos Ritz estimate and its residual remain useful diagnostics, but are not substituted for the certified lower bound.
+
+The code and tests report the norm, trace, extremal eigenvalues, and linear-solve residual for \(\Sigma'(0)\), as well as the positive induced metric \(Z_{\mathrm{eff}}\) and its generalized spectrum. They check that the graph-theoretic lower bound is positive and no greater than the observed Ritz gap within its residual tolerance. These new derivative and generalized-spectrum values are not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
 
 ## Exact finite variational meaning
 
