@@ -28,6 +28,7 @@ def test_q2_causal_graph_is_connected_dag_with_exact_causal_depth():
         assert row["directed_acyclic"] is True
         assert row["path_length"] == 2 ** row["generation"]
         assert row["source_to_sink_path_count"] == 4 ** (2 ** row["generation"] - 1)
+        assert row["degree_max"] == 4 ** row["generation"]
 
 
 def test_q2_causal_graph_preserves_route_vertex_ancestry():
