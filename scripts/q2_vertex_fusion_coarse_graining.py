@@ -607,6 +607,120 @@ def run_coarse_graining_suite(two_j=1):
 
 
 
+
+def compare_micro_and_fused_reduced_qfi_many(
+    node_states, edges, singlet, blocks, keep_boundary_subsets, generators=None
+):
+    """Evaluate many reduced boundary subsystems after one pair of contractions."""
+    if generators is None:
+        generators = spin_generators(singlet.shape[0] - 1)
+    fused, boundaries, coarse_edges = fuse_vertex_blocks(
+        node_states, edges, singlet, blocks
+    )
+    dimension = singlet.shape[0]
+    occupied = {
+        (u, lu) for u, lu, _v, _lv in edges
+    } | {
+        (v, lv) for _u, _lu, v, lv in edges
+    }
+    boundary_keys = [
+        (v, leg)
+        for v in range(len(node_states))
+        for leg in range(4)
+        if (v, leg) not in occupied
+    ]
+    normalized_subsets = []
+    for subset in keep_boundary_subsets:
+        keys = tuple(tuple(key) for key in subset)
+        if not keys or len(set(keys)) != len(keys):
+            raise ValueError("kept boundary keys must be non-empty and unique")
+        if any(key not in boundary_keys for key in keys):
+            raise ValueError("kept boundary key is not an external half-link")
+        normalized_subsets.append((keys, tuple(boundary_keys.index(k) for k in keys)))
+
+    micro_raw = _micro_state(node_states, edges, singlet)
+    coarse_raw = _coarse_state(fused, boundaries, coarse_edges, singlet)
+    micro_norm, coarse_norm = np.linalg.norm(micro_raw), np.linalg.norm(coarse_raw)
+    if micro_norm <= 1e-14 or coarse_norm <= 1e-14:
+        raise ValueError("zero-support boundary state")
+    micro_state, coarse_state = micro_raw / micro_norm, coarse_raw / coarse_norm
+
+    micro_derivatives, coarse_derivatives = [], []
+    for _a, _b, edge_index, _original in coarse_edges:
+        for generator in generators:
+            dm = _micro_state(
+                node_states, edges, singlet, (edge_index, generator)
+            ) / micro_norm
+            dc = _coarse_state(
+                fused, boundaries, coarse_edges, singlet, (edge_index, generator)
+            ) / coarse_norm
+            dm -= micro_state * np.vdot(micro_state, dm)
+            dc -= coarse_state * np.vdot(coarse_state, dc)
+            micro_derivatives.append(dm)
+            coarse_derivatives.append(dc)
+
+    parameter_count = len(micro_derivatives)
+    pure_qfi = np.empty((parameter_count, parameter_count), dtype=float)
+    for a, da in enumerate(micro_derivatives):
+        for b, db in enumerate(micro_derivatives):
+            pure_qfi[a, b] = 4.0 * float(np.real(np.vdot(da, db)))
+    pure_qfi = 0.5 * (pure_qfi + pure_qfi.T)
+
+    results = []
+    for keys, keep_axes in normalized_subsets:
+        zero_micro = np.zeros_like(micro_state)
+        zero_coarse = np.zeros_like(coarse_state)
+        micro_rho, _ = _reduced_density_and_derivative(
+            micro_state, zero_micro, dimension, keep_axes
+        )
+        coarse_rho, _ = _reduced_density_and_derivative(
+            coarse_state, zero_coarse, dimension, keep_axes
+        )
+        micro_drhos, coarse_drhos = [], []
+        for derivative in micro_derivatives:
+            _rho, drho = _reduced_density_and_derivative(
+                micro_state, derivative, dimension, keep_axes
+            )
+            micro_drhos.append(drho)
+        for derivative in coarse_derivatives:
+            _rho, drho = _reduced_density_and_derivative(
+                coarse_state, derivative, dimension, keep_axes
+            )
+            coarse_drhos.append(drho)
+
+        micro_qfi = _sld_mixed_qfi(micro_rho, micro_drhos)
+        coarse_qfi = _sld_mixed_qfi(coarse_rho, coarse_drhos)
+        qfi_gap = 0.5 * (
+            (pure_qfi - micro_qfi) + (pure_qfi - micro_qfi).T
+        )
+        min_gap = (
+            float(np.linalg.eigvalsh(qfi_gap)[0]) if qfi_gap.size else 0.0
+        )
+        density_error = float(np.max(np.abs(micro_rho - coarse_rho)))
+        derivative_error = max(
+            (float(np.max(np.abs(a - b))) for a, b in zip(micro_drhos, coarse_drhos)),
+            default=0.0,
+        )
+        qfi_error = (
+            float(np.max(np.abs(micro_qfi - coarse_qfi)))
+            if micro_qfi.size else 0.0
+        )
+        results.append({
+            "kept_boundary_keys": [list(key) for key in keys],
+            "reduced_density_max_abs_error": density_error,
+            "reduced_derivative_max_abs_error": derivative_error,
+            "mixed_qfi_max_abs_error": qfi_error,
+            "pure_minus_mixed_qfi_min_eigenvalue": min_gap,
+            "passed": (
+                density_error < 2e-9
+                and derivative_error < 2e-8
+                and qfi_error < 2e-8
+                and min_gap > -2e-8
+            ),
+        })
+    return results
+
+
 def exhaustive_reduced_boundary_partition_control(
     graph_name, two_j, keep_boundary_keys, seed=20261202
 ):
