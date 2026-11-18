@@ -96,3 +96,20 @@ def test_path5_dimensionless_spectral_diagnostics_are_reported():
     assert 0.0 <= row["qfi_rank_fraction_mean"] <= 1.0
     assert row["normalized_spectral_variance_mean"] >= -1e-10
     assert result["graph_spin_coverage"]["path_5"] == [0.5]
+
+
+@pytest.mark.parametrize("two_j", [3, 4])
+def test_high_spin_graph_spectra_on_bounded_boundary_fixtures(two_j):
+    # Keep only 8-boundary-leg fixtures so j=3/2,2 remain tractable.
+    result = run(
+        two_j_values=(two_j,),
+        trials=2,
+        graph_names=("path_3", "cycle_4"),
+    )
+    assert result["passed"]
+    spin_key = str(two_j / 2.0)
+    assert set(result["graphs"][spin_key]) == {"path_3", "cycle_4"}
+    for row in result["graphs"][spin_key].values():
+        assert row["boundary_half_links"] == 8
+        assert row["qfi_rank_fraction_mean"] <= 1.0
+        assert row["checks"]["qfi_is_psd"]
