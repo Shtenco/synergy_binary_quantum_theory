@@ -73,20 +73,31 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
                     seen.add(v)
                     stack.append(v)
 
-        # Count directed source-to-sink paths by DAG dynamic programming.
+        # Count directed source-to-sink paths using a real topological sort.
+        outgoing = [[] for _ in vertices]
+        indegree_dag = [0] * len(vertices)
+        for edge in edges:
+            u, v = edge["source"], edge["target"]
+            outgoing[u].append(v)
+            indegree_dag[v] += 1
+        queue = [i for i, degree in enumerate(indegree_dag) if degree == 0]
+        topo = []
+        cursor = 0
+        while cursor < len(queue):
+            u = queue[cursor]
+            cursor += 1
+            topo.append(u)
+            for v in outgoing[u]:
+                indegree_dag[v] -= 1
+                if indegree_dag[v] == 0:
+                    queue.append(v)
+        acyclic = len(topo) == len(vertices)
         ways = [0] * len(vertices)
         ways[0] = 1
-        for u in range(len(vertices)):
-            for v in undirected[u]:
-                # Edges are directed from smaller creation depth to larger
-                # creation depth; use the explicit outgoing edge list below.
-                pass
-        outgoing = [[] for _ in vertices]
-        for edge in edges:
-            outgoing[edge["source"]].append(edge["target"])
-        for u in range(len(vertices)):
-            for v in outgoing[u]:
-                ways[v] += ways[u]
+        if acyclic:
+            for u in topo:
+                for v in outgoing[u]:
+                    ways[v] += ways[u]
 
         rows.append({
             "generation": generation,
@@ -94,6 +105,7 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
             "active_edge_count": len(edges),
             "expected_vertex_count": expected_vertices(generation, q),
             "connected": len(seen) == len(vertices),
+            "directed_acyclic": acyclic,
             "source_to_sink_path_count": ways[1],
             "path_length": 2 ** generation,
             "degree_min": min((indegree[i] + outdegree[i] for i in range(len(vertices))), default=0),
@@ -146,6 +158,7 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
             row["active_edge_count"] == 8 ** row["generation"] for row in rows
         ),
         "all_levels_connected": all(row["connected"] for row in rows),
+        "all_levels_are_dags": all(row["directed_acyclic"] for row in rows),
         "source_sink_paths_are_four_to_the_generation": all(
             row["source_to_sink_path_count"] == 4 ** row["generation"] for row in rows
         ),
