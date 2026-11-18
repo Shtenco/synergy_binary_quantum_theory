@@ -136,9 +136,15 @@ children mass conservation at both tested refinement steps.
 However, the quotient partition is not equitable: the gate detects 40
 non-equitable source/target fibre pairs at generation 1 and 408 at generation
 2. Therefore the natural coarse operator is a Galerkin/variational compression
-of the PL dual Laplacian, not an exact Markov lumping. The next gate must build
-this compressed operator, study its spectrum and refinement stability, and
-separate finite combinatorial conductance from physical QFI conductance.
+of the PL dual Laplacian, not an exact Markov lumping. The finite Galerkin stiffness matrix has now also been constructed from PL
+dual-edge multiplicities. Its quotient graphs are connected at generations 1
+and 2 (8 and 64 nodes; 16 and 180 weighted edge pairs respectively). These
+weights are combinatorial PL conductances, not QFI conductances.
+
+The next gate must study the spectrum and refinement stability of this
+compressed operator, determine whether the non-equitable projection admits a
+controlled correction, and separate finite combinatorial conductance from
+physical QFI conductance.
 Do not insert inverse-fibre weights as if they were already physically
 derived.
 
