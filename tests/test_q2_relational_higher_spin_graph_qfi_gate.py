@@ -44,15 +44,18 @@ def test_invalid_graph_reuses_half_link_rejected():
 def test_extended_graph_family_reports_complete_qfi_spectral_partition():
     result = run(two_j_values=(1, 2), trials=2)
     assert result["passed"]
-    assert {"path_3", "path_4", "star_4", "cycle_4"} <= set(result["graphs"]["0.5"])
+    assert {"path_3", "path_4", "path_5", "star_4", "cycle_4"} <= set(result["graphs"]["0.5"])
     expected_boundary_legs = {
         "path_3": 8,
         "path_4": 10,
+        "path_5": 12,
         "star_4": 10,
         "cycle_4": 8,
     }
     for spin, graph_rows in result["graphs"].items():
         for name, expected_boundary in expected_boundary_legs.items():
+            if name not in graph_rows:
+                continue
             row = graph_rows[name]
             assert row["boundary_half_links"] == expected_boundary
             assert row["qfi_parameter_dimension"] == 3 * row["edges"]
@@ -78,3 +81,18 @@ def test_higher_spin_graph_rejects_non_integer_half_link_indices(edge):
     with pytest.raises(ValueError, match="indices must be integers"):
         contract_graph(states, [edge], singlet)
 
+
+
+def test_path5_dimensionless_spectral_diagnostics_are_reported():
+    result = run(two_j_values=(1,), trials=2)
+    row = result["graphs"]["0.5"]["path_5"]
+    assert row["nodes"] == 5
+    assert row["edges"] == 4
+    assert row["boundary_half_links"] == 12
+    assert row["qfi_parameter_dimension"] == 12
+    assert row["qfi_spectral_normalization"].startswith("eigenvalues divided")
+    assert set(row["normalized_spectral_moments_mean"]) == {"1", "2", "3", "4"}
+    assert len(row["normalized_spectral_quantiles_mean"]) == 5
+    assert 0.0 <= row["qfi_rank_fraction_mean"] <= 1.0
+    assert row["normalized_spectral_variance_mean"] >= -1e-10
+    assert result["graph_spin_coverage"]["path_5"] == [0.5]
