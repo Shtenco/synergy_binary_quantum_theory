@@ -104,3 +104,40 @@ coverage choice, not evidence that larger graphs are physically invalid.
 
 The normalized spectral variance is computed per trial and then averaged,
 rather than taking the variance of a mixture of trial spectra.
+
+
+## Explicit collective edge-parameter blocking (2026-11-18)
+
+A first mathematically explicit blocking experiment is now implemented. It
+does **not** fuse graph vertices or trace out boundary degrees of freedom.
+Instead, it restricts the microscopic edge-angle parameter space to collective
+block modes. For a partition of the internal edges into blocks (b), the
+embedding (B) is defined by
+[
+delta\theta_e=\delta\Theta_b\quad(e\in b),
+\qquad
+F_{\mathrm{block}}=B^{T}F_{\mathrm{micro}}B.
+]
+Each block therefore has one shared three-component angle. The map contains
+an identity (3\times3) block for every microscopic edge assigned to that
+collective parameter block. This is a parameter-submanifold pullback, not a
+coarse graph obtained by tensor contraction.
+
+The fixed partitions are:
+- `path_3`: `((0,1),)`;
+- `path_4`: `((0,1),(2,))`;
+- `path_5`: `((0,1),(2,3))`;
+- `star_4`: `((0,1),(2,))`;
+- `cycle_4`: `((0,1),(2,3))`.
+
+For each trial the runner computes the pulled-back QFI, normalized spectral
+moments, quantiles, variance, rank fraction, symmetry error, and minimum
+eigenvalue. The map validator requires a disjoint, exhaustive partition of
+all microscopic edges. Tests verify the exact embedding, congruence formula,
+PSD preservation for a PSD input, and rejection of malformed partitions.
+
+Interpretation remains deliberately narrow: the result measures information
+along selected collective edge-twist directions. It does not establish a
+vertex-blocking renormalization, invariance under graph refinement, or a
+continuum fixed point. The next step is to compare alternative partitions and
+construct an actual fused-block boundary tensor before making those claims.
