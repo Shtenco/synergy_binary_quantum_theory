@@ -206,3 +206,62 @@ This supports a precise non-closure statement for independent local-Haar
 measures on these connected path blocks. It still does not determine the
 physical BQG measure, and it does not prove that every possible measure or
 every graph-block topology fails to close.
+
+## Fourth-order test: the pushforward is not Haar even on its image (verified 2026-11-18)
+
+The covariance/rank result above distinguishes the pushforward from Haar on the
+*full* boundary invariant space. A stronger test asks whether the induced
+measure might nevertheless be Haar on its smaller \(d^N\)-dimensional image.
+It is not.
+
+For one Haar-random pure state in \(\mathbb C^d\), the two-copy moment is
+\((I+F)/(d(d+1))\), where \(F\) swaps the two copies. Independence across
+the \(N\) vertices gives, after regrouping the tensor factors,
+
+\[
+M_{\mathrm{prod}}
+=\bigotimes_{v=1}^N\frac{I+F_v}{d(d+1)}.
+\]
+
+A single Haar-random vector in the full product space of dimension
+\(D=d^N\) instead has
+
+\[
+M_{\mathrm{global}}=\frac{I+\prod_{v=1}^N F_v}{D(D+1)}.
+\]
+
+The normalized fusion map is an isometry, so it preserves the
+Hilbert-Schmidt distance between these two-copy moment operators. Direct
+trace evaluation gives
+
+\[
+\|M_{\mathrm{prod}}-M_{\mathrm{global}}\|_2^2
+=\left(\frac{2}{d(d+1)}\right)^N
+-\frac{2}{D(D+1)} >0
+\quad (N>1).
+\]
+
+Thus the induced measure differs from Haar both on the full boundary
+invariant space (support/rank defect) and on its own image (higher-moment
+correlations inherited from the independent microscopic factors).
+
+| Spin | Vertices | Product two-copy purity | Global-Haar two-copy purity | Two-copy HS distance |
+|---|---:|---:|---:|---:|
+| j=1/2 | 2 | 0.111111 | 0.100000 | 0.105409 |
+| j=1/2 | 3 | 0.037037 | 0.027778 | 0.096225 |
+| j=1/2 | 4 | 0.012346 | 0.007353 | 0.070659 |
+| j=1 | 2 | 0.027778 | 0.022222 | 0.074536 |
+| j=1 | 3 | 0.004630 | 0.002646 | 0.044544 |
+| j=3/2 | 2 | 0.010000 | 0.007353 | 0.051450 |
+| j=2 | 2 | 0.004444 | 0.003077 | 0.036980 |
+
+All seven two-copy controls pass in the exported artifact. The dedicated
+test module reports 7/7 passing. Verified run:
+[44381415354](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44381415354),
+commit `d82c04cfc26ef0790dd3209992ebd0dcdc0495ad`; all 50/50 workflow
+steps passed. Artifact ID `14463543023` contains the seven passing
+higher-spin/block-size controls.
+
+This is a finite, exact demonstration that the chosen product-Haar
+microscopic ansatz induces a correlated, non-Haar block measure. It does
+not determine which measure the physical BQG dynamics selects.
