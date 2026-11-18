@@ -1,0 +1,38 @@
+name: q2-walsh-local-qfi-control
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/bqg-qfi-q2-emergent-graph-audit-20261118
+    paths:
+      - 'scripts/q2_walsh_local_qfi_control.py'
+      - 'scripts/micro_walsh_qgeom_gate.py'
+      - 'scripts/spatial_qubit_geometry_gate.py'
+      - 'tests/test_q2_walsh_local_qfi_control.py'
+      - '.github/workflows/q2-walsh-local-qfi-control.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qfi-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical and test dependencies
+        run: python -m pip install numpy pytest
+      - name: Run local QFI tests
+        run: python -m pytest -q tests/test_q2_walsh_local_qfi_control.py
+      - name: Export local QFI control result
+        run: python scripts/q2_walsh_local_qfi_control.py --output verification_results/Q2_WALSH_LOCAL_QFI_CONTROL.json
+      - name: Upload local QFI control
+        uses: actions/upload-artifact@v4
+        with:
+          name: q2-walsh-local-qfi-control
+          path: verification_results/Q2_WALSH_LOCAL_QFI_CONTROL.json
+          if-no-files-found: error
