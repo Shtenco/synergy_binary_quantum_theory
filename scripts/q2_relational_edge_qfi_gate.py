@@ -42,11 +42,22 @@ def contract_shared_face(two_block_state: np.ndarray) -> np.ndarray:
     ).reshape(-1)
 
 
+def relational_boundary_generator(pauli: np.ndarray) -> np.ndarray:
+    """K_e=-J_total on B's three retained boundary half-links."""
+    return -sum(
+        (0.5 * SQ.kron_all([
+            pauli if site == target else SQ.I2
+            for site in range(6)
+        ]) for target in range(3, 6)),
+        np.zeros((64, 64), dtype=complex),
+    )
+
+
 def relational_qfi_matrix(
     intertwiner_a: np.ndarray,
     intertwiner_b: np.ndarray,
-) -> tuple[float, np.ndarray]:
-    """QFI of the normalized six-qubit boundary state under B-half-link twists."""
+) -> tuple[float, np.ndarray, float]:
+    """QFI of the six-qubit state under its Gauss-reduced relational generator."""
     psi = np.kron(intertwiner_a, intertwiner_b)
     glued = contract_shared_face(psi)
     probability = float(np.vdot(glued, glued).real)
@@ -55,14 +66,22 @@ def relational_qfi_matrix(
 
     state = glued / math.sqrt(probability)
     derivatives = []
+    pullthrough_residuals = []
     for pauli in PAULI:
-        generator = node_generator(pauli, 0)
+        half_link_generator = node_generator(pauli, 0)
         derivative_raw = contract_shared_face(
-            np.kron(intertwiner_a, -1j * (generator @ intertwiner_b))
+            np.kron(intertwiner_a, -1j * (half_link_generator @ intertwiner_b))
         )
         # Differentiate normalization as well as the unnormalized contraction.
         radial = float(np.vdot(glued, derivative_raw).real) / probability
-        derivatives.append(derivative_raw / math.sqrt(probability) - radial * state)
+        derivative = derivative_raw / math.sqrt(probability) - radial * state
+
+        # The B-node Gauss law implies J_shared|iota_B> = -J_external|iota_B>.
+        # Hence the inserted half-link twist pulls through the gluing map to
+        # K_e=-sum(J_B,external) on the three retained B boundary legs.
+        boundary_derivative = -1j * (relational_boundary_generator(pauli) @ state)
+        pullthrough_residuals.append(float(np.linalg.norm(derivative - boundary_derivative)))
+        derivatives.append(derivative)
 
     qfi = np.zeros((3, 3), dtype=float)
     overlaps = [np.vdot(state, derivative) for derivative in derivatives]
@@ -71,7 +90,7 @@ def relational_qfi_matrix(
             np.vdot(derivatives[i], derivatives[j])
             - np.conjugate(overlaps[i]) * overlaps[j]
         ))
-    return probability, qfi
+    return probability, qfi, max(pullthrough_residuals)
 
 
 def random_intertwiner(rng: np.random.Generator) -> np.ndarray:
@@ -87,12 +106,16 @@ def run(seed: int = 20261118, trials: int = 16) -> dict[str, object]:
     probabilities = []
     matrices = []
     gauss_residuals = []
+    pullthrough_residuals = []
     for _ in range(trials):
         intertwiner_a = random_intertwiner(rng)
         intertwiner_b = random_intertwiner(rng)
-        probability, qfi = relational_qfi_matrix(intertwiner_a, intertwiner_b)
+        probability, qfi, pullthrough_residual = relational_qfi_matrix(
+            intertwiner_a, intertwiner_b
+        )
         probabilities.append(probability)
         matrices.append(qfi)
+        pullthrough_residuals.append(pullthrough_residual)
 
         for node_state in (intertwiner_a, intertwiner_b):
             for axis in range(3):
@@ -113,6 +136,7 @@ def run(seed: int = 20261118, trials: int = 16) -> dict[str, object]:
         ) < 1e-12,
         "each_node_satisfies_gauss_constraint": max(gauss_residuals) < 1e-12,
         "relational_qfi_is_identity_for_every_sample": max_qfi_error < 1e-11,
+        "half_link_twist_pulls_through_to_boundary_generator": max(pullthrough_residuals) < 1e-11,
         "mean_relational_qfi_is_identity": float(
             np.linalg.norm(mean_qfi - np.eye(3))
         ) < 1e-12,
@@ -131,6 +155,7 @@ def run(seed: int = 20261118, trials: int = 16) -> dict[str, object]:
         "relational_qfi_max_frobenius_error_from_identity": max_qfi_error,
         "normalized_qfi_metric_F_over_4": (mean_qfi / 4.0).tolist(),
         "max_node_gauss_residual": max(gauss_residuals),
+        "max_half_link_to_boundary_generator_residual": max(pullthrough_residuals),
         "checks": checks,
         "claim_boundary": (
             "This derives a relational QFI for the specified two-intertwiner "
