@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from scripts.q2_vertex_fusion_coarse_graining import (
-    exhaustive_path5_partition_control,
+    exhaustive_graph_partition_control,
     compare_staged_and_direct_fusion,
     deterministic_case,
     fuse_vertex_blocks,
@@ -77,10 +77,23 @@ def test_two_stage_vertex_fusion_equals_direct_fusion(two_j):
     assert result["staged_retained_edge_indices"] == [2]
     assert result["direct_retained_edge_indices"] == [2]
 
+@pytest.mark.parametrize("graph_name,expected_partitions", [
+    ("path_3", 5),   # Bell number B_3
+    ("path_4", 15),  # Bell number B_4
+    ("path_5", 52),  # Bell number B_5
+    ("star_4", 15),
+    ("cycle_4", 15),
+])
 @pytest.mark.parametrize("two_j", [1, 2])
-def test_exhaustive_path5_vertex_partitions_and_block_order_invariance(two_j):
-    result = exhaustive_path5_partition_control(two_j=two_j, seed=20261120 + two_j)
-    assert result["partition_count"] == 52  # Bell number B_5
+def test_exhaustive_graph_vertex_partitions_and_block_order_invariance(
+    graph_name, expected_partitions, two_j
+):
+    result = exhaustive_graph_partition_control(
+        graph_name, two_j=two_j, seed=20261120 + two_j
+    )
+    assert result["graph"] == graph_name
+    assert result["partition_count"] == expected_partitions
+    assert result["expected_partition_count"] == expected_partitions
     assert result["includes_block_order_reversal"]
     assert result["max_fused_block_gauss_relative_residual"] < 2e-9
     assert result["passed"], result
