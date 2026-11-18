@@ -534,3 +534,30 @@ definitions and claim limits. Additional quotient null modes remain an
 explicit result, not something removed by regularization. This does not yet
 derive a physical edge-frame redundancy, a holonomy dynamics, a BQG history
 measure, or the causal-PL QFI pushforward.
+
+
+## Follow-up: projective stabilizer diagnosis of residual quotient nulls (2026-11-18)
+
+The global quotient gate now builds the tangent map of the normalized
+contracted boundary-state ray for every half-link/axis parameter. Each
+derivative is projected orthogonally to the full complex state vector, so
+both radial normalization and global phase are removed. For the realified
+tangent matrix R(D), the implementation checks
+
+```text
+F_half = 4 R(D)^T R(D).
+```
+
+The quotient tangent SVD is compared with the quotient-QFI spectrum. Thus
+the nullity left after the known 3V Gauss directions is identified, within
+the tested finite model, as the dimension of the infinitesimal stabilizer
+of the projective boundary state. The code records its support over nodes
+and half-links. This is a state- and contraction-dependent stabilizer
+diagnostic, not a declaration that all residual nulls are fundamental
+gauge symmetries.
+
+A regression test checks the full matrix identity above. The focused report
+`BQG_Q2_RELATIONAL_GAUGE_QUOTIENT_RESULT_20261118.md` describes the
+construction and its interpretation boundary. Numerical rank and
+stabilizer-support outputs are intentionally not reported as validated
+until the updated workflow has executed.
