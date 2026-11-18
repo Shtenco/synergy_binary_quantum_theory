@@ -156,6 +156,8 @@ def collective_edge_blocks(name, edge_count):
             or not isinstance(edge, (int, np.integer))
             for edge in flat
         )
+        or any(len(block) == 0 for block in blocks)
+        or any(len(block) == 0 for block in blocks)
         or sorted(map(int, flat)) != list(range(edge_count))
     ):
         raise ValueError("collective edge blocks must partition every edge exactly once")
@@ -243,8 +245,10 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         normalized_variances.append(float(np.var(normalized_eigenvalues)))
         rank_fractions.append(float(spectral_ranks[-1] / (3 * len(edges))))
         effective_qfi, _block_map = collective_edge_pullback_qfi(qfi, blocks)
-        effective_qfi = 0.5 * (effective_qfi + effective_qfi.T)
-        effective_eigenvalues = np.linalg.eigvalsh(effective_qfi)
+        effective_symmetry_error = float(np.linalg.norm(effective_qfi - effective_qfi.T))
+        effective_eigenvalues = np.linalg.eigvalsh(
+            0.5 * (effective_qfi + effective_qfi.T)
+        )
         normalized_effective = effective_eigenvalues / isolated_qfi
         for order in (1, 2, 3, 4):
             block_spectral_moments[str(order)].append(
@@ -258,7 +262,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
             np.sum(effective_eigenvalues > 1e-9 * max(1.0, float(np.max(np.abs(effective_eigenvalues)))))
             / effective_qfi.shape[0]
         ))
-        block_symmetry_errors.append(float(np.linalg.norm(effective_qfi - effective_qfi.T)))
+        block_symmetry_errors.append(effective_symmetry_error)
         block_min_eigenvalues.append(float(effective_eigenvalues[0]))
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
@@ -379,7 +383,9 @@ def run(two_j_values=(1, 2), trials=3, graph_names=None):
             "All spectra are also reported after division by the exact isolated-link "
             "Casimir scale 4*j*(j+1)/3. Moments, quantiles, rank fraction, and "
             "variance provide dimensionless diagnostics; they are not asserted "
-            "to be coarse-graining invariants. Path_5 is restricted to j<=1 because "
+            "to be coarse-graining invariants. Collective blocking is an explicit "
+            "parameter restriction, not vertex fusion or boundary tracing. "
+            "Path_5 is restricted to j<=1 because "
             "its 12-leg dense boundary vector grows rapidly with representation "
             "dimension. Cycle and branched graph metrics are computed directly, "
             "without path additivity assumptions."
