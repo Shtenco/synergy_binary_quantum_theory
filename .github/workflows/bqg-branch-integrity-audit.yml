@@ -1,0 +1,66 @@
+name: bqg-branch-integrity-audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/q2-two-sided-singlet-qfi-20261118
+    paths:
+      - '**.py'
+      - '**.pyi'
+      - '**.pyx'
+      - '**.pxd'
+      - '**.ipynb'
+      - '**.json'
+      - '**.md'
+      - 'requirements.txt'
+      - '.github/workflows/bqg-branch-integrity-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-branch-integrity-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full-branch-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install declared runtime and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+      - name: Compile every Python source
+        run: python -m compileall -q .
+      - name: Validate canonical structural and physical truth ledgers
+        run: |
+          python scripts/audit_core_scope.py
+          python scripts/verify_theory_gates.py
+          python scripts/verify_depth6_frontier.py
+          python scripts/verify_physicalization_gates.py
+      - name: Validate public documentation and local links
+        run: |
+          python scripts/verify_readme_links.py
+          python scripts/validate_github_latex.py \
+            README.md THEORY_STATUS.md OPEN_PROBLEMS.md \
+            CANONICAL_THEORY_PACKAGE.md PREDICTIONS_AND_EXPERIMENTAL_TESTS.md \
+            BIT_TO_SPACETIME_CENTRAL_EQUATION.md
+      - name: Run every repository regression test
+        run: |
+          mkdir -p verification_results
+          python -m pytest -q tests --junitxml=verification_results/BRANCH_TEST_RESULTS.xml
+      - name: Upload full branch audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-branch-integrity-audit
+          path: |
+            verification_results/BRANCH_TEST_RESULTS.xml
+          if-no-files-found: warn
