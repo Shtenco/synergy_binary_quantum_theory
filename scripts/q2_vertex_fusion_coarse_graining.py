@@ -2,8 +2,8 @@
 """Exact vertex-block fusion and boundary-QFI equivalence for finite BQG graphs."""
 from __future__ import annotations
 import numpy as np
-from q2_relational_higher_spin_graph_qfi_gate import graph_fixtures, invariant_singlet_tensor, random_intertwiner, spin_generators
-from q2_relational_higher_spin_network_qfi_gate import four_valent_intertwiner_basis
+from scripts.q2_relational_higher_spin_graph_qfi_gate import graph_fixtures, invariant_singlet_tensor, random_intertwiner, spin_generators
+from scripts.q2_relational_higher_spin_network_qfi_gate import four_valent_intertwiner_basis
 
 
 def _partition(n, blocks):
