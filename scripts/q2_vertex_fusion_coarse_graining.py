@@ -118,10 +118,29 @@ def _coarse_state(fused, boundaries, coarse_edges, singlet, twist=None):
     return _contract(tensors, specs, outputs).reshape(-1)
 
 
+
+def fused_block_gauss_residuals(fused_tensors, generators):
+    """Relative residuals of the diagonal SU(2) Gauss generators on each fused block."""
+    residuals = []
+    for tensor in fused_tensors:
+        tensor = np.asarray(tensor, complex)
+        norm = float(np.linalg.norm(tensor))
+        block_residual = 0.0
+        for generator in generators:
+            total = np.zeros_like(tensor, dtype=complex)
+            for axis in range(tensor.ndim):
+                total += _apply_one_leg(tensor, axis, generator)
+            relative = float(np.linalg.norm(total)) / max(norm, 1e-14)
+            block_residual = max(block_residual, relative)
+        residuals.append(block_residual)
+    return residuals
+
 def compare_micro_and_fused_qfi(node_states, edges, singlet, blocks, generators=None):
     if generators is None:
         generators = spin_generators(singlet.shape[0] - 1)
     fused, boundaries, coarse_edges = fuse_vertex_blocks(node_states, edges, singlet, blocks)
+    gauss_residuals = fused_block_gauss_residuals(fused, generators)
+    gauss_max = max(gauss_residuals, default=0.0)
     micro = _micro_state(node_states, edges, singlet)
     coarse = _coarse_state(fused, boundaries, coarse_edges, singlet)
     nm, nc = np.linalg.norm(micro), np.linalg.norm(coarse)
@@ -148,7 +167,9 @@ def compare_micro_and_fused_qfi(node_states, edges, singlet, blocks, generators=
             "coarse_qfi": fc.tolist(), "qfi_max_abs_error": error,
             "retained_edge_indices": [e[2] for e in coarse_edges],
             "coarse_parameter_dimension": len(dm_all),
-            "passed": amp_error < 2e-9 and error < 2e-8}
+            "fused_block_gauss_relative_residuals": gauss_residuals,
+            "gauss_max_relative_residual": gauss_max,
+            "passed": amp_error < 2e-9 and error < 2e-8 and gauss_max < 2e-9}
 
 
 def deterministic_case(name="path_4", two_j=1, seed=20261118, blocks=None):
@@ -299,6 +320,7 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
     partitions = list(_set_partitions(range(nodes)))
     max_amplitude_error = 0.0
     max_qfi_error = 0.0
+    max_gauss_residual = 0.0
     for blocks in partitions:
         result = compare_micro_and_fused_qfi(states, edges, singlet, blocks)
         reordered_blocks = tuple(tuple(reversed(block)) for block in reversed(blocks))
@@ -331,6 +353,11 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
             result["qfi_max_abs_error"],
             reordered["qfi_max_abs_error"],
         )
+        max_gauss_residual = max(
+            max_gauss_residual,
+            result["gauss_max_relative_residual"],
+            reordered["gauss_max_relative_residual"],
+        )
     return {
         "graph": "path_5",
         "two_j": int(two_j),
@@ -340,10 +367,12 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
         "includes_block_order_reversal": True,
         "max_amplitude_error_up_to_global_phase": max_amplitude_error,
         "max_qfi_error": max_qfi_error,
+        "max_fused_block_gauss_relative_residual": max_gauss_residual,
         "passed": (
             len(partitions) == 52
             and max_amplitude_error < 2e-9
             and max_qfi_error < 2e-8
+            and max_gauss_residual < 2e-9
         ),
     }
 
