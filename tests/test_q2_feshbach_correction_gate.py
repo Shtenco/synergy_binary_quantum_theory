@@ -26,6 +26,12 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements(fesh
         assert level["max_linear_solve_residual"] < 1e-8
         assert level["q_sector_gap_estimate"] is not None
         assert level["q_plus_p_largest_eigenvalue"] <= 8.0 + 1e-8
+        assert level["self_energy_slope_min_eigenvalue"] >= -1e-8
+        assert level["self_energy_slope_operator_norm"] > 0.0
+        assert level["max_second_resolvent_solve_residual"] < 1e-8
+        assert level["self_energy_slope_operator_norm"] >= (
+            level["leakage_operator_norm"] ** 2 / 64.0 - 1e-8
+        )
 
 
 def test_generation_one_matches_exact_finite_control_values(feshbach_result):
