@@ -10,6 +10,7 @@ on:
       - 'tests/test_q2_pl_graph_export.py'
       - 'scripts/q2_causal_pl_correspondence_gate.py'
       - 'tests/test_q2_causal_pl_correspondence_gate.py'
+      - 'tests/test_q2_feshbach_correction_gate.py'
       - 'scripts/q2_pl_generation3_preflight.py'
       - 'tests/test_q2_pl_generation3_preflight.py'
       - 'scripts/q2_relational_edge_qfi_gate.py'
