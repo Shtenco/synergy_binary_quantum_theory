@@ -199,3 +199,33 @@ This closes exhaustive finite partition coverage for the five current graph
 fixtures at these two spin values. It does not prove invariance under
 arbitrary graph refinement, arbitrary spin, boundary partial trace, or a
 physical renormalization-group flow.
+
+## Higher-spin extension on small-boundary graphs (verified 2026-11-18)
+
+To extend beyond \(j=1\) without constructing prohibitively large dense
+boundary vectors, the exhaustive audit now also covers path_3 and cycle_4
+at \(j=3/2\) and \(j=2\). These fixtures have at most eight external
+half-links in the tested contractions. All set partitions were enumerated,
+and each was repeated with reversed block and within-block order:
+
+| Spin | Graph | Partitions | Max boundary-state residual | Max QFI residual | Max Gauss residual |
+|---|---|---:|---:|---:|---:|
+| j=3/2 | path_3 | 5 | 2.585e-16 | 2.665e-15 | 3.052e-15 |
+| j=3/2 | cycle_4 | 15 | 1.794e-16 | 1.776e-15 | 3.645e-15 |
+| j=2 | path_3 | 5 | 2.169e-16 | 3.553e-15 | 5.390e-15 |
+| j=2 | cycle_4 | 15 | 2.763e-16 | 5.329e-15 | 6.424e-15 |
+
+All 40 canonical partitions and all 40 reversed-order controls passed.
+The exported JSON reports 80 partition/order evaluations and top-level
+`passed: true`.
+
+Verified run:
+[44373952171](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44373952171),
+commit `566b0ee860f06b0ef688d4ba76e887af95c06e19`. All 46 workflow steps
+passed. The downloaded artifact (ID `14459628478`) was parsed independently;
+the higher-spin JSON values above come directly from that artifact.
+
+Combined coverage is now: all 102 partitions of the five graph fixtures at
+each of \(j=1/2,1\), plus all partitions of path_3 and cycle_4 at each of
+\(j=3/2,2\). This remains a finite set of exact contraction identities,
+not an RG fixed-point or continuum result.
