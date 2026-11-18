@@ -58,6 +58,50 @@ def edge_singlet_common_generators(
     return result
 
 
+def graph_topological_gauge_rank(node_count, edges):
+    """Exact rank from connected components with or without boundary legs."""
+    if node_count < 1:
+        raise ValueError("node_count must be positive")
+    adjacency = [[] for _ in range(node_count)]
+    occupied = set()
+    for edge in edges:
+        if len(edge) != 4:
+            raise ValueError("edge must have four indices")
+        u, lu, v, lv = map(int, edge)
+        if u == v or not (0 <= u < node_count and 0 <= v < node_count):
+            raise ValueError("invalid graph endpoints")
+        if not (0 <= lu < 4 and 0 <= lv < 4):
+            raise ValueError("invalid half-link slots")
+        for endpoint in ((u, lu), (v, lv)):
+            if endpoint in occupied:
+                raise ValueError("half-link reused")
+            occupied.add(endpoint)
+        adjacency[u].append(v)
+        adjacency[v].append(u)
+    seen, components, closed = set(), 0, 0
+    for root in range(node_count):
+        if root in seen:
+            continue
+        components += 1
+        stack, members = [root], []
+        seen.add(root)
+        while stack:
+            node = stack.pop()
+            members.append(node)
+            for neighbor in adjacency[node]:
+                if neighbor not in seen:
+                    seen.add(neighbor)
+                    stack.append(neighbor)
+        if not any((node, leg) not in occupied for node in members for leg in range(4)):
+            closed += 1
+    rank = 3 * (node_count + len(edges) - closed)
+    return {"connected_components": components, "closed_components": closed,
+            "open_components": components - closed,
+            "topological_generator_dependencies": 3 * closed,
+            "topological_joint_generator_rank": rank,
+            "topological_joint_quotient_dimension": 12 * node_count - rank}
+
+
 def joint_quotient_basis(
     node_count: int, edges: list[tuple[int, int, int, int]]
 ) -> tuple[np.ndarray, dict[str, int]]:
@@ -69,7 +113,9 @@ def joint_quotient_basis(
     tolerance = max(generators.shape) * np.finfo(float).eps * max(1.0, scale) * 100.0
     rank = int(np.sum(singular > tolerance))
     quotient = u[:, rank:]
+    topology = graph_topological_gauge_rank(node_count, edges)
     return quotient, {
+        **topology,
         "full_parameter_count": 12 * node_count,
         "vertex_gauss_generator_count": 3 * node_count,
         "edge_singlet_common_generator_count": 3 * len(edges),
@@ -78,6 +124,9 @@ def joint_quotient_basis(
         "expected_independent_generator_count": 3 * node_count + 3 * len(edges),
         "generator_families_independent": bool(
             rank == 3 * node_count + 3 * len(edges)
+        ),
+        "svd_rank_matches_topology": bool(
+            rank == topology["topological_joint_generator_rank"]
         ),
     }
 
