@@ -296,7 +296,15 @@ def compare_staged_and_direct_fusion(node_states, edges, singlet,
 
 def _reduced_density_and_derivative(state, derivative, dimension, keep_axes):
     """Trace all but selected tensor axes from a normalized pure state."""
-    axis_count = int(round(np.log(state.size) / np.log(dimension)))
+    axis_count = 0
+    remaining_size = int(state.size)
+    while remaining_size > 1:
+        if remaining_size % dimension:
+            raise ValueError("boundary state size is not a power of local dimension")
+        remaining_size //= dimension
+        axis_count += 1
+    if remaining_size != 1:
+        raise ValueError("invalid boundary state dimension")
     keep_axes = tuple(keep_axes)
     traced_axes = tuple(axis for axis in range(axis_count) if axis not in keep_axes)
     permutation = keep_axes + traced_axes
