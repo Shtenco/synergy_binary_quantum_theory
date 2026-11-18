@@ -62,3 +62,19 @@ def test_extended_graph_family_reports_complete_qfi_spectral_partition():
             assert row["checks"]["qfi_rank_nullity_partition_is_consistent"]
             assert row["qfi_spectral_maximum_over_trials"] >= row["qfi_spectral_minimum_over_trials"]
 
+@pytest.mark.parametrize(
+    "edge",
+    [
+        (0.5, 0, 1, 1),
+        (0, 0, 1, 1.0),
+        (False, 0, 1, 1),
+        (0, 0, 1, "1"),
+    ],
+)
+def test_higher_spin_graph_rejects_non_integer_half_link_indices(edge):
+    basis, _ = four_valent_intertwiner_basis(1)
+    states = [random_intertwiner(np.random.default_rng(8), basis) for _ in range(2)]
+    singlet = invariant_singlet_tensor(1)
+    with pytest.raises(ValueError, match="indices must be integers"):
+        contract_graph(states, [edge], singlet)
+
