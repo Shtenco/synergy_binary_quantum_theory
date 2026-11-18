@@ -104,21 +104,36 @@ Until a shared-face relational state `rho_e` and physical relational
 generator `K_e` are derived, a QFI Laplacian on the PL dual graph is a
 placeholder, not a BQG prediction.
 
-## 6. Decision / next gate
+## 6. Updated decision: finite global correspondence found
 
 **Decision:** do not identify the causal DAG with the PL primal or dual graph.
-A stronger result than mere label matching is now proved: the four route
-labels occur as the four distinct face colours in the local star of every PL
-dual vertex. The global causal-to-PL correspondence remains unproved.
+However, a concrete many-to-one correspondence from PL tetrahedra to active
+causal edges has now been constructed and implemented in
+`scripts/q2_causal_pl_correspondence_gate.py`.
 
-The next valid research gate is not a numerical QFI run. It is a
-`causal_to_PL_correspondence_gate` that extends this proven local star map to
-an explicitly proposed microscopic gluing relation and tests its refinement
-naturality, incidence compatibility, orientation, fibre multiplicities, and
-degree/measure behavior.
-If no such relation can be derived from the microscopic rule, record that as
-a no-go for this version of the bridge and revise the model before physical
-QFI is attempted.
+The map uses:
+- the route colour of the parent face opposite the first vertex in a
+  barycentric flag to select one of the four causal route labels;
+- the parent face opposite the final vertex to select the L/R child;
+- causal endpoint incidence when the two parent tetrahedra map to distinct
+  causal edges;
+- opposite oriented PL boundary sides when both parent tetrahedra map to the
+  same causal edge.
+
+Through generations 0–2, the gate checks surjectivity, refinement naturality,
+and preservation of PL-dual adjacency as endpoint incidence of causal edges.
+The map is not an isomorphism or a graph covering. Its fibres are nonuniform
+at generation 2: 64–224 PL tetrahedra per causal edge, with mean 144. The
+exact histogram and construction are documented in
+`BQG_Q2_CAUSAL_PL_CORRESPONDENCE_GATE_RESULT_20261118.md`.
+
+This closes the *finite combinatorial correspondence* gate through generation
+2, conditional on the configured CI tests. It does not close the infinite
+refinement limit, the measure/operator problem, or physical QFI. The next gate
+must derive a refinement-compatible measure from the nonuniform fibres and
+test whether a corresponding weighted Laplacian has a controlled limit.
+Do not insert inverse-fibre weights as if they were already physically
+derived.
 
 ## Reproduction sources
 
