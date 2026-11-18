@@ -115,14 +115,14 @@ The full physical causal cone, physical rigging map, physical Born measure, reta
 
 ## 5. Repository history and integration safety
 
-At the updated audit snapshot (work-branch commit `947899010608f77fe5c8a0889bb1f465e2eb8fe4`), the work branch and `main` remain historically diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
+At the updated audit snapshot (work-branch commit `6ef322664c5ef64889d82100952ef789245b71b8`), the work branch and `main` remain historically diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
 
-- work branch: 1,165 commits ahead of `main`;
+- work branch: 1,166 commits ahead of `main`;
 - `main`: 12 commits not contained in the work branch;
-- direct recursive Git-tree comparison: `main` has 746 paths and the work branch has 893;
-- work tree adds 147 paths (18 workflows, 39 scripts, 45 tests and 45 documentation files), removes 0 paths, and has 37 shared paths with different blob contents (4 workflows, 18 scripts, 1 test and 8 documentation files, plus 6 other shared paths).
+- direct recursive Git-tree comparison of file/blob entries: `main` has 724 files and the work branch has 871;
+- the work tree adds 147 files (18 workflows, 39 scripts, 45 tests and 45 documentation files), removes 0 files, and has 33 shared files with different blob contents (4 workflows, 18 scripts, 1 test, 8 Markdown documents and 2 JSON ledgers).
 
-This direct tree comparison corrects the earlier shorthand that described two documentation paths as main-only: both `BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md` and `BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md` exist on both branches, but the work-branch blobs are expanded revisions (18,580 vs 9,047 characters and 40,850 vs 11,788 characters, respectively). There are no paths present only on `main` in this tree snapshot. The 37 differing shared paths and divergent commit histories still require a deliberate integration review; do not merge or force-update `main` automatically.
+This direct tree comparison corrects the earlier shorthand that described two documentation paths as main-only: both `BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md` and `BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md` exist on both branches, but the work-branch blobs are expanded revisions (18,580 vs 9,047 characters and 40,850 vs 11,788 characters, respectively). There are no files present only on `main` in this tree snapshot. The 33 differing shared files and divergent commit histories still require a deliberate integration review; do not merge or force-update `main` automatically.
 
 ## 6. Audit changes made on the work branch
 
