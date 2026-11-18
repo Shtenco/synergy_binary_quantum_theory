@@ -136,3 +136,32 @@ implementation. They still do not establish a physical RG transformation:
 the map currently contracts internal singlets exactly and retains cut legs,
 without tracing or summing internal degrees of freedom, specifying a
 coarse-graining measure, or deriving scale-dependent effective couplings.
+
+## Two-spin exhaustive partition audit (verified 2026-11-18)
+
+The exhaustive path_5 control was extended to execute at both \(j=1/2\)
+and \(j=1\), not merely the smaller spin. The workflow now exports two
+separate JSON records and includes both in the artifact:
+
+- \(j=1/2\): all 52 Bell partitions pass; maximum boundary-amplitude
+  residual \(3.4724549033\times10^{-16}\), maximum retained-edge QFI
+  residual \(8.8817841970\times10^{-16}\).
+- \(j=1\): all 52 Bell partitions pass; maximum boundary-amplitude
+  residual \(3.1681352919\times10^{-16}\), maximum retained-edge QFI
+  residual \(2.6645352591\times10^{-15}\).
+
+The spin-one staged/direct path_5 check also passes: boundary-state residual
+\(1.7873771438\times10^{-16}\), QFI residual
+\(4.4408920985\times10^{-16}\), with the same retained edge identity [2].
+
+The result was verified from the downloaded and independently parsed
+workflow artifact produced by
+[GitHub Actions run 44368258342](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44368258342),
+commit `b8be1972464190512885baeaf2306ba67a712bc8). All 44 workflow steps
+completed successfully; both JSON controls report `passed: true`.
+
+This closes the finite combinatorial partition audit for path_5 at these two
+spin labels. It does not close the broader physical coarse-graining problem:
+other graph families, larger spins, boundary reductions, internal-state
+sums, and a specified scale-dependent effective dynamics remain separate
+questions.
