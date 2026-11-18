@@ -105,12 +105,18 @@ def run(two_j_values: tuple[int, ...] = (1, 2, 3, 4, 5, 6)) -> dict[str, object]
     }
 
 
+def _json_default(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     result = run()
-    rendered = json.dumps(result, indent=2)
+    rendered = json.dumps(result, indent=2, default=_json_default)
     print(rendered)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
