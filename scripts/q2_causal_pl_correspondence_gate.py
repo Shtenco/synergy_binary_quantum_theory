@@ -394,6 +394,8 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     A_PP = 0.5 * (A_PP + A_PP.T)
 
     q_sector_gap_estimate = None
+    gap_ritz_residual = None
+    largest_ritz_residual = None
     q_plus_p_largest_eigenvalue = None
     if leakage_frobenius <= 1e-14:
         correction = np.zeros((m, m), dtype=float)
@@ -406,12 +408,24 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
             return project_q(laplacian_apply(q_vector)) + p_vector
 
         operator = LinearOperator((n, n), matvec=qlq_plus_p, dtype=float)
-        smallest = float(eigsh(
-            operator, k=1, which="SA", return_eigenvectors=False, tol=1e-10
-        )[0])
-        largest = float(eigsh(
-            operator, k=1, which="LA", return_eigenvectors=False, tol=1e-10
-        )[0])
+        smallest_values, smallest_vectors = eigsh(
+            operator, k=1, which="SA", return_eigenvectors=True, tol=1e-12,
+            maxiter=200000,
+        )
+        smallest = float(smallest_values[0])
+        gap_ritz_residual = float(np.linalg.norm(
+            qlq_plus_p(smallest_vectors[:, 0])
+            - smallest * smallest_vectors[:, 0]
+        ))
+        largest_values, largest_vectors = eigsh(
+            operator, k=1, which="LA", return_eigenvectors=True, tol=1e-12,
+            maxiter=200000,
+        )
+        largest = float(largest_values[0])
+        largest_ritz_residual = float(np.linalg.norm(
+            qlq_plus_p(largest_vectors[:, 0])
+            - largest * largest_vectors[:, 0]
+        ))
         # P contributes an artificial eigenvalue 1. In the present finite
         # levels the lowest eigenvalue is below 1 and therefore belongs to Q.
         if smallest < 1.0 - 1e-8:
@@ -513,15 +527,19 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         ),
         "linearized_generalized_largest_eigenvalue": float(generalized_eigenvalues[-1]),
         "q_sector_gap_estimate": q_sector_gap_estimate,
+        "q_sector_gap_ritz_residual": gap_ritz_residual,
+        "q_sector_gap_certified_lower_bound": None,
         "q_plus_p_largest_eigenvalue": q_plus_p_largest_eigenvalue,
+        "q_plus_p_largest_ritz_residual": largest_ritz_residual,
         "q_plus_p_condition_estimate": (
             q_plus_p_largest_eigenvalue / q_sector_gap_estimate
             if q_sector_gap_estimate is not None else None
         ),
-        "self_energy_linearization_remainder_coefficient": (
+        "self_energy_linearization_remainder_coefficient_using_gap_estimate": (
             leakage_operator ** 2 / (q_sector_gap_estimate ** 3)
             if q_sector_gap_estimate is not None else None
         ),
+        "remainder_bound_certified": False,
         "max_linear_solve_residual": solve_residual_max,
         "linear_solve_columns": solve_count,
         "all_linear_solves_converged": True,
