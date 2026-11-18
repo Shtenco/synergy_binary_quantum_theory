@@ -31,6 +31,24 @@ Thus the rule is recursive and uses only the existing PL face colours, barycentr
 
 At every level the map is surjective and every fibre is nonempty. At generation 2 the fibre multiplicities are nonuniform: minimum 64, maximum 224, mean 144. This nonuniformity is a result, not something to smooth away.
 
+## Refinement-consistent pushforward measure
+
+The nonuniform fibres nevertheless define a canonical finite measure by pushing forward PL tetrahedral counting measure and dividing by the known subdivision factor 24 per generation:
+
+\[
+\mu_g(e)=\frac{|\Phi_g^{-1}(e)|}{24^g}.
+\]
+
+Its total mass is exactly 16 at generations 0, 1, and 2. More strongly, it is consistent under refinement: for every parent causal edge e,
+
+\[
+\sum_{e'\in\mathrm{Ch}(e)}\mu_{g+1}(e')=\mu_g(e).
+\]
+
+This follows because every parent PL tetrahedron has exactly 24 children and all 24 map to children of its own parent causal edge. The gate checks the identity numerically for every parent fibre at both refinement steps. The probability measure is \(\bar\mu_g=\mu_g/16\).
+
+This is a genuine derived measure on the finite causal-edge partitions, not an inverse-fibre weighting. It does not yet specify a measure on causal vertices or a continuum measure.
+
 ## Incidence and refinement checks
 
 The gate verifies:
@@ -44,6 +62,8 @@ The gate verifies:
 
 The PL-dual adjacency counts checked are 32, 768, and 18,432 respectively.
 
+The partition is **not** an exact Markov lumping of the PL-dual random walk: the number of neighbours in a target fibre is not constant across every source fibre. The gate detects 40 non-equitable source/target fibre pairs at generation 1 and 408 at generation 2 (maximum neighbour-count variation 1 and 2 respectively). Thus the induced coarse weighted Laplacian can be interpreted as a Galerkin/variational compression, but not as an exact autonomous quotient dynamics.
+
 ## What this does and does not prove
 
 **Proved by the finite combinatorial construction:** a recursive, surjective, many-to-one adjacency-preserving correspondence exists through generation 2 for the frozen q=2 causal rewrite and the frozen barycentric PL refinement.
@@ -56,7 +76,7 @@ The PL-dual adjacency counts checked are 32, 768, and 18,432 respectively.
 - a physical inter-block relational state and generator;
 - QFI conductances, spectral dimension, semiclassical dynamics, or Einstein equations.
 
-The nonuniform fibre distribution is now the central measure-theoretic issue. Any continuum/QFI construction must derive how these fibres contribute to the measure and operator. Assigning inverse-fibre weights by hand would be an additional model assumption, not a result of this gate.
+The nonuniform fibre distribution is now explicit, and its normalized pushforward counting measure is refinement-consistent. The remaining operator issue is subtler: the partition is not equitable, so the compressed operator is variational rather than an exact Markov quotient. Any continuum/QFI construction must derive how this measure and the non-lumpability correction behave under further refinement. Assigning inverse-fibre weights by hand would be an additional model assumption, not a result of this gate.
 
 ## Reproduction
 
@@ -64,4 +84,4 @@ The nonuniform fibre distribution is now the central measure-theoretic issue. An
 - `tests/test_q2_causal_pl_correspondence_gate.py`
 - CI workflow: `.github/workflows/q2-pl-graph-export.yml`
 
-The workflow is configured to run both the PL exporter tests and this correspondence gate, and to upload the JSON result. The code has been committed; CI execution must be checked independently before describing the tests as passing.
+The workflow is configured to run both the PL exporter tests and this correspondence gate, and to upload the JSON result. The code has been committed; CI execution must be checked independently before describing the tests as passing. The workflow now also checks mass conservation and non-lumpability diagnostics.
