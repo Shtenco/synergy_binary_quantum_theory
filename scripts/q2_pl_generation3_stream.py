@@ -37,8 +37,11 @@ from q2_causal_pl_correspondence_gate import (
 
 
 def _advance_one_generation(tetrahedra, parent_map, orientations,
-                            causal_edges, next_vertex, generation):
-    dual = dual_graph_payload(generation, tetrahedra)
+                            causal_edges, next_vertex, generation,
+                            chain_by_tet=None, previous_faces=None):
+    dual = dual_graph_payload(
+        generation, tetrahedra, chain_by_tet, previous_faces
+    )
     vertex_colours = _vertex_face_colours(dual)
     face_sides, _ = _parent_face_sides(
         tetrahedra, parent_map, causal_edges, orientations, dual
@@ -218,19 +221,25 @@ def run():
     # Compare the direct construction against incidence matching at generations
     # 1 and 2 before using it for the larger generation-3 graph.
     comparison = []
+    chain_by_tet = None
+    previous_faces = None
     for generation in range(2):
-        parent_dual = dual_graph_payload(generation, tetrahedra)
+        parent_dual = dual_graph_payload(
+            generation, tetrahedra, chain_by_tet, previous_faces
+        )
         comparison.append({
             "generation": generation + 1,
             **_compare_with_incidence(tetrahedra, parent_dual),
         })
         (tetrahedra, parent_map, orientations, causal_edges,
-         next_vertex, _, _) = _advance_one_generation(
+         next_vertex, previous_faces, chain_by_tet) = _advance_one_generation(
             tetrahedra, parent_map, orientations, causal_edges,
-            next_vertex, generation
+            next_vertex, generation, chain_by_tet, previous_faces
         )
 
-    generation2_dual = dual_graph_payload(2, tetrahedra)
+    generation2_dual = dual_graph_payload(
+        2, tetrahedra, chain_by_tet, previous_faces
+    )
     if not generation2_dual["all_faces_two_sided_and_colour_consistent"]:
         raise ValueError("generation-2 parent dual face pairing is invalid")
 
