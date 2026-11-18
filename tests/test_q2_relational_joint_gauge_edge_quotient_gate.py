@@ -134,3 +134,22 @@ def test_topological_rank_matches_svd_on_deterministic_random_graphs():
             12 * nodes - topology["topological_joint_generator_rank"]
         )
 
+@pytest.mark.parametrize(
+    "edge",
+    [
+        (0.9, 0, 1, 1),
+        (0, 0, 1, 1.0),
+        (False, 0, 1, 1),
+        (0, 0, 1, "1"),
+    ],
+)
+def test_non_integer_half_link_indices_are_rejected(edge):
+    from scripts.q2_relational_joint_gauge_edge_quotient_gate import (
+        graph_topological_gauge_rank,
+    )
+
+    with pytest.raises(ValueError, match="indices must be integers"):
+        edge_singlet_common_generators(2, [edge])
+    with pytest.raises(ValueError, match="indices must be integers"):
+        graph_topological_gauge_rank(2, [edge])
+
