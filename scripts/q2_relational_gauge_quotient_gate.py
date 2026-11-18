@@ -27,6 +27,32 @@ from q2_relational_graph_qfi_gate import (
 )
 
 
+def extended_open_graph_fixtures():
+    """Open path, branched star, and cycle controls with distinct boundary counts."""
+    return {
+        **graph_fixtures(),
+        "path_4": (4, [(0, 3, 1, 0), (1, 3, 2, 0), (2, 3, 3, 0)]),
+        "star_4": (4, [(0, 0, 1, 0), (0, 1, 2, 0), (0, 2, 3, 0)]),
+    }
+
+
+def _validated_edge_indices(edge, node_count: int) -> tuple[int, int, int, int]:
+    if len(edge) != 4:
+        raise ValueError("each edge must be (u, leg_u, v, leg_v)")
+    if any(
+        isinstance(value, (bool, np.bool_))
+        or not isinstance(value, (int, np.integer))
+        for value in edge
+    ):
+        raise ValueError("edge endpoint and half-link indices must be integers")
+    u, leg_u, v, leg_v = map(int, edge)
+    if u == v or not (0 <= u < node_count and 0 <= v < node_count):
+        raise ValueError("edge endpoints must be distinct valid nodes")
+    if not (0 <= leg_u < 4 and 0 <= leg_v < 4):
+        raise ValueError("half-link slots must be in [0,3]")
+    return u, leg_u, v, leg_v
+
+
 def vertex_gauge_generators(node_count: int) -> np.ndarray:
     """Return G (12V x 3V), one common SU(2) rotation per vertex."""
     if node_count < 1:
@@ -52,13 +78,7 @@ def two_sided_edge_parameter_map(
     mapping = np.zeros((12 * node_count, 6 * len(edges)), dtype=float)
     occupied: set[tuple[int, int]] = set()
     for edge_index, edge in enumerate(edges):
-        if len(edge) != 4:
-            raise ValueError("each edge must be (u, leg_u, v, leg_v)")
-        u, leg_u, v, leg_v = map(int, edge)
-        if u == v or not (0 <= u < node_count and 0 <= v < node_count):
-            raise ValueError("edge endpoints must be distinct valid nodes")
-        if not (0 <= leg_u < 4 and 0 <= leg_v < 4):
-            raise ValueError("half-link slots must be in [0,3]")
+        u, leg_u, v, leg_v = _validated_edge_indices(edge, node_count)
         for endpoint in ((u, leg_u), (v, leg_v)):
             if endpoint in occupied:
                 raise ValueError("a half-link cannot belong to more than one edge")
@@ -261,7 +281,7 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
         raise ValueError("at least two trials are required")
     rng = np.random.default_rng(seed)
     results = {}
-    for name, (node_count, edges) in graph_fixtures().items():
+    for name, (node_count, edges) in extended_open_graph_fixtures().items():
         gauge_rows = []
         endpoint_rows = []
         for _ in range(trials):
@@ -362,8 +382,8 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
         "section_comparison": "reference half-link 0 versus reference half-link 3; compare generalized spectra using the induced quotient Gram metric",
         "edge_parameterization": "six independent endpoint parameters per internal edge, three at each endpoint",
         "claim_boundary": (
-            "This is a finite spin-1/2 path and cycle control. The quotient may "
-            "retain additional physical null modes; no arbitrary-graph theorem, "
+            "This is a finite spin-1/2 path, branched-star, and cycle control. "
+            "The quotient may retain additional physical null modes; no arbitrary-graph theorem, "
             "holonomy dynamics, BQG history measure, causal-PL pushforward, "
             "or continuum spectral-dimension claim follows."
         ),
