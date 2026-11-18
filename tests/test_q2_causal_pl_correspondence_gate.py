@@ -79,3 +79,6 @@ def test_q2_galerkin_quotient_conductances_are_derived_from_pl_adjacency():
     assert level2["quotient_connected"] is True
     assert all(edge["weight"] > 0 for edge in level2["quotient_conductances"])
     assert "not QFI conductances" in level2["conductance_semantics"]
+    first = level2["quotient_conductances"][0]
+    assert first["normalized_conductance"] == first["integer_multiplicity"] / (24 ** 2)
+    assert level2["conductance_normalization"] == "integer multiplicity / 24^2"
