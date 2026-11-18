@@ -61,8 +61,11 @@ subsequent refinement. In particular, the source and sink degrees are
 ]
 
 The finite-level maximum degree is therefore 1, 4, 16, 64, 256, 1024 at
-generations 0 through 5. In the literal direct limit, each retained vertex
-has unbounded degree. Thus the raw rewrite is **not uniformly locally finite**.
+generations 0 through 5. The handshake identity is checked at every level,
+\\(\\sum_v\\deg(v)=2E_g^{active}=2\\cdot8^g\\), so the mean degree tends to
+\\(7/2\\) even while the maximum diverges. In the literal direct limit, each
+retained vertex has unbounded degree. Thus the raw rewrite is **not uniformly
+locally finite**.
 
 This is a real continuum-limit blocker, not a coding defect. Before using its
 ordinary graph Laplacian as a physical spatial operator, the theory must derive
