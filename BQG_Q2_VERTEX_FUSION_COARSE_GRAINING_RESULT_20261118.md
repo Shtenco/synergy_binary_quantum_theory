@@ -302,3 +302,45 @@ reduced-boundary JSON reports top-level `passed: true`.
 This closes the finite reduced-boundary SLD-QFI consistency check for the
 tested partitions and spins. It still does not derive a scale-dependent
 effective action, a microscopic statistical measure, or a continuum RG flow.
+
+## Full CI verification of the mixed-state extension (verified 2026-11-18)
+
+The latest workflow run includes the corrected pure-limit cross-check
+(`SLD QFI = pure-state QFI` when no boundary leg is traced) and exhaustive
+mixed-boundary controls over every set partition of path_3 and cycle_4,
+including reversed block order and reversed order inside blocks.
+
+The exported mixed-state control contains 80 canonical partition cases:
+5 + 15 partitions for each of two graph fixtures and two spin values
+\(j=1/2,1\). Reversed-order controls are also evaluated, for 160
+partition/order evaluations total. All report `passed: true`.
+
+| Spin | Graph | Partitions | Max reduced-state error | Max derivative error | Max mixed-QFI error |
+|---|---|---:|---:|---:|---:|
+| j=1/2 | path_3 | 5 | 1.665e-16 | 2.776e-17 | 2.567e-32 |
+| j=1/2 | cycle_4 | 15 | 2.220e-16 | 5.554e-17 | 9.080e-19 |
+| j=1 | path_3 | 5 | 2.776e-17 | 2.861e-17 | 1.151e-31 |
+| j=1 | cycle_4 | 15 | 1.112e-16 | 4.163e-17 | 1.249e-16 |
+
+For each tested reduced subsystem, the minimum eigenvalue of the
+pure-minus-mixed QFI matrix was nonnegative at the reported precision
+(`0.0` in the JSON summaries), consistent with QFI monotonicity under
+partial trace. The independent no-trace test also confirms that the SLD
+mixed-state formula reduces to the pure-state QFI formula when the complete
+boundary is retained.
+
+Verified CI run:
+[44375574126](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44375574126),
+commit `6b770909a2417bbbb0ba730062aba38ca163730d`. The workflow completed
+47/47 steps successfully, including the dedicated fusion test step and all
+four JSON exports. The downloaded artifact (ID `14461372746`) was parsed
+independently; all four vertex-fusion JSON files report top-level
+`passed: true`.
+
+This validates exact finite tensor-network identities and finite-dimensional
+QFI data processing for the enumerated graph fixtures, spins, states, and
+subsystems. It does not establish a scale-dependent effective action, a
+nontrivial RG transformation on couplings, a fixed point, universality, or
+a continuum limit. Those require a specified microscopic ensemble/measure,
+coarse variables and induced effective measure, and an explicit scale-flow
+observable.
