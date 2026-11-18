@@ -197,9 +197,12 @@ separate. The QFI heat parameter cannot fill the missing physical-clock step.
 ## Decision
 
 **Do not promote BQG to “space-time derived from binary information” yet.**
-The most valuable next code task is a canonical q=2 graph exporter plus a
-QFI-on-that-exact-graph runner, with deterministic artifacts and the gates
-above. The result must be allowed to fail.
+The graph-export stage has since been implemented as separate PL primal/dual,
+causal-route and local-Walsh-QFI controls (see the follow-up sections below).
+The next highest-value task is to derive a gauge-covariant two-block reduced
+state and relational generator on a shared PL face, and then derive the map
+from the scalar causal DAG to the PL dual graph. Only after those inputs exist
+should the QFI Laplacian be promoted to a physical spectral-dimension test.
 
 No existing PASS is changed by this audit. No physicalization gate is closed
 by this document.
