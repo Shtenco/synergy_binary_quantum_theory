@@ -16,7 +16,7 @@ def test_global_su2_gauge_qfi_vanishes_after_gauss_projection():
     result = run()
     import numpy as np
     assert result["gauss_singlet_weight"] == pytest.approx(2.0 / 9.0, abs=1e-12)
-    assert result["global_SU2_generator_residual"] < 1e-12
+    assert result["global_SU2_singlet_generator_residual"] < 1e-12
     assert np.linalg.norm(result["global_SU2_QFI_after_Gauss_projection"]) < 1e-12
 
 
