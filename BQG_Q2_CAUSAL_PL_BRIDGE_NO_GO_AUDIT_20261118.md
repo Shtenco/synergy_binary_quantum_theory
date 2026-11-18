@@ -80,9 +80,17 @@ A proposed bridge must give, for every generation:
 - compatibility diagrams between successive refinement maps;
 - invariants checked by code, including fibre sizes and local degree bounds.
 
-The map must be derived from the microscopic gluing/dynamics. Matching route
-labels alone is insufficient. The scalar causal DAG starts from one directed
-edge, while the PL carrier starts from a closed 3-manifold triangulation.
+A precise *local* correspondence is now established in code: at every exported
+PL-dual vertex, its four incident dual edges have route colours exactly
+{00, 01, 10, 11}, each once. The PL exporter checks this at generations 0–2.
+This identifies the four alternatives of a q=2 rewrite cell with the four
+coloured face-directions around one tetrahedral dual vertex. It is a local
+star correspondence, not a map of the full causal graph: it does not assign
+causal vertices/edges to PL tetrahedra/shared faces, nor prove refinement
+naturality between the two constructions.
+
+The scalar causal DAG starts from one directed edge, while the PL carrier
+starts from a closed 3-manifold triangulation.
 
 ## 5. QFI consequence
 
@@ -99,12 +107,15 @@ placeholder, not a BQG prediction.
 ## 6. Decision / next gate
 
 **Decision:** do not identify the causal DAG with the PL primal or dual graph.
-The only established commonality is the frozen four-route label set.
+A stronger result than mere label matching is now proved: the four route
+labels occur as the four distinct face colours in the local star of every PL
+dual vertex. The global causal-to-PL correspondence remains unproved.
 
 The next valid research gate is not a numerical QFI run. It is a
-`causal_to_PL_correspondence_gate` that accepts an explicitly proposed
-microscopic gluing relation and tests its refinement naturality, incidence
-compatibility, orientation, fibre multiplicities, and degree/measure behavior.
+`causal_to_PL_correspondence_gate` that extends this proven local star map to
+an explicitly proposed microscopic gluing relation and tests its refinement
+naturality, incidence compatibility, orientation, fibre multiplicities, and
+degree/measure behavior.
 If no such relation can be derived from the microscopic rule, record that as
 a no-go for this version of the bridge and revise the model before physical
 QFI is attempted.
