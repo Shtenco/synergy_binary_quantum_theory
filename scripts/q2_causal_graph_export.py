@@ -167,9 +167,10 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
             row["source_to_sink_path_count"] == 4 ** (2 ** row["generation"] - 1) for row in rows
         ),
         "all_hashes_present": all(len(row["graph_sha256"]) == 64 for row in rows),
-        "route_labels_are_c4_carrier_labels": all(
-            tuple(label for label in ROUTE_LABELS) == ("00", "01", "10", "11")
-            for _ in (0,)
+        "four_distinct_two_bit_route_labels": (
+            len(ROUTE_LABELS) == branches
+            and len(set(ROUTE_LABELS)) == branches
+            and all(len(label) == 2 and set(label) <= {"0", "1"} for label in ROUTE_LABELS)
         ),
     }
     return {
