@@ -434,7 +434,35 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         correction = B.T @ solutions
         correction = 0.5 * (correction + correction.T)
 
+        # The derivative of the self-energy at lambda=0 is
+        # B^T (Q L Q)^(-2) B. It controls the first frequency/energy
+        # dependence beyond the static Schur complement.
+        second_solutions = np.zeros((n, m), dtype=float)
+        second_residuals = []
+        for column in range(m):
+            second_solution, info = cg(
+                operator, solutions[:, column],
+                rtol=1e-10, atol=1e-12, maxiter=20000
+            )
+            if info != 0:
+                raise RuntimeError(
+                    f"Feshbach second-resolvent CG failed at generation "
+                    f"{generation}, column {column}, info={info}"
+                )
+            second_solutions[:, column] = second_solution
+            second_residuals.append(float(np.linalg.norm(
+                qlq_plus_p(second_solution) - solutions[:, column]
+            )))
+        second_solve_residual_max = max(second_residuals, default=0.0)
+        self_energy_slope = B.T @ second_solutions
+        self_energy_slope = 0.5 * (self_energy_slope + self_energy_slope.T)
+
+    if leakage_frobenius <= 1e-14:
+        self_energy_slope = np.zeros((m, m), dtype=float)
+        second_solve_residual_max = 0.0
+
     correction_eigenvalues = np.linalg.eigvalsh(correction)
+    slope_eigenvalues = np.linalg.eigvalsh(self_energy_slope)
     effective = A_PP - correction
     effective = 0.5 * (effective + effective.T)
     effective_eigenvalues = np.linalg.eigvalsh(effective)
@@ -454,6 +482,13 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "feshbach_correction_operator_norm": correction_norm,
         "feshbach_correction_frobenius_norm": float(np.linalg.norm(correction, ord="fro")),
         "feshbach_to_galerkin_operator_ratio": correction_norm / app_norm if app_norm > 0 else None,
+        "self_energy_slope_operator_norm": float(np.linalg.norm(self_energy_slope, ord=2)),
+        "self_energy_slope_frobenius_norm": float(np.linalg.norm(self_energy_slope, ord="fro")),
+        "self_energy_slope_trace": float(np.trace(self_energy_slope)),
+        "self_energy_slope_min_eigenvalue": float(slope_eigenvalues[0]),
+        "self_energy_slope_max_eigenvalue": float(slope_eigenvalues[-1]),
+        "self_energy_slope_to_identity_ratio": float(np.linalg.norm(self_energy_slope, ord=2)),
+        "max_second_resolvent_solve_residual": second_solve_residual_max,
         "feshbach_correction_min_eigenvalue": float(correction_eigenvalues[0]),
         "feshbach_correction_max_eigenvalue": float(correction_eigenvalues[-1]),
         "effective_operator_min_eigenvalue": float(effective_eigenvalues[0]),
