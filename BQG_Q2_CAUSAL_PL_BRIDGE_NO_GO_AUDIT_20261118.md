@@ -103,7 +103,10 @@ Gauss-singlet projection. A separate two-block spin-network gluing gate now
 constructs two arbitrary four-valent spin-`1/2` intertwiners, contracts one
 shared pair of half-links with the invariant epsilon tensor, retains the six
 external half-links, and inserts a relative twist on one shared half-link
-before contraction.
+before contraction. The B-node Gauss law pulls this half-link
+generator through the contraction to the boundary relational generator
+`K_e^a = -sum_{r=1}^3 J^a_{B,r}`; the six-leg relational state is
+`rho_e = |Psi_AB><Psi_AB|`.
 
 For this specified gluing channel, the singlet-contraction probability is
 exactly (1/4), independent of the two intertwiner states, and the boundary
