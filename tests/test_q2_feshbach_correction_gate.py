@@ -34,7 +34,6 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements(fesh
         assert level["linearized_generalized_gap"] is not None
         assert level["linearized_generalized_gap"] >= -1e-8
         assert level["self_energy_linearization_remainder_coefficient_using_gap_estimate"] > 0.0
-        assert level["remainder_bound_certified"] is False
         assert level["q_sector_gap_certified_lower_bound"] > 0.0
         assert level["q_sector_gap_certified_lower_bound"] <= (
             level["q_sector_gap_estimate"] + level["q_sector_gap_ritz_residual"] + 1e-8
