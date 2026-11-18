@@ -33,6 +33,23 @@ def graph_fixtures():
     }
 
 
+def _validated_edge(edge, node_count: int) -> tuple[int, int, int, int]:
+    if len(edge) != 4:
+        raise ValueError("edges must be (u, leg_u, v, leg_v)")
+    if any(
+        isinstance(value, (bool, np.bool_))
+        or not isinstance(value, (int, np.integer))
+        for value in edge
+    ):
+        raise ValueError("edge endpoint and half-link indices must be integers")
+    u, lu, v, lv = map(int, edge)
+    if u == v or not (0 <= u < node_count and 0 <= v < node_count):
+        raise ValueError("invalid graph edge endpoints")
+    if not (0 <= lu < 4 and 0 <= lv < 4):
+        raise ValueError("invalid half-link slots")
+    return u, lu, v, lv
+
+
 def validate_graph(states, edges, dimension):
     if not states:
         raise ValueError("at least one node state is required")
@@ -44,13 +61,7 @@ def validate_graph(states, edges, dimension):
             raise ValueError(f"node {node} state is not normalized")
     normalized = []
     for edge in edges:
-        if len(edge) != 4:
-            raise ValueError("edges must be (u, leg_u, v, leg_v)")
-        u, lu, v, lv = map(int, edge)
-        if u == v or not (0 <= u < len(states) and 0 <= v < len(states)):
-            raise ValueError("invalid graph edge endpoints")
-        if not (0 <= lu < 4 and 0 <= lv < 4):
-            raise ValueError("invalid half-link slots")
+        u, lu, v, lv = _validated_edge(edge, len(states))
         for endpoint in ((u, lu), (v, lv)):
             if endpoint in occupied:
                 raise ValueError("a half-link is used by multiple edges")
