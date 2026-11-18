@@ -39,6 +39,9 @@ on:
       - 'scripts/q2_relational_higher_spin_network_qfi_gate.py'
       - 'tests/test_q2_relational_higher_spin_network_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI_RESULT_20261118.md'
+      - 'scripts/q2_relational_haar_averaged_star_qfi_gate.py'
+      - 'tests/test_q2_relational_haar_averaged_star_qfi_gate.py'
+      - 'BQG_Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI_RESULT_20261118.md'
       - 'scripts/q2_su2_irrep_singlet_invariance_gate.py'
       - 'tests/test_q2_su2_irrep_singlet_invariance_gate.py'
       - 'BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md'
@@ -95,6 +98,10 @@ jobs:
         run: python -m pytest -q tests/test_q2_relational_higher_spin_network_qfi_gate.py
       - name: Export higher-spin four-valent network QFI control
         run: python scripts/q2_relational_higher_spin_network_qfi_gate.py --output verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json
+      - name: Run Haar-averaged star QFI tests
+        run: python -m pytest -q tests/test_q2_relational_haar_averaged_star_qfi_gate.py
+      - name: Export Haar-averaged star QFI control
+        run: python scripts/q2_relational_haar_averaged_star_qfi_gate.py --output verification_results/Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI.json
       - name: Run arbitrary-irrep SU(2) singlet invariance tests
         run: python -m pytest -q tests/test_q2_su2_irrep_singlet_invariance_gate.py
       - name: Export arbitrary-irrep SU(2) singlet invariance control
@@ -134,4 +141,5 @@ jobs:
             verification_results/Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI.json
             verification_results/Q2_SU2_IRREP_SINGLET_INVARIANCE.json
             verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json
+            verification_results/Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI.json
           if-no-files-found: error
