@@ -82,3 +82,25 @@ def test_q2_galerkin_quotient_conductances_are_derived_from_pl_adjacency():
     first = level2["quotient_conductances"][0]
     assert first["normalized_conductance"] == first["integer_multiplicity"] / (24 ** 2)
     assert level2["conductance_normalization"] == "integer multiplicity / 24^2"
+
+
+
+def test_q2_galerkin_operator_has_one_zero_mode_and_positive_spectral_gap():
+    result = run(max_generation=2)
+    for row in result["levels"][1:]:
+        assert row["operator_zero_mode_count"] == 1
+        assert row["operator_spectral_gap"] is not None
+        assert row["operator_spectral_gap"] > 0
+        assert row["operator_largest_eigenvalue"] >= row["operator_spectral_gap"]
+        assert min(row["operator_spectrum"]) >= -1e-9
+        assert len(row["operator_spectrum"]) == row["causal_active_edges"]
+
+
+def test_q2_finite_heat_trace_is_monotone_but_not_claimed_as_dimension_limit():
+    result = run(max_generation=2)
+    for row in result["levels"][1:]:
+        traces = [item["normalized_heat_trace"] for item in row["heat_trace"]]
+        assert all(a >= b for a, b in zip(traces, traces[1:]))
+        assert all(item["effective_spectral_dimension"] >= -1e-8
+                   for item in row["effective_spectral_dimension"])
+        assert "continuum limit are not established" in row["spectral_interpretation"]
