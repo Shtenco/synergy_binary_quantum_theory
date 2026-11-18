@@ -7,9 +7,15 @@ from scripts.q2_relational_higher_spin_network_qfi_gate import four_valent_inter
 
 
 def _partition(n, blocks):
-    blocks = tuple(tuple(int(v) for v in b) for b in blocks)
+    raw = tuple(tuple(b) for b in blocks)
+    if any(not b for b in raw):
+        raise ValueError("vertex blocks must be non-empty")
+    flat = [v for b in raw for v in b]
+    if any(isinstance(v, (bool, np.bool_)) or not isinstance(v, (int, np.integer)) for v in flat):
+        raise ValueError("vertex blocks must contain integer indices")
+    blocks = tuple(tuple(int(v) for v in b) for b in raw)
     flat = [v for b in blocks for v in b]
-    if any(not b for b in blocks) or sorted(flat) != list(range(n)) or len(flat) != len(set(flat)):
+    if sorted(flat) != list(range(n)) or len(flat) != len(set(flat)):
         raise ValueError("vertex blocks must partition every vertex exactly once")
     return blocks
 
@@ -51,8 +57,12 @@ def fuse_vertex_blocks(node_states, edges, singlet, blocks):
     blocks = _partition(n, blocks)
     owner = {v: bi for bi, block in enumerate(blocks) for v in block}
     used, normalized = set(), []
-    for ei, (u, lu, v, lv) in enumerate(edges):
-        if any(isinstance(x, bool) or not isinstance(x, (int, np.integer)) for x in (u, lu, v, lv)):
+    for ei, edge in enumerate(edges):
+        if len(edge) != 4:
+            raise ValueError("edges must be (u, leg_u, v, leg_v)")
+        u, lu, v, lv = edge
+        if any(isinstance(x, (bool, np.bool_)) or not isinstance(x, (int, np.integer))
+               for x in (u, lu, v, lv)):
             raise ValueError("edge indices must be integers")
         if u == v or not (0 <= u < n and 0 <= v < n and 0 <= lu < 4 and 0 <= lv < 4):
             raise ValueError("invalid graph edge")
@@ -76,7 +86,7 @@ def fuse_vertex_blocks(node_states, edges, singlet, blocks):
         boundaries.append(boundary)
     lookup = {(v, leg): (bi, axis) for bi, b in enumerate(boundaries)
               for axis, (v, leg) in enumerate(b)}
-    coarse_edges = [((lookup[(u, lu)]), (lookup[(v, lv)]), ei, (u, lu, v, lv))
+    coarse_edges = [(lookup[(u, lu)], lookup[(v, lv)], ei, (u, lu, v, lv))
                     for u, lu, v, lv, ei in normalized if owner[u] != owner[v]]
     return fused, boundaries, coarse_edges
 
@@ -104,8 +114,7 @@ def _coarse_state(fused, boundaries, coarse_edges, singlet, twist=None):
     occupied = {a for a, _b, _i, _o in coarse_edges} | {b for _a, b, _i, _o in coarse_edges}
     axis_map = {(v, leg): (bi, axis) for bi, boundary in enumerate(boundaries)
                 for axis, (v, leg) in enumerate(boundary)}
-    outputs = [axis_map[k] for k in sorted(axis_map)
-               if axis_map[k] not in occupied]
+    outputs = [axis_map[k] for k in sorted(axis_map) if axis_map[k] not in occupied]
     return _contract(tensors, specs, outputs).reshape(-1)
 
 
@@ -135,8 +144,8 @@ def compare_micro_and_fused_qfi(node_states, edges, singlet, blocks, generators=
         return 4.0 * np.real([[np.vdot(a, b) for b in ds] for a in ds])
     fm, fc = make_qfi(dm_all), make_qfi(dc_all)
     error = float(np.max(np.abs(fm - fc))) if fm.size else 0.0
-    return {"amplitude_error_up_to_global_phase": amp_error, "micro_qfi": fm,
-            "coarse_qfi": fc, "qfi_max_abs_error": error,
+    return {"amplitude_error_up_to_global_phase": amp_error, "micro_qfi": fm.tolist(),
+            "coarse_qfi": fc.tolist(), "qfi_max_abs_error": error,
             "retained_edge_indices": [e[2] for e in coarse_edges],
             "coarse_parameter_dimension": len(dm_all),
             "passed": amp_error < 2e-9 and error < 2e-8}
