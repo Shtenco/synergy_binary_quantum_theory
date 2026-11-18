@@ -393,3 +393,37 @@ The workflow now includes the network-QFI tests and JSON artifact. The
 repository tests and GitHub Actions remain unverified until an actual run
 and status are observed. The result is still a finite spin-1/2 path control,
 not a full BQG network measure or continuum conductance.
+
+
+## Follow-up: four-valent star QFI and exact gauge quotient (2026-11-18)
+
+The two-link chain result extends to all four incident half-links of one
+four-valent invariant node. For link labels i,j and SU(2) axes a,b, the
+local pure-state QFI factorizes exactly as
+
+```text
+F_(i,a),(j,b) = C_ij delta_ab
+C_ij = (4/3) <iota | J_i . J_j | iota>
+```
+
+The diagonal is one. The Gauss constraint implies C times the all-ones
+vector is zero, so the 12-parameter star QFI has three exact null directions:
+the common SU(2) rotation. Thus four incident links are not four independent
+positive scalar conductances. Their relative twists have a coupled 4-by-4
+Casimir matrix.
+
+Fixing the fourth link parameter to zero gives the 3-by-3 principal relative
+metric C[0:3,0:3], positive definite for generic invariant intertwiners.
+An independent 32-state local numerical reproduction found the largest
+Gauss-null residual about 1.1e-15, smallest gauge-fixed eigenvalue about
+5.73e-3, and pair-metric eigenvalues nonnegative to roundoff.
+
+This is still a local invariant-node metric. A full BQG graph calculation
+must combine these node blocks consistently across shared links, perform
+boundary gauge reduction and tracing, and define the history-amplitude
+measure before any graph conductance or spectral dimension is claimed.
+
+Files:
+- `scripts/q2_relational_star_qfi_gate.py`
+- `tests/test_q2_relational_star_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_STAR_QFI_RESULT_20261118.md`
