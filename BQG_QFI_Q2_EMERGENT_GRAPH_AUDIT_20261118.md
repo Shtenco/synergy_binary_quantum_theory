@@ -472,3 +472,26 @@ This is direct evidence that network topology and the full boundary
 contraction affect both off-diagonal and diagonal QFI blocks. Isolated
 two-node QFI is not a universal edge weight. These are independent local
 numerical checks, not repository CI results.
+
+
+### Full graph half-link parameter space and Gauss null modes
+
+The graph gate was extended from one twist triplet per internal edge to all
+four half-link twist triplets at every node, including boundary legs. This
+produces a 12V-by-12V QFI and makes each node's three SU(2) Gauss directions
+explicit. The code checks that all 3V nodewise common-rotation vectors are
+null. It then fixes the fourth half-link at each node as a reference and
+reports the resulting 9V-dimensional principal metric, including any
+additional null modes and its numerical rank.
+
+For the tested path and cycle samples the full QFI is positive semidefinite
+up to roundoff and the nodewise gauge-null residuals are at machine
+precision. The gauge-fixed metric is also PSD but not full rank: the
+independent sample showed ranks 21/27 for the path and 24/36 for the cycle.
+This means nodewise Gauss reduction is necessary but not sufficient to
+guarantee a nondegenerate physical metric. No epsilon regularization is
+introduced.
+
+The graph-level gate now tests both edge-parameter QFI and full half-link
+QFI. Its artifact remains a finite spin-1/2 control; the causal-PL
+pushforward and BQG history measure are still outstanding.
