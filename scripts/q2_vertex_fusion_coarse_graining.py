@@ -680,11 +680,9 @@ def run_reduced_boundary_suite(two_j_values=(1, 2)):
     """Compare mixed-state QFI after tracing boundary legs on two graph families."""
     specifications = {
         "path_3": {
-            "blocks": ((0, 1), (2,)),
             "keep_boundary_keys": ((0, 0), (0, 1)),
         },
         "cycle_4": {
-            "blocks": ((0, 1), (2, 3)),
             "keep_boundary_keys": ((0, 1), (0, 3)),
         },
     }
@@ -692,10 +690,7 @@ def run_reduced_boundary_suite(two_j_values=(1, 2)):
     for two_j in two_j_values:
         controls[str(two_j / 2.0)] = {}
         for graph_name, spec in specifications.items():
-            nodes, edges = graph_fixtures()[graph_name]
-            rng = np.random.default_rng(20261201 + two_j + nodes)
-            basis, _ = four_valent_intertwiner_basis(two_j)
-            states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+            nodes, _edges = graph_fixtures()[graph_name]
             controls[str(two_j / 2.0)][graph_name] = (
                 exhaustive_reduced_boundary_partition_control(
                     graph_name, two_j, spec["keep_boundary_keys"],
