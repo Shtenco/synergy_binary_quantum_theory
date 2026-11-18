@@ -686,3 +686,33 @@ The new CI step runs the focused tests and exports
 This is an exact result for the current normalized spin-1/2 singlet
 contraction and tensor-index convention. It is not yet a derivation of a
 general higher-spin edge-frame gauge theory or BQG coarse conductance.
+
+
+## Follow-up: local singlet invariance for arbitrary SU(2) irreps (2026-11-18)
+
+The two-sided endpoint cancellation extends beyond spin one-half at the
+level of the invariant two-leg tensor. For (d=2j+1), in the magnetic
+basis (m=j,j-1,\ldots,-j), define
+\[
+(C_j)_{mn}=\frac{(-1)^{j-m}}{\sqrt{2j+1}}\delta_{n,-m}.
+\]
+The representation generators obey
+\[
+J_a C_j+C_jJ_a^T=0,
+\]
+and hence (U_j C_j U_j^T=C_j). The tensor is antisymmetric for
+half-integer spin and symmetric for integer spin.
+
+New files:
+- `scripts/q2_su2_irrep_singlet_invariance_gate.py`
+- `tests/test_q2_su2_irrep_singlet_invariance_gate.py`
+- `BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md`
+
+The finite-dimensional gate constructs ladder-operator matrices and checks
+Lie-algebra and finite-group invariance for (j=1/2,1,3/2,2,5/2,3);
+tests additionally include (j=4). It is integrated into the workflow and
+exports `verification_results/Q2_SU2_IRREP_SINGLET_INVARIANCE.json`.
+
+This establishes representation-independent local singlet cancellation,
+not higher-spin node intertwiners or network QFI. The latter remain the
+next required step before a spin-summed BQG edge metric can be claimed.
