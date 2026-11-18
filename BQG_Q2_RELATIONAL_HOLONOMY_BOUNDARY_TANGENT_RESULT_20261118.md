@@ -9,22 +9,22 @@ spaces and their kernels must not be equated without an explicit map.
 
 ## Explicit probe map
 
-For a graph with (V) four-valent nodes and (E) internal edges, order the
-full half-link infinitesimal coordinates as (12V) real parameters. For
-each oriented edge (e=(u,l_u,v,l_v)), the existing graph-QFI convention
-inserts the three generators on its first endpoint ((u,l_u)). Define
-[
-P:mathbb R^{3E}	omathbb R^{12V},qquad
-P_{12u+3l_u+a,,3e+a}=1
-]
+For a graph with \(V\) four-valent nodes and \(E\) internal edges, order the
+full half-link infinitesimal coordinates as \(12V\) real parameters. For
+each oriented edge \(e=(u,l_u,v,l_v)\), the existing graph-QFI convention
+inserts the three generators on its first endpoint \((u,l_u)\). Define
+\[
+P:\mathbb R^{3E}\to\mathbb R^{12V},\qquad
+P_{12u+3l_u+a,\,3e+a}=1
+\]
 and all other entries zero. The actual contraction's projective differential
-(D_{partial}) then induces
-[
-D_e=D_{partial}P,qquad
-F_e=4,mathcal R(D_e)^Tmathcal R(D_e)
-=P^T F_{m half}P,
-]
-where (mathcal R(D)=(\Re D,\Im D)^T).
+\(D_\partial\) then induces
+\[
+D_e=D_\partial P,\qquad
+F_e=4\,\mathcal R(D_e)^T\mathcal R(D_e)
+=P^T F_{\rm half}P,
+\]
+where \(\mathcal R(D)=(\Re D,\Im D)^T\).
 
 This is not a new physical postulate: it is the pullback of the already
 implemented half-link tangent under the exact edge-probe injection used by
@@ -38,7 +38,7 @@ intertwiners on the path and cycle fixtures:
 - the edge tangent obtained by pulling back the full projective half-link
   tangent;
 - the direct edge QFI from the existing graph contraction;
-- the matrix identity (F_e=P^T F_{m half}P);
+- the matrix identity \(F_e=P^T F_{\rm half}P\);
 - tangent rank and QFI rank, and PSD up to roundoff.
 
 It also reports the kinematic holonomy gauge-orbit rank from the previous
