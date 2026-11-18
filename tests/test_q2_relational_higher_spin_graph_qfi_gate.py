@@ -164,3 +164,24 @@ def test_every_graph_reports_explicit_collective_block_pullback():
         assert block["checks"]["effective_qfi_is_psd"]
         assert block["checks"]["effective_qfi_is_symmetric"]
         assert row["checks"]["collective_pullback_is_psd"]
+
+
+def test_orthonormal_collective_embedding_removes_block_size_metric_factor():
+    from scripts.q2_relational_higher_spin_graph_qfi_gate import collective_edge_parameter_map
+    blocks = ((0, 1), (2,))
+    shared = collective_edge_parameter_map(3, blocks)
+    unit = collective_edge_parameter_map(3, blocks, orthonormalize_blocks=True)
+    assert np.allclose(shared.T @ shared, np.diag([2.0] * 3 + [1.0] * 3))
+    assert np.allclose(unit.T @ unit, np.eye(6))
+    assert np.allclose(unit[:3, :3], np.eye(3) / np.sqrt(2.0))
+    assert np.allclose(unit[3:6, :3], np.eye(3) / np.sqrt(2.0))
+
+
+def test_collective_pullback_reports_both_coordinate_conventions():
+    result = run(two_j_values=(1,), trials=2, graph_names=("path_4",))
+    row = result["graphs"]["0.5"]["path_4"]["collective_blocking"]
+    unit = row["orthonormal_collective_mode"]
+    assert unit["parameter_map"].endswith("columns of B are orthonormal")
+    assert unit["checks"]["effective_qfi_is_psd"]
+    assert unit["checks"]["effective_qfi_is_symmetric"]
+    assert unit["rank_fraction_mean"] <= 1.0
