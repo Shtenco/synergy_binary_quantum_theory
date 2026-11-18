@@ -56,3 +56,31 @@ isolated link calculations.
 
 These figures are independent local numerical reproductions, not a run of
 the committed pytest suite or GitHub Actions.
+
+
+## Full half-link QFI and nodewise Gauss quotient
+
+The graph gate now also computes the larger 12V-by-12V QFI over every
+half-link twist at every node, including uncontracted boundary legs. This
+is necessary because the graph-edge-only parameterization does not contain
+all variables needed to express each node's Gauss gauge direction.
+
+For node v and axis a, the gauge vector has unit entries on its four
+half-link parameters (v,0,a), ..., (v,3,a). The intertwiner constraint
+implies that each such vector is a null vector of the full QFI. The gate
+checks all 3V null directions directly.
+
+A reference-leg gauge choice sets the fourth half-link parameter at every
+node to zero, leaving 9V parameters. The resulting principal submatrix is
+checked for positive semidefiniteness and its numerical rank is reported.
+It is not required to be strictly positive: the boundary state can have
+additional null directions beyond the nodewise Gauss modes. In an
+independent four-sample reproduction, the reference-fixed ranks were 21
+for the three-node path (27 parameters) and 24 for the four-cycle
+(36 parameters), with eigenvalues nonnegative up to approximately 1e-15
+roundoff. This rank deficiency is retained as data, not hidden with an
+epsilon regulator.
+
+The graph-edge parameter QFI and full half-link QFI are distinct objects.
+The latter provides the proper starting point for a global gauge quotient;
+it still does not by itself specify the physical BQG coarse conductance.
