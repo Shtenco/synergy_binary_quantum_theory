@@ -107,13 +107,13 @@ def analyze_sample(
     tangent_tolerance = float(np.sqrt(tolerance / 4.0))
     tangent_rank = int(np.sum(singular > tangent_tolerance))
     checks = {
-        "singlet_endpoint_tangents_are_opposite": np.linalg.norm(d_u + d_v) < 3e-9,
-        "two_sided_qfi_matches_lifted_edge_qfi": np.allclose(two_qfi, expected, atol=3e-9, rtol=3e-9),
-        "every_edge_common_endpoint_rotation_is_null": max(kernel_residuals, default=0.0) < 3e-9,
-        "two_sided_qfi_is_psd_up_to_roundoff": eigenvalues[0] >= -1e-9 * scale,
+        "singlet_endpoint_tangents_are_opposite": bool(np.linalg.norm(d_u + d_v) < 3e-9),
+        "two_sided_qfi_matches_lifted_edge_qfi": bool(np.allclose(two_qfi, expected, atol=3e-9, rtol=3e-9)),
+        "every_edge_common_endpoint_rotation_is_null": bool(max(kernel_residuals, default=0.0) < 3e-9),
+        "two_sided_qfi_is_psd_up_to_roundoff": bool(eigenvalues[0] >= -1e-9 * scale),
         "two_sided_rank_matches_edge_qfi_rank": two_rank == edge_rank,
         "tangent_rank_matches_two_sided_qfi_rank": tangent_rank == two_rank,
-        "edge_qfi_symmetric": edge_symmetry < 1e-10,
+        "edge_qfi_symmetric": bool(edge_symmetry < 1e-10),
     }
     return {
         "gluing_probability": probability,
