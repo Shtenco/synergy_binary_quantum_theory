@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from scripts.q2_vertex_fusion_coarse_graining import (
-    compare_micro_and_fused_qfi,
+    exhaustive_path5_partition_control,
     compare_staged_and_direct_fusion,
     deterministic_case,
     fuse_vertex_blocks,
@@ -77,59 +77,10 @@ def test_two_stage_vertex_fusion_equals_direct_fusion(two_j):
     assert result["staged_retained_edge_indices"] == [2]
     assert result["direct_retained_edge_indices"] == [2]
 
-def _set_partitions(items):
-    """Generate every set partition once, with blocks ordered by minimum item."""
-    items = tuple(items)
-    if not items:
-        yield ()
-        return
-    first, rest = items[0], items[1:]
-    for partition in _set_partitions(rest):
-        yield ((first,),) + partition
-        for index in range(len(partition)):
-            yield (
-                partition[:index]
-                + ((first,) + partition[index],)
-                + partition[index + 1:]
-            )
-
-
 def test_exhaustive_path5_vertex_partitions_and_block_order_invariance():
-    nodes, edges = graph_fixtures()["path_5"]
-    two_j = 1
-    basis, _ = four_valent_intertwiner_basis(two_j)
-    rng = np.random.default_rng(20261120)
-    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
-    singlet = invariant_singlet_tensor(two_j)
+    result = exhaustive_path5_partition_control(two_j=1, seed=20261120)
+    assert result["partition_count"] == 52  # Bell number B_5
+    assert result["includes_block_order_reversal"]
+    assert result["passed"], result
 
-    partitions = list(_set_partitions(range(nodes)))
-    assert len(partitions) == 52  # Bell number B_5
-
-    max_amplitude_error = 0.0
-    max_qfi_error = 0.0
-    for blocks in partitions:
-        canonical = compare_micro_and_fused_qfi(states, edges, singlet, blocks)
-        reordered_blocks = tuple(
-            tuple(reversed(block)) for block in reversed(blocks)
-        )
-        reordered = compare_micro_and_fused_qfi(
-            states, edges, singlet, reordered_blocks
-        )
-        assert canonical["passed"], (blocks, canonical)
-        assert reordered["passed"], (reordered_blocks, reordered)
-        assert canonical["retained_edge_indices"] == reordered["retained_edge_indices"]
-        assert canonical["coarse_parameter_dimension"] == reordered["coarse_parameter_dimension"]
-        max_amplitude_error = max(
-            max_amplitude_error,
-            canonical["amplitude_error_up_to_global_phase"],
-            reordered["amplitude_error_up_to_global_phase"],
-        )
-        max_qfi_error = max(
-            max_qfi_error,
-            canonical["qfi_max_abs_error"],
-            reordered["qfi_max_abs_error"],
-        )
-
-    assert max_amplitude_error < 2e-9
-    assert max_qfi_error < 2e-8
 
