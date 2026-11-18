@@ -213,16 +213,17 @@ def stabilizer_diagnostics(
     )
     _u, singular_values, vh = np.linalg.svd(realified, full_matrices=False)
     largest = float(singular_values[0]) if singular_values.size else 0.0
-    tolerance = 1e-9 * max(1.0, largest)
-    rank = int(np.sum(singular_values > tolerance))
-    quotient_dimension = 9 * node_count
-    nullity = quotient_dimension - rank
     qfi_quotient = quotient_basis.T @ qfi @ quotient_basis
     qfi_quotient = 0.5 * (qfi_quotient + qfi_quotient.T)
     qfi_eigenvalues = np.linalg.eigvalsh(qfi_quotient)
-    qfi_rank = int(np.sum(qfi_eigenvalues > 1e-9 * max(
-        1.0, float(np.max(np.abs(qfi_eigenvalues)))
-    )))
+    qfi_scale = max(1.0, float(np.max(np.abs(qfi_eigenvalues))))
+    qfi_tolerance = 1e-9 * qfi_scale
+    # Since F = 4 R(D)^T R(D), use the square-root-consistent SVD cutoff.
+    tolerance = float(np.sqrt(qfi_tolerance / 4.0))
+    rank = int(np.sum(singular_values > tolerance))
+    quotient_dimension = 9 * node_count
+    nullity = quotient_dimension - rank
+    qfi_rank = int(np.sum(qfi_eigenvalues > qfi_tolerance))
     participation = []
     if nullity:
         null_coordinates = vh[-nullity:, :]
