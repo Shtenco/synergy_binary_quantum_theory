@@ -2,30 +2,30 @@
 
 ## Scope and provenance
 
-This note records an independent numerical reproduction of the frozen generation-0/1/2 combinatorial construction and the matrix-free zero-energy Feshbach calculation now implemented in `scripts/q2_causal_pl_correspondence_gate.py --feshbach`.
+This note records an independent numerical reproduction of the frozen generation-0/1/2 combinatorial construction and the matrix-free zero-energy Feshbach calculation now implemented in scripts/q2_causal_pl_correspondence_gate.py --feshbach.
 
 The independent calculation rebuilt the PL barycentric flags, causal-edge fibres, and 4-regular PL dual adjacency from the repository definitions, then used SciPy conjugate gradients on the projected operator. It is a finite graph calculation, not a physical QFI result. The newly added repository implementation and tests have been committed; the combined-status endpoint returned no status checks for the latest branch commits at the time of this note, so CI is **pending/unverified** here.
 
 ## Definitions
 
-Let (L=4I-A_{PL}) be the unweighted PL tetrahedral-dual graph Laplacian. Let (U) be the isometry whose column for causal edge (e) is constant (1/\sqrt{|F_e|}) on its fibre (F_e=\Phi^{-1}(e)), and zero elsewhere. Set (P=UU^T), (Q=I-P).
+Let \(L=4I-A_{PL}\) be the unweighted PL tetrahedral-dual graph Laplacian. Let \(U\) be the isometry whose column for causal edge \(e\) is constant \(1/\sqrt{|F_e|}\) on its fibre \(F_e=\Phi^{-1}(e)\), and zero elsewhere. Set \(P=UU^T\), \(Q=I-P\).
 
 The exact off-diagonal block and zero-energy Feshbach correction are
-[
+\[
 B=QLU,\qquad
 C=B^T(Q L Q|_{Q\mathcal H})^{-1}B.
-]
+\]
 The calculation solves
-[
+\[
 (QLQ+P)X=B,
-]
-which is nonsingular on the full space and has (X\in Q\mathcal H) because (B\in Q\mathcal H). Then (C=B^TX). Only the sparse PL adjacency is applied; no dense (N_{PL}\times N_{PL}) matrix is formed.
+\]
+which is nonsingular on the full space and has \(X\in Q\mathcal H\) because \(B\in Q\mathcal H\). Then \(C=B^TX\). Only the sparse PL adjacency is applied; no dense \(N_{PL}\times N_{PL}\) matrix is formed.
 
-The Galerkin compression is (A_{PP}=U^TLU), and the zero-energy effective operator is (A_{eff}=A_{PP}-C).
+The Galerkin compression is \(A_{PP}=U^TLU\), and the zero-energy effective operator is \(A_{eff}=A_{PP}-C\).
 
 ## Numerical results
 
-All operator norms below use the same unweighted PL Laplacian normalization (L=4I-A_{PL}).
+All operator norms below use the same unweighted PL Laplacian normalization \(L=4I-A_{PL}\).
 
 | Quantity | Generation 1 | Generation 2 |
 |---|---:|---:|
@@ -43,15 +43,15 @@ All operator norms below use the same unweighted PL Laplacian normalization (L=4
 | Maximum linear-solve residual | \(<10^{-14}\) | \(1.4\times10^{-10}\) |
 
 Generation 1 has exact control values:
-[
+\[
 \|B\|_F^2=\frac{80}{9},\quad
 \|C\|_2=\frac{40}{51},\quad
 \frac{\|C\|_2}{\|A_{PP}\|_2}=\frac{20}{119}.
-]
+\]
 
-At both nontrivial levels, (C\) is positive semidefinite up to numerical precision, with one constant zero mode. (A_{eff}\) is also positive semidefinite up to numerical precision and has one zero mode. The largest eigenvalues of (A_{eff}\) are 4.5333333333 and 4.0683984560 at generations 1 and 2 respectively.
+At both nontrivial levels, \(C\) is positive semidefinite up to numerical precision, with one constant zero mode. \(A_{eff}\) is also positive semidefinite up to numerical precision and has one zero mode. The largest eigenvalues of \(A_{eff}\) are 4.5333333333 and 4.0683984560 at generations 1 and 2 respectively.
 
-Generation zero is a useful null control: all PL tetrahedra belong to one causal fibre, (U) is the normalized constant vector, (LU=0), and therefore (B=C=0).
+Generation zero is a useful null control: all PL tetrahedra belong to one causal fibre, \(U\) is the normalized constant vector, \(LU=0\), and therefore \(B=C=0\).
 
 ## Interpretation
 
