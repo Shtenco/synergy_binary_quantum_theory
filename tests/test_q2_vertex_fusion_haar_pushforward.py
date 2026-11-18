@@ -35,7 +35,7 @@ def test_local_haar_pushforward_has_proper_six_valent_invariant_support(
     assert result["pushforward_covariance_purity"] == pytest.approx(
         1.0 / input_dimension, abs=2e-9
     )
-    assert result["full_six_valent_haar_covariance_purity"] == pytest.approx(
+    assert result["full_boundary_haar_covariance_purity"] == pytest.approx(
         1.0 / expected_invariant_dimension, abs=2e-9
     )
     expected_distance = np.sqrt(
@@ -45,3 +45,46 @@ def test_local_haar_pushforward_has_proper_six_valent_invariant_support(
         expected_distance, abs=2e-9
     )
     assert result["passed"], result
+
+@pytest.mark.parametrize(
+    "two_j,vertex_count,expected_boundary_invariant_dimension",
+    [(1, 3, 14), (1, 4, 42), (2, 3, 91)],
+)
+def test_chain_block_pushforward_remains_isometric_but_not_full_boundary_haar(
+    two_j, vertex_count, expected_boundary_invariant_dimension
+):
+    result = analyze_independent_haar_fusion(two_j, vertex_count)
+    local_dimension = two_j + 1
+    input_dimension = local_dimension**vertex_count
+    expected_singular_value = 1.0 / local_dimension ** (vertex_count - 1)
+    expected_covariance_eigenvalue = 1.0 / input_dimension
+    assert result["vertex_count"] == vertex_count
+    assert result["fused_boundary_leg_count"] == 2 * vertex_count + 2
+    assert result["product_input_dimension"] == input_dimension
+    assert result["full_boundary_invariant_dimension"] == expected_boundary_invariant_dimension
+    assert result["fusion_map_rank"] == input_dimension
+    assert np.allclose(
+        result["fusion_map_singular_values"],
+        [expected_singular_value] * input_dimension,
+        atol=2e-9,
+    )
+    assert result["fusion_map_gram_max_abs_error_from_expected_scale"] < 2e-9
+    assert result["boundary_gauss_max_relative_residual"] < 2e-9
+    assert result["pushforward_covariance_rank"] == input_dimension
+    assert np.allclose(
+        result["pushforward_nonzero_covariance_eigenvalues"],
+        [expected_covariance_eigenvalue] * input_dimension,
+        atol=2e-9,
+    )
+    assert result["pushforward_covariance_purity"] == pytest.approx(
+        expected_covariance_eigenvalue, abs=2e-9
+    )
+    assert result["full_boundary_haar_covariance_purity"] == pytest.approx(
+        1.0 / expected_boundary_invariant_dimension, abs=2e-9
+    )
+    assert result["pushforward_vs_full_haar_covariance_frobenius_distance"] == pytest.approx(
+        np.sqrt(expected_covariance_eigenvalue - 1.0 / expected_boundary_invariant_dimension),
+        abs=2e-9,
+    )
+    assert result["passed"], result
+
