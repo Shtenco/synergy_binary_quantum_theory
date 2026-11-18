@@ -59,6 +59,26 @@ result. Those require additional physical choices: a coarse observable map,
 a measure/weight on microscopic configurations, treatment of internal
 degrees of freedom, and a specified refinement trajectory.
 
-CI status is intentionally not asserted in this document until the
-workflow run containing this gate is observed and its test/export steps are
-checked.
+## Verified CI result
+
+GitHub Actions run [44359457472](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44359457472)
+completed successfully on commit `3b0b20ec9c37773252d474050c5031ac95668343`.
+All 41 workflow steps passed, including the vertex-fusion regression suite
+and JSON export. The uploaded `q2-pl-graph-export` artifact was downloaded
+and the `Q2_VERTEX_FUSION_COARSE_GRAINING.json` payload was independently
+parsed as valid JSON.
+
+For the exported (j=1/2) deterministic cases:
+
+| Graph | Boundary amplitude error | Maximum QFI error |
+|---|---:|---:|
+| path_3 | (1.497\times10^{-16}) | (3.331\times10^{-16}) |
+| path_4 | (1.382\times10^{-16}) | (1.110\times10^{-16}) |
+| path_5 | (1.486\times10^{-16}) | (1.821\times10^{-17}) |
+| star_4 | (1.299\times10^{-16}) | (1.110\times10^{-16}) |
+| cycle_4 | (1.646\times10^{-16}) | (2.220\times10^{-16}) |
+
+These are floating-point residuals for the tested finite cases, not a
+continuum or renormalization-group statement. The regression suite additionally
+checks (j=1), singleton blocking, invalid partitions, and duplicate half-link
+rejection.
