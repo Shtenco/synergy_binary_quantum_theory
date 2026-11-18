@@ -126,6 +126,42 @@ def _causal_children(causal_edges, generation, next_vertex):
     return children, next_vertex
 
 
+def _lumpability_diagnostics(tetrahedra, parent_map, dual):
+    """Check whether the PL partition is an exact Markov lumping."""
+    neighbours = [[] for _ in tetrahedra]
+    for edge in dual["edges"]:
+        a, b = edge["source"], edge["target"]
+        neighbours[a].append(b)
+        neighbours[b].append(a)
+    fibres = {}
+    for index, tet in enumerate(tetrahedra):
+        fibres.setdefault(parent_map[tuple(tet)], []).append(index)
+
+    violations = 0
+    max_variation = 0
+    for source_edge, members in fibres.items():
+        target_edges = set()
+        counts_by_vertex = []
+        for vertex in members:
+            counts = Counter(
+                parent_map[tuple(tetrahedra[nbr])]
+                for nbr in neighbours[vertex]
+            )
+            counts_by_vertex.append(counts)
+            target_edges.update(counts)
+        for target_edge in target_edges:
+            values = [counts.get(target_edge, 0) for counts in counts_by_vertex]
+            variation = max(values) - min(values)
+            if variation:
+                violations += 1
+                max_variation = max(max_variation, variation)
+    return {
+        "equitable_partition": violations == 0,
+        "non_equitable_source_target_pairs": violations,
+        "maximum_neighbour_count_variation": max_variation,
+    }
+
+
 def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
     adjacency_ok = True
@@ -137,6 +173,8 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
             adjacency_ok = False
             break
     histogram = Counter(fibres.values())
+    measure_scale = 24 ** generation
+    lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
     return {
         "generation": generation,
         "pl_tetrahedra": len(tetrahedra),
@@ -146,10 +184,13 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
         "fibre_max": max(fibres.values()),
         "fibre_mean": len(tetrahedra) / len(causal_edges),
         "fibre_size_histogram": {str(k): histogram[k] for k in sorted(histogram)},
+        "pushforward_measure_total": sum(value / measure_scale for value in fibres.values()),
+        "pushforward_measure_min": min(value / measure_scale for value in fibres.values()),
+        "pushforward_measure_max": max(value / measure_scale for value in fibres.values()),
         "pl_dual_adjacencies": len(dual["edges"]),
         "adjacency_preserved": adjacency_ok,
+        **lumpability,
     }
-
 
 def run(max_generation=2):
     if not 0 <= max_generation <= 2:
@@ -168,6 +209,7 @@ def run(max_generation=2):
     levels = []
     refinement_checks = []
     face_diagnostics = []
+    measure_checks = []
 
     for generation in range(max_generation + 1):
         dual = dual_graph_payload(
@@ -232,6 +274,32 @@ def run(max_generation=2):
             "generation": generation + 1,
             "every_child_maps_to_a_child_of_its_parent": naturality_ok,
         })
+
+        # Push forward PL counting measure, normalized by the 24 children
+        # created per parent tetrahedron. The mass of each parent causal-edge
+        # fibre must equal the sum of the masses of its eight child fibres.
+        parent_fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
+        child_fibres = Counter(child_map[tuple(tet)] for tet in children)
+        child_mass_by_parent = Counter()
+        for child_edge, count in child_fibres.items():
+            parts = child_edge.split(":")
+            parent_edge = ":".join(parts[1:-2])
+            child_mass_by_parent[parent_edge] += count
+        mass_errors = {}
+        for parent_edge, parent_count in parent_fibres.items():
+            parent_mass = parent_count / (24 ** generation)
+            child_mass = child_mass_by_parent[parent_edge] / (24 ** (generation + 1))
+            if abs(parent_mass - child_mass) > 1e-12:
+                mass_errors[parent_edge] = {
+                    "parent_mass": parent_mass,
+                    "child_mass": child_mass,
+                }
+        measure_checks.append({
+            "generation": generation + 1,
+            "parent_mass_conserved": not mass_errors,
+            "parent_fibres_checked": len(parent_fibres),
+            "mass_errors": mass_errors,
+        })
         # The next loop recomputes the same level summary from the carried map.
         tetrahedra = children
         parent_map = child_map
@@ -246,6 +314,13 @@ def run(max_generation=2):
             row["adjacency_preserved"] for row in levels
         ),
         "all_fibres_nonempty": all(row["fibre_min"] > 0 for row in levels),
+        "pushforward_measure_mass_is_16": all(
+            abs(row["pushforward_measure_total"] - 16.0) < 1e-12
+            for row in levels
+        ),
+        "parent_pushforward_measure_is_refinement_consistent": all(
+            row["parent_mass_conserved"] for row in measure_checks
+        ),
         "refinement_naturality": all(
             row["every_child_maps_to_a_child_of_its_parent"]
             for row in refinement_checks
@@ -268,6 +343,11 @@ def run(max_generation=2):
         "levels": levels,
         "parent_face_diagnostics": face_diagnostics,
         "refinement_checks": refinement_checks,
+        "measure_checks": measure_checks,
+        "measure_definition": (
+            "mu_g(e) = |Phi_g^{-1}(e)| / 24^g; total mass is 16 and "
+            "parent mass equals the sum over its eight child-edge masses"
+        ),
         "checks": checks,
         "claim_boundary": (
             "Finite combinatorial graph correspondence only. Nonuniform fibres "
