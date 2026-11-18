@@ -382,7 +382,7 @@ def _certified_q_gap_lower_bound(n, dual):
 
 
 def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual):
-    """Compute the finite zero-energy Feshbach correction matrix-free on Q."""
+    """Compute finite Feshbach data without dense fine-by-coarse embeddings."""
     try:
         import numpy as np
         from scipy.sparse import csr_matrix
@@ -398,11 +398,29 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     nodes = sorted(causal_edges)
     m = len(nodes)
     node_index = {node: index for index, node in enumerate(nodes)}
-    fibre_sizes = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
-    U = np.zeros((n, m), dtype=float)
-    for row, tet in enumerate(tetrahedra):
-        edge = parent_map[tuple(tet)]
-        U[row, node_index[edge]] = 1.0 / math.sqrt(fibre_sizes[edge])
+    fibre_labels = np.fromiter(
+        (node_index[parent_map[tuple(tet)]] for tet in tetrahedra),
+        dtype=np.int64, count=n,
+    )
+    fibre_sizes = np.bincount(fibre_labels, minlength=m).astype(float)
+    if np.any(fibre_sizes <= 0):
+        raise ValueError("every causal coarse fibre must be nonempty")
+    inverse_sqrt_sizes = 1.0 / np.sqrt(fibre_sizes)
+
+    # U and U^T are applied by fibre indexing/reduction. Never allocate the
+    # n-by-m dense isometry: at generation 3 it would exceed 900 MB.
+    def apply_u(coarse):
+        return inverse_sqrt_sizes[fibre_labels] * coarse[fibre_labels]
+
+    def apply_ut(fine):
+        return np.bincount(
+            fibre_labels,
+            weights=inverse_sqrt_sizes[fibre_labels] * fine,
+            minlength=m,
+        )
+
+    def project_q(fine):
+        return fine - apply_u(apply_ut(fine))
 
     rows, cols = [], []
     for edge in dual["edges"]:
@@ -416,30 +434,38 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     def laplacian_apply(vector):
         return 4.0 * vector - adjacency @ vector
 
-    def project_q(vector):
-        return vector - U @ (U.T @ vector)
+    A_PP = np.zeros((m, m), dtype=float)
+    gram = np.zeros((m, m), dtype=float)
+    basis = np.zeros(m, dtype=float)
+    for column in range(m):
+        basis[column] = 1.0
+        u_column = apply_u(basis)
+        basis[column] = 0.0
+        lu_column = laplacian_apply(u_column)
+        b_column = project_q(lu_column)
+        A_PP[:, column] = apply_ut(lu_column)
+        # B^T B = U^T L B because B=Q L U and B is Q-valued.
+        gram[:, column] = apply_ut(laplacian_apply(b_column))
 
-    LU = laplacian_apply(U)
-    B = project_q(LU)
-    gram = B.T @ B
     gram = 0.5 * (gram + gram.T)
-    leakage_eigenvalues = np.linalg.eigvalsh(gram)
-    leakage_frobenius = float(np.linalg.norm(B, ord="fro"))
-    leakage_operator = math.sqrt(max(0.0, float(leakage_eigenvalues[-1])))
-    A_PP = U.T @ LU
     A_PP = 0.5 * (A_PP + A_PP.T)
+    leakage_eigenvalues = np.linalg.eigvalsh(gram)
+    leakage_frobenius = math.sqrt(max(0.0, float(np.trace(gram))))
+    leakage_operator = math.sqrt(max(0.0, float(leakage_eigenvalues[-1])))
 
     q_sector_gap_estimate = None
     gap_ritz_residual = None
     largest_ritz_residual = None
     q_plus_p_largest_eigenvalue = None
-    if leakage_frobenius <= 1e-14:
-        correction = np.zeros((m, m), dtype=float)
-        solve_residual_max = 0.0
-        solve_count = 0
-    else:
+    solve_residual_max = 0.0
+    second_solve_residual_max = 0.0
+    solve_count = 0
+    correction = np.zeros((m, m), dtype=float)
+    self_energy_slope = np.zeros((m, m), dtype=float)
+
+    if leakage_frobenius > 1e-14:
         def qlq_plus_p(vector):
-            p_vector = U @ (U.T @ vector)
+            p_vector = apply_u(apply_ut(vector))
             q_vector = vector - p_vector
             return project_q(laplacian_apply(q_vector)) + p_vector
 
@@ -462,55 +488,55 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
             qlq_plus_p(largest_vectors[:, 0])
             - largest * largest_vectors[:, 0]
         ))
-        # P contributes an artificial eigenvalue 1. In the present finite
-        # levels the lowest eigenvalue is below 1 and therefore belongs to Q.
+        # P contributes an artificial eigenvalue 1. At the audited levels
+        # the lowest eigenvalue is below 1 and therefore belongs to Q.
         if smallest < 1.0 - 1e-8:
             q_sector_gap_estimate = smallest
         q_plus_p_largest_eigenvalue = largest
-        solutions = np.zeros((n, m), dtype=float)
-        residuals = []
+
         for column in range(m):
+            basis[column] = 1.0
+            u_column = apply_u(basis)
+            basis[column] = 0.0
+            b_column = project_q(laplacian_apply(u_column))
+
             solution, info = cg(
-                operator, B[:, column], rtol=1e-10, atol=1e-12, maxiter=20000
+                operator, b_column, rtol=1e-10, atol=1e-12, maxiter=20000
             )
             if info != 0:
                 raise RuntimeError(
                     f"Feshbach CG failed at generation {generation}, "
                     f"column {column}, info={info}"
                 )
-            solutions[:, column] = solution
-            residuals.append(float(np.linalg.norm(qlq_plus_p(solution) - B[:, column])))
-        solve_residual_max = max(residuals, default=0.0)
-        solve_count = m
-        correction = B.T @ solutions
-        correction = 0.5 * (correction + correction.T)
+            solve_residual_max = max(
+                solve_residual_max,
+                float(np.linalg.norm(qlq_plus_p(solution) - b_column)),
+            )
+            correction[:, column] = apply_ut(
+                laplacian_apply(project_q(solution))
+            )
 
-        # The derivative of the self-energy at lambda=0 is
-        # B^T (Q L Q)^(-2) B. It controls the first frequency/energy
-        # dependence beyond the static Schur complement.
-        second_solutions = np.zeros((n, m), dtype=float)
-        second_residuals = []
-        for column in range(m):
             second_solution, info = cg(
-                operator, solutions[:, column],
-                rtol=1e-10, atol=1e-12, maxiter=20000
+                operator, solution, rtol=1e-10, atol=1e-12, maxiter=20000
             )
             if info != 0:
                 raise RuntimeError(
                     f"Feshbach second-resolvent CG failed at generation "
                     f"{generation}, column {column}, info={info}"
                 )
-            second_solutions[:, column] = second_solution
-            second_residuals.append(float(np.linalg.norm(
-                qlq_plus_p(second_solution) - solutions[:, column]
-            )))
-        second_solve_residual_max = max(second_residuals, default=0.0)
-        self_energy_slope = B.T @ second_solutions
-        self_energy_slope = 0.5 * (self_energy_slope + self_energy_slope.T)
+            second_solve_residual_max = max(
+                second_solve_residual_max,
+                float(np.linalg.norm(qlq_plus_p(second_solution) - solution)),
+            )
+            self_energy_slope[:, column] = apply_ut(
+                laplacian_apply(project_q(second_solution))
+            )
+            solve_count += 1
 
-    if leakage_frobenius <= 1e-14:
-        self_energy_slope = np.zeros((m, m), dtype=float)
-        second_solve_residual_max = 0.0
+        correction = 0.5 * (correction + correction.T)
+        self_energy_slope = 0.5 * (
+            self_energy_slope + self_energy_slope.T
+        )
 
     correction_eigenvalues = np.linalg.eigvalsh(correction)
     slope_eigenvalues = np.linalg.eigvalsh(self_energy_slope)
@@ -519,8 +545,6 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     effective_eigenvalues = np.linalg.eigvalsh(effective)
     # Linearize the energy-dependent Schur complement:
     # A_eff(0) v = lambda [I + Sigma'(0)] v + O(lambda^2).
-    # The positive matrix I+Sigma'(0) is the induced low-energy
-    # normalization/kinetic metric on the coarse sector.
     effective_metric = np.eye(m) + self_energy_slope
     effective_metric = 0.5 * (effective_metric + effective_metric.T)
     metric_eigenvalues = np.linalg.eigvalsh(effective_metric)
@@ -530,9 +554,10 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     app_norm = float(np.linalg.norm(A_PP, ord=2))
     correction_norm = float(np.linalg.norm(correction, ord=2))
     return {
-        "method": "matrix-free CG for QLQ+P; dense coarse correction only",
+        "method": "matrix-free fibre U/U^T; sparse PL adjacency; CG on QLQ+P",
         "pl_vertices": n,
         "coarse_modes": m,
+        "fine_by_coarse_dense_embedding_allocated": False,
         "leakage_frobenius_norm": leakage_frobenius,
         "leakage_operator_norm": leakage_operator,
         "leakage_rms_per_coarse_mode": leakage_frobenius / math.sqrt(m),
@@ -542,7 +567,9 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         ),
         "feshbach_correction_operator_norm": correction_norm,
         "feshbach_correction_frobenius_norm": float(np.linalg.norm(correction, ord="fro")),
-        "feshbach_to_galerkin_operator_ratio": correction_norm / app_norm if app_norm > 0 else None,
+        "feshbach_to_galerkin_operator_ratio": (
+            correction_norm / app_norm if app_norm > 0 else None
+        ),
         "self_energy_slope_operator_norm": float(np.linalg.norm(self_energy_slope, ord=2)),
         "self_energy_slope_frobenius_norm": float(np.linalg.norm(self_energy_slope, ord="fro")),
         "self_energy_slope_trace": float(np.trace(self_energy_slope)),
@@ -556,7 +583,9 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "effective_operator_gap": (
             float(effective_eigenvalues[1]) if len(effective_eigenvalues) > 1 else None
         ),
-        "effective_operator_zero_mode_count": int(np.sum(np.abs(effective_eigenvalues) <= 1e-9)),
+        "effective_operator_zero_mode_count": int(
+            np.sum(np.abs(effective_eigenvalues) <= 1e-9)
+        ),
         "effective_operator_max_eigenvalue": float(effective_eigenvalues[-1]),
         "effective_metric_min_eigenvalue": float(metric_eigenvalues[0]),
         "effective_metric_max_eigenvalue": float(metric_eigenvalues[-1]),
