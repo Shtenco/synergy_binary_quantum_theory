@@ -19,7 +19,9 @@ def test_barycentric_f_vector_preserves_euler_characteristic_for_closed_3_comple
 def test_preflight_marks_dense_spectral_cost_as_nontrivial():
     result = run()
     assert result["dense_spectral_matrix_raw_float64_bytes"] == 8 * 512 * 512
-    assert result["jacobi_rotation_work_estimate_at_100_sweeps"] == 6697779200
+    assert result["jacobi_rotation_work_estimate_at_100_sweeps_fallback_only"] == 6697779200
+    assert result["dense_lapack_cubic_work_proxy"] == 512 ** 3
+    assert "numpy.linalg.eigvalsh" in result["large_spectrum_backend"]
     assert "No generation-3 complex" in result["claim_boundary"]
 
 def test_barycentric_f_vector_rejects_wrong_dimension():
