@@ -67,3 +67,39 @@ Generation zero is a useful null control: all PL tetrahedra belong to one causal
 **Not established:** convergence or divergence as generation tends to infinity; whether the Q-sector gap closes with a power law; whether a rescaled Feshbach kernel converges to a local or nonlocal continuum operator; whether the correction survives the physical QFI and gauge reductions.
 
 The next required calculation is generation 3 using a streaming PL dual-incidence representation, followed by a refinement study of the normalized Feshbach kernel and its low-eigenvalue spectrum. The current exact correspondence exporter remains capped at generation 2.
+
+
+## Frequency-dependent Feshbach response (new computational gate)
+
+The finite implementation now also computes the first derivative of the self-energy at zero spectral parameter:
+[
+Sigma(lambda)=B^T(H-lambda I_Q)^{-1}B,qquad
+H=QLQ|_Q,
+]
+[
+Sigma(0)=C,qquad
+Sigma'(0)=B^T H^{-2}Bsucceq0.
+]
+It obtains this matrix by a second matrix-free solve (H Y=X), where (HX=B). This adds no dense PL-scale matrix.
+
+For (|lambda|<Delta_Q), where (Delta_Q=lambda_{min}(H)), the resolvent has the convergent expansion
+[
+Sigma(lambda)=
+B^TH^{-1}B+lambda B^TH^{-2}B
++lambda^2B^TH^{-3}B+cdots.
+]
+The projected eigenvalue equation is therefore
+[
+A_{PP}-lambda I_P-Sigma(lambda)=0.
+]
+To first order in (lambda), the coefficient of the spectral parameter is
+[
+I_P+Sigma'(0),
+]
+not merely (I_P). Thus even if a static Schur complement is well-defined, the eliminated modes renormalize the coarse spectral response. As the Q-sector gap shrinks, the radius of this low-energy expansion can shrink as well.
+
+The code and tests now report the norm, trace, extremal eigenvalues, and linear-solve residual for (Sigma'(0)), and check its positive-semidefinite property and the bound
+[
+|Sigma'(0)|_2ge |B|_2^2/8^2,
+]
+using (|H|_2le 8) for the 4-regular graph Laplacian. The new derivative values are not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
