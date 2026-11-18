@@ -1,0 +1,36 @@
+name: q2-causal-graph-export
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/bqg-qfi-q2-emergent-graph-audit-20261118
+    paths:
+      - 'scripts/q2_causal_graph_export.py'
+      - 'tests/test_q2_causal_graph_export.py'
+      - '.github/workflows/q2-causal-graph-export.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test runner
+        run: python -m pip install pytest
+      - name: Run causal graph tests
+        run: python -m pytest -q tests/test_q2_causal_graph_export.py
+      - name: Export five causal refinement levels
+        run: python scripts/q2_causal_graph_export.py --max-generation 5 --output verification_results/Q2_CAUSAL_GRAPH_EXPORT.json
+      - name: Upload causal graph artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: q2-causal-graph-export
+          path: verification_results/Q2_CAUSAL_GRAPH_EXPORT.json
+          if-no-files-found: error
