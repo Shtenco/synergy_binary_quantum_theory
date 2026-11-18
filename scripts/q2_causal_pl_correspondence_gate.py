@@ -448,6 +448,9 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "leakage_operator_norm": leakage_operator,
         "leakage_rms_per_coarse_mode": leakage_frobenius / math.sqrt(m),
         "A_PP_operator_norm": app_norm,
+        "leakage_to_galerkin_operator_ratio": (
+            leakage_operator / app_norm if app_norm > 0 else None
+        ),
         "feshbach_correction_operator_norm": correction_norm,
         "feshbach_correction_frobenius_norm": float(np.linalg.norm(correction, ord="fro")),
         "feshbach_to_galerkin_operator_ratio": correction_norm / app_norm if app_norm > 0 else None,
