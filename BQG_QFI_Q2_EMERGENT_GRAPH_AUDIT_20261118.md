@@ -739,3 +739,45 @@ The arbitrary-irrep local singlet tests passed for the six spins
 
 The network-QFI JSON exporter was made NumPy-scalar safe, and a regression
 test now checks its serialized result. All workflow export stages completed.
+
+
+## Follow-up: higher-spin four-valent network QFI (2026-11-18)
+
+The spin-one-half network calculation has now been generalized to individual
+finite SU(2) irreducible representations (j=1/2,1,3/2,2). For each (j),
+the four-valent intertwiner space is constructed as the joint kernel of the
+three total node generators; its expected dimension is (2j+1). The
+normalized invariant two-leg tensor is
+\[
+(C_j)_{mn}=\frac{(-1)^{j-m}}{\sqrt{2j+1}}\delta_{n,-m}.
+\]
+
+For a retained leg of a normalized invariant four-valent node, Schur's
+lemma gives (ho_{m leg}=I_{2j+1}/(2j+1)), and therefore the isolated
+single-link QFI is
+\[
+F^{(e)}_{ab}=\frac{4j(j+1)}{3}\delta_{ab}.
+\]
+For two links meeting at a middle node, the full path QFI has an isotropic
+cross block
+\[
+F^{(12)}_{ab}=\frac43
+\langle\iota_B|\mathbf J_{B0}\cdot\mathbf J_{B3}|\iota_B\rangle
+\delta_{ab},
+\]
+with pair-Casimir spectrum
+\[
+\frac12[k(k+1)-2j(j+1)],\qquad k=0,1,\ldots,2j.
+\]
+The new gate checks this Casimir identity sample-by-sample, rather than
+only checking that cross terms fall within spectral bounds.
+
+New files:
+- `scripts/q2_relational_higher_spin_network_qfi_gate.py`
+- `tests/test_q2_relational_higher_spin_network_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI_RESULT_20261118.md`
+
+The workflow runs the higher-spin tests and exports
+`verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json`.
+This is a finite pure-state path result for individual spins, not a spin
+sum or a BQG history-weighted continuum conductance.
