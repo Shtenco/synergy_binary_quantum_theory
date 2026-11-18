@@ -443,6 +443,40 @@ def run_coarse_graining_suite(two_j=1):
     }
 
 
+
+def run_high_spin_small_graph_suite(two_j_values=(3, 4), graph_names=("path_3", "cycle_4")):
+    """Exhaust all vertex partitions for small-boundary graphs at higher spins."""
+    controls = {}
+    for two_j in two_j_values:
+        controls[str(two_j / 2.0)] = {
+            name: exhaustive_graph_partition_control(
+                name, two_j=two_j, seed=20261130 + two_j
+            )
+            for name in graph_names
+        }
+    return {
+        "status": "higher-spin exhaustive vertex-fusion partition control",
+        "tested_spins": [two_j / 2.0 for two_j in two_j_values],
+        "graphs": list(graph_names),
+        "partition_order_evaluations": sum(
+            2 * row["partition_count"]
+            for spin_rows in controls.values()
+            for row in spin_rows.values()
+        ),
+        "passed": all(
+            row["passed"]
+            for spin_rows in controls.values()
+            for row in spin_rows.values()
+        ),
+        "controls": controls,
+        "claim_boundary": (
+            "Finite exact vertex fusion and retained-edge pure-state QFI for "
+            "the listed graph fixtures and spin labels only; no RG fixed point "
+            "or continuum statement is implied."
+        ),
+    }
+
+
 def main():
     import argparse
     import json
@@ -450,11 +484,16 @@ def main():
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--two-j", type=int, default=1)
+    parser.add_argument("--high-spin-small-graphs", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.two_j < 1:
         parser.error("--two-j must be a positive integer")
-    result = run_coarse_graining_suite(args.two_j)
+    result = (
+        run_high_spin_small_graph_suite()
+        if args.high_spin_small_graphs
+        else run_coarse_graining_suite(args.two_j)
+    )
     rendered = json.dumps(result, indent=2)
     print(rendered)
     if args.output:
