@@ -488,7 +488,8 @@ def run(max_generation=2):
             "parent_fibres_checked": len(parent_fibres),
             "mass_errors": mass_errors,
         })
-        # The next loop recomputes the same level summary from the carried map.
+        # Carry the refined complex forward; its level summary is built once
+        # at the start of the next iteration.
         tetrahedra = children
         parent_map = child_map
         orientations = child_orientations
