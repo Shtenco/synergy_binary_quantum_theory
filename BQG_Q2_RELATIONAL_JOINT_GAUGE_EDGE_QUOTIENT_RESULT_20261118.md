@@ -103,3 +103,18 @@ Python's `int(...)` coercion to silently truncate or reinterpret indices.
 Regression cases cover fractional, integral-float, boolean, and string inputs.
 These cases are awaiting the same fresh CI run as the randomized graph tests.
 
+## Joint quotient on extended open topologies (2026-11-18)
+
+The joint vertex-Gauss plus singlet-edge-common quotient runner now uses
+the same four open fixtures: `path_3`, `path_4`, `star_4`, and
+`cycle_4). For each it compares the explicit SVD generator rank with
+the topological formula, checks both exact QFI null families, and compares
+the quotient-QFI rank with the projective boundary tangent rank.
+
+For these open fixtures, the topological generator rank is
+(3(V+E)), and the joint quotient dimension is (9V-3E). The runner
+does not infer positive definiteness from that dimension: the numerical
+QFI/tangent checks remain separate and must pass on each sample.
+
+The new path/star regression cases and their CI execution are pending.
+
