@@ -157,7 +157,6 @@ def collective_edge_blocks(name, edge_count):
             for edge in flat
         )
         or any(len(block) == 0 for block in blocks)
-        or any(len(block) == 0 for block in blocks)
         or sorted(map(int, flat)) != list(range(edge_count))
     ):
         raise ValueError("collective edge blocks must partition every edge exactly once")
@@ -173,6 +172,7 @@ def collective_edge_parameter_map(edge_count, blocks):
             or not isinstance(edge, (int, np.integer))
             for edge in flat
         )
+        or any(len(block) == 0 for block in blocks)
         or sorted(map(int, flat)) != list(range(edge_count))
     ):
         raise ValueError("collective edge blocks must partition every edge exactly once")
