@@ -102,41 +102,51 @@ The implementation reports the coefficient \(\|B\|^2/\Delta_Q^3\), so the bound 
 The next required calculation is generation 3 using a streaming PL dual-incidence representation, followed by a refinement study of the normalized Feshbach kernel and its low-eigenvalue spectrum. The current exact correspondence exporter remains capped at generation 2.
 
 
-## Frequency-dependent Feshbach response (new computational gate)
+## Frequency-dependent Feshbach response
 
-The finite implementation now also computes the first derivative of the self-energy at zero spectral parameter:
-[
-Sigma(lambda)=B^T(H-lambda I_Q)^{-1}B,qquad
-H=QLQ|_Q,
-]
-[
-Sigma(0)=C,qquad
-Sigma'(0)=B^T H^{-2}Bsucceq0.
-]
-It obtains this matrix by a second matrix-free solve (H Y=X), where (HX=B). This adds no dense PL-scale matrix.
+The finite implementation also computes the first derivative of the self-energy at zero spectral parameter:
+\[
+\Sigma(\lambda)=B^T(H-\lambda I_Q)^{-1}B,\qquad
+H=QLQ|_{Q\mathcal H},
+\]
+\[
+\Sigma(0)=C,\qquad
+\Sigma'(0)=B^TH^{-2}B\succeq0.
+\]
+It obtains this matrix by a second matrix-free solve: first solve \(HX=B\), then \(HY=X\), and form \(\Sigma'(0)=B^TY\). No dense PL-scale matrix is formed.
 
-For (|lambda|<Delta_Q), where (Delta_Q=lambda_{min}(H)), the resolvent has the convergent expansion
-[
-Sigma(lambda)=
-B^TH^{-1}B+lambda B^TH^{-2}B
-+lambda^2B^TH^{-3}B+cdots.
-]
-The projected eigenvalue equation is therefore
-[
-A_{PP}-lambda I_P-Sigma(lambda)=0.
-]
-To first order in (lambda), the coefficient of the spectral parameter is
-[
-I_P+Sigma'(0),
-]
-not merely (I_P). Thus even if a static Schur complement is well-defined, the eliminated modes renormalize the coarse spectral response. As the Q-sector gap shrinks, the radius of this low-energy expansion can shrink as well.
+For \(|\lambda|<\Delta_Q\), where \(\Delta_Q=\lambda_{\min}(H)\), the resolvent has the convergent expansion
+\[
+\Sigma(\lambda)=B^TH^{-1}B+\lambda B^TH^{-2}B
++\lambda^2B^TH^{-3}B+\cdots.
+\]
+The projected eigenvalue equation is
+\[
+A_{PP}-\lambda I_P-\Sigma(\lambda)=0.
+\]
+To first order in \(\lambda\), this becomes the generalized eigenvalue problem
+\[
+A_{\mathrm{eff}}(0)v
+=\lambda Z_{\mathrm{eff}}v+O(\lambda^2),\qquad
+Z_{\mathrm{eff}}=I_P+\Sigma'(0)\succeq I_P.
+\]
+Thus the eliminated modes renormalize the coarse spectral normalization, not just the static stiffness. The spectral parameter here is the eigenvalue of the unweighted graph Laplacian; it is not yet a physical frequency or a calibrated spacetime energy.
 
-The code and tests now report the norm, trace, extremal eigenvalues, and linear-solve residual for (Sigma'(0)), and check its positive-semidefinite property and the bound
-[
-|Sigma'(0)|_2ge |B|_2^2/8^2,
-]
-using (|H|_2le 8) for the 4-regular graph Laplacian. The new derivative values are not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
+For \(|\lambda|<\Delta_Q\), a conservative remainder estimate is
+\[
+\|\Sigma(\lambda)-\Sigma(0)-\lambda\Sigma'(0)\|_2
+\leq
+\frac{\lambda^2\|B\|_2^2}
+{\Delta_Q^3(1-|\lambda|/\Delta_Q)}.
+\]
+The implementation reports the coefficient \(\|B\|_2^2/\Delta_Q^3\). From the recorded finite-level values it is approximately
+\[
+g=1:\ 1.008\times10^3,\qquad
+g=2:\ 2.087\times10^6.
+\]
+This roughly 2,070-fold increase is a warning that the linearized energy-dependent approximation may be valid only in a progressively narrower spectral window. It is a conservative upper-bound coefficient, not a measured remainder and not evidence by itself that the exact self-energy diverges.
 
+The code and tests report the norm, trace, extremal eigenvalues, and linear-solve residual for \(\Sigma'(0)\), as well as the positive induced metric \(Z_{\mathrm{eff}}\) and its generalized spectrum. These new derivative and generalized-spectrum values are not yet certified by a completed CI run; they must be read from the generated artifact before being treated as verified numerical results.
 
 ## Exact finite variational meaning
 
