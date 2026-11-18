@@ -268,3 +268,37 @@ reports top-level `passed: true`. The test step and export step both passed.
 This adds a verified mixed-state boundary reduction and data-processing
 check. It still does not supply a physical measure over microscopic states,
 an effective-coupling flow, or an RG fixed point.
+
+## Exhaustive mixed-boundary audit and pure-state limit (verified 2026-11-18)
+
+The reduced-boundary SLD-QFI check was extended to every set partition of
+path_3 and cycle_4, for both \(j=1/2\) and \(j=1\), including reversed
+block and within-block ordering. This covers 5 + 15 = 20 partitions per
+spin, or 40 canonical partitions and 40 reordered controls.
+
+| Spin | Graph | Partitions | Max reduced-density error | Max derivative error | Max mixed-QFI error | Min eigenvalue of pure − mixed QFI |
+|---|---|---:|---:|---:|---:|---:|
+| j=1/2 | path_3 | 5 | 1.665e-16 | 2.776e-17 | 2.567e-32 | 0.000 |
+| j=1/2 | cycle_4 | 15 | 2.220e-16 | 5.554e-17 | 9.080e-19 | 0.000 |
+| j=1 | path_3 | 5 | 2.776e-17 | 2.861e-17 | 1.151e-31 | 0.000 |
+| j=1 | cycle_4 | 15 | 1.112e-16 | 4.163e-17 | 1.249e-16 | 0.000 |
+
+All controls pass. The minimum eigenvalue is zero to displayed precision,
+consistent with the positive-semidefinite data-processing difference; no
+strictly positive information loss is claimed for every partition.
+
+A separate pure-limit regression retains all eight path_3 boundary legs at
+\(j=1/2\), so no partial trace is performed. The SLD mixed-state QFI agrees
+with the direct pure-state QFI within the test tolerance. This independently
+checks the mixed-state QFI implementation at its rank-one boundary.
+
+Verified run:
+[44375574126](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44375574126),
+commit `6b770909a2417bbbb0ba730062aba38ca163730d`. The dedicated vertex-fusion
+test step reports **34 passed**; all 47 workflow steps passed. Artifact
+`q2-pl-graph-export` (ID `14461372746`) was downloaded and parsed; the
+reduced-boundary JSON reports top-level `passed: true`.
+
+This closes the finite reduced-boundary SLD-QFI consistency check for the
+tested partitions and spins. It still does not derive a scale-dependent
+effective action, a microscopic statistical measure, or a continuum RG flow.
