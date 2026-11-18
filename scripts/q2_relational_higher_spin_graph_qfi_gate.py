@@ -26,6 +26,8 @@ from q2_relational_higher_spin_network_qfi_gate import (
 def graph_fixtures():
     return {
         "path_3": (3, [(0, 3, 1, 0), (1, 3, 2, 0)]),
+        "path_4": (4, [(0, 3, 1, 0), (1, 3, 2, 0), (2, 3, 3, 0)]),
+        "star_4": (4, [(0, 0, 1, 0), (0, 1, 2, 0), (0, 2, 3, 0)]),
         "cycle_4": (4, [(0, 0, 1, 1), (1, 2, 2, 1),
                        (2, 2, 3, 1), (3, 2, 0, 2)]),
     }
@@ -131,6 +133,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     j = two_j / 2.0
     isolated_qfi = 4.0 * j * (j + 1.0) / 3.0
     probabilities, symmetries, minima, cross_norms, diagonal_errors = [], [], [], [], []
+    spectral_minima, spectral_maxima, spectral_ranks, spectral_nullities = [], [], [], []
     path_casimir_errors = []
     pair_op = sum(
         (node_generator(g, 0, two_j + 1) @ node_generator(g, 3, two_j + 1)
@@ -142,7 +145,14 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         probability, qfi, symmetry, _boundary = graph_qfi(states, edges, singlet, generators)
         probabilities.append(probability)
         symmetries.append(symmetry)
-        minima.append(float(np.linalg.eigvalsh(qfi)[0]))
+        eigenvalues = np.linalg.eigvalsh(qfi)
+        minima.append(float(eigenvalues[0]))
+        spectral_scale = max(1.0, float(np.max(np.abs(eigenvalues))))
+        spectral_tolerance = 1e-9 * spectral_scale
+        spectral_minima.append(float(eigenvalues[0]))
+        spectral_maxima.append(float(eigenvalues[-1]))
+        spectral_ranks.append(int(np.sum(eigenvalues > spectral_tolerance)))
+        spectral_nullities.append(int(np.sum(np.abs(eigenvalues) <= spectral_tolerance)))
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
             sl = slice(3 * edge_index, 3 * edge_index + 3)
@@ -165,6 +175,13 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         "gluing_probability_max": max(probabilities),
         "max_qfi_symmetry_error": max(symmetries),
         "minimum_qfi_eigenvalue": min(minima),
+        "qfi_spectral_minimum_over_trials": min(spectral_minima),
+        "qfi_spectral_maximum_over_trials": max(spectral_maxima),
+        "qfi_rank_min_over_trials": min(spectral_ranks),
+        "qfi_rank_max_over_trials": max(spectral_ranks),
+        "qfi_nullity_min_over_trials": min(spectral_nullities),
+        "qfi_nullity_max_over_trials": max(spectral_nullities),
+        "qfi_parameter_dimension": 3 * len(edges),
         "max_diagonal_block_error_from_isolated_spin_qfi": max(diagonal_errors),
         "cross_edge_qfi_frobenius_norm_min": min(cross_norms),
         "cross_edge_qfi_frobenius_norm_max": max(cross_norms),
@@ -172,6 +189,10 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         "checks": {
             "qfi_is_symmetric": max(symmetries) < 2e-9,
             "qfi_is_psd": min(minima) > -2e-8,
+            "qfi_rank_nullity_partition_is_consistent": all(
+                rank + nullity == 3 * len(edges)
+                for rank, nullity in zip(spectral_ranks, spectral_nullities)
+            ),
             "cross_edge_correlations_are_present": max(cross_norms) > 1e-5,
             "path_diagonal_blocks_match_isolated_link": (
                 max(diagonal_errors) < 2e-8 if name == "path_3" else True
