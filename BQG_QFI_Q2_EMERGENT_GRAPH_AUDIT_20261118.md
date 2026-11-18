@@ -888,3 +888,37 @@ the established graph-QFI implementation, the (j=1) path/cycle
 contractions, the oriented path Casimir cross-block identity, and PSD/
 symmetry checks for each full finite graph QFI. The same run also passed the
 Haar-averaged star QFI tests and all earlier PL/Feshbach/QFI exports.
+
+
+## Follow-up: joint quotient of vertex Gauss and singlet-edge nulls (2026-11-18)
+
+The remaining nullity after the vertex-only quotient was exactly (3E) on
+the path and cycle fixtures. A separate generator family now identifies
+these directions explicitly: for each internal edge and axis, rotate both
+contracted half-links by the same generator. Invariance of the normalized
+singlet makes the corresponding projective tangent vanish.
+
+The joint generator matrix is
+\[
+H=[G_{\rm vertex},C_{\rm edge}],
+\]
+and the joint quotient is the orthogonal complement of its image. For the
+current fixtures:
+- Path (V=3,E=2): (operatorname{rank}H=15), joint quotient dimension 21.
+- Cycle (V=4,E=4): (operatorname{rank}H=24), joint quotient dimension 24.
+
+The new gate requires the joint quotient QFI to be full rank and its
+rank to match the projective tangent rank. This tests the hypothesis that
+the earlier extra nulls are completely accounted for by the internal
+singlet-edge common rotations. The family is treated as a kinematic
+contraction redundancy, not asserted to be an independent fundamental
+gauge symmetry. For other graphs, generator dependencies are computed
+rather than assumed.
+
+New files:
+- `scripts/q2_relational_joint_gauge_edge_quotient_gate.py`
+- `tests/test_q2_relational_joint_gauge_edge_quotient_gate.py`
+- `BQG_Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT_RESULT_20261118.md`
+
+CI exports
+`verification_results/Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT.json`.
