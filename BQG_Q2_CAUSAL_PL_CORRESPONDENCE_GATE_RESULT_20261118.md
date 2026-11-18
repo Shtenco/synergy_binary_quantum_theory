@@ -54,9 +54,13 @@ This is a genuine derived measure on the finite causal-edge partitions, not an i
 The same map induces a sparse symmetric conductance matrix without adding parameters:
 \[
 W_g(e,e')=\#\{\text{PL-dual edges joining }\Phi_g^{-1}(e)
-\text{ and }\Phi_g^{-1}(e')\},\qquad e\ne e'.
+\text{ and }\Phi_g^{-1}(e')\},\qquad e\ne e',
 \]
-Edges internal to one fibre are omitted because they contribute zero energy to functions constant on that fibre. This is the stiffness matrix obtained by restricting the PL-dual graph Dirichlet energy to fibre-constant functions. Together with the pushforward mass matrix \(M_g=\mathrm{diag}(\mu_g(e))\), it defines the finite generalized operator \(M_g^{-1}K_g\), where \(K_g\) is the weighted graph Laplacian of \(W_g\).
+and the normalized stiffness conductance is
+\[
+\kappa_g(e,e')=W_g(e,e')/24^g.
+\]
+Edges internal to one fibre are omitted because they contribute zero energy to functions constant on that fibre. The weighted Laplacian \(K_g\) of \(\kappa_g\) is the PL-dual Dirichlet energy restricted to fibre-constant functions, with the same \(24^{-g}\) normalization as the mass. Together with \(M_g=\mathrm{diag}(\mu_g(e))\), it defines the finite generalized operator \(M_g^{-1}K_g\).
 
 | Generation | Quotient nodes | Weighted edge pairs | Cross-fibre PL adjacencies | Internal PL adjacencies | Weighted degree range |
 |---:|---:|---:|---:|---:|---:|
