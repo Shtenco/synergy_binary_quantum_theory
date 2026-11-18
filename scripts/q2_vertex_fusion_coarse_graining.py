@@ -161,6 +161,130 @@ def deterministic_case(name="path_4", two_j=1, seed=20261118, blocks=None):
         blocks = tuple((v,) for v in range(nodes))
     return compare_micro_and_fused_qfi(states, edges, singlet, blocks)
 
+
+def fuse_fused_blocks(fused_tensors, boundaries, coarse_edges, blocks, singlet):
+    """Fuse already-coarse tensors once more, preserving original boundary labels."""
+    n = len(fused_tensors)
+    if len(boundaries) != n:
+        raise ValueError("coarse boundary metadata must match tensor count")
+    blocks = _partition(n, blocks)
+    owner = {v: bi for bi, block in enumerate(blocks) for v in block}
+    normalized, used = [], set()
+    for edge in coarse_edges:
+        if len(edge) != 4:
+            raise ValueError("coarse edges must contain endpoints, original index, and metadata")
+        a, b, edge_index, original = edge
+        if len(a) != 2 or len(b) != 2:
+            raise ValueError("coarse edge endpoints must be (tensor_index, axis)")
+        if any(isinstance(x, (bool, np.bool_)) or not isinstance(x, (int, np.integer))
+               for x in (*a, *b, edge_index)):
+            raise ValueError("coarse edge indices must be integers")
+        a, b = (int(a[0]), int(a[1])), (int(b[0]), int(b[1]))
+        if a[0] == b[0] or not (0 <= a[0] < n and 0 <= b[0] < n):
+            raise ValueError("invalid coarse edge tensor endpoints")
+        if not (0 <= a[1] < np.ndim(fused_tensors[a[0]])
+                and 0 <= b[1] < np.ndim(fused_tensors[b[0]])):
+            raise ValueError("invalid coarse edge tensor axes")
+        if a in used or b in used:
+            raise ValueError("a coarse half-link is used more than once")
+        used.update((a, b))
+        normalized.append((a, b, int(edge_index), original))
+
+    fused, new_boundaries = [], []
+    for block_index, block in enumerate(blocks):
+        local = sorted(block)
+        local_index = {v: i for i, v in enumerate(local)}
+        tensors = [np.asarray(fused_tensors[v], complex) for v in local]
+        internal = [
+            ((local_index[a[0]], a[1]), (local_index[b[0]], b[1]), singlet)
+            for a, b, _edge_index, _original in normalized
+            if owner[a[0]] == block_index == owner[b[0]]
+        ]
+        contracted_axes = {
+            endpoint
+            for (a, b, _edge_index, _original) in normalized
+            if owner[a[0]] == block_index == owner[b[0]]
+            for endpoint in (a, b)
+        }
+        open_axes = [
+            (v, axis)
+            for v in local
+            for axis in range(np.ndim(fused_tensors[v]))
+            if (v, axis) not in contracted_axes
+        ]
+        fused.append(_contract(
+            tensors,
+            internal,
+            [(local_index[v], axis) for v, axis in open_axes],
+        ))
+        new_boundaries.append([boundaries[v][axis] for v, axis in open_axes])
+
+    remap = {
+        (old_vertex, old_axis): (new_vertex, new_axis)
+        for new_vertex, block in enumerate(blocks)
+        for new_axis, (old_vertex, old_axis) in enumerate(
+            (item for v in sorted(block)
+             for item in [(v, axis) for axis in range(np.ndim(fused_tensors[v]))
+                          if (v, axis) not in {
+                              endpoint
+                              for a, b, _edge_index, _original in normalized
+                              if owner[a[0]] == new_vertex == owner[b[0]]
+                              for endpoint in (a, b)
+                          }])
+        )
+    }
+    retained = [
+        (remap[a], remap[b], edge_index, original)
+        for a, b, edge_index, original in normalized
+        if owner[a[0]] != owner[b[0]]
+    ]
+    return fused, new_boundaries, retained
+
+
+def _coarse_qfi(fused, boundaries, coarse_edges, singlet, generators):
+    raw = _coarse_state(fused, boundaries, coarse_edges, singlet)
+    norm = np.linalg.norm(raw)
+    if norm <= 1e-14:
+        raise ValueError("zero-support coarse boundary state")
+    state = raw / norm
+    derivatives = []
+    for _a, _b, edge_index, _original in coarse_edges:
+        for generator in generators:
+            derivative = _coarse_state(
+                fused, boundaries, coarse_edges, singlet, (edge_index, generator)
+            ) / norm
+            derivative -= state * np.vdot(state, derivative)
+            derivatives.append(derivative)
+    qfi = 4.0 * np.real([[np.vdot(a, b) for b in derivatives] for a in derivatives])
+    return state, qfi
+
+
+def compare_staged_and_direct_fusion(node_states, edges, singlet,
+                                     first_blocks, second_blocks, direct_blocks):
+    """Check that two successive blocking steps equal one direct blocking step."""
+    first = fuse_vertex_blocks(node_states, edges, singlet, first_blocks)
+    staged = fuse_fused_blocks(*first, second_blocks, singlet)
+    direct = fuse_vertex_blocks(node_states, edges, singlet, direct_blocks)
+    generators = spin_generators(singlet.shape[0] - 1)
+    staged_state, staged_qfi = _coarse_qfi(*staged, singlet, generators)
+    direct_state, direct_qfi = _coarse_qfi(*direct, singlet, generators)
+    overlap = np.vdot(direct_state, staged_state)
+    phase = overlap / abs(overlap) if abs(overlap) > 1e-14 else 1.0
+    amplitude_error = float(np.linalg.norm(staged_state - phase * direct_state))
+    qfi_error = float(np.max(np.abs(staged_qfi - direct_qfi))) if staged_qfi.size else 0.0
+    staged_edges = [edge[2] for edge in staged[2]]
+    direct_edges = [edge[2] for edge in direct[2]]
+    return {
+        "amplitude_error_up_to_global_phase": amplitude_error,
+        "qfi_max_abs_error": qfi_error,
+        "staged_retained_edge_indices": staged_edges,
+        "direct_retained_edge_indices": direct_edges,
+        "passed": (
+            amplitude_error < 2e-9 and qfi_error < 2e-8
+            and staged_edges == direct_edges
+        ),
+    }
+
 def run_coarse_graining_suite(two_j=1):
     """Run the deterministic block-fusion controls on all supported graph fixtures."""
     cases = {
