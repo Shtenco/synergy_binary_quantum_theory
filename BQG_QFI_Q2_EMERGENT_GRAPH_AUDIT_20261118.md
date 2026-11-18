@@ -781,3 +781,49 @@ The workflow runs the higher-spin tests and exports
 `verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json`.
 This is a finite pure-state path result for individual spins, not a spin
 sum or a BQG history-weighted continuum conductance.
+
+
+## Follow-up: exact Haar-averaged four-valent QFI and parametric spin weights (2026-11-18)
+
+For fixed spin (j), average the pure-state QFI over normalized intertwiners
+with Haar-distributed coefficients in the ((2j+1))-dimensional invariant
+subspace. This is an average of pure-state QFIs, not the QFI of the mixed
+Haar-averaged density operator. Since each invariant intertwiner has zero
+one-leg angular momentum expectation, the QFI average is linear in the
+two-generator correlators.
+
+The exact result is
+\[
+\mathbb E F_j=
+q_j\left(\frac43 I_4-\frac13\mathbf1\mathbf1^T\right)\otimes I_3,
+\qquad q_j=\frac{4j(j+1)}3.
+\]
+The mean pair correlator follows from the uniform trace over pair-coupling
+channels (k=0,\ldots,2j):
+\[
+\mathbb E\langle\mathbf J_\ell\cdot\mathbf J_m\rangle
+=-\frac{j(j+1)}3.
+\]
+The averaged star metric has exactly three Gauss null modes and nine
+positive quotient eigenvalues (4q_j/3).
+
+For a specified classical ensemble of orthogonal spin sectors with
+parameter-independent weights (p_j), the sector-QFI average is linear:
+[
+\bar F=\sum_jp_j\mathbb EF_j,
+\qquad
+\bar q=\sum_jp_j\frac{4j(j+1)}3.
+\]
+An illustrative set of weights is used only as a numerical fixture; no
+weights are claimed to follow from BQG dynamics.
+
+New files:
+- `scripts/q2_relational_haar_averaged_star_qfi_gate.py`
+- `tests/test_q2_relational_haar_averaged_star_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI_RESULT_20261118.md`
+
+The workflow exports
+`verification_results/Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI.json`.
+A physical spin sum still requires a derived history measure and an explicit
+statement of whether spin/intertwiner labels are orthogonal, classical, and
+accessible to the measurement.
