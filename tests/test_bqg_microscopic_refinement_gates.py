@@ -14,7 +14,7 @@ def test_fixed_pure_ancilla_shortcut_remains_an_explicit_scientific_no_go():
     assert result["relative_reconstruction_error"] == pytest.approx(1.0, abs=1e-10)
     assert result["phase_fixed_error"] == pytest.approx(2**0.5, abs=1e-10)
     assert result["Gauss_projection_leakage_sum"] < 1e-9
-    assert "fixed pure" in result["claim_boundary"].lower()
+    assert "four-qubit Gauss-singlet ancilla" in result["claim_boundary"]
 
 
 def test_bilinear_ancilla_refinement_is_an_s4_intertwiner(capsys):
