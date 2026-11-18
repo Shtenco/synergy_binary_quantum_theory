@@ -81,7 +81,7 @@ def network_relational_qfi(
             derivative_raw = _apply_boundary_twist(a, b, c, shared_site, pauli)
             derivative = derivative_raw / math.sqrt(probability)
             # B-node Gauss law: J_shared = -sum of the other three half-link J's.
-            pulled_generator = sum(
+            pulled_generator = -sum(
                 (node_generator(pauli, site) for site in other_sites),
                 np.zeros((16, 16), dtype=complex),
             )
