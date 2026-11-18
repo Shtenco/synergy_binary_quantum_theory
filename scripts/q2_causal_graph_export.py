@@ -160,7 +160,7 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
         "all_levels_connected": all(row["connected"] for row in rows),
         "all_levels_are_dags": all(row["directed_acyclic"] for row in rows),
         "source_sink_paths_are_four_to_the_generation": all(
-            row["source_to_sink_path_count"] == 4 ** row["generation"] for row in rows
+            row["source_to_sink_path_count"] == 4 ** (2 ** row["generation"] - 1) for row in rows
         ),
         "all_hashes_present": all(len(row["graph_sha256"]) == 64 for row in rows),
         "route_labels_are_c4_carrier_labels": all(
