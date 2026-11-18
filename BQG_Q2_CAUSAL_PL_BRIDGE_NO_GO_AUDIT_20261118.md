@@ -177,6 +177,9 @@ derived.
 - `tests/test_q2_pl_graph_export.py`
 - `BQG_QFI_Q2_EMERGENT_GRAPH_AUDIT_20261118.md`
 - `BQG_Q2_WALSH_LOCAL_QFI_CONTROL_RESULT_20261118.md`
+- `BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md`
+- `scripts/q2_pl_generation3_preflight.py`
+- `tests/test_q2_pl_generation3_preflight.py`
 
 This audit makes no claim that spacetime or general relativity has been
 derived. It narrows the exact missing theorem and prevents accidental
