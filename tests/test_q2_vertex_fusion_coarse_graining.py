@@ -9,6 +9,7 @@ from scripts.q2_vertex_fusion_coarse_graining import (
     compare_staged_and_direct_fusion,
     compare_micro_and_fused_qfi,
     compare_micro_and_fused_reduced_qfi,
+    compare_micro_and_fused_reduced_qfi_many,
     deterministic_case,
     fuse_vertex_blocks,
 )
@@ -180,4 +181,36 @@ def test_all_one_and_two_leg_boundary_subsystems_preserve_fused_mixed_qfi():
     assert result["max_mixed_qfi_error"] < 2e-8
     assert result["minimum_pure_minus_mixed_qfi_eigenvalue"] > -2e-8
     assert result["passed"], result
+
+def test_batched_reduced_qfi_matches_single_subsystem_reference():
+    graph_name = "path_3"
+    nodes, edges = graph_fixtures()[graph_name]
+    two_j = 1
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    rng = np.random.default_rng(20261221)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    singlet = invariant_singlet_tensor(two_j)
+    blocks = ((0, 1), (2,))
+    subsets = (((0, 0),), ((0, 0), (0, 1)), ((2, 0), (2, 1)))
+    batched = compare_micro_and_fused_reduced_qfi_many(
+        states, edges, singlet, blocks, subsets
+    )
+    assert len(batched) == len(subsets)
+    for keys, actual in zip(subsets, batched):
+        reference = compare_micro_and_fused_reduced_qfi(
+            states, edges, singlet, blocks, keys
+        )
+        assert actual["passed"] == reference["passed"]
+        assert actual["reduced_density_max_abs_error"] == pytest.approx(
+            reference["reduced_density_max_abs_error"], abs=1e-12
+        )
+        assert actual["reduced_derivative_max_abs_error"] == pytest.approx(
+            reference["reduced_derivative_max_abs_error"], abs=1e-12
+        )
+        assert actual["mixed_qfi_max_abs_error"] == pytest.approx(
+            reference["mixed_qfi_max_abs_error"], abs=1e-12
+        )
+        assert actual["pure_minus_mixed_qfi_min_eigenvalue"] == pytest.approx(
+            reference["pure_minus_mixed_qfi_min_eigenvalue"], abs=1e-10
+        )
 
