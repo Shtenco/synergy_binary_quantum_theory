@@ -191,7 +191,7 @@ def test_batched_reduced_qfi_matches_single_subsystem_reference():
     states = [random_intertwiner(rng, basis) for _ in range(nodes)]
     singlet = invariant_singlet_tensor(two_j)
     blocks = ((0, 1), (2,))
-    subsets = (((0, 0),), ((0, 0), (0, 1)), ((2, 0), (2, 1)))
+    subsets = (((0, 0),), ((0, 0), (0, 1)), ((2, 1), (2, 2)))
     batched = compare_micro_and_fused_reduced_qfi_many(
         states, edges, singlet, blocks, subsets
     )
