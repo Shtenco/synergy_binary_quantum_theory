@@ -143,6 +143,7 @@ def test_collective_edge_parameter_map_and_pullback_are_exact():
         ((0,),),
         ((0, 1.0), (2,)),
         ((0, 1), (2, 3)),
+        ((0, 1), (2,), ()),
     ],
 )
 def test_collective_edge_parameter_map_rejects_non_partitions(blocks):
