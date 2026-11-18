@@ -244,3 +244,38 @@ Detailed results:
 
 The exact causal-volume exponent remains a theorem about the frozen scalar
 recurrence. It has not been upgraded to a QFI spectral-dimension result.
+
+
+## PL tetrahedral dual graph and local QFI control (2026-11-18)
+
+The PL exporter now also exports the tetrahedral dual adjacency. At levels
+0, 1 and 2 it has respectively ((V,E)=(16,32),(384,768),(9216,18432)).
+All three dual graphs are connected and exactly 4-regular. Each dual edge is
+tagged by the omitted face-rank/route label (00,01,10,11); the two
+tetrahedra sharing a face agree on that colour. The updated PL CI run
+`44271050772` passed all 5 tests and uploaded the 432,503-byte artifact.
+
+A separate local QFI control now uses the actual four Walsh-derived
+tetrahedral face-qubit states from `micro_walsh_qgeom_gate.py`. For a pure
+face qubit the SU(2)-frame QFI is (F^{(a)}=I-n_an_a^T), and the four-face
+sum is exactly ((8/3)I_3).
+
+The same calculation exposes an important gauge null: after the existing
+Gauss-singlet projection (weight (2/9)), the global SU(2) generators
+annihilate the state and its global gauge-orbit QFI vanishes to numerical
+precision. The reduced product-state relative probe
+(K_{ij}=(Z_i-Z_j)/2) gives (F_Q=4/3), hence (F_Q/4=1/3) for all six
+face pairs. This (1/3) is **not** a physical edge weight: it is a uniform
+reduced-model product-state control, and a uniform scalar only rescales
+diffusion time.
+
+The local-QFI CI run `44271370461` passed all 3 tests and uploaded its JSON
+artifact. Detailed result: `BQG_Q2_WALSH_LOCAL_QFI_CONTROL_RESULT_20261118.md`.
+
+The next physical QFI step is therefore sharply specified: derive a
+gauge-covariant two-block reduced state and a relational generator on each
+shared tetrahedral face. A global gauge generator is ruled out as the source
+of nonzero conductance; the product-state (1/3) control must not be promoted
+to a physical weight. The 4-regular PL dual graph is now available as the
+candidate adjacency, but the scalar causal rewrite DAG remains a separate
+object until a dynamical gluing map is derived.
