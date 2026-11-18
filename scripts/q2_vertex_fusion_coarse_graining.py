@@ -310,6 +310,18 @@ def _set_partitions(items):
             )
 
 
+
+def _bell_number(n):
+    """Return the nth Bell number using an integer-only recurrence."""
+    row = [1]
+    for _ in range(n):
+        next_row = [row[-1]]
+        for k in range(len(row)):
+            next_row.append(next_row[-1] + row[k])
+        row = next_row
+    return row[0]
+
+
 def exhaustive_graph_partition_control(graph_name="path_5", two_j=1, seed=20261120):
     """Check every vertex partition of a fixture and invariance under block ordering."""
     if graph_name not in graph_fixtures():
@@ -365,13 +377,13 @@ def exhaustive_graph_partition_control(graph_name="path_5", two_j=1, seed=202611
         "two_j": int(two_j),
         "spin": float(two_j) / 2.0,
         "partition_count": len(partitions),
-        "expected_partition_count": 52,
+        "expected_partition_count": len(partitions),
         "includes_block_order_reversal": True,
         "max_amplitude_error_up_to_global_phase": max_amplitude_error,
         "max_qfi_error": max_qfi_error,
         "max_fused_block_gauss_relative_residual": max_gauss_residual,
         "passed": (
-            len(partitions) == 52
+            len(partitions) == _bell_number(nodes)
             and max_amplitude_error < 2e-9
             and max_qfi_error < 2e-8
             and max_gauss_residual < 2e-9
