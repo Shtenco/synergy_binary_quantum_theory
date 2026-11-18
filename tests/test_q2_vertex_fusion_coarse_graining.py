@@ -6,6 +6,7 @@ from scripts.q2_vertex_fusion_coarse_graining import (
     exhaustive_reduced_boundary_partition_control,
     run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
+    compare_micro_and_fused_qfi,
     deterministic_case,
     fuse_vertex_blocks,
 )
@@ -133,4 +134,37 @@ def test_partial_trace_mixed_boundary_qfi_is_fusion_invariant_and_monotone(
     assert result["max_mixed_qfi_error"] < 2e-8
     assert result["minimum_pure_minus_mixed_qfi_eigenvalue"] > -2e-8
     assert result["passed"], result
+
+def test_sld_mixed_qfi_reduces_to_pure_qfi_when_no_boundary_leg_is_traced():
+    graph_name = "path_3"
+    nodes, edges = graph_fixtures()[graph_name]
+    two_j = 1
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    rng = np.random.default_rng(20261207)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    occupied = {
+        (u, lu) for u, lu, _v, _lv in edges
+    } | {
+        (v, lv) for _u, _lu, v, lv in edges
+    }
+    all_boundary_keys = tuple(
+        (v, leg)
+        for v in range(nodes)
+        for leg in range(4)
+        if (v, leg) not in occupied
+    )
+    blocks = ((0, 1), (2,))
+    singlet = invariant_singlet_tensor(two_j)
+    mixed = compare_micro_and_fused_reduced_qfi(
+        states, edges, singlet, blocks, all_boundary_keys
+    )
+    pure = compare_micro_and_fused_qfi(states, edges, singlet, blocks)
+    assert np.allclose(
+        np.asarray(mixed["micro_mixed_qfi"]),
+        np.asarray(pure["micro_qfi"]),
+        atol=2e-8,
+        rtol=2e-8,
+    )
+    assert mixed["pure_minus_mixed_qfi_min_eigenvalue"] > -2e-8
+    assert mixed["passed"], mixed
 
