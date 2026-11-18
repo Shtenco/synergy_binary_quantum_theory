@@ -100,17 +100,19 @@ retained-edge QFI against the microscopic calculation, and invariance of
 original retained-edge identities under reordering.
 
 The regression test runs this exhaustive check at both \(j=1/2\) and
-\(j=1\). The workflow also exports a separate control JSON for each spin.
+\(j=1\). In addition, every fused block tensor is checked against the
+residual of the diagonal SU(2) Gauss generators acting on all of its open
+legs. The workflow exports a separate control JSON for each spin.
 Verified workflow:
-[44368258342](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44368258342),
-commit `b8be1972464190512885baeaf2306ba67a712bc8`. All 45 job steps
+[44369135373](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44369135373),
+commit `796791744445be2f0155cb92cd4e0c3089e40454`. All 45 job steps
 completed successfully. Its `q2-pl-graph-export` artifact (ID
-`14457636817`) was downloaded and both JSON files were independently parsed:
+`14457977384`) was downloaded and both JSON files were independently parsed:
 
-| Spin | Partitions | Max boundary-amplitude residual | Max retained-edge QFI residual | Result |
-|---|---:|---:|---:|---|
-| \(j=1/2\) | 52 | \(3.472\times10^{-16}\) | \(8.882\times10^{-16}\) | pass |
-| \(j=1\) | 52 | \(3.168\times10^{-16}\) | \(2.665\times10^{-15}\) | pass |
+| Spin | Partitions | Max amplitude residual | Max QFI residual | Max fused-block Gauss residual | Result |
+|---|---:|---:|---:|---:|---|
+| \(j=1/2\) | 52 | \(3.472\times10^{-16}\) | \(8.882\times10^{-16}\) | \(8.598\times10^{-16}\) | pass |
+| \(j=1\) | 52 | \(3.168\times10^{-16}\) | \(2.665\times10^{-15}\) | \(2.153\times10^{-15}\) | pass |
 
 For both spins, the staged-versus-direct path_5 fusion control also passed:
 the retained edge identity is `[2]` in both constructions. For \(j=1/2\),
@@ -124,6 +126,10 @@ ordinary nontrivial partitions at both spins. These results establish
 numerical agreement for the tested finite-dimensional cases, not
 exhaustiveness over all spin labels, graph topologies, or intertwiner
 configurations.
+
+Thus the tested fused tensors remain SU(2)-invariant under the diagonal action
+on their retained open legs, within floating-point residuals. This confirms
+closure of the local Gauss constraint under this exact finite contraction.
 
 These checks strengthen the finite algebraic identity and software
 implementation. They still do not establish a physical RG transformation:
