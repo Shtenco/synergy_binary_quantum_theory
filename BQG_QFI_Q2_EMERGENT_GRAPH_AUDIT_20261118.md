@@ -827,3 +827,24 @@ The workflow exports
 A physical spin sum still requires a derived history measure and an explicit
 statement of whether spin/intertwiner labels are orthogonal, classical, and
 accessible to the measurement.
+
+
+### Verification status for higher-spin and Haar-averaged QFI
+
+The higher-spin path gate and the exact Haar-averaged star gate both passed
+the complete branch workflow. The latter tests all four sectors
+(j=1/2,1,3/2,2), the exact (12\times12) star matrix, its three Gauss
+null directions, and the nine positive quotient eigenvalues. The illustrative
+weights ((0.1,0.2,0.3,0.4)) give
+\[
+\bar q=\frac{16}{3},\qquad
+\bar F_{\rm cross}=-\frac{16}{9}I_3,\qquad
+\lambda_{\rm quotient}=\frac{64}{9}
+\]
+with multiplicity nine. These are outputs for the stated example weights,
+not a fitted or BQG-derived spin distribution.
+
+Successful CI:
+- Higher-spin network QFI: run `44337958660`.
+- Haar-averaged star and spin-ensemble QFI: run
+  `44338229507`.
