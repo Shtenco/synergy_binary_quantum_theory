@@ -54,3 +54,28 @@ def test_q2_causal_quotient_is_not_an_exact_markov_lumping():
     assert level2["equitable_partition"] is False
     assert level2["non_equitable_source_target_pairs"] == 408
     assert level2["maximum_neighbour_count_variation"] == 2
+
+
+
+def test_q2_galerkin_quotient_conductances_are_derived_from_pl_adjacency():
+    result = run(max_generation=2)
+    level0, level1, level2 = result["levels"]
+    assert (level0["quotient_weighted_edge_pairs"], level0["internal_pl_dual_adjacencies"]) == (0, 32)
+    assert (
+        level1["quotient_weighted_edge_pairs"],
+        level1["quotient_cross_fibre_adjacencies"],
+        level1["internal_pl_dual_adjacencies"],
+        level1["quotient_weighted_degree_min"],
+        level1["quotient_weighted_degree_max"],
+    ) == (16, 512, 256, 128, 128)
+    assert (
+        level2["quotient_weighted_edge_pairs"],
+        level2["quotient_cross_fibre_adjacencies"],
+        level2["internal_pl_dual_adjacencies"],
+        level2["quotient_weighted_degree_min"],
+        level2["quotient_weighted_degree_max"],
+    ) == (180, 12032, 6400, 192, 512)
+    assert level1["quotient_connected"] is True
+    assert level2["quotient_connected"] is True
+    assert all(edge["weight"] > 0 for edge in level2["quotient_conductances"])
+    assert "not QFI conductances" in level2["conductance_semantics"]
