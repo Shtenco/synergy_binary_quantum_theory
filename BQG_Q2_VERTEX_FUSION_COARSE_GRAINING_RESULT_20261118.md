@@ -93,36 +93,34 @@ rejection.
 
 The path_5 partition check has now been promoted from a test-only loop into
 the reproducible JSON control exported by the workflow. It enumerates all
-(B_5=52) set partitions of the five microscopic vertices and repeats each
-case with both the block order and the vertex order inside each block reversed.
-For every partition it checks normalized boundary-state equality up to global
-phase, equality of the retained-edge QFI against the microscopic calculation,
-and invariance of original retained-edge identities under reordering.
+52 set partitions (the fifth Bell number, B_5) of the five microscopic vertices
+and repeats each case with both the block order and the vertex order inside
+each block reversed. For every partition it checks normalized boundary-state
+equality up to global phase, equality of retained-edge QFI against the
+microscopic calculation, and invariance of original retained-edge identities
+under reordering.
 
 Verified workflow:
 [44363347302](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44363347302),
-commit `27eb01e571f592ca0b7752b1e0371c097b8a3960). All 44 job steps completed
+commit `27eb01e571f592ca0b7752b1e0371c097b8a3960`. All 44 job steps completed
 successfully, including the exhaustive vertex-fusion regression test. Its
 `q2-pl-graph-export` artifact (ID `14455127392`) was downloaded; the JSON
 was parsed independently and reports:
 
 - all five deterministic path/star/cycle controls passed;
 - all 52 path_5 partitions passed, including reversed block order;
-- maximum normalized boundary-amplitude residual across the exhaustive
-  partition control: (3.473\times10^{-16});
-- maximum retained-edge QFI residual: (8.882\times10^{-16});
-- staged versus direct path_5 fusion: amplitude residual
-  (1.629\times10^{-16}), QFI residual (1.348\times10^{-32}), and identical
-  retained edge identity ([2]).
+- maximum normalized boundary-amplitude residual: `3.473e-16`;
+- maximum retained-edge QFI residual: `8.882e-16`;
+- staged versus direct path_5 fusion: amplitude residual `1.629e-16`,
+  QFI residual `1.348e-32`, and identical retained edge identity `[2]`.
 
-The separate CI regression matrix continues to cover both (j=1/2) and
-(j=1), including staged-versus-direct fusion. The exported exhaustive
-partition control uses (j=1/2); it should not be interpreted as exhaustive
-over spin labels or graph topologies.
+The separate CI regression matrix continues to cover both j=1/2 and j=1,
+including staged-versus-direct fusion. The exported exhaustive partition
+control uses j=1/2; it should not be interpreted as exhaustive over spin
+labels or graph topologies.
 
 These checks strengthen the finite algebraic identity and software
 implementation. They still do not establish a physical RG transformation:
 the map currently contracts internal singlets exactly and retains cut legs,
 without tracing or summing internal degrees of freedom, specifying a
 coarse-graining measure, or deriving scale-dependent effective couplings.
-
