@@ -198,8 +198,10 @@ def gauss_gauge_diagnostics(qfi: np.ndarray, node_count: int) -> dict[str, objec
     ]
     reduced = qfi[np.ix_(keep, keep)]
     eigenvalues = np.linalg.eigvalsh(reduced)
+    full_minimum = float(np.linalg.eigvalsh(qfi)[0])
     return {
         "max_node_gauss_null_residual": max(null_residuals),
+        "full_qfi_minimum_eigenvalue": full_minimum,
         "gauge_fixed_parameter_count": len(keep),
         "gauge_fixed_minimum_eigenvalue": float(eigenvalues[0]),
         "gauge_fixed_maximum_eigenvalue": float(eigenvalues[-1]),
@@ -268,6 +270,9 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
             "max_node_gauss_null_residual": max(
                 item["max_node_gauss_null_residual"] for item in gauge_diagnostics
             ),
+            "full_half_link_qfi_minimum_eigenvalue": min(
+                item["full_qfi_minimum_eigenvalue"] for item in gauge_diagnostics
+            ),
             "gauge_fixed_parameter_count": gauge_diagnostics[0]["gauge_fixed_parameter_count"],
             "gauge_fixed_minimum_eigenvalue": min(
                 item["gauge_fixed_minimum_eigenvalue"] for item in gauge_diagnostics
@@ -287,6 +292,9 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
                 "nodewise_gauss_directions_are_null": max(
                     item["max_node_gauss_null_residual"] for item in gauge_diagnostics
                 ) < 1e-9,
+                "full_half_link_qfi_is_psd": min(
+                    item["full_qfi_minimum_eigenvalue"] for item in gauge_diagnostics
+                ) > -1e-9,
                 "full_half_link_qfi_is_symmetric": max(
                     item["full_half_link_symmetry_error"] for item in gauge_diagnostics
                 ) < 1e-9,
