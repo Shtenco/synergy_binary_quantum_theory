@@ -150,3 +150,23 @@ cannot be introduced without acting on any microscopic edge. Symmetry is
 measured on the unsymmetrized pullback (B^T F B); only its symmetric part is
 used for the stable eigenvalue calculation. This prevents the symmetry check
 from becoming tautological through premature symmetrization.
+
+
+### Coordinate-metric normalization of collective modes
+
+The first pullback uses a shared physical angle on every edge in a block.
+Its embedding has (B^TB=|b|I_3) on a block of size (|b|), so its
+eigenvalues naturally include a block-multiplicity coordinate factor. To
+separate this convention from the intrinsic information in the collective
+direction, the runner now reports a second, orthonormal embedding:
+[
+U_{e b}=|b|^{-1/2}I_3,\
+qquad U^TU=I,qquad F_{\mathrm{unit}}=U^TF_{\mathrm{micro}}U.
+]
+Both conventions are retained. The shared-angle pullback answers the
+information for a common equal-angle displacement; the orthonormal pullback
+compares collective directions with a unit Euclidean parameter norm. Their
+spectra should not be conflated, and neither is a vertex-fusion map.
+
+Regression tests verify (B^TB) equals the block-size metric, (U^TU=I),
+and PSD/symmetry for both pullbacks.
