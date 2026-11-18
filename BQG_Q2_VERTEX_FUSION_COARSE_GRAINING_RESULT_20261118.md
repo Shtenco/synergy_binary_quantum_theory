@@ -165,3 +165,37 @@ spin labels. It does not close the broader physical coarse-graining problem:
 other graph families, larger spins, boundary reductions, internal-state
 sums, and a specified scale-dependent effective dynamics remain separate
 questions.
+
+## Exhaustive audit across all graph fixtures (verified 2026-11-18)
+
+The exhaustive partition routine was generalized from path_5 to every graph
+fixture currently in the gate: path_3, path_4, path_5, star_4, and cycle_4.
+For each graph it enumerates the complete Bell set of vertex partitions:
+5 + 15 + 52 + 15 + 15 = 102 partitions per spin. Every partition is
+re-evaluated after reversing block order and the vertex order inside each
+block. The audit also records the diagonal SU(2) Gauss-law residual of each
+fused block.
+
+Both spin sectors were run independently:
+
+| Spin | Partitions | Max boundary-state residual | Max retained-edge QFI residual | Max fused-block Gauss residual |
+|---|---:|---:|---:|---:|
+| j=1/2 | 102 | 2.970e-16 | 6.661e-16 | 8.980e-16 |
+| j=1 | 102 | 4.335e-16 | 2.665e-15 | 2.535e-15 |
+
+All 204 canonical partitions passed, as did their reversed-order controls.
+Thus the artifact covers 408 partition/order evaluations in total. The
+staged-versus-direct path_5 fusion check also passes in both spins and retains
+the same original edge identity [2].
+
+Verified run:
+[44373496107](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44373496107),
+commit `71d568ad2f7d978c2e4a252406e691768cc2266c`. The job completed all 45
+steps successfully. The downloaded artifact (ID `14459792831`) contains
+both spin-specific JSON exports; both were parsed independently and report
+top-level `passed: true`.
+
+This closes exhaustive finite partition coverage for the five current graph
+fixtures at these two spin values. It does not prove invariance under
+arbitrary graph refinement, arbitrary spin, boundary partial trace, or a
+physical renormalization-group flow.
