@@ -113,3 +113,53 @@ def test_high_spin_graph_spectra_on_bounded_boundary_fixtures(two_j):
         assert row["boundary_half_links"] == 8
         assert row["qfi_rank_fraction_mean"] <= 1.0
         assert row["checks"]["qfi_is_psd"]
+
+
+def test_collective_edge_parameter_map_and_pullback_are_exact():
+    from scripts.q2_relational_higher_spin_graph_qfi_gate import (
+        collective_edge_parameter_map,
+        collective_edge_pullback_qfi,
+    )
+    blocks = ((0, 1), (2,))
+    mapping = collective_edge_parameter_map(3, blocks)
+    expected = np.zeros((9, 6))
+    expected[0:3, 0:3] = np.eye(3)
+    expected[3:6, 0:3] = np.eye(3)
+    expected[6:9, 3:6] = np.eye(3)
+    assert np.array_equal(mapping, expected)
+    rng = np.random.default_rng(20261118)
+    raw = rng.normal(size=(9, 9))
+    micro_qfi = raw.T @ raw
+    effective, returned_map = collective_edge_pullback_qfi(micro_qfi, blocks)
+    assert np.array_equal(returned_map, mapping)
+    assert np.allclose(effective, mapping.T @ micro_qfi @ mapping)
+    assert np.linalg.eigvalsh(effective).min() >= -1e-10
+
+
+@pytest.mark.parametrize(
+    "blocks",
+    [
+        ((0,), (0, 1)),
+        ((0,),),
+        ((0, 1.0), (2,)),
+        ((0, 1), (2, 3)),
+    ],
+)
+def test_collective_edge_parameter_map_rejects_non_partitions(blocks):
+    from scripts.q2_relational_higher_spin_graph_qfi_gate import collective_edge_parameter_map
+    with pytest.raises(ValueError, match="partition"):
+        collective_edge_parameter_map(3, blocks)
+
+
+def test_every_graph_reports_explicit_collective_block_pullback():
+    result = run(two_j_values=(1,), trials=2)
+    assert result["passed"]
+    for name, row in result["graphs"]["0.5"].items():
+        block = row["collective_blocking"]
+        flattened = [edge for group in block["edge_partition"] for edge in group]
+        assert sorted(flattened) == list(range(row["edges"]))
+        assert block["effective_parameter_dimension"] == 3 * len(block["edge_partition"])
+        assert block["pullback"] == "F_effective = B.T @ F_micro @ B"
+        assert block["checks"]["effective_qfi_is_psd"]
+        assert block["checks"]["effective_qfi_is_symmetric"]
+        assert row["checks"]["collective_pullback_is_psd"]
