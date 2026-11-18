@@ -83,6 +83,15 @@ A_{eff}(0)v=\lambda Z_{eff}v,\qquad
 Z_{eff}=I+\Sigma'(0)\succcurlyeq I.
 \]
 The code reports the spectrum of this positive induced metric and the generalized spectrum. This captures the leading low-energy normalization induced by eliminated PL modes. It does not replace the exact energy-dependent kernel; its validity is restricted to energies small compared with the Q-sector gap. Because that gap is already small at generation 2, the radius of a useful low-energy expansion may shrink with refinement.
+For \(|\lambda|<\Delta_Q=\lambda_{min}(H_Q)\), the Neumann expansion gives the explicit conservative remainder bound
+\[
+\|\Sigma(\lambda)-\Sigma(0)-\lambda\Sigma'(0)\|
+\leq
+\frac{\lambda^2\|B\|^2}
+{\Delta_Q^3(1-|\lambda|/\Delta_Q)}.
+\]
+The implementation reports the coefficient \(\|B\|^2/\Delta_Q^3\), so the bound can be evaluated at any energy strictly inside the certified finite-level radius. This bound is deliberately conservative and does not assert that the actual remainder saturates it.
+
 
 ## Claim boundary and next gate
 
