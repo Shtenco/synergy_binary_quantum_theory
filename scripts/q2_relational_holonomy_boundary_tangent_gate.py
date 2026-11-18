@@ -123,14 +123,14 @@ def compare_one(
         "direct_graph_qfi_symmetry_error": direct_symmetry,
         "holonomy_gauge_diagnostics": holonomy_gauge,
         "checks": {
-            "qfi_equals_four_projective_tangent_gram": np.allclose(
+            "qfi_equals_four_projective_tangent_gram": bool(np.allclose(
                 reconstructed, edge_qfi_from_pullback, atol=3e-10, rtol=3e-10
-            ),
-            "direct_edge_qfi_matches_half_link_pullback": np.allclose(
+            )),
+            "direct_edge_qfi_matches_half_link_pullback": bool(np.allclose(
                 direct_edge_qfi, edge_qfi_from_pullback, atol=3e-10, rtol=3e-10
-            ),
+            )),
             "tangent_rank_matches_qfi_rank": edge_rank == qfi_rank,
-            "edge_qfi_psd_up_to_roundoff": qfi_eigenvalues[0] >= -1e-9 * qfi_scale,
+            "edge_qfi_psd_up_to_roundoff": bool(qfi_eigenvalues[0] >= -1e-9 * qfi_scale),
         },
     }
 
