@@ -648,3 +648,41 @@ the simultaneous vertex action on internal holonomies plus boundary frames
 are not yet derived. Consequently the holonomy quotient and projective
 boundary-state stabilizer remain distinct mathematical objects; no physical
 coarse conductance or continuum result is claimed.
+
+
+## Follow-up: two-sided endpoint QFI and singlet quotient (2026-11-18)
+
+For the normalized invariant spin-1/2 singlet used on each internal edge,
+the simultaneous fundamental action on its two tensor indices leaves the
+gluing tensor invariant. In the current contraction convention this yields
+the exact projective tangent identity
+\[
+D_v(e)=-D_u(e)
+\]
+for equal Pauli-axis parameters applied at the two ends of the same
+contracted edge. This identity is independent of the other node intertwiners
+and remains valid inside a multi-edge contraction.
+
+Let (F\in\mathbb R^{3E\times3E}) denote the full correlated edge QFI,
+including off-diagonal edge blocks. With endpoint coordinates interleaved
+edge by edge, define (S:\mathbb R^{6E}\to\mathbb R^{3E}) by
+((Sx)_e=x_{e,u}-x_{e,v}). The full two-sided metric is
+\[
+F_{\rm 2s}=S^TFS
+=\begin{pmatrix}F&-F\\-F&F\end{pmatrix}_{e,e'}.
+\]
+It has at least (3E) structural common-endpoint null directions. Its
+rank equals the rank of the relative edge QFI; additional nullity is exactly
+the already diagnosed projective boundary-state stabilizer pulled back to
+the relative coordinates.
+
+New files:
+- `scripts/q2_relational_two_sided_endpoint_qfi_gate.py`
+- `tests/test_q2_relational_two_sided_endpoint_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI_RESULT_20261118.md`
+
+The new CI step runs the focused tests and exports
+`verification_results/Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI.json`.
+This is an exact result for the current normalized spin-1/2 singlet
+contraction and tensor-index convention. It is not yet a derivation of a
+general higher-spin edge-frame gauge theory or BQG coarse conductance.
