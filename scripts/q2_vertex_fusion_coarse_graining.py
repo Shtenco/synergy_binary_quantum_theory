@@ -596,6 +596,52 @@ def run_coarse_graining_suite(two_j=1):
 
 
 
+
+def run_reduced_boundary_suite(two_j_values=(1, 2)):
+    """Compare mixed-state QFI after tracing boundary legs on two graph families."""
+    specifications = {
+        "path_3": {
+            "blocks": ((0, 1), (2,)),
+            "keep_boundary_keys": ((0, 0), (0, 1)),
+        },
+        "cycle_4": {
+            "blocks": ((0, 1), (2, 3)),
+            "keep_boundary_keys": ((0, 1), (0, 3)),
+        },
+    }
+    controls = {}
+    for two_j in two_j_values:
+        controls[str(two_j / 2.0)] = {}
+        for graph_name, spec in specifications.items():
+            nodes, edges = graph_fixtures()[graph_name]
+            rng = np.random.default_rng(20261201 + two_j + nodes)
+            basis, _ = four_valent_intertwiner_basis(two_j)
+            states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+            controls[str(two_j / 2.0)][graph_name] = (
+                compare_micro_and_fused_reduced_qfi(
+                    states, edges, invariant_singlet_tensor(two_j),
+                    spec["blocks"], spec["keep_boundary_keys"]
+                )
+            )
+    return {
+        "status": "mixed reduced-boundary QFI under exact vertex fusion",
+        "tested_spins": [two_j / 2.0 for two_j in two_j_values],
+        "graphs": list(specifications),
+        "passed": all(
+            row["passed"]
+            for spin_rows in controls.values()
+            for row in spin_rows.values()
+        ),
+        "controls": controls,
+        "claim_boundary": (
+            "Exact reduced density matrix and SLD-QFI equivalence after tracing "
+            "the same external boundary legs, plus the QFI data-processing "
+            "inequality for the tested finite states. This is not a physical "
+            "renormalization-group flow."
+        ),
+    }
+
+
 def run_high_spin_small_graph_suite(two_j_values=(3, 4), graph_names=("path_3", "cycle_4")):
     """Exhaust all vertex partitions for small-boundary graphs at higher spins."""
     controls = {}
@@ -637,15 +683,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--two-j", type=int, default=1)
     parser.add_argument("--high-spin-small-graphs", action="store_true")
+    parser.add_argument("--reduced-boundary-qfi", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.two_j < 1:
         parser.error("--two-j must be a positive integer")
-    result = (
-        run_high_spin_small_graph_suite()
-        if args.high_spin_small_graphs
-        else run_coarse_graining_suite(args.two_j)
-    )
+    if args.high_spin_small_graphs and args.reduced_boundary_qfi:
+        parser.error("choose only one specialized control mode")
+    if args.high_spin_small_graphs:
+        result = run_high_spin_small_graph_suite()
+    elif args.reduced_boundary_qfi:
+        result = run_reduced_boundary_suite()
+    else:
+        result = run_coarse_graining_suite(args.two_j)
     rendered = json.dumps(result, indent=2)
     print(rendered)
     if args.output:
