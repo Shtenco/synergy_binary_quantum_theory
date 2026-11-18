@@ -44,6 +44,22 @@ def test_local_haar_pushforward_has_proper_boundary_invariant_support(
     assert result["pushforward_vs_full_haar_covariance_frobenius_distance"] == pytest.approx(
         expected_distance, abs=2e-9
     )
+    expected_product_second_moment_purity = (
+        2.0 / (local_dimension * (local_dimension + 1.0))
+    ) ** 2
+    expected_global_second_moment_purity = (
+        2.0 / (input_dimension * (input_dimension + 1.0))
+    )
+    assert result["product_haar_two_copy_moment_purity"] == pytest.approx(
+        expected_product_second_moment_purity, abs=2e-10
+    )
+    assert result["global_haar_on_input_two_copy_moment_purity"] == pytest.approx(
+        expected_global_second_moment_purity, abs=2e-10
+    )
+    assert result["two_copy_moment_hilbert_schmidt_distance"] == pytest.approx(
+        np.sqrt(expected_product_second_moment_purity - expected_global_second_moment_purity),
+        abs=2e-10,
+    )
     assert result["passed"], result
 
 @pytest.mark.parametrize(
@@ -85,6 +101,22 @@ def test_chain_block_pushforward_remains_isometric_but_not_full_boundary_haar(
     assert result["pushforward_vs_full_haar_covariance_frobenius_distance"] == pytest.approx(
         np.sqrt(expected_covariance_eigenvalue - 1.0 / expected_boundary_invariant_dimension),
         abs=2e-9,
+    )
+    expected_product_second_moment_purity = (
+        2.0 / (local_dimension * (local_dimension + 1.0))
+    ) ** vertex_count
+    expected_global_second_moment_purity = (
+        2.0 / (input_dimension * (input_dimension + 1.0))
+    )
+    assert result["product_haar_two_copy_moment_purity"] == pytest.approx(
+        expected_product_second_moment_purity, abs=2e-10
+    )
+    assert result["global_haar_on_input_two_copy_moment_purity"] == pytest.approx(
+        expected_global_second_moment_purity, abs=2e-10
+    )
+    assert result["two_copy_moment_hilbert_schmidt_distance"] == pytest.approx(
+        np.sqrt(expected_product_second_moment_purity - expected_global_second_moment_purity),
+        abs=2e-10,
     )
     assert result["passed"], result
 
