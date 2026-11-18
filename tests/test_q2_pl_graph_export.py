@@ -60,3 +60,15 @@ def test_q2_pl_dual_refinement_records_parent_tetrahedra():
             and len(vertex["parent_tetrahedron"]) == 4
             for vertex in row["dual_graph"]["vertices"]
         )
+
+
+
+def test_q2_pl_dual_vertices_realize_all_four_route_labels_locally():
+    result = run(max_generation=2)
+    assert result["checks"]["every_dual_vertex_has_one_incident_edge_per_route"] is True
+    for row in result["generations"]:
+        stars = [[] for _ in range(row["dual_graph"]["vertex_count"])]
+        for edge in row["dual_graph"]["edges"]:
+            stars[edge["source"]].append(edge["route_label"])
+            stars[edge["target"]].append(edge["route_label"])
+        assert all(sorted(labels) == ["00", "01", "10", "11"] for labels in stars)
