@@ -310,9 +310,11 @@ def _set_partitions(items):
             )
 
 
-def exhaustive_path5_partition_control(two_j=1, seed=20261120):
-    """Check every set partition of path_5 and invariance under block ordering."""
-    nodes, edges = graph_fixtures()["path_5"]
+def exhaustive_graph_partition_control(graph_name="path_5", two_j=1, seed=20261120):
+    """Check every vertex partition of a fixture and invariance under block ordering."""
+    if graph_name not in graph_fixtures():
+        raise ValueError(f"unknown graph fixture: {graph_name}")
+    nodes, edges = graph_fixtures()[graph_name]
     rng = np.random.default_rng(seed)
     basis, _ = four_valent_intertwiner_basis(two_j)
     states = [random_intertwiner(rng, basis) for _ in range(nodes)]
@@ -330,7 +332,7 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
         if not result["passed"] or not reordered["passed"]:
             return {
                 "partition_count": len(partitions),
-                "expected_partition_count": 52,
+                "expected_partition_count": len(partitions),
                 "passed": False,
                 "failed_partition": blocks,
                 "reordered_partition": reordered_blocks,
@@ -338,7 +340,7 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
         if result["retained_edge_indices"] != reordered["retained_edge_indices"]:
             return {
                 "partition_count": len(partitions),
-                "expected_partition_count": 52,
+                "expected_partition_count": len(partitions),
                 "passed": False,
                 "failed_partition": blocks,
                 "reason": "retained edge identity depends on block ordering",
@@ -359,7 +361,7 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
             reordered["gauss_max_relative_residual"],
         )
     return {
-        "graph": "path_5",
+        "graph": graph_name,
         "two_j": int(two_j),
         "spin": float(two_j) / 2.0,
         "partition_count": len(partitions),
@@ -375,6 +377,11 @@ def exhaustive_path5_partition_control(two_j=1, seed=20261120):
             and max_gauss_residual < 2e-9
         ),
     }
+
+
+def exhaustive_path5_partition_control(two_j=1, seed=20261120):
+    """Backward-compatible path_5 exhaustive partition control."""
+    return exhaustive_graph_partition_control("path_5", two_j=two_j, seed=seed)
 
 def run_coarse_graining_suite(two_j=1):
     """Run the deterministic block-fusion controls on all supported graph fixtures."""
@@ -399,7 +406,12 @@ def run_coarse_graining_suite(two_j=1):
         second_blocks=((0, 1), (2,)),
         direct_blocks=((0, 1, 2), (3, 4)),
     )
-    exhaustive = exhaustive_path5_partition_control(two_j=two_j)
+    exhaustive = {
+        name: exhaustive_graph_partition_control(
+            name, two_j=two_j, seed=20261120 + two_j
+        )
+        for name in graph_fixtures()
+    }
     return {
         "status": "exact finite vertex-fusion coarse-graining",
         "two_j": int(two_j),
@@ -407,9 +419,9 @@ def run_coarse_graining_suite(two_j=1):
         "passed": (
             all(row["passed"] for row in results.values())
             and staged["passed"]
-            and exhaustive["passed"]
+            and all(row["passed"] for row in exhaustive.values())
         ),
-        "exhaustive_path5_partition_control": exhaustive,
+        "exhaustive_graph_partition_controls": exhaustive,
         "staged_vs_direct_two_level_fusion": staged,
         "claim_boundary": (
             "Exact equality of finite tensor contractions and retained-edge pure-state "
