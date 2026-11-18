@@ -27,3 +27,12 @@ Gauss-law null vectors, and positivity after this reference-link gauge fix.
 This is a local invariant-node result; it does not yet include the full
 multi-node mixed-state reduction, higher-spin sums, BQG history amplitudes,
 or a continuum limit.
+
+## Independent numerical check
+
+For 32 seeded random normalized intertwiners (seed 20261118), an independent
+local reproduction found the largest common-twist null residual below
+7e-16, the full pair-metric minimum eigenvalue no lower than -8e-16
+(roundoff), and the smallest eigenvalue of the reference-link gauge-fixed
+3-by-3 metric approximately 5.73e-3. These are local algebraic checks, not
+repository test or CI results.
