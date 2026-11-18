@@ -32,6 +32,24 @@ from q2_relational_gauge_quotient_gate import (
 )
 
 
+def _validated_edge_indices(edge, node_count: int) -> tuple[int, int, int, int]:
+    """Reject coercible-but-invalid indices instead of silently truncating them."""
+    if len(edge) != 4:
+        raise ValueError("edge must be (u, leg_u, v, leg_v)")
+    if any(
+        isinstance(value, (bool, np.bool_))
+        or not isinstance(value, (int, np.integer))
+        for value in edge
+    ):
+        raise ValueError("edge endpoint and half-link indices must be integers")
+    u, lu, v, lv = map(int, edge)
+    if u == v or not (0 <= u < node_count and 0 <= v < node_count):
+        raise ValueError("invalid edge endpoints")
+    if not (0 <= lu < 4 and 0 <= lv < 4):
+        raise ValueError("invalid half-link indices")
+    return u, lu, v, lv
+
+
 def edge_singlet_common_generators(
     node_count: int, edges: list[tuple[int, int, int, int]]
 ) -> np.ndarray:
