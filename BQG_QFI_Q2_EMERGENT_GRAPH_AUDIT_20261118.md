@@ -352,3 +352,44 @@ Detailed follow-up files:
 - `BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md`
 - `scripts/q2_pl_generation3_preflight.py`
 - `scripts/q2_relational_edge_qfi_gate.py`
+
+
+## Follow-up: two-link network QFI and non-additivity (2026-11-18)
+
+A three-node path A-B-C was added, with two normalized spin-1/2 singlet
+contractions A3-B0 and B3-C0. The eight retained half-links form a pure
+boundary state. Two independent relative twists on B0 and B3 give a full
+6-by-6 multiparameter QFI matrix.
+
+For the tested SU(2)-invariant path family, the two diagonal 3-by-3 link
+blocks are each I_3, but the cross block is c I_3. It is not zero in general
+and depends on the middle intertwiner. The exact finite-dimensional identity
+is
+
+```text
+c = (4/3) <iota_B | J_B0 . J_B3 | iota_B>
+```
+
+The projected pair-Casimir spectrum in the four-valent invariant space is
+{-3/4,+1/4}, so c lies in [-1,1/3]. The full QFI eigenvalues are 1+c and
+1-c, each triply degenerate. This proves that summing independent two-node
+edge QFIs does not in general reproduce the network multiparameter QFI.
+A coarse metric must retain the cross terms or justify a controlled
+coarse-graining that removes them.
+
+The new gate checks both signed Gauss-law pullthrough identities, the exact
+Casimir formula, isotropy, the QFI spectrum's positivity, and the fixed
+two-link gluing probability 1/16. An independent local 32-sample numerical
+reproduction found Casimir-formula error below 8e-16 and pullthrough residual
+below 3e-16. This is a local numerical cross-check, not a repository test or
+CI result.
+
+Files:
+- `scripts/q2_relational_network_qfi_gate.py`
+- `tests/test_q2_relational_network_qfi_gate.py`
+- `BQG_Q2_RELATIONAL_NETWORK_QFI_RESULT_20261118.md`
+
+The workflow now includes the network-QFI tests and JSON artifact. The
+repository tests and GitHub Actions remain unverified until an actual run
+and status are observed. The result is still a finite spin-1/2 path control,
+not a full BQG network measure or continuum conductance.
