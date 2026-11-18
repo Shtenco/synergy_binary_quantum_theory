@@ -33,7 +33,7 @@ def test_q2_causal_to_pl_correspondence_fibre_multiplicities_are_explicit():
 
 def test_q2_causal_to_pl_correspondence_does_not_claim_physical_weights():
     result = run(max_generation=2)
-    assert "does not derive a physical measure" in result["claim_boundary"]
+    assert "does not derive a physical continuum measure" in result["claim_boundary"]
 
 
 
