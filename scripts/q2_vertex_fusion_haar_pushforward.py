@@ -97,6 +97,13 @@ def analyze_independent_haar_fusion(
     contraction_map = np.column_stack(columns)
 
     input_dimension = int(local_basis.shape[1] ** vertex_count)
+    product_haar_projective_support_dimension = vertex_count * (
+        local_basis.shape[1] - 1
+    )
+    full_projective_image_dimension = input_dimension - 1
+    segre_codimension_in_image = (
+        full_projective_image_dimension - product_haar_projective_support_dimension
+    )
     gram = contraction_map.conj().T @ contraction_map
     expected_gram = np.eye(gram.shape[0], dtype=complex) / (
         dimension ** (2 * (vertex_count - 1))
@@ -151,6 +158,9 @@ def analyze_independent_haar_fusion(
         "spin": float(two_j) / 2.0,
         "local_intertwiner_dimension": int(local_basis.shape[1]),
         "product_input_dimension": input_dimension,
+        "full_projective_image_dimension": full_projective_image_dimension,
+        "product_haar_projective_support_dimension": product_haar_projective_support_dimension,
+        "segre_codimension_in_image": segre_codimension_in_image,
         "vertex_count": vertex_count,
         "fused_boundary_leg_count": boundary_leg_count,
         "full_boundary_invariant_dimension": full_invariant_dimension,
@@ -170,6 +180,7 @@ def analyze_independent_haar_fusion(
             local_basis.shape[1] == dimension
             and map_rank == input_dimension
             and full_invariant_dimension > input_dimension
+            and segre_codimension_in_image > 0
             and gram_error < 2e-9
             and local_gauss_residual < 2e-9
             and max_boundary_gauss_residual < 2e-9
@@ -188,8 +199,10 @@ def analyze_independent_haar_fusion(
             "space. Its exact pushforward covariance is therefore not the "
             "full boundary-Haar covariance. The exact two-copy moment also "
             "differs from Haar on the image subspace, so the pushforward is "
-            "not Haar even after restricting to its support. This demonstrates "
-            "non-closure of this toy measure, not a statement about the unspecified "
+            "not Haar even after restricting to its support: it is concentrated "
+            "on the lower-dimensional Segre variety of product states in the "
+            "induced vertex-factorization. This demonstrates non-closure of this "
+            "toy measure, not a statement about the unspecified "
             "physical BQG measure."
         ),
         "claim_boundary": (
