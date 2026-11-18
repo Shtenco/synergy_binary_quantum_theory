@@ -282,3 +282,69 @@ of nonzero conductance; the product-state (1/3) control must not be promoted
 to a physical weight. The 4-regular PL dual graph is now available as the
 candidate adjacency, but the scalar causal rewrite DAG remains a separate
 object until a dynamical gluing map is derived.
+
+## Follow-up: finite causal–PL quotient, relational link QFI, and generation-3 preflight (2026-11-18)
+
+The earlier decision above is historical and has been refined by subsequent
+work on the active research branch.
+
+### Finite causal–PL correspondence and Galerkin operator
+
+A recursive many-to-one map from PL tetrahedra to active q=2 causal edges is
+now implemented and checked through generations 0–2. It preserves PL-dual
+adjacency as endpoint incidence of the image causal edges and is natural under
+the tested barycentric/causal refinement. It is not an isomorphism, covering,
+or exact Markov lumping. The pushforward counting measure
+[
+\mu_g(e)=|\Phi_g^{-1}(e)|/24^g
+]
+has total mass 16 and is conserved parent-to-children at both tested
+refinement steps. The induced Galerkin quotient has 8 nodes/16 weighted pairs
+at g=1 and 64 nodes/180 weighted pairs at g=2. Its finite generalized spectrum
+and heat trace are diagnostic only; no spectral plateau or continuum limit
+has been established.
+
+### Two-block relational QFI
+
+A concrete two-node spin-network gluing channel is now specified. Two arbitrary
+four-valent spin-1/2 SU(2) intertwiners are glued across one shared face with
+the normalized epsilon singlet, retaining the six uncontracted boundary
+half-links. Inserting a relative twist on one half-link before contraction
+gives a gluing probability (1/4) and pure-state relational QFI
+[
+F^{(e)}_{ab}=\delta_{ab},\qquad
+g^{(e)}_{ab}=F^{(e)}_{ab}/4=\delta_{ab}/4.
+]
+The result is independent of the two intertwiner states in this fixed
+spin-1/2 channel. This closes a *specified local relational-QFI control*,
+not the full physical graph metric: boundary gauge reduction, tracing,
+network correlations, spin sums, and the BQG history-amplitude measure remain
+open. In particular, the microscopic (1/4) must not yet be multiplied into
+the Galerkin quotient and called a derived coarse BQG conductance.
+
+### Generation-3 capacity
+
+An allocation-free exact f-vector preflight predicts
+[
+(f'_0,f'_1,f'_2,f'_3)=(40256,261440,442368,221184),
+]
+with 442,368 PL-dual edges and 512 causal active edges at g=3. The current
+dense Jacobi spectral routine is not suitable for blind extension to 512
+nodes; a compact/streaming correspondence representation and sparse spectral
+method are required before attempting a full g=3 gate.
+
+### Execution status
+
+The new QFI and capacity gates, tests, and workflow steps are committed.
+The current GitHub combined-status lookup returns no status checks for the
+latest branch commit, so the new repository tests and Actions run remain
+**unverified** here. Independent local arithmetic and a numerical
+cross-check of the two-block contraction reproduce the stated f-vector,
+gluing probability (1/4), and (F^{(e)}=I_3); this is not a substitute for
+the repository CI result.
+
+Detailed follow-up files:
+- `BQG_Q2_CAUSAL_PL_CORRESPONDENCE_GATE_RESULT_20261118.md`
+- `BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md`
+- `scripts/q2_pl_generation3_preflight.py`
+- `scripts/q2_relational_edge_qfi_gate.py`
