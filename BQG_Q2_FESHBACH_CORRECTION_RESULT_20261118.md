@@ -150,25 +150,25 @@ The code and tests report the norm, trace, extremal eigenvalues, and linear-solv
 
 ## Exact finite variational meaning
 
-The zero-energy Schur complement has an exact minimization interpretation. For any coarse vector (z),
-[
-z^T A_{mathrm{eff}}(0)z
+The zero-energy Schur complement has an exact minimization interpretation. For every coarse vector \(z\),
+\[
+z^T A_{\mathrm{eff}}(0)z
 =
-min_{qin Qmathcal H}
-(Uz+q)^T L(Uz+q).
-]
+\min_{q\in Q\mathcal H}(Uz+q)^T L(Uz+q).
+\]
 The unique minimizing excluded component is
-[
-q_*(z)=-(QLQ|_Q)^{-1}QLUz.
-]
+\[
+q_*(z)=-(QLQ|_Q)^{-1}QLUz=-H^{-1}Bz.
+\]
 Completing the square gives
-[
-A_{mathrm{eff}}(0)=A_{PP}-B^T H^{-1}B,
-qquad H=QLQ|_Q.
-]
+\[
+A_{\mathrm{eff}}(0)=A_{PP}-B^TH^{-1}B.
+\]
 Consequently, at every finite level,
-[
-0preceq A_{mathrm{eff}}(0)preceq A_{PP},
-qquad C=B^TH^{-1}Bsucceq0.
-]
-If the PL dual graph is connected and the constant vector lies in the fibre-constant subspace, then the kernel of (A_{mathrm{eff}}(0)) is exactly the one-dimensional constant coarse mode. These are finite graph theorems, not numerical conjectures. They provide direct consistency checks for the implementation.
+\[
+0\preceq A_{\mathrm{eff}}(0)\preceq A_{PP},
+\qquad C=B^TH^{-1}B\succeq0.
+\]
+If the PL dual graph is connected and the constant vector lies in the fibre-constant subspace, then the kernel of \(A_{\mathrm{eff}}(0)\) is exactly the one-dimensional constant coarse mode.
+
+This means the Feshbach operator is not merely a perturbative correction: it is the exact minimum PL Dirichlet energy compatible with fixed coarse data. Galerkin energy is the value obtained by restricting the minimization to \(q=0\), so it is an upper bound. These are finite graph theorems, not numerical conjectures, and they provide direct consistency checks for the implementation.
