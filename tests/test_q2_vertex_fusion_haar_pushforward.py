@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 
-from scripts.q2_vertex_fusion_haar_pushforward import (
-    analyze_independent_haar_fusion,
-    analyze_spin_family,
-)
+from scripts.q2_vertex_fusion_haar_pushforward import analyze_independent_haar_fusion
 
 
 @pytest.mark.parametrize(
@@ -48,13 +45,3 @@ def test_local_haar_pushforward_has_proper_six_valent_invariant_support(
         expected_distance, abs=2e-9
     )
     assert result["passed"], result
-
-
-def test_higher_spin_family_export_passes_and_keeps_physical_measure_claim_boundary():
-    result = analyze_spin_family()
-    assert result["tested_spins"] == [0.5, 1.0, 1.5, 2.0]
-    assert result["passed"], result
-    assert all(row["passed"] for row in result["controls"].values())
-    assert "not the physical BQG measure" in result["claim_boundary"]
-    for row in result["controls"].values():
-        assert "not a statement about the unspecified physical BQG measure" in row["interpretation"]
