@@ -20,6 +20,10 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements():
     assert f1["effective_operator_min_eigenvalue"] >= -1e-8
     assert f1["all_linear_solves_converged"] is True
     assert f1["max_linear_solve_residual"] < 1e-8
+    assert abs(f1["leakage_frobenius_norm"] ** 2 - 80.0 / 9.0) < 1e-9
+    assert abs(f1["feshbach_correction_operator_norm"] - 40.0 / 51.0) < 1e-9
+    assert abs(f1["q_sector_gap_estimate"] - 0.1522409349774257) < 1e-8
+    assert f1["q_plus_p_condition_estimate"] > 1.0
 
 
 def test_feshbach_correction_obeys_the_operator_lower_bound():
