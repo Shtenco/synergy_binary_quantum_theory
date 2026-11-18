@@ -60,3 +60,33 @@ fractional, boolean, string, and otherwise non-integer endpoint/half-link
 indices before tensor contraction. Regression cases were added for these
 invalid inputs; they remain subject to the pending CI execution.
 
+
+
+## Coarse-graining-oriented spectral diagnostics and path-5 extension (2026-11-18)
+
+The finite graph family now includes `path_5` (5 vertices, 4 internal edges,
+12 boundary half-links). Its direct dense boundary-state calculation is
+restricted to (j\leq1): the output vector has dimension
+((2j+1)^{12}), so extending this fixture to (j=3/2,2) would create
+unnecessarily large dense state vectors. The (j=3/2,2) scans remain on
+the existing fixtures with at most 10 boundary half-links.
+
+For each graph/trial, the edge-twist QFI spectrum is normalized by the exact
+isolated-link scale (4j(j+1)/3). The report now includes:
+- normalized spectral moments of orders 1 through 4;
+- mean empirical spectral quantiles at probabilities 0, 0.25, 0.5, 0.75, 1;
+- normalized spectral variance;
+- numerical rank fraction (rank divided by (3E));
+- explicit graph-by-spin coverage, so skipped high-dimensional cases cannot
+  be mistaken for tested cases.
+
+These quantities are diagnostics for comparing finite fixtures of different
+parameter dimensions. No invariance under graph blocking or coarse-graining is
+assumed. In particular, the current QFI is a pure-boundary-state QFI for
+independent first-endpoint edge twists, not a renormalized effective action
+or a QFI after tracing/blocking boundary degrees of freedom. A genuine
+coarse-graining map and its induced parameter pullback must be specified
+before claiming spectral flow or continuum universality.
+
+The path-5 test and new spectral summaries are added to the workflow suite;
+execution remains pending until a matching Actions run is observed.
