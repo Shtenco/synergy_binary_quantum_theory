@@ -45,6 +45,9 @@ on:
       - 'scripts/q2_relational_higher_spin_graph_qfi_gate.py'
       - 'tests/test_q2_relational_higher_spin_graph_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI_RESULT_20261118.md'
+      - 'scripts/q2_relational_joint_gauge_edge_quotient_gate.py'
+      - 'tests/test_q2_relational_joint_gauge_edge_quotient_gate.py'
+      - 'BQG_Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT_RESULT_20261118.md'
       - 'scripts/q2_su2_irrep_singlet_invariance_gate.py'
       - 'tests/test_q2_su2_irrep_singlet_invariance_gate.py'
       - 'BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md'
@@ -101,6 +104,10 @@ jobs:
         run: python -m pytest -q tests/test_q2_relational_higher_spin_network_qfi_gate.py
       - name: Export higher-spin four-valent network QFI control
         run: python scripts/q2_relational_higher_spin_network_qfi_gate.py --output verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json
+      - name: Run joint vertex-Gauss and singlet-edge quotient tests
+        run: python -m pytest -q tests/test_q2_relational_joint_gauge_edge_quotient_gate.py
+      - name: Export joint vertex-Gauss and singlet-edge quotient
+        run: python scripts/q2_relational_joint_gauge_edge_quotient_gate.py --output verification_results/Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT.json
       - name: Run higher-spin graph path and cycle QFI tests
         run: python -m pytest -q tests/test_q2_relational_higher_spin_graph_qfi_gate.py
       - name: Export higher-spin graph path and cycle QFI
@@ -150,4 +157,5 @@ jobs:
             verification_results/Q2_RELATIONAL_HIGHER_SPIN_NETWORK_QFI.json
             verification_results/Q2_RELATIONAL_HAAR_AVERAGED_STAR_QFI.json
             verification_results/Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI.json
+            verification_results/Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT.json
           if-no-files-found: error
