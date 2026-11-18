@@ -53,6 +53,9 @@ on:
       - 'tests/test_q2_su2_irrep_singlet_invariance_gate.py'
       - 'BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md'
       - 'scripts/q2_vertex_fusion_coarse_graining.py'
+      - 'BQG_Q2_VERTEX_FUSION_HAAR_PUSHFORWARD_20261118.md'
+      - 'tests/test_q2_vertex_fusion_haar_pushforward.py'
+      - 'scripts/q2_vertex_fusion_haar_pushforward.py'
       - 'tests/test_q2_vertex_fusion_coarse_graining.py'
       - 'BQG_Q2_VERTEX_FUSION_COARSE_GRAINING_RESULT_20261118.md'
       - 'BQG_Q2_RELATIONAL_GRAPH_QFI_RESULT_20261118.md'
@@ -128,6 +131,10 @@ jobs:
         run: python -m scripts.q2_vertex_fusion_coarse_graining --reduced-boundary-qfi --output verification_results/Q2_VERTEX_FUSION_REDUCED_BOUNDARY_QFI.json
       - name: Run exhaustive boundary subsystem QFI sweep
         run: python -m scripts.q2_vertex_fusion_coarse_graining --boundary-subsystem-sweep --output verification_results/Q2_VERTEX_FUSION_BOUNDARY_SUBSYSTEM_SWEEP.json
+      - name: Run local-Haar pushforward under vertex fusion tests
+        run: python -m pytest -q tests/test_q2_vertex_fusion_haar_pushforward.py
+      - name: Export local-Haar pushforward under vertex fusion control
+        run: python -m scripts.q2_vertex_fusion_haar_pushforward --output verification_results/Q2_VERTEX_FUSION_HAAR_PUSHFORWARD.json
       - name: Run Haar-averaged star QFI tests
         run: python -m pytest -q tests/test_q2_relational_haar_averaged_star_qfi_gate.py
       - name: Export Haar-averaged star QFI control
@@ -179,4 +186,5 @@ jobs:
             verification_results/Q2_VERTEX_FUSION_HIGHER_SPIN.json
             verification_results/Q2_VERTEX_FUSION_REDUCED_BOUNDARY_QFI.json
             verification_results/Q2_VERTEX_FUSION_BOUNDARY_SUBSYSTEM_SWEEP.json
+            verification_results/Q2_VERTEX_FUSION_HAAR_PUSHFORWARD.json
           if-no-files-found: error
