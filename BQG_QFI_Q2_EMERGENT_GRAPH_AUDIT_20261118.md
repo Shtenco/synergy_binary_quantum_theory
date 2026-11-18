@@ -203,3 +203,44 @@ above. The result must be allowed to fail.
 
 No existing PASS is changed by this audit. No physicalization gate is closed
 by this document.
+
+
+## Follow-up implementation: separate PL and causal graph exporters (2026-11-18)
+
+Two distinct deterministic graph families are now exported rather than
+conflated:
+
+1. `scripts/q2_pl_graph_export.py`: the 16-cell boundary and two global
+   barycentric refinements. CI run `44269971966` passed all 3 tests and
+   uploaded the 70,352-byte adjacency artifact.
+2. `scripts/q2_causal_graph_export.py`: the directed scalar q=2 route rewrite
+   through generation 5. CI run `44270674765` passed all 3 tests and uploaded
+   the 635,543-byte causal adjacency/ancestry artifact.
+
+The causal exporter realizes each directed edge (u\to v) as four
+labelled alternatives (u\to m_a\to v), with (a=00,01,10,11). It
+reproduces (N_5=18,726), (E_5^{active}=32,768), causal path length 32 and
+(4^{31}) source-to-sink paths for this explicit independent-branch
+realization.
+
+**New structural warning:** in this literal graph realization the degree of
+each retained old vertex is multiplied by four at every refinement; the
+boundary degrees are (4^g). The direct limit is therefore not uniformly
+locally finite. The exporter records this rather than hiding it. A physical
+Laplacian/continuum limit now requires a derived vertex measure, a normalized
+refinement rule, or a revised microscopic gluing. Any such change must be
+retested against the exact causal-volume scaling.
+
+The two exported graph families have different seed sizes and incidence:
+the causal rewrite starts from one directed edge, while the PL completion
+starts from the 8-vertex/16-tetrahedron 16-cell boundary. Sharing the four
+route labels does not define a global incidence-preserving map. Thus Gate A
+remains open; QFI on the physical causal/PL graph remains blocked by the
+missing canonical gluing map and physical \\(\\rho_e,K_e\\) assignments.
+
+Detailed results:
+- `BQG_Q2_PL_GRAPH_EXPORT_RESULT_20261118.md`
+- `BQG_Q2_CAUSAL_GRAPH_EXPORT_AUDIT_20261118.md`
+
+The exact causal-volume exponent remains a theorem about the frozen scalar
+recurrence. It has not been upgraded to a QFI spectral-dimension result.
