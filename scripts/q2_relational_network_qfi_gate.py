@@ -102,6 +102,18 @@ def network_relational_qfi(
     return probability, qfi, max(residuals)
 
 
+def middle_link_correlation_scalar(intertwiner_b: np.ndarray) -> float:
+    """Exact SU(2)-invariant prediction c=(4/3)<J_B0 dot J_B3>."""
+    pair_casimir = sum(
+        (node_generator(PAULI[axis], 0) @ node_generator(PAULI[axis], 3)
+         for axis in range(3)),
+        np.zeros((16, 16), dtype=complex),
+    )
+    return (4.0 / 3.0) * float(
+        np.vdot(intertwiner_b, pair_casimir @ intertwiner_b).real
+    )
+
+
 def random_intertwiner(rng: np.random.Generator) -> np.ndarray:
     coefficients = rng.normal(size=2) + 1j * rng.normal(size=2)
     coefficients /= np.linalg.norm(coefficients)
@@ -116,6 +128,7 @@ def run(seed: int = 20261118, trials: int = 32) -> dict[str, object]:
     matrices = []
     pullthrough = []
     cross_scalars = []
+    analytic_cross_errors = []
     diagonal_errors = []
     cross_isotropic_errors = []
     minimum_eigenvalues = []
@@ -134,6 +147,9 @@ def run(seed: int = 20261118, trials: int = 32) -> dict[str, object]:
         cross = qfi[:3, 3:]
         scalar = float(np.trace(cross) / 3.0)
         cross_scalars.append(scalar)
+        analytic_cross_errors.append(abs(
+            scalar - middle_link_correlation_scalar(b)
+        ))
         cross_isotropic_errors.append(float(np.linalg.norm(cross - scalar * np.eye(3))))
         minimum_eigenvalues.append(float(np.linalg.eigvalsh(qfi)[0]))
 
@@ -146,6 +162,13 @@ def run(seed: int = 20261118, trials: int = 32) -> dict[str, object]:
         "cross_block_is_su2_isotropic_for_path_intertwiners": max(
             cross_isotropic_errors
         ) < 1e-10,
+        "cross_block_matches_exact_middle_node_casimir": max(
+            analytic_cross_errors
+        ) < 1e-10,
+        "cross_scalar_respects_spin_pair_spectrum_bounds": (
+            min(cross_scalars) >= -1.0 - 1e-10
+            and max(cross_scalars) <= 1.0 / 3.0 + 1e-10
+        ),
         "cross_link_correlations_are_not_identically_zero": max(cross_abs) > 1e-3,
         "cross_link_correlations_depend_on_intermediate_intertwiner": (
             max(cross_scalars) - min(cross_scalars) > 1e-2
@@ -170,6 +193,10 @@ def run(seed: int = 20261118, trials: int = 32) -> dict[str, object]:
         "cross_block_scalar_max": max(cross_scalars),
         "cross_block_absolute_max": max(cross_abs),
         "cross_block_isotropy_max_error": max(cross_isotropic_errors),
+        "cross_block_exact_formula": "c=(4/3)<J_B0 dot J_B3>",
+        "middle_pair_casimir_eigenvalues": [-0.75, 0.25],
+        "cross_block_analytic_formula_max_error": max(analytic_cross_errors),
+        "cross_scalar_allowed_interval": [-1.0, 1.0 / 3.0],
         "full_qfi_minimum_eigenvalue": min(minimum_eigenvalues),
         "max_gauss_pullthrough_residual": max(pullthrough),
         "checks": checks,
