@@ -3,6 +3,7 @@ import pytest
 
 from scripts.q2_vertex_fusion_coarse_graining import (
     exhaustive_graph_partition_control,
+    run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
     deterministic_case,
     fuse_vertex_blocks,
@@ -98,4 +99,13 @@ def test_exhaustive_graph_vertex_partitions_and_block_order_invariance(
     assert result["max_fused_block_gauss_relative_residual"] < 2e-9
     assert result["passed"], result
 
+def test_higher_spin_small_graphs_exhaustive_vertex_fusion():
+    result = run_high_spin_small_graph_suite(
+        two_j_values=(3, 4), graph_names=("path_3", "cycle_4")
+    )
+    assert result["tested_spins"] == [1.5, 2.0]
+    assert result["partition_order_evaluations"] == 80
+    assert result["passed"], result
+    for spin_rows in result["controls"].values():
+        assert all(row["passed"] for row in spin_rows.values())
 
