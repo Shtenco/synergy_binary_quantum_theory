@@ -33,8 +33,15 @@ U_B(\boldsymbol\theta)
 \qquad J^a=\sigma_a/2.
 ]
 This is a half-link generator, not the total Gauss generator
-(J^a_{B,\mathrm{tot}}=\sum_{f=1}^4J^a_{B,f}). The latter annihilates every
-chosen intertwiner.
+J^a_{B,tot} = sum_{f=1}^4 J^a_{B,f}, which annihilates every chosen
+intertwiner. The node Gauss law gives
+J^a_{B,b}|iota_B> = -sum_{r=1}^3 J^a_{B,r}|iota_B>.
+Consequently the inserted half-link twist pulls through the gluing map to
+the Hermitian relational generator on the retained six-qubit boundary:
+K_e^a = -sum_{r=1}^3 J^a_{B,r}.
+The corresponding relational density operator is
+rho_e = |Psi_AB><Psi_AB|, where |Psi_AB> is the normalized contracted
+six-qubit boundary state defined above.
 
 ## Exact result
 
@@ -65,8 +72,9 @@ coefficients (1/\sqrt2). Therefore:
 The value is independent of the two intertwiner states, not a fitted
 parameter. The script evaluates the full six-qubit contracted boundary
 state and its three tangent vectors for random complex superpositions in
-both intertwiner spaces. It checks (p_e=1/4), the identity QFI matrix, and
-the Gauss constraints at both nodes.
+both intertwiner spaces. It checks p_e=1/4, the identity QFI matrix, both
+node Gauss constraints, and equality between the inserted half-link
+derivative and the boundary action of K_e.
 
 ## Numerical gate
 
