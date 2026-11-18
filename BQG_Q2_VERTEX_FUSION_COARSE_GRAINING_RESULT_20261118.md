@@ -229,3 +229,42 @@ Combined coverage is now: all 102 partitions of the five graph fixtures at
 each of \(j=1/2,1\), plus all partitions of path_3 and cycle_4 at each of
 \(j=3/2,2\). This remains a finite set of exact contraction identities,
 not an RG fixed-point or continuum result.
+
+## Mixed boundary states and QFI data processing (verified 2026-11-18)
+
+A further finite control now traces out six of the eight external boundary
+half-links and retains a two-leg subsystem. It compares the reduced density
+matrix, its parameter derivatives, and the symmetric-logarithmic-derivative
+(SLD) mixed-state QFI before and after exact vertex fusion. It also checks
+the quantum data-processing inequality in matrix form:
+\[
+F_{\mathrm{pure}}-F_{\mathrm{reduced}}\succeq 0.
+\]
+
+The tested controls are path_3 with blocks \(((0,1),(2,))\), retaining
+boundary legs \(((0,0),(0,1))\), and cycle_4 with blocks
+\(((0,1),(2,3))\), retaining \(((0,1),(0,3))\). Both are evaluated at
+\(j=1/2\) and \(j=1\).
+
+| Spin | Graph | Density-matrix error | Derivative error | Mixed-QFI error | Min eigenvalue of pure − mixed QFI |
+|---|---|---:|---:|---:|---:|
+| j=1/2 | path_3 | 5.551e-17 | 2.194e-17 | 2.261e-33 | 1.000 |
+| j=1/2 | cycle_4 | 5.551e-17 | 3.737e-17 | 4.167e-19 | 0.262 |
+| j=1 | path_3 | 2.776e-17 | 1.182e-17 | 1.454e-33 | 2.667 |
+| j=1 | cycle_4 | 8.557e-17 | 3.273e-17 | 1.110e-16 | 0.827 |
+
+All four controls pass. In path_3, the selected local reduced subsystem is
+insensitive to the retained cut-edge twists to numerical precision, so its
+mixed QFI is effectively zero; this is consistent with, rather than a
+violation of, QFI monotonicity. The cycle_4 subsystem retains nonzero
+information, while the pure-minus-mixed QFI matrix remains positive.
+
+The workflow exported `Q2_VERTEX_FUSION_REDUCED_BOUNDARY_QFI.json` in
+[run 44374564138](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44374564138),
+commit `a12063d35a6cb167ae653f48c1f0c5114891db1d`. The downloaded artifact
+(ID `14460102381`) was independently parsed; its reduced-boundary control
+reports top-level `passed: true`. The test step and export step both passed.
+
+This adds a verified mixed-state boundary reduction and data-processing
+check. It still does not supply a physical measure over microscopic states,
+an effective-coupling flow, or an RG fixed point.
