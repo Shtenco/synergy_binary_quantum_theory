@@ -150,7 +150,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
             diagonal_errors.append(float(np.linalg.norm(qfi[sl, sl] - isolated_qfi * np.eye(3))))
         cross_norms.append(float(np.linalg.norm(qfi - block_diagonal)))
         if name == "path_3":
-            predicted = (4.0 / 3.0) * float(
+            predicted = -(4.0 / 3.0) * float(
                 np.vdot(states[1], pair_op @ states[1]).real
             )
             path_casimir_errors.append(float(np.linalg.norm(
@@ -202,7 +202,7 @@ def run(two_j_values=(1, 2), trials=3):
         "graphs": rows,
         "interpretation": (
             "Path and cycle graph contractions are evaluated directly. The path "
-            "has the exact middle-node Casimir cross block and isolated-link "
+            "has the exact signed middle-node Casimir cross block and isolated-link "
             "diagonal scale. Cycle metrics are not assumed additive or equal to "
             "the path; their complete QFI is computed from the contracted state."
         ),
