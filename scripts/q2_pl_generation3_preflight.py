@@ -17,6 +17,8 @@ def barycentric_f_vector_3d(f_vector: tuple[int, int, int, int]) -> tuple[int, i
     Counts flags by their simplex dimensions. The input must describe a
     tetrahedral complex; the formula is valid for a simplicial 3-complex.
     """
+    if len(f_vector) != 4:
+        raise ValueError("a tetrahedral 3-complex requires four f-vector entries")
     f0, f1, f2, f3 = f_vector
     if min(f_vector) < 0:
         raise ValueError("f-vector entries must be non-negative")
