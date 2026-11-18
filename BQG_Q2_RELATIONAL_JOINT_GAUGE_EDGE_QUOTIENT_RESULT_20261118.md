@@ -107,7 +107,7 @@ These cases are awaiting the same fresh CI run as the randomized graph tests.
 
 The joint vertex-Gauss plus singlet-edge-common quotient runner now uses
 the same four open fixtures: `path_3`, `path_4`, `star_4`, and
-`cycle_4). For each it compares the explicit SVD generator rank with
+`cycle_4`. For each it compares the explicit SVD generator rank with
 the topological formula, checks both exact QFI null families, and compares
 the quotient-QFI rank with the projective boundary tangent rank.
 
@@ -118,3 +118,21 @@ QFI/tangent checks remain separate and must pass on each sample.
 
 The new path/star regression cases and their CI execution are pending.
 
+
+
+## Exhaustive two-vertex matching coverage (added 2026-11-18)
+
+A deterministic exhaustive regression now enumerates every partial matching
+between the four half-links at vertex 0 and the four half-links at vertex 1.
+For matching size k=0,...,4, it checks all choices of endpoint slots and all
+bijections between the chosen slot sets, giving
+
+    sum_k C(4,k)^2 k! = 1 + 16 + 72 + 96 + 24 = 209 cases.
+
+For every case, the test compares the explicit SVD rank and quotient dimension
+with the closed/open-component formula. This specifically exercises the
+transition from boundary-bearing open components (k<4) to a fully closed
+two-vertex component (k=4), including the zero-edge disconnected case.
+
+The exhaustive test has been added to the suite; it is not marked as executed
+or passing until a fresh CI run reports its result.
