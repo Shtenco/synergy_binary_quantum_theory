@@ -29,3 +29,29 @@ Files:
 CI exports \`verification_results/Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI.json\`.
 This remains a finite pure-state graph computation, not a spin sum or
 history-weighted continuum conductance.
+
+## Extended topology and QFI spectral diagnostics (2026-11-18)
+
+The direct-contraction fixture family now includes:
+- `path_3`: 3 vertices, 2 edges, 8 boundary half-links;
+- `path_4`: 4 vertices, 3 edges, 10 boundary half-links;
+- `star_4`: 4 vertices, 3 edges, 10 boundary half-links;
+- `cycle_4`: 4 vertices, 4 edges, 8 boundary half-links.
+
+For each spin and trial, the gate now records the smallest and largest eigenvalues
+of the complete edge-twist QFI, its numerical rank and nullity, and verifies
+the rank-nullity partition against the parameter dimension (3E). The
+eigenvalue threshold is relative to `max(1, max(abs(eigenvalues)))), with
+factor (10^{-9}). These diagnostics allow degeneracies to be observed rather
+than silently assuming full rank.
+
+The expanded suite is configured for (j=1/2) and (j=1), with two random
+intertwiner samples per graph and spin. The test checks the exact boundary-leg
+counts and spectral bookkeeping. This is an added test specification; the
+expanded test run and CI status are not yet confirmed.
+
+**Scope distinction:** these are spectra of the (3E\times3E) edge-twist
+pure-boundary-state QFI. They are not the spectrum of the full (12V\times12V)
+half-link QFI and do not by themselves classify vertex-Gauss or edge-frame
+null modes.
+
