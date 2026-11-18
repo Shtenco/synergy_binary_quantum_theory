@@ -2,6 +2,7 @@
 """Exact vertex-block fusion and boundary-QFI equivalence for finite BQG graphs."""
 from __future__ import annotations
 import numpy as np
+from itertools import combinations
 from scripts.q2_relational_higher_spin_graph_qfi_gate import graph_fixtures, invariant_singlet_tensor, random_intertwiner, spin_generators
 from scripts.q2_relational_higher_spin_network_qfi_gate import four_valent_intertwiner_basis
 
@@ -684,6 +685,129 @@ def exhaustive_reduced_boundary_partition_control(
     }
 
 
+
+def exhaustive_boundary_subsystem_sweep(
+    graph_names=("path_3", "cycle_4"),
+    two_j_values=(1, 2),
+    retained_sizes=(1, 2),
+):
+    """Sweep every 1- and 2-leg boundary subsystem and every vertex partition."""
+    summary = {}
+    total_subsystems = 0
+    total_partition_order_evaluations = 0
+    maxima = {"density": 0.0, "derivative": 0.0, "qfi": 0.0}
+    min_data_processing = float("inf")
+    for two_j in two_j_values:
+        spin_key = str(two_j / 2.0)
+        summary[spin_key] = {}
+        for graph_name in graph_names:
+            nodes, edges = graph_fixtures()[graph_name]
+            occupied = {
+                (u, lu) for u, lu, _v, _lv in edges
+            } | {
+                (v, lv) for _u, _lu, v, lv in edges
+            }
+            boundary = tuple(
+                (v, leg)
+                for v in range(nodes)
+                for leg in range(4)
+                if (v, leg) not in occupied
+            )
+            subsets = tuple(
+                subset
+                for size in retained_sizes
+                for subset in combinations(boundary, size)
+            )
+            partitions = tuple(_set_partitions(range(nodes)))
+            graph_max = {"density": 0.0, "derivative": 0.0, "qfi": 0.0}
+            graph_min_dp = float("inf")
+            graph_evaluations = 0
+            for subset in subsets:
+                for blocks in partitions:
+                    reverse = tuple(
+                        tuple(reversed(block)) for block in reversed(blocks)
+                    )
+                    result = exhaustive_reduced_boundary_partition_control(
+                        graph_name, two_j, subset,
+                        seed=20261220 + nodes
+                    )
+                    # The control above exhausts all partitions and their
+                    # reversed-order counterparts for this exact subsystem.
+                    if not result["passed"]:
+                        return {
+                            "passed": False,
+                            "failed_graph": graph_name,
+                            "failed_spin": spin_key,
+                            "failed_boundary_subset": [list(k) for k in subset],
+                            "failed_control": result,
+                        }
+                    graph_max["density"] = max(
+                        graph_max["density"], result["max_reduced_density_error"]
+                    )
+                    graph_max["derivative"] = max(
+                        graph_max["derivative"], result["max_reduced_derivative_error"]
+                    )
+                    graph_max["qfi"] = max(
+                        graph_max["qfi"], result["max_mixed_qfi_error"]
+                    )
+                    graph_min_dp = min(
+                        graph_min_dp,
+                        result["minimum_pure_minus_mixed_qfi_eigenvalue"],
+                    )
+                    graph_evaluations += 2 * result["partition_count"]
+            total_subsystems += len(subsets)
+            total_partition_order_evaluations += graph_evaluations
+            for key in maxima:
+                maxima[key] = max(maxima[key], graph_max[key])
+            min_data_processing = min(min_data_processing, graph_min_dp)
+            summary[spin_key][graph_name] = {
+                "boundary_leg_count": len(boundary),
+                "retained_sizes": list(retained_sizes),
+                "subsystem_count": len(subsets),
+                "partition_count_per_subsystem": _bell_number(nodes),
+                "partition_order_evaluations": graph_evaluations,
+                "max_reduced_density_error": graph_max["density"],
+                "max_reduced_derivative_error": graph_max["derivative"],
+                "max_mixed_qfi_error": graph_max["qfi"],
+                "minimum_pure_minus_mixed_qfi_eigenvalue": graph_min_dp,
+                "passed": (
+                    graph_max["density"] < 2e-9
+                    and graph_max["derivative"] < 2e-8
+                    and graph_max["qfi"] < 2e-8
+                    and graph_min_dp > -2e-8
+                ),
+            }
+    return {
+        "status": "exhaustive reduced-boundary subsystem sweep",
+        "tested_spins": [two_j / 2.0 for two_j in two_j_values],
+        "graphs": list(graph_names),
+        "retained_boundary_subset_sizes": list(retained_sizes),
+        "total_subsystems": total_subsystems,
+        "partition_order_evaluations": total_partition_order_evaluations,
+        "max_reduced_density_error": maxima["density"],
+        "max_reduced_derivative_error": maxima["derivative"],
+        "max_mixed_qfi_error": maxima["qfi"],
+        "minimum_pure_minus_mixed_qfi_eigenvalue": min_data_processing,
+        "passed": (
+            all(
+                row["passed"]
+                for spin_rows in summary.values()
+                for row in spin_rows.values()
+            )
+            and maxima["density"] < 2e-9
+            and maxima["derivative"] < 2e-8
+            and maxima["qfi"] < 2e-8
+            and min_data_processing > -2e-8
+        ),
+        "controls": summary,
+        "claim_boundary": (
+            "Finite reduced-boundary SLD-QFI equality under exact vertex fusion "
+            "for all listed one- and two-leg subsystems, graph fixtures, spins, "
+            "and vertex partitions; not a physical RG flow."
+        ),
+    }
+
+
 def run_reduced_boundary_suite(two_j_values=(1, 2)):
     """Compare mixed-state QFI after tracing boundary legs on two graph families."""
     specifications = {
@@ -766,16 +890,20 @@ def main():
     parser.add_argument("--two-j", type=int, default=1)
     parser.add_argument("--high-spin-small-graphs", action="store_true")
     parser.add_argument("--reduced-boundary-qfi", action="store_true")
+    parser.add_argument("--boundary-subsystem-sweep", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.two_j < 1:
         parser.error("--two-j must be a positive integer")
-    if args.high_spin_small_graphs and args.reduced_boundary_qfi:
+    selected_modes = sum((args.high_spin_small_graphs, args.reduced_boundary_qfi, args.boundary_subsystem_sweep))
+    if selected_modes > 1:
         parser.error("choose only one specialized control mode")
     if args.high_spin_small_graphs:
         result = run_high_spin_small_graph_suite()
     elif args.reduced_boundary_qfi:
         result = run_reduced_boundary_suite()
+    elif args.boundary_subsystem_sweep:
+        result = exhaustive_boundary_subsystem_sweep()
     else:
         result = run_coarse_graining_suite(args.two_j)
     rendered = json.dumps(result, indent=2)
