@@ -19,7 +19,13 @@ import itertools
 import json
 from pathlib import Path
 
-from bcqg_global_manifold_gate import cross_polytope_boundary_4
+
+
+def cross_polytope_boundary_4():
+    return sorted({
+        tuple(sorted(2 * axis + signs[axis] for axis in range(4)))
+        for signs in itertools.product((0, 1), repeat=4)
+    })
 
 
 def all_nonempty_faces(tetrahedra):
@@ -63,7 +69,7 @@ def graph_edges_from_chains(tetrahedra, faces):
     return sorted(edges)
 
 
-def graph_payload(generation, tetrahedra, previous_faces=None):
+def graph_payload(generation, tetrahedra, previous_faces=None, parent_tetrahedra=None):
     if generation == 0:
         vertices = sorted({v for tet in tetrahedra for v in tet})
         edges = sorted({
@@ -76,11 +82,9 @@ def graph_payload(generation, tetrahedra, previous_faces=None):
     else:
         assert previous_faces is not None
         vertices = list(range(len(previous_faces)))
-        edges = graph_edges_from_chains(
-            # These are the parent tetrahedra whose faces became current nodes.
-            graph_payload_parent_tetrahedra,
-            previous_faces,
-        )
+        if parent_tetrahedra is None:
+            raise ValueError("parent_tetrahedra required for a refined graph")
+        edges = graph_edges_from_chains(parent_tetrahedra, previous_faces)
         node_labels = [
             {"id": i, "simplex": list(face)}
             for i, face in enumerate(previous_faces)
@@ -146,9 +150,7 @@ def run(max_generation=2):
     for generation in range(1, max_generation + 1):
         parent_tets = tets
         tets, parent_faces = barycentric_subdivision(parent_tets)
-        global graph_payload_parent_tetrahedra
-        graph_payload_parent_tetrahedra = parent_tets
-        rows.append(graph_payload(generation, tets, parent_faces))
+        rows.append(graph_payload(generation, tets, parent_faces, parent_tets))
     expected = [(8, 24), (80, 464), (1696, 10912)]
     checks = {
         "counts_match_independent_pl_gate": all(
