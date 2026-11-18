@@ -316,6 +316,7 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
             "projective_stabilizer_nullity_max": max(
                 row["stabilizer_diagnostics"]["quotient_tangent_nullity"] for row in gauge_rows
             ),
+            "stabilizer_half_link_participation_sample": gauge_rows[0]["stabilizer_diagnostics"]["null_mode_half_link_participation"],
             "stabilizer_rank_consistency": all(
                 row["stabilizer_diagnostics"]["tangent_qfi_rank_agrees"] for row in gauge_rows
             ),
