@@ -427,3 +427,27 @@ Files:
 - `scripts/q2_relational_star_qfi_gate.py`
 - `tests/test_q2_relational_star_qfi_gate.py`
 - `BQG_Q2_RELATIONAL_STAR_QFI_RESULT_20261118.md`
+
+
+## Follow-up: explicit finite graph QFI contractions (2026-11-18)
+
+A graph-level tensor-network gate now contracts normalized four-valent
+spin-1/2 intertwiners across explicitly identified half-links using normalized
+SU(2) epsilon singlets. Each internal edge has an independent three-axis
+twist inserted at its first endpoint. The gate computes the complete pure
+boundary-state multiparameter QFI, retaining all cross-edge blocks.
+
+Two fixtures are included: a three-node path and a four-cycle. This is the
+first direct construction beyond a single star or a two-edge path. The
+cyclic fixture is intentionally not forced to inherit the isolated-edge
+identity block: additional contractions can change the reduced boundary
+state and its diagonal QFI. The output reports each diagonal block and every
+cross-edge contribution separately. It accepts only symmetry and
+positive-semidefiniteness of the complete QFI, plus nonzero cross terms for
+the tested fixtures.
+
+The graph gate is added to the branch workflow and exports
+`Q2_RELATIONAL_GRAPH_QFI.json`. The workflow status is not yet verified.
+This is still a finite spin-1/2 graph control, not the general BQG network
+metric: the next required layer is a global boundary-gauge quotient and a
+canonical pushforward to the causal-PL quotient graph.
