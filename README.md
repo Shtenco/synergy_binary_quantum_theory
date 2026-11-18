@@ -924,7 +924,7 @@ Einstein IR и замороженные физические предсказа�
 
 | Зачем пришёл читатель | Что открыть |
 |---|---|
-| Понять честный текущий статус | [THEORY_STATUS.md](THEORY_STATUS.md), [OPEN_PROBLEMS.md](OPEN_PROBLEMS.md) и машинные реестры; [AUDIT_CURRENT.md](AUDIT_CURRENT.md) — архивный срез от 10 октября |
+| Понять честный текущий статус | [интегрированный аудит 18 ноября](BQG_REPOSITORY_INTEGRATED_AUDIT_20261118.md), [THEORY_STATUS.md](THEORY_STATUS.md), [OPEN_PROBLEMS.md](OPEN_PROBLEMS.md) и машинные реестры; [AUDIT_CURRENT.md](AUDIT_CURRENT.md) — архивный срез от 10 октября |
 | Проверить точные теоремы | [theory_gates.json](theory_gates.json) и [CANONICAL_THEORY_PACKAGE.md](CANONICAL_THEORY_PACKAGE.md) |
 | Проверить, почему физическая теория ещё не завершена | [physicalization_gates.json](physicalization_gates.json) и [OPEN_PROBLEMS.md](OPEN_PROBLEMS.md) |
 | Узнать о depth-6 | [depth6_frontier.json](depth6_frontier.json) |
