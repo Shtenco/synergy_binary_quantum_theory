@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import math
 from collections import Counter
 from pathlib import Path
 import sys
@@ -318,10 +319,9 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
     times = [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
     heat = []
     for time in times:
-        trace = sum(__import__("math").exp(-value * time) for value in eigenvalues) / n
+        trace = sum(math.exp(-value * time) for value in eigenvalues) / n
         heat.append({"time": time, "normalized_heat_trace": trace})
     dimension = []
-    import math
     for i in range(1, len(heat) - 1):
         left, right = heat[i - 1], heat[i + 1]
         slope = (
