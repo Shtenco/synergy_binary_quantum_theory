@@ -94,3 +94,12 @@ This is additional test coverage, not yet a reported passing execution:
 the commit containing the test must receive a fresh GitHub Actions result
 before the randomized check is marked PASS.
 
+## Input-validation hardening (added 2026-11-18)
+
+The graph rank and edge-generator builders now share a strict half-link
+index validator. It rejects fractional values, booleans, numeric strings,
+out-of-range slots, self-loops, and invalid endpoints instead of allowing
+Python's `int(...)` coercion to silently truncate or reinterpret indices.
+Regression cases cover fractional, integral-float, boolean, and string inputs.
+These cases are awaiting the same fresh CI run as the randomized graph tests.
+
