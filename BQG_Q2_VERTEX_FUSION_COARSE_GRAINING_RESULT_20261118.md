@@ -91,33 +91,39 @@ rejection.
 
 ## Exhaustive partition audit (2026-11-18)
 
-The path_5 partition check has now been promoted from a test-only loop into
-the reproducible JSON control exported by the workflow. It enumerates all
-52 set partitions (the fifth Bell number, B_5) of the five microscopic vertices
-and repeats each case with both the block order and the vertex order inside
-each block reversed. For every partition it checks normalized boundary-state
-equality up to global phase, equality of retained-edge QFI against the
-microscopic calculation, and invariance of original retained-edge identities
-under reordering.
+The path_5 partition check is part of the reproducible JSON controls. It
+enumerates all 52 set partitions (the fifth Bell number, B_5) of the five
+microscopic vertices and repeats each case with both the block order and the
+vertex order inside each block reversed. For every partition it checks
+normalized boundary-state equality up to global phase, equality of
+retained-edge QFI against the microscopic calculation, and invariance of
+original retained-edge identities under reordering.
 
+The regression test runs this exhaustive check at both \(j=1/2\) and
+\(j=1\). The workflow also exports a separate control JSON for each spin.
 Verified workflow:
-[44363347302](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44363347302),
-commit `27eb01e571f592ca0b7752b1e0371c097b8a3960`. All 44 job steps completed
-successfully, including the exhaustive vertex-fusion regression test. Its
-`q2-pl-graph-export` artifact (ID `14455127392`) was downloaded; the JSON
-was parsed independently and reports:
+[44368258342](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44368258342),
+commit `b8be1972464190512885baeaf2306ba67a712bc8`. All 45 job steps
+completed successfully. Its `q2-pl-graph-export` artifact (ID
+`14457636817`) was downloaded and both JSON files were independently parsed:
 
-- all five deterministic path/star/cycle controls passed;
-- all 52 path_5 partitions passed, including reversed block order;
-- maximum normalized boundary-amplitude residual: `3.473e-16`;
-- maximum retained-edge QFI residual: `8.882e-16`;
-- staged versus direct path_5 fusion: amplitude residual `1.629e-16`,
-  QFI residual `1.348e-32`, and identical retained edge identity `[2]`.
+| Spin | Partitions | Max boundary-amplitude residual | Max retained-edge QFI residual | Result |
+|---|---:|---:|---:|---|
+| \(j=1/2\) | 52 | \(3.472\times10^{-16}\) | \(8.882\times10^{-16}\) | pass |
+| \(j=1\) | 52 | \(3.168\times10^{-16}\) | \(2.665\times10^{-15}\) | pass |
 
-The separate CI regression matrix continues to cover both j=1/2 and j=1,
-including staged-versus-direct fusion. The exported exhaustive partition
-control uses j=1/2; it should not be interpreted as exhaustive over spin
-labels or graph topologies.
+For both spins, the staged-versus-direct path_5 fusion control also passed:
+the retained edge identity is `[2]` in both constructions. For \(j=1/2\),
+the amplitude residual is \(1.629\times10^{-16}\) and QFI residual is
+\(1.348\times10^{-32}\); for \(j=1\), the corresponding residuals are
+\(1.787\times10^{-16}\) and \(4.441\times10^{-16}\).
+
+The separate regression matrix also tests path, star, and cycle fixtures,
+singleton blocking, invalid partitions, duplicate half-link rejection, and
+ordinary nontrivial partitions at both spins. These results establish
+numerical agreement for the tested finite-dimensional cases, not
+exhaustiveness over all spin labels, graph topologies, or intertwiner
+configurations.
 
 These checks strengthen the finite algebraic identity and software
 implementation. They still do not establish a physical RG transformation:
