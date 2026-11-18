@@ -716,3 +716,26 @@ exports `verification_results/Q2_SU2_IRREP_SINGLET_INVARIANCE.json`.
 This establishes representation-independent local singlet cancellation,
 not higher-spin node intertwiners or network QFI. The latter remain the
 next required step before a spin-summed BQG edge metric can be claimed.
+
+
+## CI closure: two-sided endpoint quotient and arbitrary SU(2) irreps
+
+The complete workflow run `44336897934` passed, including all tests and
+exports for the graph, gauge, holonomy, projective-boundary, two-sided
+endpoint, arbitrary-irrep, Feshbach, and PL generation-2 controls. The
+previously contradictory Feshbach test assertion was removed; the positive
+certified gap-bound assertions remain.
+
+For six random intertwiner samples per graph, the two-sided endpoint QFI
+had rank 6/nullity 6 on the two-edge path and rank 12/nullity 12 on the
+four-edge cycle. Thus the only null directions in these edge-probe metrics
+were the (3E) common endpoint rotations. The endpoint tangent-sum residual
+was exactly zero in exported floating-point results; signed-lift QFI
+reconstruction errors were below (1.51\times10^{-15}).
+
+The arbitrary-irrep local singlet tests passed for the six spins
+(j=1/2,1,3/2,2,5/2,3), with maximum finite-group invariance residual
+(1.59\times10^{-15}); the test suite also covers (j=4).
+
+The network-QFI JSON exporter was made NumPy-scalar safe, and a regression
+test now checks its serialized result. All workflow export stages completed.
