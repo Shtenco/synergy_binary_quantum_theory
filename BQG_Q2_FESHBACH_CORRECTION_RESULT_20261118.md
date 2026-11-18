@@ -114,6 +114,8 @@ H=QLQ|_{Q\mathcal H},
 \Sigma'(0)=B^TH^{-2}B\succeq0.
 \]
 It obtains this matrix by a second matrix-free solve: first solve \(HX=B\), then \(HY=X\), and form \(\Sigma'(0)=B^TY\). No dense PL-scale matrix is formed.
+The fine-to-coarse isometry is also applied implicitly through fibre labels and group reductions. The implementation no longer allocates the dense \(N_{PL}\times N_{causal}\) matrix \(U\), nor dense fine-by-coarse arrays for \(B\), \(X\), or \(Y\). It accumulates only coarse \(m\times m\) Gram/self-energy matrices while applying the sparse PL adjacency to fine-level vectors. This removes the roughly 900 MB dense-embedding bottleneck anticipated for generation 3 (221,184 PL tetrahedra by 512 coarse modes). It does **not** yet build or compute generation 3; the generation-3 incidence construction remains a separate unfinished task.
+
 
 For \(|\lambda|<\Delta_Q\), where \(\Delta_Q=\lambda_{\min}(H)\), the resolvent has the convergent expansion
 \[
