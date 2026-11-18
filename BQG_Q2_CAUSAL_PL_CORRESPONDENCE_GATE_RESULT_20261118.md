@@ -140,3 +140,22 @@ The nonuniform fibre distribution is now explicit, and its normalized pushforwar
 - CI workflow: `.github/workflows/q2-pl-graph-export.yml`
 
 The workflow is configured to run both the PL exporter tests and this correspondence gate, and to upload the JSON result. The code has been committed; CI execution must be checked independently before describing the tests as passing. The workflow now also checks mass conservation and non-lumpability diagnostics.
+
+## 2026-11-18 test-suite audit update
+
+A source-level consistency audit found one stale test assertion: the quotient
+exporter serializes each conductance multiplicity as
+`integer_multiplicity`, while the test incorrectly read `weight`. The test
+was corrected to use the actual exported schema. Two additional safeguards
+were added: an exact 2x2 Jacobi-eigensolver spectrum check, rejection of a
+non-symmetric input matrix, and a generation-zero spectral edge-case check
+(single constant zero mode, no positive gap, unit normalized heat trace).
+
+Commits:
+- `fddc07e` — correct conductance test field name;
+- `ec3b8fe` — add Jacobi and generation-zero edge-case tests.
+
+**Execution status:** these changes have been committed, but the GitHub
+combined-status endpoint currently reports no status checks for the latest
+commit. Therefore the tests must still be treated as *not verified by CI*;
+this audit does not report them as passing.
