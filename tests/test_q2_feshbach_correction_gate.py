@@ -34,6 +34,7 @@ def test_generation_one_matches_exact_finite_control_values(feshbach_result):
     assert abs(level1["feshbach_correction_operator_norm"] - 40.0 / 51.0) < 1e-9
     assert abs(level1["q_sector_gap_estimate"] - 0.1522409349774257) < 1e-8
     assert abs(level1["feshbach_to_galerkin_operator_ratio"] - 20.0 / 119.0) < 1e-9
+    assert abs(level1["leakage_to_galerkin_operator_ratio"] - 0.40406101782088405) < 1e-8
 
 
 def test_generation_two_feshbach_correction_is_reproduced(feshbach_result):
@@ -42,6 +43,7 @@ def test_generation_two_feshbach_correction_is_reproduced(feshbach_result):
     assert abs(level2["feshbach_correction_operator_norm"] - 1.7366734310) < 1e-7
     assert abs(level2["q_sector_gap_estimate"] - 0.01171906316138909) < 1e-8
     assert abs(level2["feshbach_to_galerkin_operator_ratio"] - 0.3845362122) < 1e-7
+    assert abs(level2["leakage_to_galerkin_operator_ratio"] - 0.4058229130) < 1e-7
 
 
 def test_feshbach_correction_obeys_the_operator_lower_bound(feshbach_result):
