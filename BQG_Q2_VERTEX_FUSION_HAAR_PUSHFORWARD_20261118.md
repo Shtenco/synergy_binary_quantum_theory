@@ -265,3 +265,56 @@ higher-spin/block-size controls.
 This is a finite, exact demonstration that the chosen product-Haar
 microscopic ansatz induces a correlated, non-Haar block measure. It does
 not determine which measure the physical BQG dynamics selects.
+
+## Support geometry: the induced measure lives on a Segre variety
+
+The two-copy moment test has a geometric counterpart. Under the isometric
+identification of the fused image with
+\(\mathcal H_{4,\mathrm{inv}}^{\otimes N}\), the normalized outputs of
+independent local Haar vectors are exactly product vectors
+
+\[
+|\psi_1\rangle\otimes\cdots\otimes|\psi_N\rangle.
+\]
+
+Their projective support is the Segre variety
+
+\[
+\operatorname{Seg}\big((\mathbb{CP}^{d-1})^N\big)
+\subset \mathbb{CP}^{d^N-1},
+\]
+
+whose complex dimension is \(N(d-1)\). The ambient projective image has
+dimension \(d^N-1\), so the support codimension is
+
+\[
+\boxed{d^N-1-N(d-1).}
+\]
+
+| Spin | Vertices | Ambient image dimension | Product support dimension | Segre codimension |
+|---|---:|---:|---:|---:|
+| j=1/2 | 2 | 3 | 2 | 1 |
+| j=1/2 | 3 | 7 | 3 | 4 |
+| j=1/2 | 4 | 15 | 4 | 11 |
+| j=1 | 2 | 8 | 4 | 4 |
+| j=1 | 3 | 26 | 6 | 20 |
+| j=3/2 | 2 | 15 | 6 | 9 |
+| j=2 | 2 | 24 | 8 | 16 |
+
+Thus the pushforward is not merely a non-Haar smooth density on the image:
+it is singular with respect to full Haar measure on that image, because it is
+concentrated on a lower-dimensional algebraic subset. A smooth coarse
+effective action with respect to full image-Haar measure cannot represent
+this toy pushforward without additional singular constraints or a change of
+measure.
+
+The Segre-codimension assertions are included in the regression tests.
+Verified run:
+[44382012782](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44382012782),
+commit `a39fe4ef5335a6bab31c347599b777a5895ff954`; all 50/50 workflow
+steps passed. The independently parsed artifact (ID `14463823638`)
+reports all seven Segre-support controls as `passed: true`.
+
+Again, this singular-support result is specific to the independent local-Haar
+toy ensemble. A physical graph-changing projector can generate correlations
+and a different support; that physical measure remains to be derived.
