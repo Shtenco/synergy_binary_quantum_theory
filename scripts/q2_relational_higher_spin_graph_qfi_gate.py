@@ -137,6 +137,62 @@ def graph_qfi(states, edges, singlet, generators):
     return probability, qfi, float(np.linalg.norm(qfi - qfi.T)), boundary
 
 
+def collective_edge_blocks(name, edge_count):
+    """A fixed, explicit partition used to restrict edge twists to blockwise modes."""
+    partitions = {
+        "path_3": ((0, 1),),
+        "path_4": ((0, 1), (2,)),
+        "path_5": ((0, 1), (2, 3)),
+        "star_4": ((0, 1), (2,)),
+        "cycle_4": ((0, 1), (2, 3)),
+    }
+    if name not in partitions:
+        raise ValueError(f"no collective edge partition for graph {name!r}")
+    blocks = partitions[name]
+    flat = [edge for block in blocks for edge in block]
+    if (
+        any(
+            isinstance(edge, (bool, np.bool_))
+            or not isinstance(edge, (int, np.integer))
+            for edge in flat
+        )
+        or sorted(map(int, flat)) != list(range(edge_count))
+    ):
+        raise ValueError("collective edge blocks must partition every edge exactly once")
+    return tuple(tuple(map(int, block)) for block in blocks)
+
+
+def collective_edge_parameter_map(edge_count, blocks):
+    """Map block angles to micro edge angles: theta_e = theta_block(e)."""
+    flat = [edge for block in blocks for edge in block]
+    if (
+        any(
+            isinstance(edge, (bool, np.bool_))
+            or not isinstance(edge, (int, np.integer))
+            for edge in flat
+        )
+        or sorted(map(int, flat)) != list(range(edge_count))
+    ):
+        raise ValueError("collective edge blocks must partition every edge exactly once")
+    mapping = np.zeros((3 * edge_count, 3 * len(blocks)), dtype=float)
+    for block_index, block in enumerate(blocks):
+        for edge in block:
+            mapping[3 * int(edge):3 * int(edge) + 3,
+                    3 * block_index:3 * block_index + 3] = np.eye(3)
+    return mapping
+
+
+def collective_edge_pullback_qfi(micro_qfi, blocks):
+    """Pull back micro QFI to collective block-angle parameters by B.T F B."""
+    if np.asarray(micro_qfi).ndim != 2 or micro_qfi.shape[0] != micro_qfi.shape[1]:
+        raise ValueError("micro QFI must be a square matrix")
+    if micro_qfi.shape[0] % 3:
+        raise ValueError("micro QFI dimension must be divisible by three")
+    edge_count = micro_qfi.shape[0] // 3
+    mapping = collective_edge_parameter_map(edge_count, blocks)
+    return mapping.T @ np.asarray(micro_qfi, dtype=float) @ mapping, mapping
+
+
 def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     rng = np.random.default_rng(seed + two_j + len(edges))
     basis, _ = four_valent_intertwiner_basis(two_j)
@@ -151,6 +207,13 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     normalized_quantiles = []
     normalized_variances = []
     rank_fractions = []
+    block_spectral_moments = {str(order): [] for order in (1, 2, 3, 4)}
+    block_spectral_quantiles = []
+    block_spectral_variances = []
+    block_rank_fractions = []
+    block_symmetry_errors = []
+    block_min_eigenvalues = []
+    blocks = collective_edge_blocks(name, len(edges))
     pair_op = sum(
         (node_generator(g, 0, two_j + 1) @ node_generator(g, 3, two_j + 1)
          for g in generators),
@@ -179,6 +242,24 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         )
         normalized_variances.append(float(np.var(normalized_eigenvalues)))
         rank_fractions.append(float(spectral_ranks[-1] / (3 * len(edges))))
+        effective_qfi, _block_map = collective_edge_pullback_qfi(qfi, blocks)
+        effective_qfi = 0.5 * (effective_qfi + effective_qfi.T)
+        effective_eigenvalues = np.linalg.eigvalsh(effective_qfi)
+        normalized_effective = effective_eigenvalues / isolated_qfi
+        for order in (1, 2, 3, 4):
+            block_spectral_moments[str(order)].append(
+                float(np.mean(normalized_effective ** order))
+            )
+        block_spectral_quantiles.append(
+            np.quantile(normalized_effective, [0.0, 0.25, 0.5, 0.75, 1.0]).tolist()
+        )
+        block_spectral_variances.append(float(np.var(normalized_effective)))
+        block_rank_fractions.append(float(
+            np.sum(effective_eigenvalues > 1e-9 * max(1.0, float(np.max(np.abs(effective_eigenvalues)))))
+            / effective_qfi.shape[0]
+        ))
+        block_symmetry_errors.append(float(np.linalg.norm(effective_qfi - effective_qfi.T)))
+        block_min_eigenvalues.append(float(effective_eigenvalues[0]))
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
             sl = slice(3 * edge_index, 3 * edge_index + 3)
@@ -222,9 +303,31 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         "cross_edge_qfi_frobenius_norm_min": min(cross_norms),
         "cross_edge_qfi_frobenius_norm_max": max(cross_norms),
         "max_path_middle_casimir_formula_error": max(path_casimir_errors) if path_casimir_errors else None,
+        "collective_blocking": {
+            "edge_partition": [list(block) for block in blocks],
+            "parameter_map": "theta_micro[e] = theta_block[b] for e in block b; B has 3x3 identity blocks",
+            "effective_parameter_dimension": 3 * len(blocks),
+            "pullback": "F_effective = B.T @ F_micro @ B",
+            "normalized_spectral_moments_mean": {
+                order: float(np.mean(values)) for order, values in block_spectral_moments.items()
+            },
+            "normalized_spectral_quantiles_mean": np.mean(
+                np.asarray(block_spectral_quantiles), axis=0
+            ).tolist(),
+            "normalized_spectral_variance_mean": float(np.mean(block_spectral_variances)),
+            "rank_fraction_mean": float(np.mean(block_rank_fractions)),
+            "minimum_eigenvalue_over_trials": min(block_min_eigenvalues),
+            "max_symmetry_error": max(block_symmetry_errors),
+            "checks": {
+                "effective_qfi_is_psd": min(block_min_eigenvalues) > -2e-8,
+                "effective_qfi_is_symmetric": max(block_symmetry_errors) < 2e-9,
+            },
+        },
         "checks": {
             "qfi_is_symmetric": max(symmetries) < 2e-9,
             "qfi_is_psd": min(minima) > -2e-8,
+            "collective_pullback_is_psd": min(block_min_eigenvalues) > -2e-8,
+            "collective_pullback_is_symmetric": max(block_symmetry_errors) < 2e-9,
             "qfi_rank_nullity_partition_is_consistent": all(
                 rank + nullity == 3 * len(edges)
                 for rank, nullity in zip(spectral_ranks, spectral_nullities)
