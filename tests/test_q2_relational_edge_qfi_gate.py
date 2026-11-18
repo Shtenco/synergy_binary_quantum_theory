@@ -23,9 +23,10 @@ def test_relational_qfi_is_independent_of_the_two_node_intertwiners():
     for _ in range(8):
         a = random_intertwiner(rng)
         b = random_intertwiner(rng)
-        probability, qfi = relational_qfi_matrix(a, b)
+        probability, qfi, pullthrough_residual = relational_qfi_matrix(a, b)
         assert probability == pytest.approx(0.25, abs=1e-12)
         assert np.allclose(qfi, np.eye(3), atol=1e-11)
+        assert pullthrough_residual < 1e-11
 
 
 def test_relative_twist_is_not_the_global_node_gauss_generator():
@@ -33,4 +34,5 @@ def test_relative_twist_is_not_the_global_node_gauss_generator():
     # acts on one shared half-link only (not on the sum over all four legs).
     result = run(seed=19, trials=2)
     assert result["max_node_gauss_residual"] < 1e-12
+    assert result["max_half_link_to_boundary_generator_residual"] < 1e-11
     assert result["relational_qfi_max_frobenius_error_from_identity"] < 1e-11
