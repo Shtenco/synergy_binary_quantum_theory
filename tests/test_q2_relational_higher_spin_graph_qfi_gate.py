@@ -59,6 +59,6 @@ def test_extended_graph_family_reports_complete_qfi_spectral_partition():
             assert row["qfi_rank_max_over_trials"] <= row["qfi_parameter_dimension"]
             assert row["qfi_rank_min_over_trials"] >= 0
             assert row["qfi_rank_min_over_trials"] + row["qfi_nullity_min_over_trials"] <= row["qfi_parameter_dimension"]
-            assert row["qfi_rank_nullity_partition_is_consistent"] if "qfi_rank_nullity_partition_is_consistent" in row else all(row["checks"].values())
+            assert row["checks"]["qfi_rank_nullity_partition_is_consistent"]
             assert row["qfi_spectral_maximum_over_trials"] >= row["qfi_spectral_minimum_over_trials"]
 
