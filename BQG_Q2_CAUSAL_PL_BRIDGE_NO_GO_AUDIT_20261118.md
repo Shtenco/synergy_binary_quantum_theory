@@ -128,10 +128,17 @@ exact histogram and construction are documented in
 `BQG_Q2_CAUSAL_PL_CORRESPONDENCE_GATE_RESULT_20261118.md`.
 
 This closes the *finite combinatorial correspondence* gate through generation
-2, conditional on the configured CI tests. It does not close the infinite
-refinement limit, the measure/operator problem, or physical QFI. The next gate
-must derive a refinement-compatible measure from the nonuniform fibres and
-test whether a corresponding weighted Laplacian has a controlled limit.
+2, conditional on the configured CI tests. A refinement-consistent pushforward
+measure has also been derived:
+`mu_g(e) = |Phi_g^{-1}(e)| / 24^g`, with total mass 16 and exact parent-to-
+children mass conservation at both tested refinement steps.
+
+However, the quotient partition is not equitable: the gate detects 40
+non-equitable source/target fibre pairs at generation 1 and 408 at generation
+2. Therefore the natural coarse operator is a Galerkin/variational compression
+of the PL dual Laplacian, not an exact Markov lumping. The next gate must build
+this compressed operator, study its spectrum and refinement stability, and
+separate finite combinatorial conductance from physical QFI conductance.
 Do not insert inverse-fibre weights as if they were already physically
 derived.
 
