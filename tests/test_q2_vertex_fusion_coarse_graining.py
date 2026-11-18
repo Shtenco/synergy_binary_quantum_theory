@@ -82,6 +82,7 @@ def test_exhaustive_path5_vertex_partitions_and_block_order_invariance(two_j):
     result = exhaustive_path5_partition_control(two_j=two_j, seed=20261120 + two_j)
     assert result["partition_count"] == 52  # Bell number B_5
     assert result["includes_block_order_reversal"]
+    assert result["max_fused_block_gauss_relative_residual"] < 2e-9
     assert result["passed"], result
 
 
