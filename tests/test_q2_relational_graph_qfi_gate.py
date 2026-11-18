@@ -48,3 +48,14 @@ def test_graph_validation_rejects_non_normalized_node_state():
     states = [np.ones(16, dtype=complex), np.ones(16, dtype=complex)]
     with pytest.raises(ValueError, match="must be normalized"):
         validate_graph(states, [(0, 0, 1, 0)])
+
+def test_full_half_link_qfi_has_nodewise_gauss_nulls_and_gauge_fixed_psd():
+    result = run(seed=20261118, trials=3)
+    for name, row in result["graphs"].items():
+        node_count = row["nodes"]
+        assert row["full_half_link_qfi_shape"] == [12 * node_count, 12 * node_count]
+        assert row["max_node_gauss_null_residual"] < 1e-9
+        assert row["full_half_link_qfi_minimum_eigenvalue"] > -1e-9
+        assert row["gauge_fixed_parameter_count"] == 9 * node_count
+        assert row["gauge_fixed_numerical_rank_min"] <= 9 * node_count
+        assert row["checks"]["gauge_fixed_half_link_qfi_is_psd"] is True
