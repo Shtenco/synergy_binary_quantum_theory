@@ -149,6 +149,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     path_casimir_errors = []
     normalized_moments = {str(order): [] for order in (1, 2, 3, 4)}
     normalized_quantiles = []
+    normalized_variances = []
     rank_fractions = []
     pair_op = sum(
         (node_generator(g, 0, two_j + 1) @ node_generator(g, 3, two_j + 1)
@@ -176,6 +177,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         normalized_quantiles.append(
             np.quantile(normalized_eigenvalues, [0.0, 0.25, 0.5, 0.75, 1.0]).tolist()
         )
+        normalized_variances.append(float(np.var(normalized_eigenvalues)))
         rank_fractions.append(float(spectral_ranks[-1] / (3 * len(edges))))
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
@@ -215,9 +217,7 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
             np.asarray(normalized_quantiles), axis=0
         ).tolist(),
         "normalized_spectral_quantiles_probability_levels": [0.0, 0.25, 0.5, 0.75, 1.0],
-        "normalized_spectral_variance_mean": float(
-            np.mean(normalized_moments["2"]) - np.mean(normalized_moments["1"]) ** 2
-        ),
+        "normalized_spectral_variance_mean": float(np.mean(normalized_variances)),
         "max_diagonal_block_error_from_isolated_spin_qfi": max(diagonal_errors),
         "cross_edge_qfi_frobenius_norm_min": min(cross_norms),
         "cross_edge_qfi_frobenius_norm_max": max(cross_norms),
@@ -240,11 +240,17 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     }
 
 
-def run(two_j_values=(1, 2), trials=3):
+def run(two_j_values=(1, 2), trials=3, graph_names=None):
+    available_graphs = graph_fixtures()
+    selected_names = tuple(available_graphs) if graph_names is None else tuple(graph_names)
+    unknown = set(selected_names) - set(available_graphs)
+    if unknown:
+        raise ValueError(f"unknown graph fixtures: {sorted(unknown)}")
     rows = {}
     for two_j in two_j_values:
         rows[str(two_j / 2.0)] = {}
-        for name, (nodes, edges) in graph_fixtures().items():
+        for name in selected_names:
+            nodes, edges = available_graphs[name]
             # The path_5 boundary has 12 open legs. Keep its dense boundary
             # vector to j<=1; higher spins remain covered on <=10-leg fixtures.
             if name == "path_5" and two_j > 2:
@@ -264,7 +270,7 @@ def run(two_j_values=(1, 2), trials=3):
         "graph_spin_coverage": {
             name: [float(two_j / 2.0) for two_j in two_j_values
                    if name in rows[str(two_j / 2.0)]]
-            for name in graph_fixtures()
+            for name in selected_names
         },
         "interpretation": (
             "All spectra are also reported after division by the exact isolated-link "
