@@ -412,14 +412,13 @@ def run(max_generation=2):
         dual = dual_graph_payload(
             generation, tetrahedra, chain_by_tet, previous_faces
         )
-        _vertex_face_colours(dual)
+        vertex_colours = _vertex_face_colours(dual)
         levels.append(_summarise(
             generation, tetrahedra, parent_map, causal_edges, dual
         ))
         if generation == max_generation:
             break
 
-        vertex_colours = _vertex_face_colours(dual)
         face_sides, face_info = _parent_face_sides(
             tetrahedra, parent_map, causal_edges, orientations, dual
         )
@@ -461,12 +460,6 @@ def run(max_generation=2):
                 orientations[parent] * (-1 if inversions % 2 else 1)
             )
 
-        child_dual = dual_graph_payload(
-            generation + 1, children, child_chains, faces
-        )
-        child_level = _summarise(
-            generation + 1, children, child_map, child_causal_edges, child_dual
-        )
         refinement_checks.append({
             "generation": generation + 1,
             "every_child_maps_to_a_child_of_its_parent": naturality_ok,
