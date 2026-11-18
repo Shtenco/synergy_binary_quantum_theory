@@ -29,6 +29,7 @@ from q2_relational_graph_qfi_gate import (
 from q2_relational_gauge_quotient_gate import (
     projective_tangent_jacobian,
     vertex_gauge_generators,
+    extended_open_graph_fixtures,
 )
 
 
@@ -191,7 +192,7 @@ def run(seed=20261118, trials=4):
         raise ValueError("at least two trials are required")
     rng = np.random.default_rng(seed)
     graphs = {}
-    for name, (node_count, edges) in graph_fixtures().items():
+    for name, (node_count, edges) in extended_open_graph_fixtures().items():
         samples = [
             analyze_sample([random_intertwiner(rng) for _ in range(node_count)], edges)
             for _ in range(trials)
@@ -233,7 +234,7 @@ def run(seed=20261118, trials=4):
         ),
         "claim_boundary": (
             "This classifies exact nulls of the present finite spin-1/2 "
-            "contraction. It does not establish that the singlet-edge nulls "
+            "path, branched-star, and cycle contractions. It does not establish that the singlet-edge nulls "
             "are an independent fundamental gauge symmetry, nor does it "
             "derive a general BQG edge-frame bundle or continuum dynamics."
         ),
