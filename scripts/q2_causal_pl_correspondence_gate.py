@@ -276,6 +276,23 @@ def _jacobi_eigenvalues_symmetric(matrix, tolerance=1e-12, max_sweeps=100):
     return sorted(a[i][i] for i in range(n))
 
 
+def _symmetric_eigenvalues(matrix):
+    """Use LAPACK for large dense matrices, retaining the stdlib Jacobi fallback."""
+    n = len(matrix)
+    if n >= 128:
+        try:
+            import numpy as np
+        except ImportError:
+            return _jacobi_eigenvalues_symmetric(matrix)
+        array = np.asarray(matrix, dtype=float)
+        if array.ndim != 2 or array.shape != (n, n):
+            raise ValueError("symmetric eigensolver requires a square matrix")
+        if not np.allclose(array, array.T, rtol=0.0, atol=1e-10):
+            raise ValueError("matrix is not symmetric")
+        return np.linalg.eigvalsh(array).tolist()
+    return _jacobi_eigenvalues_symmetric(matrix)
+
+
 def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
     """Spectrum and finite-time heat trace of M^{-1}K, symmetrized by M."""
     nodes = sorted(causal_edges)
@@ -295,7 +312,7 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
         matrix[i][j] += off
         matrix[j][i] += off
 
-    eigenvalues = _jacobi_eigenvalues_symmetric(matrix)
+    eigenvalues = _symmetric_eigenvalues(matrix)
     zero_count = sum(abs(value) <= 1e-9 for value in eigenvalues)
     positive = [value for value in eigenvalues if value > 1e-9]
     times = [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
