@@ -220,7 +220,24 @@ def run(max_generation=2):
         ))
     expected = [(8, 24), (80, 464), (1696, 10912)]
     expected_dual = [(16, 32), (384, 768), (9216, 18432)]
+    # A tetrahedral dual vertex has four incident shared faces.  Their
+    # omitted-axis colours are exactly the four frozen q=2 route labels.
+    # Check this local route-to-face correspondence at every exported level.
+    local_route_stars = []
+    for row in rows:
+        incident_colours = [[] for _ in range(row["dual_graph"]["vertex_count"])]
+        for edge in row["dual_graph"]["edges"]:
+            colour = edge["route_colour"]
+            incident_colours[edge["source"]].append(colour)
+            incident_colours[edge["target"]].append(colour)
+        local_route_stars.append(incident_colours)
+
     checks = {
+        "every_dual_vertex_has_one_incident_edge_per_route": all(
+            sorted(colours) == [0, 1, 2, 3]
+            for level in local_route_stars
+            for colours in level
+        ),
         "counts_match_independent_pl_gate": all(
             (row["vertex_count"], row["edge_count"]) == expected[i]
             for i, row in enumerate(rows)
