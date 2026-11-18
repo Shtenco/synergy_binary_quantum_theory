@@ -67,7 +67,9 @@ def run() -> dict[str, object]:
         "generation3_pl_dual_edges": dual_edges,
         "generation3_causal_active_edges": causal_edges,
         "dense_spectral_matrix_raw_float64_bytes": dense_matrix_bytes,
-        "jacobi_rotation_work_estimate_at_100_sweeps": jacobi_rotation_work_upper,
+        "jacobi_rotation_work_estimate_at_100_sweeps_fallback_only": jacobi_rotation_work_upper,
+        "dense_lapack_cubic_work_proxy": causal_edges ** 3,
+        "large_spectrum_backend": "numpy.linalg.eigvalsh for 128+ nodes; stdlib Jacobi fallback",
         "checks": checks,
         "passed": all(checks.values()),
         "claim_boundary": (
