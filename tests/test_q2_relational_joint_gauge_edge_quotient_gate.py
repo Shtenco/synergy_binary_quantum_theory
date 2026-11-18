@@ -96,3 +96,41 @@ def test_joint_quotient_svd_rank_matches_topological_theorem():
         assert info["svd_rank_matches_topology"]
         assert info["joint_generator_rank"] == topology["topological_joint_generator_rank"]
         assert info["joint_quotient_dimension"] == topology["topological_joint_quotient_dimension"]
+
+def test_topological_rank_matches_svd_on_deterministic_random_graphs():
+    from scripts.q2_relational_joint_gauge_edge_quotient_gate import (
+        graph_topological_gauge_rank,
+    )
+
+    rng = np.random.default_rng(20261119)
+    for _case in range(32):
+        nodes = int(rng.integers(2, 9))
+        endpoints = [(node, leg) for node in range(nodes) for leg in range(4)]
+        candidates = [
+            (left, right)
+            for i, left in enumerate(endpoints)
+            for right in endpoints[i + 1 :]
+            if left[0] != right[0]
+        ]
+        rng.shuffle(candidates)
+        target_edges = int(rng.integers(0, min(2 * nodes, len(candidates)) + 1))
+        occupied = set()
+        edges = []
+        for left, right in candidates:
+            if len(edges) >= target_edges:
+                break
+            if left in occupied or right in occupied:
+                continue
+            occupied.update((left, right))
+            edges.append((left[0], left[1], right[0], right[1]))
+
+        _basis, info = joint_quotient_basis(nodes, edges)
+        topology = graph_topological_gauge_rank(nodes, edges)
+        assert info["svd_rank_matches_topology"]
+        assert info["joint_generator_rank"] == 3 * (
+            nodes + len(edges) - topology["closed_components"]
+        )
+        assert info["joint_quotient_dimension"] == (
+            12 * nodes - topology["topological_joint_generator_rank"]
+        )
+
