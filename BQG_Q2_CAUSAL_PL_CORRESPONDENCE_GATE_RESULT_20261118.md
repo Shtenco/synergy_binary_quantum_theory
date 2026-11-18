@@ -49,6 +49,23 @@ This follows because every parent PL tetrahedron has exactly 24 children and all
 
 This is a genuine derived measure on the finite causal-edge partitions, not an inverse-fibre weighting. It does not yet specify a measure on causal vertices or a continuum measure.
 
+## Galerkin quotient conductances
+
+The same map induces a sparse symmetric conductance matrix without adding parameters:
+\[
+W_g(e,e')=\#\{\text{PL-dual edges joining }\Phi_g^{-1}(e)
+\text{ and }\Phi_g^{-1}(e')\},\qquad e\ne e'.
+\]
+Edges internal to one fibre are omitted because they contribute zero energy to functions constant on that fibre. This is the stiffness matrix obtained by restricting the PL-dual graph Dirichlet energy to fibre-constant functions. Together with the pushforward mass matrix \(M_g=\mathrm{diag}(\mu_g(e))\), it defines the finite generalized operator \(M_g^{-1}K_g\), where \(K_g\) is the weighted graph Laplacian of \(W_g\).
+
+| Generation | Quotient nodes | Weighted edge pairs | Cross-fibre PL adjacencies | Internal PL adjacencies | Weighted degree range |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 1 | 0 | 0 | 32 | 0 |
+| 1 | 8 | 16 | 512 | 256 | 128–128 |
+| 2 | 64 | 180 | 12,032 | 6,400 | 192–512 |
+
+The quotient is connected at generations 1 and 2. These integer conductances are derived from PL adjacency multiplicities. They are **not** physical QFI conductances.
+
 ## Incidence and refinement checks
 
 The gate verifies:
@@ -62,7 +79,7 @@ The gate verifies:
 
 The PL-dual adjacency counts checked are 32, 768, and 18,432 respectively.
 
-The partition is **not** an exact Markov lumping of the PL-dual random walk: the number of neighbours in a target fibre is not constant across every source fibre. The gate detects 40 non-equitable source/target fibre pairs at generation 1 and 408 at generation 2 (maximum neighbour-count variation 1 and 2 respectively). Thus the induced coarse weighted Laplacian can be interpreted as a Galerkin/variational compression, but not as an exact autonomous quotient dynamics.
+The partition is **not** an exact Markov lumping of the PL-dual random walk: the number of neighbours in a target fibre is not constant across every source fibre. The gate detects 40 non-equitable source/target fibre pairs at generation 1 and 408 at generation 2 (maximum neighbour-count variation 1 and 2 respectively). Thus the induced coarse weighted Laplacian is a Galerkin/variational compression, but not an exact autonomous quotient dynamics. The compressed energy is exact on the subspace of fibre-constant functions; invariance of that subspace under the full PL Laplacian is not established.
 
 ## What this does and does not prove
 
@@ -76,7 +93,7 @@ The partition is **not** an exact Markov lumping of the PL-dual random walk: the
 - a physical inter-block relational state and generator;
 - QFI conductances, spectral dimension, semiclassical dynamics, or Einstein equations.
 
-The nonuniform fibre distribution is now explicit, and its normalized pushforward counting measure is refinement-consistent. The remaining operator issue is subtler: the partition is not equitable, so the compressed operator is variational rather than an exact Markov quotient. Any continuum/QFI construction must derive how this measure and the non-lumpability correction behave under further refinement. Assigning inverse-fibre weights by hand would be an additional model assumption, not a result of this gate.
+The nonuniform fibre distribution is now explicit, and its normalized pushforward counting measure is refinement-consistent. The finite Galerkin stiffness weights are also derived from PL adjacency. The remaining operator issue is subtler: the partition is not equitable, so the compressed operator is variational rather than an exact Markov quotient. Any continuum/QFI construction must establish spectral/refinement stability of this compression and derive the physical relational QFI contribution separately. Assigning inverse-fibre weights by hand would be an additional model assumption, not a result of this gate.
 
 ## Reproduction
 
