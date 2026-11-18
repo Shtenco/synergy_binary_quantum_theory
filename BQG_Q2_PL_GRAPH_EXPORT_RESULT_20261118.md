@@ -28,10 +28,12 @@ published PL refinement counts:
 | 2 | 1696 | 10912 | 9216 |
 
 A separate in-session Python reconstruction of the same face-poset algorithm
-reproduced all six vertex/edge counts exactly. The repository test suite and
-GitHub Actions workflow were added, but no Actions run was visible at the time
-of this report; therefore the new repository tests are **not yet reported as
-CI-passing**.
+reproduced all six vertex/edge counts exactly. GitHub Actions run
+`44269971966` completed successfully: all 3 exporter tests passed, the
+three-level JSON export completed with `passed: true`, and the 70,352-byte
+`q2-pl-graph-export` artifact was uploaded. The run was triggered at commit
+`fdab36fc27bc04801e98a252d5ae172b185c7631`; the subsequent report-only commit
+did not alter the exporter or tests.
 
 ## Critical distinction — what this does not solve
 
