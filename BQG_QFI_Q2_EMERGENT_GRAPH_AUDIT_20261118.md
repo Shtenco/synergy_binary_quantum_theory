@@ -878,3 +878,13 @@ New files:
 
 The workflow exports
 `verification_results/Q2_RELATIONAL_HIGHER_SPIN_GRAPH_QFI.json`.
+
+
+### Verification status for higher-spin graph topology
+
+The complete workflow including the higher-spin path/cycle graph gate passed
+(run `44338709726`). This includes the direct (j=1/2) comparison with
+the established graph-QFI implementation, the (j=1) path/cycle
+contractions, the oriented path Casimir cross-block identity, and PSD/
+symmetry checks for each full finite graph QFI. The same run also passed the
+Haar-averaged star QFI tests and all earlier PL/Feshbach/QFI exports.
