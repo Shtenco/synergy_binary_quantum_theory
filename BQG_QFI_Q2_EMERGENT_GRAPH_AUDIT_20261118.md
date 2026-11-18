@@ -309,12 +309,13 @@ has been established.
 A concrete two-node spin-network gluing channel is now specified. Two arbitrary
 four-valent spin-1/2 SU(2) intertwiners are glued across one shared face with
 the normalized epsilon singlet, retaining the six uncontracted boundary
-half-links. Inserting a relative twist on one half-link before contraction
-gives a gluing probability (1/4) and pure-state relational QFI
-[
-F^{(e)}_{ab}=\delta_{ab},\qquad
-g^{(e)}_{ab}=F^{(e)}_{ab}/4=\delta_{ab}/4.
-]
+half-links. The resulting boundary density operator is
+rho_e=|Psi_AB><Psi_AB|. The inserted relative twist on B's shared half-link
+pulls through the B-node Gauss law to the explicit boundary generator
+K_e^a=-sum_{r=1}^3 J^a_{B,r}, acting on B's three retained half-links.
+The gluing probability is 1/4 and the pure-state relational QFI is
+F_e=I_3, so the normalized metric F_e/4=I_3/4. The script checks the
+half-link-to-boundary-generator identity directly.
 The result is independent of the two intertwiner states in this fixed
 spin-1/2 channel. This closes a *specified local relational-QFI control*,
 not the full physical graph metric: boundary gauge reduction, tracing,
