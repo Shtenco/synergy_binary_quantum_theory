@@ -43,11 +43,11 @@ The exhaustive reduced-boundary sweep reports:
 The independent local-Haar pushforward control covers seven finite spin/block configurations. The product-Haar support is a Segre variety inside the fusion image; its measured complex projective codimensions are 1, 4, 11, 4, 20, 9 and 16. This establishes non-closure of that specified toy ensemble under the tested fusion maps, not of the physical BQG measure.
 
 The new topology-dependent Gram controls are also in the artifact:
-- `star_4), (j=1/2): rank 16/16, scalar Gram map, condition number 1;
-- `cycle_4), (j=1/2): rank 12/16, rank defect 4;
-- `cycle_4), (j=1): rank 61/81, rank defect 20.
+- `star_4` at j=1/2: rank 16/16, scalar Gram map, condition number 1;
+- `cycle_4` at j=1/2: rank 12/16, rank defect 4;
+- `cycle_4` at j=1: rank 61/81, rank defect 20.
 
-All three report `passed=true`; boundary Gauss residuals remain below (3\times10^{-15}). The complete finite result and its interpretation limits are recorded in [BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md](BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md).
+All three report `passed=true`; boundary Gauss residuals remain below 3e-15. The complete finite result and its interpretation limits are recorded in [BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md](BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md).
 
 ### 1.3 All-branch Python static audit
 
