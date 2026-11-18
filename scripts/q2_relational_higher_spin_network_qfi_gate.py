@@ -227,7 +227,7 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
         "pair_casimir_spectrum_error": float(np.linalg.norm(pair_spectrum - expected_pair_values)),
         "max_gauss_pullthrough_residual": max(pullthrough_errors),
         "minimum_network_qfi_eigenvalue": min(min_qfi_eigenvalues),
-        "cross_spectrum_interval_violation": max(analytic_errors),
+        "cross_spectrum_interval_violation": max(analytic_cross_errors),
         "checks": {
             "intertwiner_dimension_is_2j_plus_1": bool(basis.shape[1] == two_j + 1),
             "intertwiner_nullspace_is_accurate": bool(intertwiner_residual < 2e-10),
@@ -241,7 +241,10 @@ def analyze_spin(two_j: int, seed: int = 20261118, trials: int = 8) -> dict[str,
             "pair_casimir_spectrum_is_exact": bool(np.linalg.norm(pair_spectrum - expected_pair_values) < 2e-9),
             "gauss_pullthrough_holds": bool(max(pullthrough_errors) < 2e-9),
             "network_qfi_is_psd": bool(min(min_qfi_eigenvalues) > -2e-9),
-            "cross_block_respects_pair_casimir_bounds": bool(max(analytic_errors) < 2e-9),
+            "cross_block_respects_pair_casimir_bounds": bool(
+                min(cross_values) >= (4.0 / 3.0) * pair_spectrum[0] - 2e-9
+                and max(cross_values) <= (4.0 / 3.0) * pair_spectrum[-1] + 2e-9
+            ),
         },
     }
 
