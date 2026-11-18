@@ -252,6 +252,16 @@ def run():
     degree = np.bincount(endpoints.ravel(), minlength=n_children)
     if not np.all(degree == 4):
         raise ValueError("generation-3 dual graph is not 4-regular")
+    unique_edge_count = len(np.unique(endpoints, axis=0))
+    if unique_edge_count != len(endpoints):
+        raise ValueError("generation-3 direct construction emitted duplicate edges")
+    route_degree = np.zeros((n_children, 4), dtype=np.uint8)
+    for route in range(4):
+        selected = endpoints[routes == route]
+        np.add.at(route_degree[:, route], selected[:, 0], 1)
+        np.add.at(route_degree[:, route], selected[:, 1], 1)
+    if not np.all(route_degree == 1):
+        raise ValueError("each child must have exactly one neighbour in each route")
 
     # Build the generation-3 causal fibres using the already-audited parent
     # route-colour and oriented face-side rules.
@@ -314,6 +324,8 @@ def run():
         "within_parent_edge_count": int(np.sum(routes < 3)) == 331776,
         "across_parent_edge_count": int(np.sum(routes == 3)) == 110592,
         "four_regular": bool(np.all(degree == 4)),
+        "unique_dual_edges": unique_edge_count == len(endpoints),
+        "one_neighbour_per_route_at_every_child": bool(np.all(route_degree == 1)),
         "connected": component_count == 1,
         "causal_fibre_count_512": len(causal_ids) == 512,
         "all_causal_fibres_nonempty": bool(np.all(fibre_sizes > 0)),
@@ -326,6 +338,8 @@ def run():
             "parent_tetrahedra": len(tetrahedra),
             "child_tetrahedra": n_children,
             "dual_edges": len(endpoints),
+            "unique_dual_edges": unique_edge_count,
+            "route_edge_counts": [int(np.sum(routes == k)) for k in range(4)],
             "within_parent_edges": int(np.sum(routes < 3)),
             "across_parent_edges": int(np.sum(routes == 3)),
             "causal_fibres": len(causal_ids),
