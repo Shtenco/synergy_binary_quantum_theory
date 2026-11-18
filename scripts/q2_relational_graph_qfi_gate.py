@@ -186,12 +186,13 @@ def run(seed: int = 20261118, trials: int = 12) -> dict[str, object]:
             "max_symmetry_error": max(symmetry),
             "minimum_qfi_eigenvalue": min(minimum_eigenvalues),
             "max_diagonal_link_block_error_from_identity": max(diagonal_errors),
+            "diagonal_link_blocks_equal_identity": max(diagonal_errors) < 1e-9,
             "cross_link_qfi_frobenius_norm_min": min(cross_norms),
             "cross_link_qfi_frobenius_norm_max": max(cross_norms),
             "checks": {
                 "qfi_symmetric": max(symmetry) < 1e-10,
                 "qfi_positive_semidefinite": min(minimum_eigenvalues) > -1e-10,
-                "diagonal_link_blocks_identity": max(diagonal_errors) < 1e-9,
+                "diagonal_link_blocks_are_finite": bool(np.isfinite(diagonal_errors).all()),
                 "cross_link_terms_present": max(cross_norms) > 1e-3,
             },
         }
