@@ -3,7 +3,7 @@ import pytest
 
 from scripts.q2_vertex_fusion_coarse_graining import (
     exhaustive_graph_partition_control,
-    compare_micro_and_fused_reduced_qfi,
+    exhaustive_reduced_boundary_partition_control,
     run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
     deterministic_case,
@@ -111,26 +111,26 @@ def test_higher_spin_small_graphs_exhaustive_vertex_fusion():
         assert all(row["passed"] for row in spin_rows.values())
 
 @pytest.mark.parametrize(
-    "graph_name,blocks,keep_keys",
+    "graph_name,keep_keys,expected_partitions",
     [
-        ("path_3", ((0, 1), (2,)), ((0, 0), (0, 1))),
-        ("cycle_4", ((0, 1), (2, 3)), ((0, 1), (0, 3))),
+        ("path_3", ((0, 0), (0, 1)), 5),
+        ("cycle_4", ((0, 1), (0, 3)), 15),
     ],
 )
 @pytest.mark.parametrize("two_j", [1, 2])
 def test_partial_trace_mixed_boundary_qfi_is_fusion_invariant_and_monotone(
-    graph_name, blocks, keep_keys, two_j
+    graph_name, keep_keys, expected_partitions, two_j
 ):
-    nodes, edges = graph_fixtures()[graph_name]
-    basis, _ = four_valent_intertwiner_basis(two_j)
-    rng = np.random.default_rng(20261201 + two_j + nodes)
-    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
-    result = compare_micro_and_fused_reduced_qfi(
-        states, edges, invariant_singlet_tensor(two_j), blocks, keep_keys
+    nodes, _edges = graph_fixtures()[graph_name]
+    result = exhaustive_reduced_boundary_partition_control(
+        graph_name, two_j, keep_keys, seed=20261201 + nodes
     )
-    assert result["reduced_density_max_abs_error"] < 2e-9
-    assert result["reduced_derivative_max_abs_error"] < 2e-8
-    assert result["mixed_qfi_max_abs_error"] < 2e-8
-    assert result["pure_minus_mixed_qfi_min_eigenvalue"] > -2e-8
+    assert result["partition_count"] == expected_partitions
+    assert result["expected_partition_count"] == expected_partitions
+    assert result["includes_block_order_reversal"]
+    assert result["max_reduced_density_error"] < 2e-9
+    assert result["max_reduced_derivative_error"] < 2e-8
+    assert result["max_mixed_qfi_error"] < 2e-8
+    assert result["minimum_pure_minus_mixed_qfi_eigenvalue"] > -2e-8
     assert result["passed"], result
 
