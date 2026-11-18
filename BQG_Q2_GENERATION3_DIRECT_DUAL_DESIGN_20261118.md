@@ -165,3 +165,33 @@ QFI conductance, or that a continuum/physical spacetime limit exists.
 The next implementation gate is to realize this compact construction, compare
 its generation-0/1/2 restriction against the existing incidence exporter,
 then run the generation-3 causal-fibre and matrix-free Feshbach checks.
+
+
+## Implementation status (2026-11-18)
+
+A first compact executable implementation has now been added at
+`scripts/q2_pl_generation3_stream.py`. It:
+
+- reconstructs the audited generation-2 correspondence state using the
+  existing generation-0/1 routines;
+- compares the direct adjacency signatures and route colours with the
+  incidence-based exporter at generations 1 and 2;
+- builds generation-3 child tetrahedra, dual endpoints and route colours in
+  NumPy fixed-width arrays;
+- derives the 512 causal-fibre labels from the generation-2 face-colour and
+  oriented-side data;
+- checks the exact edge split, degree four, connectivity, fibre surjectivity
+  and parent pushforward mass conservation.
+
+Run from the repository root:
+
+```bash
+python scripts/q2_pl_generation3_stream.py --output artifacts/q2_generation3_compact_gate.json
+```
+
+**Execution status:** the script has been committed, but it has not yet been
+executed in a repository runtime. Therefore none of its runtime checks is
+claimed as passed. The next gate is to execute it with NumPy and SciPy
+available, repair any discrepancies, and only then add a compact-array
+Feshbach operator path. The generation-3 Feshbach calculation is not included
+in this first implementation.
