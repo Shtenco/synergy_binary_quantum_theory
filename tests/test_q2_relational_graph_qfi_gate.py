@@ -19,6 +19,9 @@ def test_path_and_cycle_full_graph_qfi_are_psd_with_cross_link_terms():
     # The path reproduces the isolated two-link identity blocks; do not
     # assume this survives additional contractions around a cycle.
     assert result["graphs"]["path_3"]["diagonal_link_blocks_equal_identity"] is True
+    # Closing the path into a cycle changes the boundary reduction: the
+    # diagonal edge blocks are no longer universally the isolated I_3.
+    assert result["graphs"]["cycle_4"]["max_diagonal_link_block_error_from_identity"] > 1e-5
 
 
 def test_cycle_graph_has_eight_boundary_qubits_and_twelve_qfi_parameters():
