@@ -16,6 +16,9 @@ def test_local_haar_pushforward_has_proper_boundary_invariant_support(
     input_dimension = local_dimension**2
     assert result["local_intertwiner_dimension"] == local_dimension
     assert result["product_input_dimension"] == input_dimension
+    assert result["full_projective_image_dimension"] == input_dimension - 1
+    assert result["product_haar_projective_support_dimension"] == 2 * (local_dimension - 1)
+    assert result["segre_codimension_in_image"] == (local_dimension - 1) ** 2
     assert result["fused_boundary_leg_count"] == 6
     assert result["full_boundary_invariant_dimension"] == expected_invariant_dimension
     assert result["fusion_map_rank"] == input_dimension
@@ -77,6 +80,11 @@ def test_chain_block_pushforward_remains_isometric_but_not_full_boundary_haar(
     assert result["vertex_count"] == vertex_count
     assert result["fused_boundary_leg_count"] == 2 * vertex_count + 2
     assert result["product_input_dimension"] == input_dimension
+    assert result["full_projective_image_dimension"] == input_dimension - 1
+    assert result["product_haar_projective_support_dimension"] == vertex_count * (local_dimension - 1)
+    assert result["segre_codimension_in_image"] == (
+        input_dimension - 1 - vertex_count * (local_dimension - 1)
+    )
     assert result["full_boundary_invariant_dimension"] == expected_boundary_invariant_dimension
     assert result["fusion_map_rank"] == input_dimension
     assert np.allclose(
