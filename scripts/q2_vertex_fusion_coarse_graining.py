@@ -190,7 +190,7 @@ def fuse_fused_blocks(fused_tensors, boundaries, coarse_edges, blocks, singlet):
         used.update((a, b))
         normalized.append((a, b, int(edge_index), original))
 
-    fused, new_boundaries = [], []
+    fused, new_boundaries, remap = [], [], {}
     for block_index, block in enumerate(blocks):
         local = sorted(block)
         local_index = {v: i for i, v in enumerate(local)}
@@ -202,7 +202,7 @@ def fuse_fused_blocks(fused_tensors, boundaries, coarse_edges, blocks, singlet):
         ]
         contracted_axes = {
             endpoint
-            for (a, b, _edge_index, _original) in normalized
+            for a, b, _edge_index, _original in normalized
             if owner[a[0]] == block_index == owner[b[0]]
             for endpoint in (a, b)
         }
@@ -213,33 +213,19 @@ def fuse_fused_blocks(fused_tensors, boundaries, coarse_edges, blocks, singlet):
             if (v, axis) not in contracted_axes
         ]
         fused.append(_contract(
-            tensors,
-            internal,
+            tensors, internal,
             [(local_index[v], axis) for v, axis in open_axes],
         ))
         new_boundaries.append([boundaries[v][axis] for v, axis in open_axes])
+        for new_axis, old_endpoint in enumerate(open_axes):
+            remap[old_endpoint] = (block_index, new_axis)
 
-    remap = {
-        (old_vertex, old_axis): (new_vertex, new_axis)
-        for new_vertex, block in enumerate(blocks)
-        for new_axis, (old_vertex, old_axis) in enumerate(
-            (item for v in sorted(block)
-             for item in [(v, axis) for axis in range(np.ndim(fused_tensors[v]))
-                          if (v, axis) not in {
-                              endpoint
-                              for a, b, _edge_index, _original in normalized
-                              if owner[a[0]] == new_vertex == owner[b[0]]
-                              for endpoint in (a, b)
-                          }])
-        )
-    }
     retained = [
         (remap[a], remap[b], edge_index, original)
         for a, b, edge_index, original in normalized
         if owner[a[0]] != owner[b[0]]
     ]
     return fused, new_boundaries, retained
-
 
 def _coarse_qfi(fused, boundaries, coarse_edges, singlet, generators):
     raw = _coarse_state(fused, boundaries, coarse_edges, singlet)
