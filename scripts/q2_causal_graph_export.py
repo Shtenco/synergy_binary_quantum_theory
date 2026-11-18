@@ -111,6 +111,12 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
             "degree_min": min((indegree[i] + outdegree[i] for i in range(len(vertices))), default=0),
             "degree_max": max((indegree[i] + outdegree[i] for i in range(len(vertices))), default=0),
             "degree_max_expected": branches ** generation,
+            "source_degree": indegree[0] + outdegree[0],
+            "sink_degree": indegree[1] + outdegree[1],
+            "degree_sum": sum(indegree[i] + outdegree[i] for i in range(len(vertices))),
+            "mean_degree": (
+                sum(indegree[i] + outdegree[i] for i in range(len(vertices))) / len(vertices)
+            ),
             "graph_sha256": hashlib.sha256(canonical).hexdigest(),
             "vertices": list(vertices),
             "active_edges": edges,
@@ -162,6 +168,13 @@ def build(max_generation: int = 5, q: int = 2) -> dict:
         "all_levels_are_dags": all(row["directed_acyclic"] for row in rows),
         "max_degree_matches_branching_law": all(
             row["degree_max"] == row["degree_max_expected"] for row in rows
+        ),
+        "boundary_degrees_match_branching_law": all(
+            row["source_degree"] == row["sink_degree"] == branches ** row["generation"]
+            for row in rows
+        ),
+        "handshake_lemma_holds": all(
+            row["degree_sum"] == 2 * row["active_edge_count"] for row in rows
         ),
         "source_sink_paths_are_four_to_the_generation": all(
             row["source_to_sink_path_count"] == 4 ** (2 ** row["generation"] - 1) for row in rows
