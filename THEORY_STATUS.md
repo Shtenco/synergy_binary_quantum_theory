@@ -1,4 +1,20 @@
-# Текущий статус BQG — 12 октября 2026
+# Статус BQG — обновление 18 ноября 2026
+
+> Нижняя часть документа сохраняет обзорный срез от 12 октября 2026 года. Этот верхний блок — более поздняя сверка с машинными реестрами и CI; при расхождении приоритет имеют `theory_gates.json` и `physicalization_gates.json`.
+
+## Актуальная машинная истина — 18 ноября 2026
+
+- В структурном реестре 50 core gates: 23 `proved`, 21 `tested_finite`, 5 `conditional`, 1 `no_go`.
+- `core_theory_closed_declared=false`; проверяемый статус `structural_candidate_closed=false`. Единственный core no-go — `PURE_ANCILLA_NODE_REFINEMENT`: фиксированное чистое четырёхспиновое Gauss-singlet ancilla не реализует каноническое (S_4)-эквивариантное линейное отображение. Это отвергает конкретный shortcut, а не всю программу бинарного ancilla: корректная bilinear-конструкция рассматривается отдельно.
+- Все 9 обязательных физических gates и 4 дополнительных физических gates остаются `open_physical`. `physicalization_complete=false`; `experimentally_confirmed=false`.
+- В ветке `work/q2-two-sided-singlet-qfi-20261118` конечномерная vertex-fusion/QFI-проверка прошла GitHub Actions run [44380637440](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44380637440): 50/50 шагов успешны; артефакт `q2-pl-graph-export` создан. Это подтверждает только перечисленные конечномерные вычислительные контроли, не физическую RG-динамику и не континуальный предел.
+- Полный `core-regression` и branch-wide Python audit на этой рабочей ветке этим запуском не подтверждены. `core-regression` настроен на `main`; workflow полного branch-wide аудита также не запускался на текущем work-branch в рамках этой проверки.
+
+См. также: [Q2/QFI аудит 18 ноября](BQG_QFI_Q2_EMERGENT_GRAPH_AUDIT_20261118.md), [открытые физические задачи](OPEN_PROBLEMS.md), [план математических исправлений](BQG_MATHEMATICAL_REMEDIATION_PLAN_20261113.md), [W5 production audit](W5_PRODUCTION_AUDIT_20261113.md). `AUDIT_CURRENT.md` — архивный срез от 10 октября 2026 года.
+
+---
+
+# Исторический обзорный срез — 12 октября 2026
 
 **structural_candidate_closed=false; physicalization_complete=false; experimentally_confirmed=false.** Девять обязательных физических условий остаются открытыми. Исторические декларации `true` ниже сохраняются только как архив и не являются актуальным заключением.
 
