@@ -104,3 +104,24 @@ and retained boundary.
 The new regression checks the tangent/QFI identity and equality of
 quotient tangent and QFI nullities. No numerical values are asserted here
 until the workflow executes this new gate.
+
+## Extended full half-link topology audit (2026-11-18)
+
+The full (12V\times12V) half-link QFI and vertex-Gauss quotient now
+include four explicit open graph fixtures: `path_3`, `path_4`,
+`star_4`, and `cycle_4). This adds a four-node branched graph and a
+longer open path without changing the original path/cycle controls.
+
+For every fixture the run records the full-QFI symmetry and Gauss-null
+residuals, orthogonal quotient spectrum/rank/nullity, reference-section
+spectrum agreement, projective tangent stabilizer agreement, and the
+(6E\times6E) two-sided endpoint QFI pullback.
+
+The edge parameter map now uses strict integer validation and rejects
+fractional, boolean, string, out-of-range, self-loop, and reused-half-link
+inputs. Regression tests cover both the new topologies and invalid indices.
+
+These are expanded finite spin-(1/2) controls. No arbitrary graph family,
+higher-spin full-half-link contraction, or continuum limit is claimed until
+separately derived and tested.
+
