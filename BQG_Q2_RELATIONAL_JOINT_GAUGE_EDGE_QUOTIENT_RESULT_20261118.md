@@ -52,3 +52,32 @@ Files:
 - \`BQG_Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT_RESULT_20261118.md\`
 
 CI exports \`verification_results/Q2_RELATIONAL_JOINT_GAUGE_EDGE_QUOTIENT.json\`.
+
+
+## Topological rank theorem (extended audit)
+
+The combined generator rank can be predicted exactly from graph topology.
+For one Lie-algebra axis, let a_v be the coefficient of the vertex column
+and b_e the coefficient of the edge column in a linear dependence.
+A boundary half-link forces a_v=0. An internal edge e=(u,v) gives
+a_u+b_e=0 and a_v+b_e=0, hence a_u=a_v. Therefore a connected component
+with a boundary half-link has no nonzero dependence; a component with no
+boundary half-links has exactly one dependence (all a_v equal and b_e=-a_v).
+
+If c_closed is the number of connected components with no external
+half-links, the exact rank is
+
+    rank(H) = 3 * (V + E - c_closed)
+
+and the quotient dimension is
+
+    12V - 3 * (V + E - c_closed).
+
+This is a theorem about the generator map, not a claim that the QFI quotient
+is positive definite. A fully closed graph has no open boundary legs in the
+present contraction setup, so this linear-algebra result alone does not
+provide a nontrivial boundary pure-state QFI.
+
+Tests compare the SVD rank with the formula on the open path and cycle,
+a closed complete five-node graph (10 internal edges), and two disconnected
+closed components plus an isolated open node.
