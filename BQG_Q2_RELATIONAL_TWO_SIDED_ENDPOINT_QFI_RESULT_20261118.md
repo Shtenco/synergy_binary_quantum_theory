@@ -77,3 +77,27 @@ The result is exact for the normalized spin-\(1/2\) singlet contraction and
 the current tensor-index convention. It does not yet derive the simultaneous
 vertex-gauge action on boundary frames, extend the invariant tensor to
 higher representations, or produce BQG history-weighted coarse conductances.
+
+
+## Verified CI results
+
+GitHub Actions run `44336897934` completed successfully on 2026-11-18.
+The focused two-sided gate passed all four tests and its six-sample-per-graph
+JSON export reported:
+
+| Graph | Relative edge-QFI rank | Two-sided QFI rank | Two-sided nullity |
+|---|---:|---:|---:|
+| Path (3 nodes, 2 edges) | 6 | 6 | 6 |
+| Cycle (4 nodes, 4 edges) | 12 | 12 | 12 |
+
+For both fixtures the maximum norm of (D_u+D_v) was exactly zero in the
+exported floating-point results. The signed-lift reconstruction errors were
+(1.26\times10^{-15}) (path) and (1.50\times10^{-15}) (cycle).
+Every structural common-endpoint null check, PSD check, and tangent/QFI
+rank comparison passed. The observed nullity is exactly (3E), with no
+additional null modes in these relative edge probes for these samples.
+
+The same full workflow also passed the arbitrary-irrep invariance tests:
+16 tests passed. Across (j=1/2,1,3/2,2,5/2,3), the maximum finite-group
+invariance residual was (1.59\times10^{-15}); the Lie-algebra residual
+was zero at the reported precision.
