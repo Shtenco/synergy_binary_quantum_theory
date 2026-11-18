@@ -90,3 +90,17 @@ before claiming spectral flow or continuum universality.
 
 The path-5 test and new spectral summaries are added to the workflow suite;
 execution remains pending until a matching Actions run is observed.
+
+
+## Higher-spin spectral cross-check at j=3/2 and j=2
+
+The graph runner now accepts an explicit `graph_names` selection. This
+allows higher-spin checks on bounded fixtures without allocating the much
+larger 10- or 12-boundary-leg dense state vectors. New tests evaluate
+`path_3` and `cycle_4` (8 boundary half-links each) at (j=3/2) and
+(j=2), with the same normalized spectral moments, quantiles, rank fractions,
+PSD and symmetry diagnostics. This is a deliberately bounded numerical
+coverage choice, not evidence that larger graphs are physically invalid.
+
+The normalized spectral variance is computed per trial and then averaged,
+rather than taking the variance of a mixture of trial spectra.
