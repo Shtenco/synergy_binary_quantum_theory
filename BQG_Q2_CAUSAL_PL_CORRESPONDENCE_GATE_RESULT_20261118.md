@@ -83,6 +83,40 @@ The gate verifies:
 
 The PL-dual adjacency counts checked are 32, 768, and 18,432 respectively.
 
+## Generalized spectrum and finite heat trace
+
+The gate now builds the symmetric matrix
+\[
+A_g=M_g^{-1/2}K_gM_g^{-1/2},
+\]
+which is similar to the generalized operator \(M_g^{-1}K_g\), and computes its
+eigenvalues with a standard-library Jacobi diagonalization. It reports the
+zero-mode count, first positive eigenvalue (finite spectral gap), largest
+eigenvalue, trace, normalized heat trace
+\[
+P_g(t)=\frac{1}{|E_c(g)|}\sum_j e^{-t\lambda_j},
+\]
+and finite-difference effective dimension
+\[
+d_s(t)=-2\frac{d\log P_g(t)}{d\log t}.
+\]
+
+These are diagnostics of the *finite normalized Galerkin operator*. The heat
+trace is sampled at nine fixed diffusion times; a positive gap or a positive
+effective dimension at a few finite times is not a proof of a scale-invariant
+spectral-dimension plateau. A meaningful BQG spectral-dimension claim requires
+stability over both diffusion-time windows and refinement generations, plus
+control of the operator limit. The present exporter/gate remains capped at
+generation 2.
+
+There is relevant mathematical work on spectra of iterated barycentric
+refinements of graphs (for example, Knill's theorem on convergence of spectral
+functions for a specific graph-barycentric refinement operation). That result
+does not automatically apply here: our operator is a weighted Galerkin
+compression of the tetrahedral PL-dual graph through a non-equitable,
+many-to-one causal-edge partition. The refinement operation and operator
+family must be matched before importing any convergence theorem.
+
 The partition is **not** an exact Markov lumping of the PL-dual random walk: the number of neighbours in a target fibre is not constant across every source fibre. The gate detects 40 non-equitable source/target fibre pairs at generation 1 and 408 at generation 2 (maximum neighbour-count variation 1 and 2 respectively). Thus the induced coarse weighted Laplacian is a Galerkin/variational compression, but not an exact autonomous quotient dynamics. The compressed energy is exact on the subspace of fibre-constant functions; invariance of that subspace under the full PL Laplacian is not established.
 
 ## What this does and does not prove
