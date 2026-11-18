@@ -3,6 +3,7 @@ import pytest
 
 from scripts.q2_vertex_fusion_coarse_graining import (
     exhaustive_graph_partition_control,
+    compare_micro_and_fused_reduced_qfi,
     run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
     deterministic_case,
@@ -108,4 +109,28 @@ def test_higher_spin_small_graphs_exhaustive_vertex_fusion():
     assert result["passed"], result
     for spin_rows in result["controls"].values():
         assert all(row["passed"] for row in spin_rows.values())
+
+@pytest.mark.parametrize(
+    "graph_name,blocks,keep_keys",
+    [
+        ("path_3", ((0, 1), (2,)), ((0, 0), (0, 1))),
+        ("cycle_4", ((0, 1), (2, 3)), ((0, 1), (0, 3))),
+    ],
+)
+@pytest.mark.parametrize("two_j", [1, 2])
+def test_partial_trace_mixed_boundary_qfi_is_fusion_invariant_and_monotone(
+    graph_name, blocks, keep_keys, two_j
+):
+    nodes, edges = graph_fixtures()[graph_name]
+    basis, _ = four_valent_intertwiner_basis(two_j)
+    rng = np.random.default_rng(20261201 + two_j + nodes)
+    states = [random_intertwiner(rng, basis) for _ in range(nodes)]
+    result = compare_micro_and_fused_reduced_qfi(
+        states, edges, invariant_singlet_tensor(two_j), blocks, keep_keys
+    )
+    assert result["reduced_density_max_abs_error"] < 2e-9
+    assert result["reduced_derivative_max_abs_error"] < 2e-8
+    assert result["mixed_qfi_max_abs_error"] < 2e-8
+    assert result["pure_minus_mixed_qfi_min_eigenvalue"] > -2e-8
+    assert result["passed"], result
 
