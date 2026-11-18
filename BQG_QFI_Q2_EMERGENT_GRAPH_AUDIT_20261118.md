@@ -451,3 +451,24 @@ The graph gate is added to the branch workflow and exports
 This is still a finite spin-1/2 graph control, not the general BQG network
 metric: the next required layer is a global boundary-gauge quotient and a
 canonical pushforward to the causal-PL quotient graph.
+
+
+### Finite graph contraction check: path versus cycle
+
+The explicit graph tensor-network gate has two fixtures: a three-node path
+and a four-cycle. Independent local reproduction (eight random invariant
+node-state samples per fixture, seed 20261118) confirms:
+
+- Path: each diagonal edge QFI block remains I_3, while cross-edge terms are
+  nonzero (Frobenius norm 0.218–2.336).
+- Four-cycle: cross-edge terms are larger (Frobenius norm 1.025–3.236),
+  and diagonal edge blocks themselves deviate from I_3 by as much as 0.233.
+- Both full QFI matrices remain positive in these samples; the smallest
+  eigenvalue observed was 0.0464 for the path and 0.1231 for the cycle.
+- The four-cycle contraction probability is state-dependent (about
+  0.00365–0.00434), unlike the path's fixed 1/16.
+
+This is direct evidence that network topology and the full boundary
+contraction affect both off-diagonal and diagonal QFI blocks. Isolated
+two-node QFI is not a universal edge weight. These are independent local
+numerical checks, not repository CI results.
