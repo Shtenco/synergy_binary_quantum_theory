@@ -77,8 +77,9 @@ def test_two_stage_vertex_fusion_equals_direct_fusion(two_j):
     assert result["staged_retained_edge_indices"] == [2]
     assert result["direct_retained_edge_indices"] == [2]
 
-def test_exhaustive_path5_vertex_partitions_and_block_order_invariance():
-    result = exhaustive_path5_partition_control(two_j=1, seed=20261120)
+@pytest.mark.parametrize("two_j", [1, 2])
+def test_exhaustive_path5_vertex_partitions_and_block_order_invariance(two_j):
+    result = exhaustive_path5_partition_control(two_j=two_j, seed=20261120 + two_j)
     assert result["partition_count"] == 52  # Bell number B_5
     assert result["includes_block_order_reversal"]
     assert result["passed"], result
