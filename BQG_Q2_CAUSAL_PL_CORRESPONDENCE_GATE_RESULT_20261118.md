@@ -178,12 +178,15 @@ count. Since the closed tetrahedral 3-manifold has two tetrahedra at every
 triangle, the generation-3 PL dual graph has 442,368 edges. The q=2 causal
 active-edge count is (8^3=512).
 
-The preflight also quantifies a numerical bottleneck: a dense 512-by-512
-float64 spectral matrix occupies 2,097,152 raw bytes, but the current cyclic
-Jacobi implementation can require on the order of 6,697,779,200 scalar
-rotation/update operations under the conservative 100-sweep work estimate.
-This estimate is not a benchmark; it is a warning against extending the
-current dense eigensolver blindly.
+The preflight also quantifies the spectral cost: a dense 512-by-512
+float64 matrix occupies 2,097,152 raw bytes. The correspondence gate now uses
+`numpy.linalg.eigvalsh` (LAPACK) for matrices of 128 nodes or more, while
+retaining the standard-library cyclic Jacobi method as a small-matrix and
+no-NumPy fallback. The fallback's conservative 100-sweep scalar
+rotation/update work estimate is 6,697,779,200 operations at 512 nodes; this
+is not a benchmark. The LAPACK path removes that Python-level bottleneck,
+but does not solve the separate memory and serialization costs of building
+the generation-3 PL/dual complex.
 
 The CI workflow now runs the allocation-free preflight tests and uploads its
 JSON artifact. This does **not** mean generation 3 has been exported or that
