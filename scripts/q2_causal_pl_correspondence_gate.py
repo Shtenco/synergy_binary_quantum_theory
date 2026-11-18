@@ -353,7 +353,7 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     try:
         import numpy as np
         from scipy.sparse import csr_matrix
-        from scipy.sparse.linalg import LinearOperator, cg
+        from scipy.sparse.linalg import LinearOperator, cg, eigsh
     except ImportError as exc:
         raise RuntimeError("Feshbach diagnostics require numpy and scipy") from exc
 
@@ -392,6 +392,8 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
     A_PP = U.T @ LU
     A_PP = 0.5 * (A_PP + A_PP.T)
 
+    q_sector_gap_estimate = None
+    q_plus_p_largest_eigenvalue = None
     if leakage_frobenius <= 1e-14:
         correction = np.zeros((m, m), dtype=float)
         solve_residual_max = 0.0
@@ -403,6 +405,17 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
             return project_q(laplacian_apply(q_vector)) + p_vector
 
         operator = LinearOperator((n, n), matvec=qlq_plus_p, dtype=float)
+        smallest = float(eigsh(
+            operator, k=1, which="SA", return_eigenvectors=False, tol=1e-10
+        )[0])
+        largest = float(eigsh(
+            operator, k=1, which="LA", return_eigenvectors=False, tol=1e-10
+        )[0])
+        # P contributes an artificial eigenvalue 1. In the present finite
+        # levels the lowest eigenvalue is below 1 and therefore belongs to Q.
+        if smallest < 1.0 - 1e-8:
+            q_sector_gap_estimate = smallest
+        q_plus_p_largest_eigenvalue = largest
         solutions = np.zeros((n, m), dtype=float)
         residuals = []
         for column in range(m):
@@ -442,6 +455,12 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "feshbach_correction_max_eigenvalue": float(correction_eigenvalues[-1]),
         "effective_operator_min_eigenvalue": float(effective_eigenvalues[0]),
         "effective_operator_max_eigenvalue": float(effective_eigenvalues[-1]),
+        "q_sector_gap_estimate": q_sector_gap_estimate,
+        "q_plus_p_largest_eigenvalue": q_plus_p_largest_eigenvalue,
+        "q_plus_p_condition_estimate": (
+            q_plus_p_largest_eigenvalue / q_sector_gap_estimate
+            if q_sector_gap_estimate is not None else None
+        ),
         "max_linear_solve_residual": solve_residual_max,
         "linear_solve_columns": solve_count,
         "all_linear_solves_converged": True,
