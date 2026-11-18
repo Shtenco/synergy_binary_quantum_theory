@@ -518,6 +518,10 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
             q_plus_p_largest_eigenvalue / q_sector_gap_estimate
             if q_sector_gap_estimate is not None else None
         ),
+        "self_energy_linearization_remainder_coefficient": (
+            leakage_operator ** 2 / (q_sector_gap_estimate ** 3)
+            if q_sector_gap_estimate is not None else None
+        ),
         "max_linear_solve_residual": solve_residual_max,
         "linear_solve_columns": solve_count,
         "all_linear_solves_converged": True,
