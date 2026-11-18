@@ -561,3 +561,56 @@ A regression test checks the full matrix identity above. The focused report
 construction and its interpretation boundary. Numerical rank and
 stabilizer-support outputs are intentionally not reported as validated
 until the updated workflow has executed.
+
+
+## Follow-up: SU(2) holonomy versus endpoint-coordinate quotient (2026-11-18)
+
+A separate finite kinematic gate now distinguishes three maps that were
+previously easy to conflate:
+
+1. the six endpoint coordinates on an oriented link;
+2. the three-dimensional tangent space of its single (SU(2)) holonomy;
+3. the graph-wide vertex-gauge orbit in the product of link-holonomy spaces.
+
+With (g_e\mapsto h_u g_e h_v^{-1}) and
+(T_a=-i\sigma_a/2), the exact left-trivialized differential is
+\[
+\delta g_e g_e^{-1}=\xi_u-\operatorname{Ad}_{g_e}\xi_v.
+\]
+The six-to-three endpoint map is
+\[
+H_e=[I_3\; -\operatorname{Ad}_{g_e}],
+\]
+which has rank three and a three-dimensional kernel
+(x_{e,u}=\operatorname{Ad}_{g_e}x_{e,v}). This kernel means that two
+endpoint-coordinate descriptions can produce the same variation of one
+group element. No independent edge-frame field has been introduced, so it
+must not be relabelled as a new physical edge-frame gauge symmetry.
+
+Composing this map with the vertex-incidence embedding gives the true
+infinitesimal vertex-gauge Jacobian
+\[
+(A\xi)_e=\xi_u-\operatorname{Ad}_{g_e}\xi_v.
+\]
+The physical holonomy tangent quotient has dimension
+(3|E|-\operatorname{rank}A), which depends on holonomies as well as graph
+topology. On a connected tree all link holonomies are gauge removable. On a
+generic single cycle, the remaining local modulus is the conjugacy class of
+the ordered loop holonomy (one real parameter); the vertex-gauge stabilizer
+has dimension one.
+
+New files:
+- `scripts/q2_relational_holonomy_quotient_gate.py`
+- `tests/test_q2_relational_holonomy_quotient_gate.py`
+- `BQG_Q2_RELATIONAL_HOLONOMY_QUOTIENT_RESULT_20261118.md`
+
+The gate checks the adjoint representation, endpoint-map rank/kernel,
+vertex-gauge composition, finite cycle-holonomy conjugation, and a
+finite-difference check of the infinitesimal law. Its tests and JSON export
+are now included in the graph workflow. CI execution is not yet verified.
+
+This remains a kinematic SU(2) control. It does not yet identify the
+projective boundary-state stabilizer with the holonomy stabilizer, nor derive
+the physical QFI conductance or a continuum limit. The next step is to
+compare the differential of the actual contraction map with the holonomy
+quotient map, rather than identify their null spaces by assumption.
