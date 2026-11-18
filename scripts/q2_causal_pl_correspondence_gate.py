@@ -162,7 +162,7 @@ def _lumpability_diagnostics(tetrahedra, parent_map, dual):
     }
 
 
-def _quotient_operator_diagnostics(tetrahedra, parent_map, causal_edges, dual):
+def _quotient_operator_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual):
     """Build the sparse Galerkin conductances induced by PL dual adjacency."""
     weights = Counter()
     internal = 0
@@ -184,7 +184,12 @@ def _quotient_operator_diagnostics(tetrahedra, parent_map, causal_edges, dual):
         adjacency[b].add(a)
         weighted_degree[a] += weight
         weighted_degree[b] += weight
-        sparse_edges.append({"source": a, "target": b, "weight": weight})
+        sparse_edges.append({
+            "source": a,
+            "target": b,
+            "integer_multiplicity": weight,
+            "normalized_conductance": weight / (24 ** generation),
+        })
 
     seen = set()
     components = 0
@@ -210,6 +215,7 @@ def _quotient_operator_diagnostics(tetrahedra, parent_map, causal_edges, dual):
         "quotient_weighted_degree_min": min(weighted_degree.values()),
         "quotient_weighted_degree_max": max(weighted_degree.values()),
         "quotient_conductances": sparse_edges,
+        "conductance_normalization": f"integer multiplicity / 24^{generation}",
         "conductance_semantics": (
             "number of PL-dual edges between the two causal-edge fibres; "
             "Galerkin stiffness weights, not QFI conductances"
@@ -231,7 +237,7 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     measure_scale = 24 ** generation
     lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
     quotient = _quotient_operator_diagnostics(
-        tetrahedra, parent_map, causal_edges, dual
+        generation, tetrahedra, parent_map, causal_edges, dual
     )
     return {
         "generation": generation,
