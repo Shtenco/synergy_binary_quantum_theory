@@ -163,8 +163,8 @@ def collective_edge_blocks(name, edge_count):
     return tuple(tuple(map(int, block)) for block in blocks)
 
 
-def collective_edge_parameter_map(edge_count, blocks):
-    """Map block angles to micro edge angles: theta_e = theta_block(e)."""
+def collective_edge_parameter_map(edge_count, blocks, orthonormalize_blocks=False):
+    """Embed block angles; optionally give each collective mode unit Euclidean norm."""
     flat = [edge for block in blocks for edge in block]
     if (
         any(
@@ -179,19 +179,22 @@ def collective_edge_parameter_map(edge_count, blocks):
     mapping = np.zeros((3 * edge_count, 3 * len(blocks)), dtype=float)
     for block_index, block in enumerate(blocks):
         for edge in block:
+            coefficient = 1.0 / math.sqrt(len(block)) if orthonormalize_blocks else 1.0
             mapping[3 * int(edge):3 * int(edge) + 3,
-                    3 * block_index:3 * block_index + 3] = np.eye(3)
+                    3 * block_index:3 * block_index + 3] = coefficient * np.eye(3)
     return mapping
 
 
-def collective_edge_pullback_qfi(micro_qfi, blocks):
-    """Pull back micro QFI to collective block-angle parameters by B.T F B."""
+def collective_edge_pullback_qfi(micro_qfi, blocks, orthonormalize_blocks=False):
+    """Pull back QFI using shared-angle or unit-norm collective block coordinates."""
     if np.asarray(micro_qfi).ndim != 2 or micro_qfi.shape[0] != micro_qfi.shape[1]:
         raise ValueError("micro QFI must be a square matrix")
     if micro_qfi.shape[0] % 3:
         raise ValueError("micro QFI dimension must be divisible by three")
     edge_count = micro_qfi.shape[0] // 3
-    mapping = collective_edge_parameter_map(edge_count, blocks)
+    mapping = collective_edge_parameter_map(
+        edge_count, blocks, orthonormalize_blocks=orthonormalize_blocks
+    )
     return mapping.T @ np.asarray(micro_qfi, dtype=float) @ mapping, mapping
 
 
@@ -215,6 +218,12 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
     block_rank_fractions = []
     block_symmetry_errors = []
     block_min_eigenvalues = []
+    orthonormal_block_moments = {str(order): [] for order in (1, 2, 3, 4)}
+    orthonormal_block_quantiles = []
+    orthonormal_block_variances = []
+    orthonormal_block_rank_fractions = []
+    orthonormal_block_min_eigenvalues = []
+    orthonormal_block_symmetry_errors = []
     blocks = collective_edge_blocks(name, len(edges))
     pair_op = sum(
         (node_generator(g, 0, two_j + 1) @ node_generator(g, 3, two_j + 1)
@@ -264,6 +273,26 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
         ))
         block_symmetry_errors.append(effective_symmetry_error)
         block_min_eigenvalues.append(float(effective_eigenvalues[0]))
+        unit_qfi, _unit_map = collective_edge_pullback_qfi(
+            qfi, blocks, orthonormalize_blocks=True
+        )
+        unit_symmetry_error = float(np.linalg.norm(unit_qfi - unit_qfi.T))
+        unit_eigenvalues = np.linalg.eigvalsh(0.5 * (unit_qfi + unit_qfi.T))
+        normalized_unit = unit_eigenvalues / isolated_qfi
+        for order in (1, 2, 3, 4):
+            orthonormal_block_moments[str(order)].append(
+                float(np.mean(normalized_unit ** order))
+            )
+        orthonormal_block_quantiles.append(
+            np.quantile(normalized_unit, [0.0, 0.25, 0.5, 0.75, 1.0]).tolist()
+        )
+        orthonormal_block_variances.append(float(np.var(normalized_unit)))
+        orthonormal_block_rank_fractions.append(float(
+            np.sum(unit_eigenvalues > 1e-9 * max(1.0, float(np.max(np.abs(unit_eigenvalues)))))
+            / unit_qfi.shape[0]
+        ))
+        orthonormal_block_min_eigenvalues.append(float(unit_eigenvalues[0]))
+        orthonormal_block_symmetry_errors.append(unit_symmetry_error)
         block_diagonal = np.zeros_like(qfi)
         for edge_index in range(len(edges)):
             sl = slice(3 * edge_index, 3 * edge_index + 3)
@@ -325,6 +354,23 @@ def analyze_graph(two_j, name, node_count, edges, trials=3, seed=20261118):
             "checks": {
                 "effective_qfi_is_psd": min(block_min_eigenvalues) > -2e-8,
                 "effective_qfi_is_symmetric": max(block_symmetry_errors) < 2e-9,
+            },
+            "orthonormal_collective_mode": {
+                "parameter_map": "theta_micro[e] = theta_unit[b] / sqrt(|b|); columns of B are orthonormal",
+                "normalized_spectral_moments_mean": {
+                    order: float(np.mean(values)) for order, values in orthonormal_block_moments.items()
+                },
+                "normalized_spectral_quantiles_mean": np.mean(
+                    np.asarray(orthonormal_block_quantiles), axis=0
+                ).tolist(),
+                "normalized_spectral_variance_mean": float(np.mean(orthonormal_block_variances)),
+                "rank_fraction_mean": float(np.mean(orthonormal_block_rank_fractions)),
+                "minimum_eigenvalue_over_trials": min(orthonormal_block_min_eigenvalues),
+                "max_symmetry_error": max(orthonormal_block_symmetry_errors),
+                "checks": {
+                    "effective_qfi_is_psd": min(orthonormal_block_min_eigenvalues) > -2e-8,
+                    "effective_qfi_is_symmetric": max(orthonormal_block_symmetry_errors) < 2e-9,
+                },
             },
         },
         "checks": {
