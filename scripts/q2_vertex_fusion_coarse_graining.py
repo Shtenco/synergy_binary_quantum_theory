@@ -160,3 +160,52 @@ def deterministic_case(name="path_4", two_j=1, seed=20261118, blocks=None):
     if blocks is None:
         blocks = tuple((v,) for v in range(nodes))
     return compare_micro_and_fused_qfi(states, edges, singlet, blocks)
+
+def run_coarse_graining_suite(two_j=1):
+    """Run the deterministic block-fusion controls on all supported graph fixtures."""
+    cases = {
+        "path_3": ((0, 1), (2,)),
+        "path_4": ((0, 1), (2, 3)),
+        "path_5": ((0, 1), (2, 3, 4)),
+        "star_4": ((0, 1), (2, 3)),
+        "cycle_4": ((0, 1), (2, 3)),
+    }
+    results = {
+        name: deterministic_case(name, two_j=two_j, blocks=blocks)
+        for name, blocks in cases.items()
+    }
+    return {
+        "status": "exact finite vertex-fusion coarse-graining",
+        "two_j": int(two_j),
+        "spin": float(two_j) / 2.0,
+        "passed": all(row["passed"] for row in results.values()),
+        "claim_boundary": (
+            "Exact equality of finite tensor contractions and retained-edge pure-state "
+            "QFI under vertex-block fusion. This is not an RG fixed-point or continuum result."
+        ),
+        "cases": results,
+    }
+
+
+def main():
+    import argparse
+    import json
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--two-j", type=int, default=1)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    if args.two_j < 1:
+        parser.error("--two-j must be a positive integer")
+    result = run_coarse_graining_suite(args.two_j)
+    rendered = json.dumps(result, indent=2)
+    print(rendered)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered + "\\n", encoding="utf-8")
+    return 0 if result["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
