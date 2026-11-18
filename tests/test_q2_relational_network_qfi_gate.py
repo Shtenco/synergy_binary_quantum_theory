@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 
@@ -5,6 +7,7 @@ from scripts.q2_relational_network_qfi_gate import (
     network_relational_qfi,
     random_intertwiner,
     run,
+    _json_default,
 )
 
 
@@ -62,3 +65,9 @@ def test_middle_pair_casimir_has_singlet_and_triplet_eigenvalues():
     )
     projected = SQ.logical_basis().conj().T @ pair @ SQ.logical_basis()
     assert np.linalg.eigvalsh(projected) == pytest.approx([-0.75, 0.25], abs=1e-12)
+
+
+def test_network_export_payload_is_json_serializable():
+    payload = run(seed=811, trials=2)
+    encoded = json.dumps(payload, default=_json_default)
+    assert '"passed": true' in encoded
