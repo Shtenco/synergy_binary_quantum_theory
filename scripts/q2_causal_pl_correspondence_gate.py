@@ -348,6 +348,39 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
     }
 
 
+def _certified_q_gap_lower_bound(n, dual):
+    """Certified lower bound on lambda_min(QLQ|Q) from graph connectivity.
+
+    For a connected n-vertex graph of diameter D, pathwise Cauchy-Schwarz
+    gives lambda_2(L) >= 2 / ((n-1) D). A BFS eccentricity e from any root
+    obeys D <= 2e, hence lambda_2(L) >= 1 / ((n-1)e). Since constants lie
+    in the fibre-constant P sector, Q is orthogonal to constants and
+    lambda_min(QLQ|Q) >= lambda_2(L).
+    """
+    if n <= 1:
+        return None, None
+    adjacency = [[] for _ in range(n)]
+    for edge in dual["edges"]:
+        a, b = edge["source"], edge["target"]
+        adjacency[a].append(b)
+        adjacency[b].append(a)
+    distances = [-1] * n
+    distances[0] = 0
+    queue = [0]
+    for vertex in queue:
+        next_distance = distances[vertex] + 1
+        for neighbour in adjacency[vertex]:
+            if distances[neighbour] < 0:
+                distances[neighbour] = next_distance
+                queue.append(neighbour)
+    if len(queue) != n:
+        return None, None
+    eccentricity = max(distances)
+    if eccentricity <= 0:
+        return None, None
+    return 1.0 / ((n - 1) * eccentricity), eccentricity
+
+
 def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual):
     """Compute the finite zero-energy Feshbach correction matrix-free on Q."""
     try:
@@ -359,6 +392,9 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         raise RuntimeError("Feshbach diagnostics require numpy and scipy") from exc
 
     n = len(tetrahedra)
+    certified_gap_lower_bound, root_eccentricity_upper_bound = (
+        _certified_q_gap_lower_bound(n, dual)
+    )
     nodes = sorted(causal_edges)
     m = len(nodes)
     node_index = {node: index for index, node in enumerate(nodes)}
@@ -528,7 +564,8 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
         "linearized_generalized_largest_eigenvalue": float(generalized_eigenvalues[-1]),
         "q_sector_gap_estimate": q_sector_gap_estimate,
         "q_sector_gap_ritz_residual": gap_ritz_residual,
-        "q_sector_gap_certified_lower_bound": None,
+        "q_sector_gap_certified_lower_bound": certified_gap_lower_bound,
+        "root_eccentricity_upper_bound": root_eccentricity_upper_bound,
         "q_plus_p_largest_eigenvalue": q_plus_p_largest_eigenvalue,
         "q_plus_p_largest_ritz_residual": largest_ritz_residual,
         "q_plus_p_condition_estimate": (
@@ -539,7 +576,11 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
             leakage_operator ** 2 / (q_sector_gap_estimate ** 3)
             if q_sector_gap_estimate is not None else None
         ),
-        "remainder_bound_certified": False,
+        "self_energy_linearization_remainder_coefficient_certified_upper_bound": (
+            leakage_operator ** 2 / (certified_gap_lower_bound ** 3)
+            if certified_gap_lower_bound is not None else None
+        ),
+        "remainder_bound_certified": certified_gap_lower_bound is not None,
         "max_linear_solve_residual": solve_residual_max,
         "linear_solve_columns": solve_count,
         "all_linear_solves_converged": True,
