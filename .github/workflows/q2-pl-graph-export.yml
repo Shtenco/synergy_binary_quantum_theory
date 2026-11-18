@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - research/bqg-qfi-q2-emergent-graph-audit-20261118
+      - work/q2-two-sided-singlet-qfi-20261118
     paths:
       - 'scripts/q2_pl_graph_export.py'
       - 'tests/test_q2_pl_graph_export.py'
