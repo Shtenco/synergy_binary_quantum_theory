@@ -36,6 +36,9 @@ on:
       - 'scripts/q2_relational_two_sided_endpoint_qfi_gate.py'
       - 'tests/test_q2_relational_two_sided_endpoint_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI_RESULT_20261118.md'
+      - 'scripts/q2_su2_irrep_singlet_invariance_gate.py'
+      - 'tests/test_q2_su2_irrep_singlet_invariance_gate.py'
+      - 'BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md'
       - 'BQG_Q2_RELATIONAL_GRAPH_QFI_RESULT_20261118.md'
       - '.github/workflows/q2-pl-graph-export.yml'
 
@@ -85,6 +88,10 @@ jobs:
         run: python -m pytest -q tests/test_q2_relational_two_sided_endpoint_qfi_gate.py
       - name: Export two-sided singlet endpoint QFI control
         run: python scripts/q2_relational_two_sided_endpoint_qfi_gate.py --output verification_results/Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI.json
+      - name: Run arbitrary-irrep SU(2) singlet invariance tests
+        run: python -m pytest -q tests/test_q2_su2_irrep_singlet_invariance_gate.py
+      - name: Export arbitrary-irrep SU(2) singlet invariance control
+        run: python scripts/q2_su2_irrep_singlet_invariance_gate.py --output verification_results/Q2_SU2_IRREP_SINGLET_INVARIANCE.json
       - name: Run four-valent star QFI tests
         run: python -m pytest -q tests/test_q2_relational_star_qfi_gate.py
       - name: Export four-valent star QFI control
@@ -118,4 +125,5 @@ jobs:
             verification_results/Q2_RELATIONAL_HOLONOMY_QUOTIENT.json
             verification_results/Q2_RELATIONAL_HOLONOMY_BOUNDARY_TANGENT.json
             verification_results/Q2_RELATIONAL_TWO_SIDED_ENDPOINT_QFI.json
+            verification_results/Q2_SU2_IRREP_SINGLET_INVARIANCE.json
           if-no-files-found: error
