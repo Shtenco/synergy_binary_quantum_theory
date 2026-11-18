@@ -223,6 +223,108 @@ def _quotient_operator_diagnostics(generation, tetrahedra, parent_map, causal_ed
     }
 
 
+def _jacobi_eigenvalues_symmetric(matrix, tolerance=1e-12, max_sweeps=100):
+    """Eigenvalues of a small real symmetric matrix; stdlib-only Jacobi method."""
+    n = len(matrix)
+    a = [list(map(float, row)) for row in matrix]
+    if any(len(row) != n for row in a):
+        raise ValueError("symmetric eigensolver requires a square matrix")
+    for i in range(n):
+        for j in range(i + 1, n):
+            if abs(a[i][j] - a[j][i]) > 1e-10:
+                raise ValueError("matrix is not symmetric")
+            value = 0.5 * (a[i][j] + a[j][i])
+            a[i][j] = a[j][i] = value
+    for _ in range(max_sweeps):
+        changed = False
+        for p in range(n - 1):
+            for q in range(p + 1, n):
+                apq = a[p][q]
+                if abs(apq) <= tolerance:
+                    continue
+                changed = True
+                tau = (a[q][q] - a[p][p]) / (2.0 * apq)
+                sign = 1.0 if tau >= 0 else -1.0
+                t = sign / (abs(tau) + (1.0 + tau * tau) ** 0.5)
+                cosine = 1.0 / (1.0 + t * t) ** 0.5
+                sine = t * cosine
+                app, aqq = a[p][p], a[q][q]
+                a[p][p] = app - t * apq
+                a[q][q] = aqq + t * apq
+                a[p][q] = a[q][p] = 0.0
+                for k in range(n):
+                    if k == p or k == q:
+                        continue
+                    akp, akq = a[k][p], a[k][q]
+                    a[k][p] = a[p][k] = cosine * akp - sine * akq
+                    a[k][q] = a[q][k] = sine * akp + cosine * akq
+        if not changed:
+            break
+    else:
+        residual = max(
+            (abs(a[i][j]) for i in range(n) for j in range(i + 1, n)),
+            default=0.0,
+        )
+        if residual > 1e-9:
+            raise RuntimeError(f"Jacobi eigensolver did not converge: {residual}")
+    return sorted(a[i][i] for i in range(n))
+
+
+def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
+    """Spectrum and finite-time heat trace of M^{-1}K, symmetrized by M."""
+    nodes = sorted(causal_edges)
+    n = len(nodes)
+    index = {node: i for i, node in enumerate(nodes)}
+    matrix = [[0.0] * n for _ in range(n)]
+    scale = 24 ** generation
+    for edge in conductances:
+        i, j = index[edge["source"]], index[edge["target"]]
+        weight = edge["integer_multiplicity"] / scale
+        mi, mj = mass_by_edge[edge["source"]], mass_by_edge[edge["target"]]
+        if mi <= 0 or mj <= 0:
+            raise ValueError("pushforward measure must be strictly positive")
+        matrix[i][i] += weight / mi
+        matrix[j][j] += weight / mj
+        off = -weight / (mi * mj) ** 0.5
+        matrix[i][j] += off
+        matrix[j][i] += off
+
+    eigenvalues = _jacobi_eigenvalues_symmetric(matrix)
+    zero_count = sum(abs(value) <= 1e-9 for value in eigenvalues)
+    positive = [value for value in eigenvalues if value > 1e-9]
+    times = [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
+    heat = []
+    for time in times:
+        trace = sum(__import__("math").exp(-value * time) for value in eigenvalues) / n
+        heat.append({"time": time, "normalized_heat_trace": trace})
+    dimension = []
+    import math
+    for i in range(1, len(heat) - 1):
+        left, right = heat[i - 1], heat[i + 1]
+        slope = (
+            math.log(right["normalized_heat_trace"])
+            - math.log(left["normalized_heat_trace"])
+        ) / (math.log(right["time"]) - math.log(left["time"]))
+        dimension.append({
+            "time": heat[i]["time"],
+            "effective_spectral_dimension": -2.0 * slope,
+        })
+    return {
+        "operator_spectrum": eigenvalues,
+        "operator_zero_mode_count": zero_count,
+        "operator_spectral_gap": min(positive) if positive else None,
+        "operator_largest_eigenvalue": max(eigenvalues) if eigenvalues else 0.0,
+        "operator_trace": sum(eigenvalues),
+        "heat_trace": heat,
+        "effective_spectral_dimension": dimension,
+        "spectral_interpretation": (
+            "finite generalized Galerkin operator spectrum only; a plateau "
+            "across refinement generations and a controlled continuum limit "
+            "are not established"
+        ),
+    }
+
+
 def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
     adjacency_ok = True
@@ -238,6 +340,12 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
     lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
     quotient = _quotient_operator_diagnostics(
         generation, tetrahedra, parent_map, causal_edges, dual
+    )
+    mass_by_edge = {
+        edge: count / (24 ** generation) for edge, count in fibres.items()
+    }
+    spectrum = _spectral_diagnostics(
+        generation, causal_edges, mass_by_edge, quotient["quotient_conductances"]
     )
     return {
         "generation": generation,
@@ -255,6 +363,7 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual):
         "adjacency_preserved": adjacency_ok,
         **lumpability,
         **quotient,
+        **spectrum,
     }
 
 def run(max_generation=2):
