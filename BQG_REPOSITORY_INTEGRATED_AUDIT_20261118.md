@@ -13,56 +13,62 @@ Main branch: not modified; no merge performed.
 
 ### 1.1 Full branch regression
 
-Workflow: [bqg-branch-integrity-audit, run 44382012617](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44382012617)
+Most recent completed full branch-integrity run before the graph-topology Gram addition: [run 44393440176](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44393440176), on commit `36336bd6d8f37ba0e94963eb14d0d8d406377552`.
 
-- `python -m compileall -q .`: PASS.
-- `audit_core_scope.py`: PASS.
-- `verify_theory_gates.py`: PASS.
-- `verify_depth6_frontier.py`: PASS.
-- `verify_physicalization_gates.py`: PASS.
-- `verify_readme_links.py` and the selected GitHub-LaTeX checks: PASS.
-- Full `pytest -q tests`: **509 passed, 59 subtests passed, 0 failures, 0 errors, 0 skips** (354.75 seconds).
+- Python compilation: PASS.
+- Canonical structural, depth-6 and physicalization ledgers: PASS.
+- README/local-link validation: PASS.
+- Full `pytest -q tests`: **509 passed, 59 subtests passed, 0 failures, 0 errors, 0 skips** (292.02 seconds).
 
-The successful test run is on commit `a39fe4ef5335a6bab31c347599b777a5895ff954`. Subsequent commits up to the audit snapshot changed documentation/workflow configuration, not the tested Python implementation. A second full branch-integrity run was started for the documentation-updated snapshot.
+After that run, the graph-topology fusion module and four regression cases were added. The focused Q2 workflow [44394058368](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44394058368) completed successfully: the existing vertex-fusion suite reports 36/36 passing, the new graph-Gram module reports 4/4 passing, all export steps succeeded, and the 26-file JSON artifact was uploaded.
+
+A fresh full-repository regression run [44394789020](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44394789020), on commit `bdb3fd15a007f7e6894ea5fb9a6c43607604e543`, was in progress at the time of this audit update. Do not treat the earlier 509-test run as a full-suite verdict for the newly added graph-Gram module; that module is currently covered by the successful focused Q2 run.
 
 ### 1.2 Q2 graph/QFI export
 
-Workflow: [q2-pl-graph-export, run 44382474317](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44382474317)  
-Artifact: [q2-pl-graph-export](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44382474317/artifacts/14464941457)
+Latest workflow: [q2-pl-graph-export, run 44394058368](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44394058368)  
+Artifact: [q2-pl-graph-export](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44394058368/artifacts/14468838975)
 
-The artifact contains 23 JSON exports. All 23 were parsed independently; none has `passed=false`.
+The artifact contains **26 JSON exports**. I downloaded the archive and independently parsed every JSON file; all 26 are valid, every top-level `passed` field is true, and no nested `passed=false` record occurs.
 
 The exhaustive reduced-boundary sweep reports:
 
 - 144 boundary subsystems;
 - 2,880 partition-order evaluations;
-- maximum reduced-density error: `3.8860812576573896e-16`;
-- maximum reduced-derivative error: `1.6667795129466247e-16`;
-- maximum mixed-QFI error: `9.43689570931383e-16`;
+- maximum reduced-density error: `3.885780586188048e-16`;
+- maximum reduced-derivative error: `1.4033044459902308e-16`;
+- maximum mixed-QFI error: `6.106226635438361e-16`;
 - minimum eigenvalue of pure-minus-mixed QFI: `0.0`.
 
-The Haar pushforward control covers seven finite configurations. The product-Haar support is a Segre variety inside the fusion image; the measured complex projective codimensions are 1, 4, 11, 4, 20, 9, and 16 for the tested `(j, vertex_count)` configurations. This establishes non-closure of the specified independent local Haar toy ensemble under the tested fusion map. It does **not** identify the physical BQG measure.
+The independent local-Haar pushforward control covers seven finite spin/block configurations. The product-Haar support is a Segre variety inside the fusion image; its measured complex projective codimensions are 1, 4, 11, 4, 20, 9 and 16. This establishes non-closure of that specified toy ensemble under the tested fusion maps, not of the physical BQG measure.
+
+The new topology-dependent Gram controls are also in the artifact:
+- `star_4), (j=1/2): rank 16/16, scalar Gram map, condition number 1;
+- `cycle_4), (j=1/2): rank 12/16, rank defect 4;
+- `cycle_4), (j=1): rank 61/81, rank defect 20.
+
+All three report `passed=true`; boundary Gauss residuals remain below (3\times10^{-15}). The complete finite result and its interpretation limits are recorded in [BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md](BQG_Q2_VERTEX_FUSION_GRAPH_GRAM_RESULT_20261119.md).
 
 ### 1.3 All-branch Python static audit
 
-Workflow: [python-all-branches-audit, run 44383335720](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44383335720)  
-Artifact: [PYTHON_ALL_BRANCHES_AUDIT.json](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44383335720/artifacts/14464687471)
+Latest scan after adding the graph-Gram script and tests: [python-all-branches-audit, run 44393987545](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44393987545)  
+Artifact: [python-all-branches-audit](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44393987545/artifacts/14469902365)
 
 - 174 branch heads; 163 unique head commits;
-- 22,809 Python-file occurrences across branch snapshots;
-- 814 unique Python paths and 1,006 path/content versions;
-- 1,003 unique Python blob contents; 1,564 sources parsed, including embedded and inline sources;
+- 22,811 Python-file occurrences across branch snapshots;
+- 816 unique Python paths and 1,008 path/content versions;
+- 1,005 unique Python blob contents; 1,566 sources parsed, including embedded and inline sources;
 - 10 embedded archives scanned, 983 members and 335 embedded Python sources;
 - 0 unsafe archive members and 0 archive extraction errors;
 - `main_ast_status=PASS`, with 0 syntax errors;
-- current work-branch HEAD at scan time: 0 syntax errors.
+- the work-branch snapshot containing the new graph-Gram module has no syntax-error finding.
 
 Two syntax errors remain only in historical branch snapshots:
 
-1. `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2:86`, on `recovery/bqg-physical-spectral-history-2026-09-06` and `research/physical-scalar-kernel-dynamics`.
-2. `scripts/pl_lorentzian_group_worker_v2.py:49`, on `research/bqg-v24-finite-index-constraint-gates-20261108`, `research/bqg-v25-local-HDA-charge-20261108`, and `audit/bqg-independent-proof-20261108`.
+1. `.github/workflows/lorentzian-pruned-first-column.yml#heredoc-PY-2:86`, on two historical branch heads.
+2. `scripts/pl_lorentzian_group_worker_v2.py:49`, on three historical branch heads.
 
-The current branch has heuristic AST findings (17 broad-exception handlers, 2 network-access sites, and 9 process-execution sites). The network sites are in archived documentation code; process calls occur in audit/test/archived contexts and local worker orchestration. These are review markers, not confirmed vulnerabilities. The current branch has no detected pickle deserialization, bare `except`, or unguarded archive-extraction finding.
+The scan also reports one inline-Python syntax error across the historical snapshot corpus; the main branch has zero inline syntax errors. These are historical-source findings, not failures in the current work-branch Python source.
 
 ## 2. Current mathematical status from the canonical ledgers
 
@@ -117,12 +123,12 @@ The full physical causal cone, physical rigging map, physical Born measure, reta
 
 ## 5. Repository history and integration safety
 
-At the updated audit snapshot (work-branch commit `6ef322664c5ef64889d82100952ef789245b71b8`), the work branch and `main` remain historically diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
+At the updated audit snapshot (work-branch commit `bdb3fd15a007f7e6894ea5fb9a6c43607604e543`), the work branch and `main` remain historically diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
 
-- work branch: 1,166 commits ahead of `main`;
+- work branch: 1,173 commits ahead of `main`;
 - `main`: 12 commits not contained in the work branch;
-- direct recursive Git-tree comparison of file/blob entries: `main` has 724 files and the work branch has 871;
-- the work tree adds 147 files (18 workflows, 39 scripts, 45 tests and 45 documentation files), removes 0 files, and has 33 shared files with different blob contents (4 workflows, 18 scripts, 1 test, 8 Markdown documents and 2 JSON ledgers).
+- direct recursive Git-tree comparison of file/blob entries: `main` has 724 files and the work branch has 874;
+- the work tree adds 150 files (18 workflows, 40 scripts, 46 tests and 46 documentation files), removes 0 files, and has 33 shared files with different blob contents (4 workflows, 18 scripts, 1 test, 8 Markdown documents and 2 JSON ledgers).
 
 This direct tree comparison corrects the earlier shorthand that described two documentation paths as main-only: both `BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md` and `BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md` exist on both branches, but the work-branch blobs are expanded revisions (18,580 vs 9,047 characters and 40,850 vs 11,788 characters, respectively). There are no files present only on `main` in this tree snapshot. The 33 differing shared files and divergent commit histories still require a deliberate integration review; do not merge or force-update `main` automatically.
 
@@ -133,6 +139,9 @@ This direct tree comparison corrects the earlier shorthand that described two do
 - Corrected the stale `structural_candidate_closed=true` declaration in `OPEN_PROBLEMS.md` to match the canonical core ledger and documented the single core no-go.
 - Added a current machine-ledger snapshot to `THEORY_STATUS.md`.
 - Added regression tests for the fixed-pure-ancilla no-go and the bilinear refinement construction.
+- Reconciled the README's gate registry count with the canonical ledger (56 total records; 50 core gates) and added the missing Lorentzian full-node conditional gate to the reader-facing atlas.
+- Recomputed branch divergence from recursive Git trees at blob level; corrected the report to distinguish history divergence from actual missing files.
+- Added and CI-wired the tree-versus-loop fusion Gram diagnostic, its four regression cases, three JSON exports, and a dedicated mathematical report.
 - Fixed the missing `sys` import in `q2_relational_higher_spin_edge_qfi_gate.py`.
 - Added a branch-only integrity workflow for compile, ledger, documentation, and complete test-suite validation.
 - Enabled the all-branch Python AST audit workflow to run from this research branch.
