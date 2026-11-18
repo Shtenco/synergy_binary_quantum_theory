@@ -22,10 +22,10 @@ def test_feshbach_correction_is_computed_and_positive_on_finite_refinements():
     assert f1["max_linear_solve_residual"] < 1e-8
 
 
-def test_feshbach_correction_is_bounded_by_the_leakage_and_positive_gap():
+def test_feshbach_correction_obeys_the_operator_lower_bound():
     result = run(max_generation=1, compute_feshbach=True)
     f1 = result["levels"][1]["feshbach"]
-    assert f1["feshbach_correction_operator_norm"] <= (
-        f1["leakage_operator_norm"] ** 2 / 1e-12
+    assert f1["feshbach_correction_operator_norm"] >= (
+        f1["leakage_operator_norm"] ** 2 / 8.0 - 1e-9
     )
     assert f1["feshbach_to_galerkin_operator_ratio"] > 0.0
