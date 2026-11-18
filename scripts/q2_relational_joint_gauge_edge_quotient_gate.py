@@ -41,13 +41,7 @@ def edge_singlet_common_generators(
     result = np.zeros((12 * node_count, 3 * len(edges)), dtype=float)
     occupied = set()
     for edge_index, edge in enumerate(edges):
-        if len(edge) != 4:
-            raise ValueError("edge must be (u, leg_u, v, leg_v)")
-        u, lu, v, lv = map(int, edge)
-        if u == v or not (0 <= u < node_count and 0 <= v < node_count):
-            raise ValueError("invalid edge endpoints")
-        if not (0 <= lu < 4 and 0 <= lv < 4):
-            raise ValueError("invalid half-link indices")
+        u, lu, v, lv = _validated_edge_indices(edge, node_count)
         for endpoint in ((u, lu), (v, lv)):
             if endpoint in occupied:
                 raise ValueError("a half-link cannot belong to multiple edges")
@@ -65,13 +59,7 @@ def graph_topological_gauge_rank(node_count, edges):
     adjacency = [[] for _ in range(node_count)]
     occupied = set()
     for edge in edges:
-        if len(edge) != 4:
-            raise ValueError("edge must have four indices")
-        u, lu, v, lv = map(int, edge)
-        if u == v or not (0 <= u < node_count and 0 <= v < node_count):
-            raise ValueError("invalid graph endpoints")
-        if not (0 <= lu < 4 and 0 <= lv < 4):
-            raise ValueError("invalid half-link slots")
+        u, lu, v, lv = _validated_edge_indices(edge, node_count)
         for endpoint in ((u, lu), (v, lv)):
             if endpoint in occupied:
                 raise ValueError("half-link reused")
