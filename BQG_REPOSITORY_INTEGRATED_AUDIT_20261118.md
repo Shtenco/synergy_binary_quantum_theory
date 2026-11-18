@@ -115,13 +115,14 @@ The full physical causal cone, physical rigging map, physical Born measure, reta
 
 ## 5. Repository history and integration safety
 
-At the compared snapshot, the work branch and `main` are diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
+At the updated audit snapshot (work-branch commit `947899010608f77fe5c8a0889bb1f465e2eb8fe4`), the work branch and `main` remain historically diverged from common base `5dc5789a0511c7cae6183bd824939e5c20cbd798`:
 
-- work branch: 1,160 commits ahead;
+- work branch: 1,165 commits ahead of `main`;
 - `main`: 12 commits not contained in the work branch;
-- tree comparison: 178 changed paths relative to `main`, including 57 scripts, 46 tests, and 21 workflow files.
+- direct recursive Git-tree comparison: `main` has 746 paths and the work branch has 893;
+- work tree adds 147 paths (18 workflows, 39 scripts, 45 tests and 45 documentation files), removes 0 paths, and has 37 shared paths with different blob contents (4 workflows, 18 scripts, 1 test and 8 documentation files, plus 6 other shared paths).
 
-The main-side-only tree delta is concentrated in two documentation paths, but this does not make the histories safe to merge automatically. Keep the branch isolated until a deliberate integration review resolves the divergence and confirms the intended canonical versions of those documents.
+This direct tree comparison corrects the earlier shorthand that described two documentation paths as main-only: both `BQG_L2_PRODUCTION_PRIMITIVE_LINEARITY_AUDIT_20261111.md` and `BQG_RESEARCH_CONTINUITY_CHECKPOINT_20261111.md` exist on both branches, but the work-branch blobs are expanded revisions (18,580 vs 9,047 characters and 40,850 vs 11,788 characters, respectively). There are no paths present only on `main` in this tree snapshot. The 37 differing shared paths and divergent commit histories still require a deliberate integration review; do not merge or force-update `main` automatically.
 
 ## 6. Audit changes made on the work branch
 
