@@ -293,6 +293,155 @@ def compare_staged_and_direct_fusion(node_states, edges, singlet,
     }
 
 
+
+def _reduced_density_and_derivative(state, derivative, dimension, keep_axes):
+    """Trace all but selected tensor axes from a normalized pure state."""
+    axis_count = int(round(np.log(state.size) / np.log(dimension)))
+    keep_axes = tuple(keep_axes)
+    traced_axes = tuple(axis for axis in range(axis_count) if axis not in keep_axes)
+    permutation = keep_axes + traced_axes
+    shape = (dimension,) * axis_count
+    matrix = state.reshape(shape).transpose(permutation).reshape(
+        dimension ** len(keep_axes), -1
+    )
+    derivative_matrix = derivative.reshape(shape).transpose(permutation).reshape(
+        dimension ** len(keep_axes), -1
+    )
+    rho = matrix @ matrix.conj().T
+    drho = derivative_matrix @ matrix.conj().T + matrix @ derivative_matrix.conj().T
+    return rho, drho
+
+
+def _sld_mixed_qfi(rho, derivatives, eigenvalue_tolerance=1e-12):
+    """Symmetric-logarithmic-derivative QFI for a finite density matrix."""
+    eigenvalues, eigenvectors = np.linalg.eigh(rho)
+    eigenvalues = np.maximum(eigenvalues.real, 0.0)
+    denominators = eigenvalues[:, None] + eigenvalues[None, :]
+    weights = np.zeros_like(denominators)
+    support = denominators > eigenvalue_tolerance
+    weights[support] = 2.0 / denominators[support]
+    transformed = [
+        eigenvectors.conj().T @ derivative @ eigenvectors
+        for derivative in derivatives
+    ]
+    qfi = np.zeros((len(derivatives), len(derivatives)), dtype=float)
+    for a in range(len(derivatives)):
+        for b in range(len(derivatives)):
+            qfi[a, b] = float(np.real(np.sum(
+                weights * transformed[a] * transformed[b].T
+            )))
+    return 0.5 * (qfi + qfi.T)
+
+
+def compare_micro_and_fused_reduced_qfi(
+    node_states, edges, singlet, blocks, keep_boundary_keys, generators=None
+):
+    """Compare mixed-boundary SLD QFI before/after exact vertex fusion.
+
+    All boundary legs not listed in keep_boundary_keys are traced out. The
+    retained parameters are the same inter-block edge twists used by the
+    pure-boundary comparison. Also checks QFI monotonicity under this partial
+    trace (quantum data-processing inequality).
+    """
+    if generators is None:
+        generators = spin_generators(singlet.shape[0] - 1)
+    fused, boundaries, coarse_edges = fuse_vertex_blocks(
+        node_states, edges, singlet, blocks
+    )
+    dimension = singlet.shape[0]
+    occupied = {
+        (u, lu) for u, lu, _v, _lv in edges
+    } | {
+        (v, lv) for _u, _lu, v, lv in edges
+    }
+    boundary_keys = [
+        (v, leg)
+        for v in range(len(node_states))
+        for leg in range(4)
+        if (v, leg) not in occupied
+    ]
+    keep_boundary_keys = tuple(tuple(key) for key in keep_boundary_keys)
+    if not keep_boundary_keys or len(set(keep_boundary_keys)) != len(keep_boundary_keys):
+        raise ValueError("kept boundary keys must be non-empty and unique")
+    if any(key not in boundary_keys for key in keep_boundary_keys):
+        raise ValueError("kept boundary key is not an external half-link")
+    keep_axes = tuple(boundary_keys.index(key) for key in keep_boundary_keys)
+
+    micro_raw = _micro_state(node_states, edges, singlet)
+    coarse_raw = _coarse_state(fused, boundaries, coarse_edges, singlet)
+    micro_norm, coarse_norm = np.linalg.norm(micro_raw), np.linalg.norm(coarse_raw)
+    if micro_norm <= 1e-14 or coarse_norm <= 1e-14:
+        raise ValueError("zero-support boundary state")
+    micro_state, coarse_state = micro_raw / micro_norm, coarse_raw / coarse_norm
+
+    micro_derivatives, coarse_derivatives = [], []
+    for _a, _b, edge_index, _original in coarse_edges:
+        for generator in generators:
+            dm = _micro_state(
+                node_states, edges, singlet, (edge_index, generator)
+            ) / micro_norm
+            dc = _coarse_state(
+                fused, boundaries, coarse_edges, singlet, (edge_index, generator)
+            ) / coarse_norm
+            dm -= micro_state * np.vdot(micro_state, dm)
+            dc -= coarse_state * np.vdot(coarse_state, dc)
+            micro_derivatives.append(dm)
+            coarse_derivatives.append(dc)
+
+    micro_rho, micro_drhos = None, []
+    coarse_rho, coarse_drhos = None, []
+    for derivative in micro_derivatives:
+        rho, drho = _reduced_density_and_derivative(
+            micro_state, derivative, dimension, keep_axes
+        )
+        if micro_rho is None:
+            micro_rho = rho
+        micro_drhos.append(drho)
+    for derivative in coarse_derivatives:
+        rho, drho = _reduced_density_and_derivative(
+            coarse_state, derivative, dimension, keep_axes
+        )
+        if coarse_rho is None:
+            coarse_rho = rho
+        coarse_drhos.append(drho)
+
+    micro_qfi = _sld_mixed_qfi(micro_rho, micro_drhos)
+    coarse_qfi = _sld_mixed_qfi(coarse_rho, coarse_drhos)
+    pure = np.asarray(compare_micro_and_fused_qfi(
+        node_states, edges, singlet, blocks, generators
+    )["micro_qfi"], dtype=float)
+    qfi_gap = 0.5 * ((pure - micro_qfi) + (pure - micro_qfi).T)
+    data_processing_min_eigenvalue = (
+        float(np.linalg.eigvalsh(qfi_gap)[0]) if qfi_gap.size else 0.0
+    )
+    density_error = float(np.max(np.abs(micro_rho - coarse_rho)))
+    derivative_error = max(
+        (float(np.max(np.abs(a - b))) for a, b in zip(micro_drhos, coarse_drhos)),
+        default=0.0,
+    )
+    qfi_error = float(np.max(np.abs(micro_qfi - coarse_qfi))) if micro_qfi.size else 0.0
+    return {
+        "kept_boundary_keys": [list(key) for key in keep_boundary_keys],
+        "kept_boundary_dimension": int(dimension ** len(keep_axes)),
+        "traced_boundary_leg_count": len(boundary_keys) - len(keep_axes),
+        "retained_edge_indices": [edge[2] for edge in coarse_edges],
+        "micro_reduced_density_trace_error": abs(float(np.trace(micro_rho).real) - 1.0),
+        "coarse_reduced_density_trace_error": abs(float(np.trace(coarse_rho).real) - 1.0),
+        "reduced_density_max_abs_error": density_error,
+        "reduced_derivative_max_abs_error": derivative_error,
+        "micro_mixed_qfi": micro_qfi.tolist(),
+        "coarse_mixed_qfi": coarse_qfi.tolist(),
+        "mixed_qfi_max_abs_error": qfi_error,
+        "pure_minus_mixed_qfi_min_eigenvalue": data_processing_min_eigenvalue,
+        "passed": (
+            density_error < 2e-9
+            and derivative_error < 2e-8
+            and qfi_error < 2e-8
+            and data_processing_min_eigenvalue > -2e-8
+        ),
+    }
+
+
 def _set_partitions(items):
     """Generate every set partition exactly once."""
     items = tuple(items)
