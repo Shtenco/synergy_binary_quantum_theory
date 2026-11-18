@@ -7,6 +7,7 @@ from scripts.q2_vertex_fusion_coarse_graining import (
     run_high_spin_small_graph_suite,
     compare_staged_and_direct_fusion,
     compare_micro_and_fused_qfi,
+    compare_micro_and_fused_reduced_qfi,
     deterministic_case,
     fuse_vertex_blocks,
 )
