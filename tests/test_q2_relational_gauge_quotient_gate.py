@@ -84,3 +84,34 @@ def test_projective_tangent_jacobian_reconstructs_full_half_link_qfi():
     realified = np.concatenate([tangent.real, tangent.imag], axis=0)
     reconstructed = 4.0 * (realified.T @ realified)
     assert np.allclose(reconstructed, qfi, atol=2e-10, rtol=2e-10)
+
+def test_full_half_link_quotient_covers_extended_open_topologies():
+    from scripts.q2_relational_gauge_quotient_gate import extended_open_graph_fixtures
+
+    result = run(seed=20261120, trials=2)
+    fixtures = extended_open_graph_fixtures()
+    assert {"path_3", "path_4", "star_4", "cycle_4"} <= set(result["graphs"])
+    for name, (nodes, edges) in fixtures.items():
+        row = result["graphs"][name]
+        assert row["nodes"] == nodes
+        assert row["internal_edges"] == len(edges)
+        assert row["quotient_dimension"] == 9 * nodes
+        assert row["two_sided_endpoint_parameter_count"] == 6 * len(edges)
+        assert row["checks"]["global_su2v_gauge_annihilated"]
+        assert row["checks"]["reference_section_independence"]
+        assert row["checks"]["two_sided_endpoint_qfi_psd"]
+
+
+@pytest.mark.parametrize(
+    "edge",
+    [
+        (0.5, 0, 1, 1),
+        (0, 0, 1, 1.0),
+        (False, 0, 1, 1),
+        (0, 0, 1, "1"),
+    ],
+)
+def test_two_sided_edge_map_rejects_non_integer_indices(edge):
+    with pytest.raises(ValueError, match="indices must be integers"):
+        two_sided_edge_parameter_map(2, [edge])
+
