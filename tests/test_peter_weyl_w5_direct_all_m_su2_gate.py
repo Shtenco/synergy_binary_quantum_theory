@@ -13,6 +13,27 @@ import k5_peter_weyl_safe_hda_column as pw
 
 
 class TestDirectAllMSU2FailClosed(unittest.TestCase):
+    def test_operator_cache_snapshot_and_clear_are_bounded_and_observable(self):
+        from functools import lru_cache
+        from types import SimpleNamespace
+
+        @lru_cache(maxsize=4)
+        def cached(value):
+            return value * value
+
+        module = SimpleNamespace(__name__="synthetic_cache_module", cached=cached)
+        self.assertEqual(cached(3), 9)
+        before = gate.cache_snapshot((module,))
+        self.assertEqual(before[0]["currsize"], 1)
+        self.assertEqual(before[0]["maxsize"], 4)
+        cleared = gate.clear_operator_caches((module,))
+        self.assertEqual(cleared, ["synthetic_cache_module.cached"])
+        self.assertEqual(cached.cache_info().currsize, 0)
+
+    def test_current_rss_probe_is_optional_and_nonnegative(self):
+        value = gate.current_rss_bytes()
+        self.assertTrue(value is None or (isinstance(value, int) and value >= 0))
+
     def test_complex_operator_diagnostics_are_losslessly_json_serializable(self):
         import json
         encoded = json.dumps(
@@ -157,6 +178,8 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             for case in result["cases"]
         ))
         self.assertEqual(len(result["operator_columns_sparse"]), 30)
+        self.assertEqual(len(result["cache_memory_diagnostics"]), 30)
+        self.assertTrue(all("caches_before_clear" in row for row in result["cache_memory_diagnostics"]))
         self.assertTrue(all(len(column["entries"]) >= 1 for column in result["operator_columns_sparse"]))
         self.assertEqual(
             {(column["source_node"], column["K12"], column["K34"], column["input_M2"])
