@@ -2,7 +2,7 @@ name: BQG HDA compression algebra regression
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
       - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
@@ -11,7 +11,7 @@ on:
       - 'tests/test_bqg_hda_compression_identity.py'
       - '.github/workflows/bqg-hda-algebra-regression.yml'
   pull_request:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
       - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
