@@ -224,6 +224,52 @@ def coarse_spectral_report(generation, operator, mass):
     }
 
 
+def coarse_space_approximation_report(coordinates, tetrahedra, fibre_labels,
+                                       cell_volumes):
+    """Test whether causal fibres approximate simple PL coordinate functions."""
+    points = np.asarray(coordinates, dtype=float)
+    tets = np.asarray(tetrahedra, dtype=np.int64)
+    labels = np.asarray(fibre_labels, dtype=np.int64)
+    volumes = np.asarray(cell_volumes, dtype=float)
+    if labels.shape != volumes.shape or len(labels) != len(tets):
+        raise ValueError("coarse-space approximation inputs have incompatible shapes")
+    n_fibres = int(labels.max()) + 1
+    cell_centres = points[tets].mean(axis=1)
+    fibre_mass = np.bincount(labels, weights=volumes, minlength=n_fibres)
+    fibre_centres = np.column_stack([
+        np.bincount(labels, weights=volumes * cell_centres[:, axis],
+                    minlength=n_fibres) / fibre_mass
+        for axis in range(points.shape[1])
+    ])
+    coordinate_errors = []
+    for axis in range(points.shape[1]):
+        values = cell_centres[:, axis]
+        projected = fibre_centres[labels, axis]
+        denominator = float(np.sum(volumes * values * values))
+        numerator = float(np.sum(volumes * (values - projected) ** 2))
+        coordinate_errors.append(
+            float(np.sqrt(numerator / denominator)) if denominator > 0 else 0.0
+        )
+    displacement = cell_centres - fibre_centres[labels]
+    squared_radius = np.sum(displacement * displacement, axis=1)
+    rms_radius_by_fibre = np.sqrt(
+        np.bincount(labels, weights=volumes * squared_radius,
+                    minlength=n_fibres) / fibre_mass
+    )
+    max_radius_by_fibre = np.zeros(n_fibres, dtype=float)
+    np.maximum.at(max_radius_by_fibre, labels, np.sqrt(squared_radius))
+    return {
+        "test_functions": "four ambient PL coordinate functions x_0,...,x_3 sampled at tetrahedron barycentres",
+        "relative_l2_projection_errors": coordinate_errors,
+        "rms_fibre_radius_min": float(rms_radius_by_fibre.min()),
+        "rms_fibre_radius_median": float(np.median(rms_radius_by_fibre)),
+        "rms_fibre_radius_max": float(rms_radius_by_fibre.max()),
+        "max_fibre_radius": float(max_radius_by_fibre.max()),
+        "coordinate_modes_resolved": bool(max(coordinate_errors) < 0.5),
+        "scope": "finite approximation-space diagnostic; coordinate tests do not by themselves prove density or disprove all possible limits",
+    }
+
+
 def build_coarse_spectral_sequence():
     """Build G0--G2 geometric dual operators and their causal-fibre compressions."""
     coordinates, tetrahedra = initial_reference_embedding()
@@ -264,6 +310,9 @@ def build_coarse_spectral_sequence():
             "fine_vertices": int(len(tetrahedra)),
             "fine_edges": int(len(endpoints)),
             "fine_graph_components": int(dual["component_count"]),
+            "coarse_space_approximation": coarse_space_approximation_report(
+                coordinates, tetrahedra, labels, volumes
+            ),
         })
         reports.append(report)
 
