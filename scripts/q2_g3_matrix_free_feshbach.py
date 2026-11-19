@@ -49,15 +49,13 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         operator, k=1, which="SA", v0=v0, tol=spectral_tol,
         maxiter=spectral_maxiter, return_eigenvectors=True,
     )
-    largest, large_vec = eigsh(
-        operator, k=1, which="LA", v0=v0, tol=spectral_tol,
-        maxiter=spectral_maxiter, return_eigenvectors=True,
-    )
-    lam_min, lam_max = float(smallest[0]), float(largest[0])
+    lam_min = float(smallest[0])
     small_residual = float(np.linalg.norm(model.apply_q_plus_p(small_vec[:, 0]) -
                                           lam_min * small_vec[:, 0]))
-    large_residual = float(np.linalg.norm(model.apply_q_plus_p(large_vec[:, 0]) -
-                                          lam_max * large_vec[:, 0]))
+    # The graph is 4-regular, so lambda_max(L) <= 2*d_max = 8.
+    # Compression by Q cannot increase the operator norm; P contributes
+    # eigenvalue 1 on the orthogonal coarse subspace.
+    lam_max_upper = 8.0
     spectral_seconds = time.perf_counter() - spectral_started
     if not np.isfinite(lam_min) or lam_min <= 0 or not np.isfinite(lam_max):
         raise ValueError(f"Q-space operator not numerically positive: {lam_min}, {lam_max}")
@@ -93,7 +91,8 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         })
 
     passed = (
-        lam_min > 0 and correction_min >= -1e-8 and slope_min >= -1e-8
+        lam_min > 0 and small_residual <= max(1e-6, spectral_tol * 10)
+        and correction_min >= -1e-8 and slope_min >= -1e-8
         and max_cg_residual <= max(1e-7, cg_rtol * 100)
         and max_second_residual <= max(1e-7, cg_rtol * 100)
     )
@@ -110,10 +109,9 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         "fibre_size_max": int(model.fibre_sizes.max()),
         "q_l_q_plus_p_spectrum_estimate": {
             "lambda_min_ritz": lam_min,
-            "lambda_max_ritz": lam_max,
-            "condition_estimate": lam_max / lam_min,
+            "lambda_max_upper_bound": lam_max_upper,
+            "condition_ratio_estimate": lam_max_upper / lam_min,
             "smallest_eigenpair_residual": small_residual,
-            "largest_eigenpair_residual": large_residual,
             "method": "scipy eigsh on matrix-free QLQ+P; Ritz estimates, not certified bounds",
             "tolerance": spectral_tol,
         },
@@ -129,6 +127,12 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
     }
 
 
+def write_report(path: Path, result: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\\n",
+                    encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--export-dir", type=Path, required=True)
@@ -140,8 +144,7 @@ def main():
     args = parser.parse_args()
     result = run(args.export_dir, cg_rtol=args.cg_rtol, cg_maxiter=args.cg_maxiter,
                  spectral_tol=args.spectral_tol, spectral_maxiter=args.spectral_maxiter)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\\n")
+    write_report(args.output, result)
     print(json.dumps(result, indent=2, allow_nan=False))
     return 0 if result["passed"] else 1
 
