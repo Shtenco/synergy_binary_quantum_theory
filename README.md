@@ -1257,7 +1257,7 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 
 ### Что имеет строгую опору в исходниках
 
-1. **Бинарный selector и тетраэдральный носитель.** Для frozen q=2 route construction уравнение локальной однородности выбирает q=2; три нетривиальных Walsh-характера  формируют точный регулярный тетраэдральный набор с попарным скалярным произведением `-1/3`. Четырёхспиновый Gauss-синглетный сектор и логический geometry qubit — отдельные точные представительные конструкции. См. [MICRO_WALSH_QGEOM_BRIDGE.md](MICRO_WALSH_QGEOM_BRIDGE.md) и [SPATIAL_QUBIT_GEOMETRY_BRIDGE.md](SPATIAL_QUBIT_GEOMETRY_BRIDGE.md).
+1. **Бинарный selector и тетраэдральный носитель.** Для frozen q=2 route construction уравнение локальной однородности выбирает q=2; три нетривиальных Walsh-характера  формируют точный регулярный тетраэдральный набор с попарным скалярным произведением `-1/3`. Четырёхспиновый Gauss-синглетный сектор и логический geometry qubit — отдельные точные представительные конструкции. См. [MICRO_WALSH_QGEOM_BRIDGE.md](MICRO_WALSH_QGEOM_BRIDGE.md) и [SPATIAL_QUBIT_GEOMETRY_BRIDGE.md](SPATIAL_QUBIT_GEOMETRY_BRIDGE.md).
 
 2. **3D combinatorial route.** Для frozen q=2 rewrite выведено точное `N_g=(4·8^g+10)/7` и монотонное `d_g → 3`. Каноническое minimal+flag PL-завершение — граница 16-cell, гомологически S³; рекурсивные PL-проверки выполнены на заявленных конечных уровнях. Это доказывает свойства выбранной конструкции, но не уникальность произвольной bare-causal склейки и не физический континуум. См. [Q2_DIMENSION3_FIXED_POINT_CLOSURE.md](Q2_DIMENSION3_FIXED_POINT_CLOSURE.md), [GLOBAL_MANIFOLD_Q2_COMPLETION.md](GLOBAL_MANIFOLD_Q2_COMPLETION.md).
 
