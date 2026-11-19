@@ -40,5 +40,10 @@ def test_generation3_causal_pushforward_is_surjective_and_conserved(generation3_
     assert counts["causal_fibres"] == 512
     assert counts["fibre_size_min"] > 0
     assert counts["fibre_size_max"] >= counts["fibre_size_min"]
+    histogram = counts["fibre_size_histogram"]
+    assert sum(histogram.values()) == 512
+    assert sum(int(size) * multiplicity for size, multiplicity in histogram.items()) == 221_184
+    assert counts["fibre_size_mean"] == 432.0
+    assert counts["pushforward_measure_total"] == 16.0
     assert checks["all_causal_fibres_nonempty"] is True
     assert checks["pushforward_parent_mass_conserved"] is True
