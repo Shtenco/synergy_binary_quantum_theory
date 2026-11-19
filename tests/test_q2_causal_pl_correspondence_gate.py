@@ -173,6 +173,8 @@ def test_q2_correspondence_summary_gates_are_computed_from_diagnostics():
         and row["vertices_checked"] > 0
         for row in result["route_colour_diagnostics"]
     )
+    assert len(result["parent_face_diagnostics"]) == 3
+    assert [row["generation"] for row in result["parent_face_diagnostics"]] == [0, 1, 2]
     assert all(
         row["side_assignments_valid"]
         and row["face_side_assignments"] == row["expected_face_side_assignments"]
