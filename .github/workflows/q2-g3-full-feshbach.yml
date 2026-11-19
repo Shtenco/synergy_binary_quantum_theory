@@ -1,0 +1,44 @@
+name: Q2 G3 full Feshbach matrix reconstruction
+
+on:
+  push:
+    branches:
+      - research/bqg-q2-correspondence-audit-hardening-20261119
+    paths:
+      - '.github/workflows/q2-g3-full-feshbach.yml'
+      - 'scripts/q2_g3_full_feshbach.py'
+      - 'scripts/q2_matrix_free_feshbach.py'
+      - 'scripts/q2_pl_generation3_chunked_export.py'
+      - 'tests/test_q2_g3_full_feshbach.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-g3-feshbach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy scipy pytest
+      - name: Test full Feshbach reconstruction against dense reference
+        run: python -m pytest -q tests/test_q2_g3_full_feshbach.py
+      - name: Export generation-3 graph in bounded parent chunks
+        run: python scripts/q2_pl_generation3_chunked_export.py --output-dir verification_results/g3_chunked --chunk-size 4096
+      - name: Reconstruct complete G3 correction and self-energy slope matrices
+        run: python scripts/q2_g3_full_feshbach.py --export-dir verification_results/g3_chunked --output-dir verification_results/g3_full_feshbach --rtol 1e-8 --atol 1e-11 --maxiter 10000
+      - name: Upload complete G3 Feshbach matrices and diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: q2-g3-full-feshbach-matrices
+          path: |
+            verification_results/g3_full_feshbach/G3_FULL_FESHBACH_MANIFEST.json
+            verification_results/g3_full_feshbach/G3_FESHBACH_CORRECTION_MATRIX.npy
+            verification_results/g3_full_feshbach/G3_SELF_ENERGY_SLOPE_MATRIX.npy
+          if-no-files-found: error
+          retention-days: 30
