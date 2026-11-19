@@ -1,0 +1,42 @@
+name: BQG HDA compression algebra regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
+      - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
+      - 'PETER_WEYL_TWO_NODE_SINE_HDA_RESULT.md'
+      - 'FULL_OPERATOR_FIRST_HDA_CERTIFICATE.md'
+      - 'tests/test_bqg_hda_compression_identity.py'
+      - '.github/workflows/bqg-hda-algebra-regression.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
+      - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
+      - 'PETER_WEYL_TWO_NODE_SINE_HDA_RESULT.md'
+      - 'FULL_OPERATOR_FIRST_HDA_CERTIFICATE.md'
+      - 'tests/test_bqg_hda_compression_identity.py'
+      - '.github/workflows/bqg-hda-algebra-regression.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-hda-algebra-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  exact-compression-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NumPy
+        run: python -m pip install numpy
+      - name: Run exact compression identity and leakage-bound tests
+        run: python -m unittest discover -s tests -p 'test_bqg_hda_compression_identity.py' -v
