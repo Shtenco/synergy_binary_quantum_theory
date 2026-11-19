@@ -39,8 +39,17 @@ from q2_causal_graph_export import ROUTE_LABELS
 
 
 def _causal_edges_share_exactly_one_endpoint(edge_a, edge_b):
-    """Return whether two endpoint pairs meet at exactly one vertex."""
+    """Return whether two distinct endpoint pairs meet at exactly one vertex."""
     return len(set(edge_a) & set(edge_b)) == 1
+
+
+def _causal_edge_labels_are_incident(edge_id_a, edge_id_b, causal_edges):
+    """Same coarse edge is valid; distinct coarse edges must meet at one endpoint."""
+    if edge_id_a == edge_id_b:
+        return True
+    return _causal_edges_share_exactly_one_endpoint(
+        causal_edges[edge_id_a], causal_edges[edge_id_b]
+    )
 
 
 def _permutation_data(chain, faces, parent):
@@ -642,7 +651,7 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_f
         b = tuple(dual["vertices"][edge["target"]]["tetrahedron"])
         ea, eb = parent_map[a], parent_map[b]
         endpoints_a, endpoints_b = causal_edges[ea], causal_edges[eb]
-        if not _causal_edges_share_exactly_one_endpoint(endpoints_a, endpoints_b):
+        if not _causal_edge_labels_are_incident(ea, eb, causal_edges):
             adjacency_violations.append({
                 "pl_dual_source": edge["source"],
                 "pl_dual_target": edge["target"],
