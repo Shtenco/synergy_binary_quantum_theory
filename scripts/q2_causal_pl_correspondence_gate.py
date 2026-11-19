@@ -38,6 +38,11 @@ from q2_pl_graph_export import (
 from q2_causal_graph_export import ROUTE_LABELS
 
 
+def _causal_edges_share_exactly_one_endpoint(edge_a, edge_b):
+    """Return whether two endpoint pairs meet at exactly one vertex."""
+    return len(set(edge_a) & set(edge_b)) == 1
+
+
 def _permutation_data(chain, faces, parent):
     """Recover the ordered parent-vertex permutation from a barycentric flag."""
     permutation = []
@@ -109,10 +114,15 @@ def _parent_face_sides(tetrahedra, parent_map, causal_edges, orientations, dual)
             side_b = "L" if ub == shared else "R"
         sides[(ta, face)] = side_a
         sides[(tb, face)] = side_b
+    valid_values = all(side in {"L", "R"} for side in sides.values())
+    expected_assignments = 2 * len(dual["edges"])
     return sides, {
         "same_parent_edge_faces": same_edge_faces,
         "distinct_incident_parent_edge_faces": distinct_edge_faces,
         "face_side_assignments": len(sides),
+        "expected_face_side_assignments": expected_assignments,
+        "side_assignment_values_valid": valid_values,
+        "side_assignments_valid": valid_values and len(sides) == expected_assignments,
     }
 
 
@@ -631,7 +641,9 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_f
         a = tuple(dual["vertices"][edge["source"]]["tetrahedron"])
         b = tuple(dual["vertices"][edge["target"]]["tetrahedron"])
         ea, eb = parent_map[a], parent_map[b]
-        if not (set(causal_edges[ea]) & set(causal_edges[eb])):
+        if not _causal_edges_share_exactly_one_endpoint(
+            causal_edges[ea], causal_edges[eb]
+        ):
             adjacency_ok = False
             break
     histogram = Counter(fibres.values())
@@ -685,6 +697,7 @@ def run(max_generation=2, compute_feshbach=False):
     levels = []
     refinement_checks = []
     face_diagnostics = []
+    route_colour_diagnostics = []
     measure_checks = []
 
     for generation in range(max_generation + 1):
@@ -692,6 +705,15 @@ def run(max_generation=2, compute_feshbach=False):
             generation, tetrahedra, chain_by_tet, previous_faces
         )
         vertex_colours = _vertex_face_colours(dual)
+        route_colours_valid = all(
+            sorted(mapping.values()) == [0, 1, 2, 3]
+            for mapping in vertex_colours
+        )
+        route_colour_diagnostics.append({
+            "generation": generation,
+            "vertices_checked": len(vertex_colours),
+            "all_four_route_colours_present_per_vertex": route_colours_valid,
+        })
         levels.append(_summarise(
             generation, tetrahedra, parent_map, causal_edges, dual,
             compute_feshbach=compute_feshbach,
@@ -794,8 +816,13 @@ def run(max_generation=2, compute_feshbach=False):
             row["every_child_maps_to_a_child_of_its_parent"]
             for row in refinement_checks
         ),
-        "all_parent_face_side_assignments_valid": True,
-        "four_route_face_colours_present": True,
+        "all_parent_face_side_assignments_valid": all(
+            row["side_assignments_valid"] for row in face_diagnostics
+        ),
+        "four_route_face_colours_present": all(
+            row["all_four_route_colours_present_per_vertex"]
+            for row in route_colour_diagnostics
+        ),
     }
     return {
         "status": "candidate q2 causal-to-PL edge correspondence",
@@ -811,6 +838,7 @@ def run(max_generation=2, compute_feshbach=False):
         ),
         "levels": levels,
         "parent_face_diagnostics": face_diagnostics,
+        "route_colour_diagnostics": route_colour_diagnostics,
         "refinement_checks": refinement_checks,
         "measure_checks": measure_checks,
         "measure_definition": (
