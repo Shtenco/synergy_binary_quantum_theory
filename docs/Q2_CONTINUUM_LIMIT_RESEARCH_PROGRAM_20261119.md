@@ -146,6 +146,14 @@ If the graph ensemble or action has tunable couplings, identify dimensionless co
 7. **Independent reproduction:** run the same analysis from a second implementation or independently reconstructed artifacts.
 8. **Physical bridge remains separate:** even a proven spectral continuum limit does not prove Lorentzian causal propagation, Einstein dynamics, or physical QFI conductance. Those require independent operator and observable derivations.
 
+## New finite-form implementation and regression result
+
+The research branch now contains a finite graph Dirichlet-form module, with explicit positive vertex measure, positive edge conductances, scale factor, stiffness matrix, energy, mass norm, associated generator, and mass-weighted resolvent action. It also validates nonnegative constant-preserving prolongation maps and computes candidate recovery-sequence probe diagnostics. The report deliberately labels these as finite probes, not a Mosco proof.
+
+The dedicated Q2 graph/export workflow run 44445748662 completed successfully on commit d453900eab2ba4d67d644d6e087b89c988918520. Its 23 pytest invocations passed 150 tests in total; the new Dirichlet-form suite contributed 5/5 passing tests. The run also completed the existing graph, QFI, G3 exporter, and Feshbach-control suites and uploaded its artifact.
+
+This is a tested numerical foundation for the next stage. It does not yet provide actual SBQT geometric conductances, independent refinement families, a liminf theorem, or a recovery theorem on a dense core.
+
 ## New finite-level result: complete G3 Feshbach matrices (19 November 2026)
 
 Dedicated workflow run 44442960180 completed successfully on the research branch and uploaded artifact 14493520542. The artifact contains both complete 512 x 512 matrices and the manifest. It is the full-column reconstruction, not the four-probe matrix-free report.
