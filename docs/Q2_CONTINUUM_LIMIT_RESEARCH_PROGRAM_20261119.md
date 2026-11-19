@@ -24,6 +24,9 @@ The objective is to construct and test a mathematically specified sequence of me
 7. G. Elek, *Weak convergence of finite graphs, integrated density of states and a Cheeger type inequality*, Journal of Combinatorial Theory, Series B 98 (2008), 62--68. DOI: 10.1016/j.jctb.2007.03.004.
    - https://doi.org/10.1016/j.jctb.2007.03.004
 
+8. J. Ambjørn, J. Gizbert-Studnicki, A. Görlich, D. Németh, *Is lattice quantum gravity asymptotically safe? Making contact between causal dynamical triangulations and the functional renormalization group*, Physical Review D 110, 126006 (2024). DOI: 10.1103/PhysRevD.110.126006. This is a particularly relevant current bridge between CDT finite-volume scaling and FRG fixed-point language; the authors explicitly state that the numerical precision allows a putative UV fixed point but does not prove its existence.
+   - https://doi.org/10.1103/PhysRevD.110.126006
+
 These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
 
 ## Required mathematical object at every refinement level
