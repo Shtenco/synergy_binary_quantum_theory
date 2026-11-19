@@ -2,7 +2,7 @@ name: BQG physical-history reference diagnostics
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'BQG_PHYSICAL_CAUSAL_CONE_AUDIT_20261111.md'
@@ -11,7 +11,7 @@ on:
       - 'tests/test_bqg_physical_history_decoherence_engine.py'
       - '.github/workflows/bqg-physical-history-reference.yml'
   pull_request:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'BQG_PHYSICAL_CAUSAL_CONE_AUDIT_20261111.md'
