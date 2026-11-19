@@ -118,11 +118,13 @@ def certified_gap_lower_bound_from_root_eccentricity(model) -> dict:
     if eccentricity <= 0:
         raise ValueError("invalid BFS eccentricity")
     lower_bound = 1.0 / ((n - 1) * eccentricity)
+    full_operator_lower_bound = min(1.0, lower_bound)
     return {
         "root_eccentricity_upper_bound": eccentricity,
         "lambda_min_q_l_q_certified_lower_bound": lower_bound,
+        "lambda_min_q_l_q_plus_p_certified_lower_bound": full_operator_lower_bound,
         "lambda_max_q_l_q_plus_p_certified_upper_bound": lambda_max_upper,
-        "condition_number_certified_upper_bound": lambda_max_upper / lower_bound,
+        "condition_number_certified_upper_bound": lambda_max_upper / full_operator_lower_bound,
         "proof": "connected graph diameter <= 2*root eccentricity; lambda_2(L) >= 1/((n-1)*eccentricity); lambda_max(L) <= 2*d_max; range(Q) is orthogonal to constants",
     }
 
