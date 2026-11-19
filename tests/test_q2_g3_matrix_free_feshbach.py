@@ -81,5 +81,6 @@ def test_certified_graph_gap_bound_uses_bfs_and_actual_maximum_degree():
 
     assert bound["root_eccentricity_upper_bound"] == 3
     assert bound["lambda_min_q_l_q_certified_lower_bound"] == pytest.approx(1 / 9)
+    assert bound["lambda_min_q_l_q_plus_p_certified_lower_bound"] == pytest.approx(1 / 9)
     assert bound["lambda_max_q_l_q_plus_p_certified_upper_bound"] == pytest.approx(4.0)
     assert bound["condition_number_certified_upper_bound"] == pytest.approx(36.0)
