@@ -73,6 +73,7 @@ def test_matrix_free_feshbach_correction_matches_dense_schur_complement(cycle_op
     actual, info = op.apply_feshbach_correction(coarse)
     assert np.allclose(actual, correction @ coarse, atol=1e-10)
     assert info["info"] == 0
+    assert info["iterations"] > 0
     assert info["residual_norm"] < 1e-10
     assert np.linalg.eigvalsh(correction).min() >= -1e-12
 
@@ -83,6 +84,8 @@ def test_matrix_free_self_energy_slope_matches_dense_second_resolvent(cycle_oper
     coarse = np.array([0.75, -1.25])
     actual, info = op.apply_self_energy_slope(coarse)
     assert np.allclose(actual, slope @ coarse, atol=1e-10)
+    assert info["first_solve"]["iterations"] > 0
+    assert info["second_solve"]["iterations"] > 0
     assert info["first_solve"]["residual_norm"] < 1e-10
     assert info["second_solve"]["residual_norm"] < 1e-10
     assert np.linalg.eigvalsh(slope).min() >= -1e-12
