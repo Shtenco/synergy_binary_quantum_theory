@@ -17,7 +17,7 @@ class TestW5V09V10PairedRegression(unittest.TestCase):
         path = Path(V09.__file__)
         raw = path.read_bytes()
         git_blob = hashlib.sha1(
-            b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+            b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
         ).hexdigest()
         self.assertEqual(git_blob, "a2cc3d5eaee8377e94fd7d24a1a279d2399df133")
 
