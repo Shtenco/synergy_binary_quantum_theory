@@ -1,6 +1,12 @@
 import pytest
 
-from scripts.q2_vertex_fusion_graph_gram import analyze_graph_block_fusion_gram
+import numpy as np
+
+from scripts.q2_vertex_fusion_graph_gram import (
+    _positive_spectrum,
+    _relative_singular_rank,
+    analyze_graph_block_fusion_gram,
+)
 
 
 @pytest.mark.parametrize(
@@ -53,3 +59,14 @@ def test_tree_and_loop_blocks_have_distinct_fusion_gram_structure(
 def test_unknown_graph_fixture_is_rejected():
     with pytest.raises(ValueError, match="unknown graph fixture"):
         analyze_graph_block_fusion_gram("not_a_graph", 1)
+
+
+@pytest.mark.parametrize("scale", [1.0, 1e-12, 1e-80])
+def test_gram_rank_and_positive_spectrum_are_scale_invariant(scale):
+    singular_values = scale * np.array([4.0, 2.0, 0.5, 1e-14])
+    eigenvalues = singular_values**2
+
+    assert _relative_singular_rank(singular_values, 1e-10) == 3
+    positive = _positive_spectrum(eigenvalues, 1e-10)
+    assert positive.size == 3
+    assert np.all(positive > 0.0)
