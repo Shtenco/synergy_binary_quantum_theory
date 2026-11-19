@@ -76,7 +76,12 @@ def _sine_composition_probe(node, seed_k, jmax2, mode):
     import peter_weyl_covariant_volume_leg_gate as CV
     import peter_weyl_covariant_composition_gate as COMP
     import bqg_pruning_audit as PRUNE
-    import bqg_v09_w5_lorentzian_raw_column as V09
+    import sys
+    from pathlib import Path
+    archive_dir = Path(__file__).resolve().parent / "archive"
+    if str(archive_dir) not in sys.path:
+        sys.path.insert(0, str(archive_dir))
+    import bqg_v09_w5_lorentzian_raw_column_v09_frozen as V09
 
     seed = V09.w5_input_key(seed_k)
     context = PRUNE.bypass() if mode == "shadow_no_prune" else contextlib.nullcontext()
@@ -146,7 +151,13 @@ def run(node, jmax2, mode, output):
 
     import bqg_pruning_audit as PRUNE
     import k5_peter_weyl_safe_hda_column as PW
-    import bqg_v09_w5_lorentzian_raw_column as V09
+    import sys
+    from pathlib import Path
+    archive_dir = Path(__file__).resolve().parent / "archive"
+    if str(archive_dir) not in sys.path:
+        sys.path.insert(0, str(archive_dir))
+    import bqg_v09_w5_lorentzian_raw_column_v09_frozen as V09
+    import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import bqg_v10_w5_lorentzian_adjoint_closure as V10
 
     v09_epsilon = V09.ordered_epsilon_triples(PW.NEIG[node])
@@ -163,19 +174,29 @@ def run(node, jmax2, mode, output):
     }
 
     original_serializer = V09.serialize_sparse
+    original_lsine_run = LSINE.run
     captured = []
+    sine_capture = {}
 
     def capture_serializer(state):
         captured.append(dict(state))
         return original_serializer(state)
 
+    def capture_lsine_run(*args, **kwargs):
+        result = original_lsine_run(*args, **kwargs)
+        sine_capture.clear()
+        sine_capture.update(result)
+        return result
+
     V09.serialize_sparse = capture_serializer
+    LSINE.run = capture_lsine_run
     v09_rows = []
     try:
         context = PRUNE.bypass() if mode == "shadow_no_prune" else contextlib.nullcontext()
         with context:
             for seed_k in W5_K:
                 captured.clear()
+                sine_capture.clear()
                 result = V09.run_column(node, seed_k, jmax2, 0, 24)
                 if len(captured) != 3:
                     raise AssertionError(f"expected three V09 serialization calls, got {len(captured)}")
@@ -189,7 +210,8 @@ def run(node, jmax2, mode, output):
                         (int(row["epsilon_sign"]), tuple(row["ordered_edges"]))
                         for row in result["term_diagnostics"]
                     ] == v09_epsilon,
-                    "sine_wrapper_gate_passed": result["sine_wrapper_gate_passed"],
+                    "sine_wrapper_gate_passed": sine_capture.get("passed") is True,
+                    "sine_wrapper_diagnostics": sine_capture.get("max_diagnostics", {}),
                     "A_serializer_loss": _serializer_loss(raw_A, result["A_Euclidean_sine_Gauss"]),
                     "B_gauss_serializer_loss": _serializer_loss(raw_B_gauss, result["B_Lorentzian_raw_KKV_Gauss"]),
                     "B_covariant_serializer_loss": _serializer_loss(raw_B_covariant, result["B_Lorentzian_raw_KKV_covariant"]),
@@ -198,6 +220,7 @@ def run(node, jmax2, mode, output):
                 })
     finally:
         V09.serialize_sparse = original_serializer
+        LSINE.run = original_lsine_run
 
     amp_tol = 0.0 if mode == "shadow_no_prune" else 1e-12
     v10 = V10.run_closure(
