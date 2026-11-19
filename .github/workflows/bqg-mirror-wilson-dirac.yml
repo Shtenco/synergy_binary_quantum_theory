@@ -2,7 +2,7 @@ name: BQG mirror mass and Wilson-Dirac finite gate
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
       - 'MIRROR_WILSON_MATTER.md'
@@ -11,7 +11,7 @@ on:
       - 'tests/test_mirror_wilson_matter_gate.py'
       - '.github/workflows/bqg-mirror-wilson-dirac.yml'
   pull_request:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
       - 'MIRROR_WILSON_MATTER.md'
