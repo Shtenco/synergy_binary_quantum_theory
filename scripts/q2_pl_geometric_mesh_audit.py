@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import json
 from pathlib import Path
 
@@ -69,7 +70,23 @@ def refine_embedding(coordinates, tetrahedra):
     new_coordinates = np.empty((len(faces), old.shape[1]), dtype=float)
     for face_id, face in enumerate(faces):
         new_coordinates[face_id] = np.mean(old[np.asarray(face, dtype=np.int64)], axis=0)
-    return new_coordinates, children
+    return new_coordinates, children, faces
+
+
+def stable_child_order(tetrahedra, faces):
+    """Match the exporter's stable ID: 24*parent_id + permutation rank."""
+    face_id = {tuple(face): index for index, face in enumerate(faces)}
+    ordered = np.empty((24 * len(tetrahedra), 4), dtype=np.uint32)
+    for parent_id, tetrahedron in enumerate(tetrahedra):
+        tet = tuple(int(v) for v in tetrahedron)
+        for rank, permutation in enumerate(itertools.permutations(range(4))):
+            prefix = []
+            chain = []
+            for position in permutation:
+                prefix.append(tet[position])
+                chain.append(face_id[tuple(sorted(prefix))])
+            ordered[24 * parent_id + rank] = np.sort(chain)
+    return ordered
 
 
 def geometric_dual_weights(coordinates, tetrahedra, edge_endpoints, cell_volumes,
@@ -138,7 +155,12 @@ def build_geometry(max_generation=3):
             raise ValueError(f"PL volume is not conserved at generation {generation}")
         levels.append(metrics)
         if generation < max_generation:
-            coordinates, tetrahedra = refine_embedding(coordinates, tetrahedra)
+            coordinates, children, faces = refine_embedding(coordinates, tetrahedra)
+            tetrahedra = (
+                stable_child_order(tetrahedra, faces)
+                if generation + 1 == max_generation
+                else children
+            )
     for previous, current in zip(levels, levels[1:]):
         if current["mesh_diameter_max"] >= previous["mesh_diameter_max"]:
             raise ValueError("maximum PL mesh diameter did not decrease under refinement")
