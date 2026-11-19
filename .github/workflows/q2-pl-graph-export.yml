@@ -1,4 +1,4 @@
-name: q2-pl-graph-export
+name: q2-pl-graph-export\n\n# Includes the bounded-memmap generation-3 export and manifest reconciliation.
 
 on:
   workflow_dispatch:
