@@ -4,6 +4,8 @@ on:
   push:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
       - 'scripts/bqg_spectral_history_graph_gate.py'
       - 'tests/test_bqg_spectral_history_regression.py'
@@ -11,6 +13,8 @@ on:
   pull_request:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
       - 'scripts/bqg_spectral_history_graph_gate.py'
       - 'tests/test_bqg_spectral_history_regression.py'
