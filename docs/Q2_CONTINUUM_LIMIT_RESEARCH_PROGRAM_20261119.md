@@ -1,0 +1,148 @@
+# Q2 continuum-limit research program (19 November 2026)
+
+## Status and objective
+
+The current G0--G3 computations establish finite-level combinatorial and spectral facts. They do **not** establish a continuum limit. In particular, the G3 heat-trace/effective-dimension data do not yet exhibit a demonstrated scale-independent plateau, and the current G3 Feshbach report evaluates four deterministic coarse probes rather than the complete 512 x 512 self-energy matrix.
+
+The objective is to construct and test a mathematically specified sequence of measured spaces, Hilbert spaces, closed quadratic forms, and self-adjoint operators whose limit is independent of arbitrary discretization choices. A continuum claim is accepted only after analytic hypotheses and numerical falsification tests are both met.
+
+## Literature anchors
+
+1. K. Kuwae and T. Shioya, *Convergence of spectral structures: a functional analytic theory and its applications to spectral geometry*, Communications in Analysis and Geometry 11 (2003), 599--673. DOI: 10.4310/CAG.2003.v11.n4.a1. Framework includes Mosco convergence of quadratic forms, spectral structures, Riemannian manifolds, locally finite graphs, and metric spaces with Dirichlet forms.
+   - https://www.intlpress.com/site/pub/files/_fulltext/journals/cag/2003/0011/0004/CAG-2003-0011-0004-a001.pdf
+2. I. Babuška and J. E. Osborn, *Finite Element-Galerkin Approximation of the Eigenvalues and Eigenvectors of Selfadjoint Problems*, Mathematics of Computation 52 (1989), 275--297. DOI: 10.1090/S0025-5718-1989-0962210-8.
+   - https://www.ams.org/journals/mcom/1989-52-186/S0025-5718-1989-0962210-8/
+3. J. Kigami, *Analysis on Fractals* (Cambridge University Press, 2001), especially the construction of limiting Dirichlet/resistance forms from compatible finite networks.
+   - https://doi.org/10.1017/CBO9780511470943
+4. J. Ambjørn, D. N. Coumbe, J. Gizbert-Studnicki, J. Jurkiewicz, *Searching for a continuum limit in causal dynamical triangulation quantum gravity*, Physical Review D 93, 104032 (2016). DOI: 10.1103/PhysRevD.93.104032.
+   - https://doi.org/10.1103/PhysRevD.93.104032
+5. M. Reuter and F. Saueressig, *Quantum Einstein Gravity*, New Journal of Physics 14 (2012), 055022. DOI: 10.1088/1367-2630/14/5/055022.
+   - https://inspirehep.net/literature/1088697
+6. G. Dusson, I. M. Sigal, B. Stamm, *The Feshbach--Schur map and perturbation theory*, 2021; and *Analysis of the Feshbach--Schur method for the Fourier spectral discretizations of Schrödinger operators*, Mathematics of Computation 92 (2023), 217--249.
+   - https://ems.press/books/ecr/187/3518
+   - https://doi.org/10.1090/MCOM/3774
+7. G. Elek, *Weak convergence of finite graphs, integrated density of states and a Cheeger type inequality*, Journal of Combinatorial Theory, Series B 98 (2008), 62--68. DOI: 10.1016/j.jctb.2007.03.004.
+   - https://doi.org/10.1016/j.jctb.2007.03.004
+
+These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
+
+## Required mathematical object at every refinement level
+
+For each level n, define explicitly:
+
+- a finite measured space (X_n, d_n, mu_n), including the metric construction and normalization of mu_n;
+- a Hilbert space H_n = L^2(X_n, mu_n);
+- a dense domain D(E_n) and a nonnegative, closed, symmetric quadratic form E_n;
+- the self-adjoint operator A_n associated with E_n;
+- maps/comparison operators between H_n and a candidate limit Hilbert space H, or a common ambient space;
+- the physical length scale h_n and every normalization factor in A_n.
+
+For a weighted graph, a candidate form has the structure
+E_n(f) = c_n/2 sum_{(i,j) in E_n} w_{ij}^{(n)} |f_i - f_j|^2,
+with the scalar c_n, edge weights, vertex measure, and inner product derived from the model's geometry. They must not be chosen after inspecting the desired spectral dimension. The associated operator is the operator represented by this form in L^2(X_n, mu_n), not an unlabelled adjacency matrix.
+
+The current G3 coarse matrix U^T L U is a finite fibre-compressed operator. Its construction is useful, but it is not by itself a derivation of the continuum normalization c_n or a proof that the sequence of forms has a limit.
+
+## Continuum acceptance theorem to target
+
+The primary target is Mosco convergence of E_n to a closed nonnegative form E on H, with explicit identification of the Hilbert-space convergence/comparison maps. The proof obligations are:
+
+1. **Liminf:** whenever u_n converges weakly to u under the chosen varying-Hilbert-space notion, E(u) <= liminf E_n(u_n).
+2. **Recovery:** for every u in D(E), construct u_n converging strongly to u with limsup E_n(u_n) <= E(u).
+3. **Compactness / tightness:** establish the hypotheses needed for compact resolvent or, if the limit is noncompact, state the correct local or measure-theoretic spectral mode of convergence.
+4. **Measure and geometry:** prove convergence/tightness of mu_n and control metric distortion, volume growth, and degenerating bottlenecks.
+5. **Operator consequence:** derive strong resolvent convergence; claim eigenvalue/eigenfunction convergence only when the additional compactness and multiplicity hypotheses hold.
+6. **Heat semigroup:** derive convergence of e^{-t A_n} on the appropriate domain of t. Heat-trace convergence requires additional uniform spectral-tail/trace-class control; it does not follow from strong resolvent convergence alone.
+
+A numerical fit to a power law is not a substitute for these conditions.
+
+## Refinement protocol: eliminate false convergence
+
+A single nested sequence is insufficient. For each target scale, generate at least three independently constructed refinement families (different admissible subdivision orders, relabellings, and local refinement choices) with matched macroscopic geometry and measure. Where the model admits it, add controlled perturbations of edge weights and fibre assignments.
+
+At each level record h_n, vertex/edge counts, measure total, degree distribution, fibre-size distribution, graph diameter, bottleneck/isoperimetric diagnostics, low spectrum with residuals, spectral counting function, heat trace, and resource use. Preserve raw operator and measure artifacts with hashes.
+
+Compare observables only after the same dimensional scaling is derived and applied to all sequences. Report uncertainty and residuals; never select the time window or exponent after seeing which one gives the preferred dimension.
+
+## Required convergence diagnostics
+
+### A. Quadratic-form and resolvent layer
+
+- Construct explicit restriction/prolongation or comparison maps.
+- Test energy liminf and recovery inequalities on growing deterministic function families, including constants, localized bumps, low eigenmodes, and random smooth-proxy fields.
+- Compare resolvents (A_n + z)^(-1) on matched probes for multiple positive z.
+- Track the operator residual and the error under independent refinement families.
+
+Finite probe tests are falsification tools, not a proof of Mosco convergence. The eventual proof must identify a dense core and uniform estimates.
+
+### B. Spectrum and heat kernel
+
+- Compute low eigenpairs with residuals and multiplicity-aware subspace angles.
+- Track eigenvalue counting functions and heat traces over a scale window that expands with refinement.
+- Separate ultraviolet, crossover, and infrared regimes.
+- Demonstrate that the candidate scaling window moves with h_n while the rescaled curve stabilizes.
+- Quantify finite-size corrections and compare at least two independent extrapolation ansätze.
+- Test robustness to changing the heat-time grid and differentiation method for effective spectral dimension.
+
+A plateau is accepted only if it persists across refinement families, expands or remains stable in rescaled coordinates, and its uncertainty shrinks under refinement. A local flat segment on one level is not enough.
+
+### C. Geometry and measure
+
+- Verify that total measure conservation is accompanied by convergence of measures on test functions, not merely equality of total mass.
+- Measure volume growth and ball-volume ratios at matched rescaled radii.
+- Track diameter, injectivity/bottleneck proxies, and isoperimetric/Cheeger quantities.
+- Check that no vanishing-measure appendages or exceptional fibres dominate the heat trace.
+
+### D. Feshbach / coarse-graining layer
+
+For P_n the coarse projection and Q_n = I - P_n, define the energy-dependent Schur complement with an explicit spectral parameter z:
+F_n(z) = P_n(A_n-z)P_n - P_n A_n Q_n [Q_n(A_n-z)Q_n]^{-1} Q_n A_n P_n,
+on a domain where the inverse exists.
+
+Required:
+- certify or bound the Q-block spectral gap and resolvent norm over a common z-window;
+- calculate the full coarse self-energy matrix when feasible, otherwise report matrix-free operator actions on a systematically expanding, reproducible probe basis with error bounds;
+- compare independent probe bases, not only four seeded vectors;
+- test symmetry, positivity/monotonicity where theoretically required, and finite-difference agreement for the self-energy derivative;
+- establish convergence of F_n(z) after the same coarse-space identification maps;
+- show that truncation and solver errors are below the refinement error.
+
+Four positive quadratic-form probes are a useful initial smoke test, not a positivity theorem for the full matrix and not a continuum closure.
+
+### E. Renormalization and universality
+
+If the graph ensemble or action has tunable couplings, identify dimensionless couplings and a finite-size scaling prescription before fitting. Search for critical surfaces/fixed points through multiple volumes and independent bare-coupling trajectories. Record relevant/irrelevant directions and stability under regulator/parameterization changes. A stable fixed point and universality across discretization families are stronger evidence than apparent convergence of one deterministic graph sequence.
+
+## Immediate SBQT work queue
+
+1. **Freeze definitions:** write down the G_n geometry, h_n, mu_n, comparison maps, E_n, and A_n. Explicitly distinguish the full 221,184-vertex G3 graph Laplacian, the 512-fibre Galerkin compression, and the Feshbach effective operator.
+2. **Audit normalization:** derive c_n and weights from the intended continuum energy/dimension. Add dimensional-analysis tests and prohibit post-hoc per-level normalization.
+3. **Build independent refinement families:** produce at least three G0--G3 families with matching macroscopic invariants; compare spectra and heat traces without pooling unlike operators.
+4. **Add form-convergence harness:** implement liminf/recovery probe suites and resolvent-action comparisons; persist all probe vectors/seeds and errors.
+5. **Expand Feshbach:** replace the four-vector-only report with deterministic basis blocks and randomized cross-checks; compute the complete 512-dimensional coarse self-energy if memory/time permit. If not, produce rigorous operator-norm or quadratic-form bounds, not a false PASS.
+6. **Extend levels:** G4 and beyond only after the normalization and exporter are stable; retain bounded-memory export and verify geometry/measure at each generation.
+7. **Independent reproduction:** run the same analysis from a second implementation or independently reconstructed artifacts.
+8. **Physical bridge remains separate:** even a proven spectral continuum limit does not prove Lorentzian causal propagation, Einstein dynamics, or physical QFI conductance. Those require independent operator and observable derivations.
+
+## Current decision rule
+
+Status labels must distinguish:
+
+- FINITE_LEVEL_PASS: finite graph/operator invariants pass;
+- NUMERICAL_SCALING_EVIDENCE: multi-level data show a stable trend but theorem assumptions remain unproved;
+- MOSCO_CONVERGENCE_PROVED: liminf and recovery plus the required Hilbert-space/measure hypotheses are proved;
+- SPECTRAL_CONVERGENCE_PROVED: operator/spectral consequences are established with compactness or the correct noncompact substitute;
+- CONTINUUM_PHYSICAL_LIMIT: only after the mathematical limit and independent physical interpretation gates both pass.
+
+At the present G0--G3 stage, the correct label is finite-level evidence only. No stable continuum limit is claimed.
+
+## Immediate references for the next implementation pass
+
+- Kuwae--Shioya (2003): varying Hilbert spaces, Mosco convergence, spectral structures.
+- Babuška--Osborn (1989): Galerkin eigenvalue/eigenvector error estimates.
+- Kigami (2001): compatible network energies and limiting resistance forms.
+- Ambjørn et al. (2016): lattice-spacing determination and finite-size scaling in CDT.
+- Dusson--Sigal--Stamm (2021, 2023): Feshbach--Schur estimates and discretization error.
+- Elek (2008): weak graph convergence and integrated density of states.
+
+The first implementation milestone is not another plot. It is a fully specified, scale-normalized sequence of energy forms with comparison maps and a test suite capable of detecting failure of liminf, recovery, and resolvent convergence.
