@@ -43,7 +43,8 @@ class TestSeedShardedPairedAggregate(unittest.TestCase):
 
     def test_production_shadow_difference_fails(self):
         rows = self.fixture()
-        rows[1] = make_report(10, "production", 0, perturb=1e-4)
+        idx = next(i for i, r in enumerate(rows) if r["Jmax2"] == 10 and r["mode"] == "production" and r["seed_Ks"] == [0])
+        rows[idx] = make_report(10, "production", 0, perturb=1e-4)
         result = aggregate(rows)
         self.assertFalse(result["passed"])
         self.assertTrue(result["pruning_failures"])
