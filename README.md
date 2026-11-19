@@ -1371,3 +1371,13 @@ BIP39 следует держать отдельным криптографич�
 - Finite Feshbach correction относится к unweighted PL dual Laplacian, не к физической QFI. Для generation 2 Q-sector gap estimate 0.15224093498 с Ritz residual 2.21e−14, но certified lower bound лишь 1.63185e−4; certified self-energy remainder coefficient достигает 8.18208e11. Значит, сертификат существует, но его bound слишком велик, чтобы считать quasi-local correction малой или uniform refinement limit доказанным.
 - Edge QFI для заданного two-block spin-1/2 singlet channel даёт F_e=I_3 и F_e/4=I_3/4 с residual порядка 10−15. На path A–B–C cross block точно имеет форму cI_3, c=(4/3)⟨J_B0·J_B3⟩, и меняется со state; полная QFI остаётся positive. На cycle_4 диагональные edge blocks уже не обязаны равняться I_3. Поэтому универсальные независимые scalar edge weights из локального edge result не следуют.
 - Эти артефакты относятся к head c851f2dac4dff0e126a17d4b4e46a9c6af2d114b из run 44434220560, а не к текущему head PR #85. Для текущего head требуется отдельный свежий workflow.
+
+### Важная оговорка о выборе q=2, размерности и spectral history
+
+[REPOSITORY_AUDIT_2026-09-06_SPECTRAL_HISTORY.md](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/spectral-history-closure/REPOSITORY_AUDIT_2026-09-06_SPECTRAL_HISTORY.md) фиксирует строгую логику выбора:
+
+- Уравнение q+2=2^q имеет единственное целое решение q=2 при условии уже выбранного locally valence-homogeneous binary route family. Само требование такой route-family homogeneity пока является архитектурным/model-selection условием, а не следствием полной graph-changing Hamiltonian.
+- d*=log₂(2·2^q)=q+1=3 — точная теорема для frozen route rewrite, но она математически зависит от тех же предпосылок q=2. C4, octahedral link, 16-cell/S3 и d*=3 согласуются, однако не являются четырьмя статистически независимыми измерениями неизвестной размерности.
+- 16-cell даёт точную выбранную PL S3 completion и проверенную конечную refinement stability; уникальность этой топологии среди всех допустимых microscopic histories и её динамическое доминирование физической мерой не доказаны.
+- [BQG_SPECTRAL_HISTORY_GRAPH.md](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/spectral-history-closure/BQG_SPECTRAL_HISTORY_GRAPH.md) определяет constraint spectral dimension из конечного положительного Euclidean master и operator-derived block-Lanczos/Jacobi graph. Это спектральная характеристика constraint operator на выбранном seed sector; она не становится физической spacetime dimension без независимой refinement/geometry theorem.
+- B3 spectral-history extension пока имеет preregistration, а не найденный B3 closure result. Конечный Euclidean first-edge/finite Krylov control нельзя выдавать за полную Lorentzian physical history.
