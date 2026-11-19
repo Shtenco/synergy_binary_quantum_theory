@@ -14,7 +14,7 @@ on:
       - 'tests/test_bqg_v09_v10_paired_regression.py'
   pull_request:
     branches:
-      - research/intrinsic-clock-lorentzian-bridge-20261116
+      - research/bqg-intrinsic-clock-lorentzian-bridge-20261116
     paths:
       - '.github/workflows/bqg-w5-v09-v10-paired.yml'
       - 'scripts/bqg_v09_v10_paired_regression.py'
