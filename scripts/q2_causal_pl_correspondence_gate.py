@@ -636,16 +636,23 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
 
 def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_feshbach=False):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
-    adjacency_ok = True
+    adjacency_violations = []
     for edge in dual["edges"]:
         a = tuple(dual["vertices"][edge["source"]]["tetrahedron"])
         b = tuple(dual["vertices"][edge["target"]]["tetrahedron"])
         ea, eb = parent_map[a], parent_map[b]
-        if not _causal_edges_share_exactly_one_endpoint(
-            causal_edges[ea], causal_edges[eb]
-        ):
-            adjacency_ok = False
-            break
+        endpoints_a, endpoints_b = causal_edges[ea], causal_edges[eb]
+        if not _causal_edges_share_exactly_one_endpoint(endpoints_a, endpoints_b):
+            adjacency_violations.append({
+                "pl_dual_source": edge["source"],
+                "pl_dual_target": edge["target"],
+                "causal_source_edge": ea,
+                "causal_target_edge": eb,
+                "causal_source_endpoints": list(endpoints_a),
+                "causal_target_endpoints": list(endpoints_b),
+                "shared_endpoint_count": len(set(endpoints_a) & set(endpoints_b)),
+            })
+    adjacency_ok = not adjacency_violations
     histogram = Counter(fibres.values())
     measure_scale = 24 ** generation
     lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
@@ -672,6 +679,8 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_f
         "pushforward_measure_max": max(value / measure_scale for value in fibres.values()),
         "pl_dual_adjacencies": len(dual["edges"]),
         "adjacency_preserved": adjacency_ok,
+        "adjacency_violation_count": len(adjacency_violations),
+        "adjacency_violation_examples": adjacency_violations[:10],
         **lumpability,
         **quotient,
         **spectrum,
