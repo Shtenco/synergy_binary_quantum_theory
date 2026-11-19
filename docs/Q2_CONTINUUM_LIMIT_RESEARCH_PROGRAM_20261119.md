@@ -44,6 +44,13 @@ The objective is to construct and test a mathematically specified sequence of me
 15. M. Wardetzky, S. Mathur, F. Kälberer, E. Grinspun, *Discrete Laplace Operators: No Free Lunch*, Symposium on Geometry Processing (2007), DOI: 10.2312/SGP/SGP07/033-037. The paper proves that on general triangular meshes no single discrete Laplacian satisfies all the natural desiderata simultaneously. It is a warning to state explicitly which properties our geometric dual and primal FEM operators preserve; its exact theorem is for surface meshes, so extension to tetrahedral 3-complexes must be justified separately.
    - https://doi.org/10.2312/SGP/SGP07/033-037
 
+9. N. García Trillos, M. Gerlach, M. Hein, D. Slepčev, *Error estimates for spectral convergence of the graph Laplacian on random geometric graphs towards the Laplace--Beltrami operator* (2018). arXiv:1801.10108. Gives quantitative eigenvalue/eigenvector convergence rates under sampling and bandwidth hypotheses, with transport-based comparison of empirical and continuum measures.
+   - https://arxiv.org/abs/1801.10108
+10. N. García Trillos and D. Slepčev, *Continuum limit of total variation on point clouds* (2016), and related work on graph Dirichlet energies and spectral convergence. The key transferable technique is the TL^p transport topology plus Gamma-convergence and compactness; the hypotheses are for random geometric graphs approximating a known manifold/domain, not automatically satisfied by our combinatorial PL dual graphs.
+   - https://www.math.cmu.edu/users/slepcev/spectral_gamma10.pdf
+11. M. Keller, D. Lenz, R. Wojciechowski, *Graphs and Discrete Dirichlet Spaces* (2021). A systematic framework for graph Laplacians, regular Dirichlet forms, intrinsic metrics, heat semigroups, recurrence and stochastic completeness.
+   - https://www.math.uni-potsdam.de/professuren/graphentheorie/research/ansicht/graphs-and-discrete-dirichlet-spaces
+
 These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
 
 ## Required mathematical object at every refinement level
@@ -210,7 +217,7 @@ The dedicated GitHub Actions run completed successfully:
 - Self-energy slope: symmetry max-entry error 1.15e-7; smallest eigenvalue -1.40e-15 (roundoff); largest 27.8169; trace 514.252.
 - Both matrices are 512 x 512 and numerically positive semidefinite to the stated tolerances. Independent artifact inspection also verified the normalized constant coarse mode (proportional to square-root fibre sizes) is annihilated to relative residual about 1.6e-9 / 1.4e-9.
 
-This closes the earlier four-probe limitation for the **finite G3 geometric graph**. It does not establish convergence of these matrices across refinement levels, nor identify them with physical QFI conductance. The solve residuals are numerical stopping diagnostics, not rigorous operator-norm error bounds. The next test is matrix-level refinement stability across independently generated G0--G3 families, using common coarse-space identifications and fixed normalization.
+Independent matrix-action cross-check on the persisted G3 graph (seed 20261119, one normalized random coarse vector, independently rebuilt sparse Laplacian): projected-CG converged on both solves with residuals 1.25e-9 and 8.89e-10. Relative discrepancy between direct operator action and stored matrix action was 8.16e-9 for the correction and 1.40e-7 for the slope. This closes the earlier four-probe limitation for the **finite G3 geometric graph**. It does not establish convergence of these matrices across refinement levels, nor identify them with physical QFI conductance. The solve residuals are numerical stopping diagnostics, not rigorous operator-norm error bounds. The next test is matrix-level refinement stability across independently generated G0--G3 families, using common coarse-space identifications and fixed normalization.
 
 ## Current decision rule
 
