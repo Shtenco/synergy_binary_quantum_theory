@@ -55,3 +55,16 @@ def test_galerkin_spectral_report_counts_connected_zero_mode():
     assert report["negative_eigenvalue_count_below_tolerance"] == 0
     assert report["symmetry_error"] == 0
     assert report["measure_total"] == 16.0
+
+
+def test_g3_galerkin_uses_full_g0_g2_heat_time_grid_and_gap():
+    from scripts.q2_g3_matrix_free_feshbach import galerkin_spectral_report
+
+    matrix = np.array([[0.5, -1 / np.sqrt(2)], [-1 / np.sqrt(2), 1.0]])
+    report = galerkin_spectral_report(matrix, measure_total=16.0)
+    assert [row["t"] for row in report["normalized_heat_trace"]] == [
+        0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0
+    ]
+    assert len(report["heat_trace_normalized"]) == 7
+    assert report["spectral_gap"] > 0
+    assert report["nonzero_count"] == 4
