@@ -50,7 +50,7 @@ jobs:
         run: python -m pip install --upgrade numpy sympy
       - name: Compile paired W5 audit modules
         run: |
-          python -m py_compile scripts/bqg_v09_w5_lorentzian_raw_column.py
+          python -m py_compile scripts/archive/bqg_v09_w5_lorentzian_raw_column_v09_frozen.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_v09_v10_paired_regression.py
           python -m py_compile scripts/peter_weyl_euclidean_sine_ordering_gate.py
