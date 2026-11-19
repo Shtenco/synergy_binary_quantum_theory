@@ -3,7 +3,7 @@ from scripts.q2_causal_pl_correspondence_gate import run
 
 def test_q2_causal_to_pl_correspondence_preserves_adjacency_and_refinement():
     result = run(max_generation=2)
-    assert result["passed"] is True
+    assert result["passed"] is True, {"checks": result["checks"], "levels": result["levels"]}
     assert result["checks"]["all_levels_preserve_dual_adjacency"] is True
     assert result["checks"]["refinement_naturality"] is True
     assert [
