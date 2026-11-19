@@ -46,16 +46,19 @@ def coarse_galerkin_matrix(edge_endpoints, fibre_labels, fibre_sizes, *, chunk_r
 
 def galerkin_spectral_report(matrix, *, measure_total, times=None):
     times = np.asarray(times if times is not None else
-                       [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0], dtype=float)
+                       [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0], dtype=float)
     symmetry_error = float(np.max(np.abs(matrix - matrix.T)))
     eigenvalues = np.linalg.eigvalsh(0.5 * (matrix + matrix.T))
     heat = np.asarray([np.mean(np.exp(-t * eigenvalues)) for t in times])
     log_t, log_heat = np.log(times), np.log(heat)
     spectral_dimension = -2.0 * np.gradient(log_heat, log_t)
+    positive = eigenvalues[eigenvalues > 1e-10]
     return {
         "dimension": int(matrix.shape[0]),
+        "nonzero_count": int(np.count_nonzero(np.abs(matrix) > 1e-14)),
         "symmetry_error": symmetry_error,
         "minimum_eigenvalue": float(eigenvalues[0]),
+        "spectral_gap": float(positive[0]) if len(positive) else None,
         "maximum_eigenvalue": float(eigenvalues[-1]),
         "negative_eigenvalue_count_below_tolerance": int(np.sum(eigenvalues < -1e-10)),
         "zero_mode_count": int(np.sum(np.abs(eigenvalues) <= 1e-10)),
