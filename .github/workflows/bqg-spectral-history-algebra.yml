@@ -2,14 +2,14 @@ name: BQG spectral-history algebraic regression
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
       - 'scripts/bqg_spectral_history_graph_gate.py'
       - 'tests/test_bqg_spectral_history_regression.py'
       - '.github/workflows/bqg-spectral-history-algebra.yml'
   pull_request:
-    branches: [main]
+    branches: ['**']
     paths:
       - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
       - 'scripts/bqg_spectral_history_graph_gate.py'
