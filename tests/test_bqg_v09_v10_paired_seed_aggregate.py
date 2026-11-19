@@ -4,17 +4,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from bqg_v09_v10_paired_seed_aggregate import aggregate, CUTOFFS, MODES, SEEDS
+from bqg_v09_v10_paired_seed_aggregate import (
+    aggregate, CUTOFFS, MODES, SEEDS, EXPECTED_SCHEMA, EXPECTED_STATUS,
+    REQUIRED_ACCEPTANCE,
+)
 
 
 def make_report(cutoff, mode, seed, perturb=0.0):
     value = complex(seed + 1 + perturb, 0.25 * seed)
     row = [repr(("state", seed)), value.real, value.imag]
     return {
+        "schema": EXPECTED_SCHEMA,
+        "status": EXPECTED_STATUS,
+        "source_node": 0,
         "Jmax2": cutoff,
         "mode": mode,
         "seed_Ks": [seed],
-        "acceptance": {"paired_seed": True},
+        "acceptance": {name: True for name in REQUIRED_ACCEPTANCE},
         "V09_vs_V10_forward_columns": [{
             "seed_K": seed,
             "V09_raw_sparse": [row],
@@ -57,6 +63,27 @@ class TestSeedShardedPairedAggregate(unittest.TestCase):
         result = aggregate(rows)
         self.assertFalse(result["passed"])
         self.assertTrue(result["cutoff_convergence_failures"])
+
+    def test_missing_required_acceptance_key_fails_closed(self):
+        rows = self.fixture()
+        rows[0]["acceptance"].pop(REQUIRED_ACCEPTANCE[0])
+        result = aggregate(rows)
+        self.assertFalse(result["passed"])
+        self.assertTrue(result["per_report_failures"])
+
+    def test_wrong_schema_fails_closed(self):
+        rows = self.fixture()
+        rows[0]["schema"] = "unknown-schema"
+        result = aggregate(rows)
+        self.assertFalse(result["passed"])
+        self.assertEqual(len(result["malformed_reports"]), 1)
+
+    def test_duplicate_cell_fails_closed(self):
+        rows = self.fixture()
+        rows.append(dict(rows[0]))
+        result = aggregate(rows)
+        self.assertFalse(result["passed"])
+        self.assertTrue(result["duplicate_cells"])
 
     def test_missing_seed_cutoff_mode_cell_fails_closed(self):
         result = aggregate(self.fixture()[:-1])
