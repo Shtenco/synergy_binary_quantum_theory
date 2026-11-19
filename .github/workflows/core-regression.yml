@@ -226,47 +226,69 @@ jobs:
           path: verification_results/L1_Q4_S4_METRIC_COMPRESSION.json
           if-no-files-found: error
 
-  higher-shell:
+  higher-shell-columns:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        column: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
-      - name: Install dependencies
+      - name: Install numerical dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-      - name: Download 31 certified exact higher-shell columns
+      - name: Compute exact higher-shell column ${{ matrix.column }}
+        run: |
+          python scripts/peter_weyl_higher_shell_lambda_gate.py \\
+            --column ${{ matrix.column }} \\
+            --output verification_results/columns/column_${{ matrix.column }}.json
+      - name: Upload exact higher-shell column
+        uses: actions/upload-artifact@v4
+        with:
+          name: higher-shell-column-${{ matrix.column }}-${{ github.run_id }}
+          path: verification_results/columns/column_${{ matrix.column }}.json
+          if-no-files-found: error
+          retention-days: 30
+
+  higher-shell-assemble:
+    needs: higher-shell-columns
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install numerical dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Download all 32 freshly computed higher-shell columns
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: Shtenco/binary_quantum_theory
-          run-id: 31844567559
-          pattern: lambda-column-*
+          pattern: higher-shell-column-*-${{ github.run_id }}
           path: verification_results/columns
           merge-multiple: true
-      - name: Audit inherited higher-shell set
+      - name: Audit exact 32-column set
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('verification_results/columns')
-          got=sorted(int(x.stem.split('_')[-1]) for x in p.glob('column_*.json'))
-          missing=[i for i in range(32) if i not in got]
-          print('inherited columns:', got)
-          assert missing in ([28], []), missing
+          got=sorted(int(x.stem.split('_')[-1]) for x in Path('verification_results/columns').glob('column_*.json'))
+          print('fresh higher-shell columns:', got)
+          assert got == list(range(32)), got
           PY
-      - name: Fresh independent recomputation of heavy column 28
-        run: |
-          python scripts/peter_weyl_higher_shell_lambda_gate.py \
-            --column 28 \
-            --output verification_results/columns/column_28.json
       - name: Reassemble exact 32D Lambda and block-Lanczos matrices
         run: |
-          python scripts/peter_weyl_higher_shell_lambda_gate.py \
-            --assemble-dir verification_results/columns \
+          python scripts/peter_weyl_higher_shell_lambda_gate.py \\
+            --assemble-dir verification_results/columns \\
             --output verification_results/PETER_WEYL_HIGHER_SHELL_LAMBDA.json
       - name: Guard canonical higher-shell spectrum
         run: |
@@ -282,11 +304,10 @@ jobs:
           assert p['block_lanczos']['B2_reconstruction_error'] < 1e-7
           print('higher-shell spectrum guards: PASS')
           PY
-      - name: Upload reconstructed higher-shell evidence
+      - name: Upload assembled higher-shell evidence
         uses: actions/upload-artifact@v4
         with:
-          name: canonical-peter-weyl-higher-shell
-          path: |
-            verification_results/columns/column_28.json
-            verification_results/PETER_WEYL_HIGHER_SHELL_LAMBDA.json
+          name: canonical-peter-weyl-higher-shell-${{ github.run_id }}
+          path: verification_results/PETER_WEYL_HIGHER_SHELL_LAMBDA.json
           if-no-files-found: error
+          retention-days: 30
