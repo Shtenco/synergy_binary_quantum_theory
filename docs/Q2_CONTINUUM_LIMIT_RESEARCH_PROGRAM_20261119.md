@@ -39,6 +39,11 @@ The objective is to construct and test a mathematically specified sequence of me
 13. M. Belkin and P. Niyogi, *Convergence of Laplacian Eigenmaps* (2008). Shows convergence of suitably constructed graph-Laplacian eigenvectors to Laplace--Beltrami eigenfunctions under manifold sampling assumptions.
    - https://www.aoml.noaa.gov/ftp/pub/phod/pub/thacker/SSAmanifoldPapers/BelkinNiyogi2008.pdf
 
+14. J. Dodziuk, *Finite-Difference Approach to the Hodge Theory of Harmonic Forms*, American Journal of Mathematics 98 (1976), 79--104. For suitable inner products on cochains of smooth Riemannian triangulations, this constructs a combinatorial Hodge theory approximating the smooth one; the paper also proves convergence results for eigenvalues of the Laplacian on functions under subdivision. This is especially relevant to a barycentrically refined PL complex.
+   - https://doi.org/10.2307/2373615
+15. M. Wardetzky, S. Mathur, F. Kälberer, E. Grinspun, *Discrete Laplace Operators: No Free Lunch*, Symposium on Geometry Processing (2007), DOI: 10.2312/SGP/SGP07/033-037. The paper proves that on general triangular meshes no single discrete Laplacian satisfies all the natural desiderata simultaneously. It is a warning to state explicitly which properties our geometric dual and primal FEM operators preserve; its exact theorem is for surface meshes, so extension to tetrahedral 3-complexes must be justified separately.
+   - https://doi.org/10.2312/SGP/SGP07/033-037
+
 These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
 
 ## Required mathematical object at every refinement level
