@@ -115,3 +115,36 @@ calculation. It must independently validate the fibre projection
 generation-1/2 dense controls, establish solver residual and gap bounds, and
 report the correction and self-energy derivative without allocating a dense
 221,184-by-512 embedding. No generation-3 Feshbach result is claimed here.
+
+
+## Matrix-free Feshbach primitive controls (2026-11-19)
+
+A generic matrix-free operator layer has now been added:
+
+- `scripts/q2_matrix_free_feshbach.py`
+- `tests/test_q2_matrix_free_feshbach.py`
+
+It applies the normalized fibre isometry (U), its adjoint (U^T), the
+orthogonal projectors (P=UU^T) and (Q=I-P), the leakage maps
+(B=QLU), (B^T=U^TLQ), and the Galerkin block (A_{PP}=U^TLU) without
+allocating the fine-by-coarse dense embedding. It solves with (QLQ+P)
+using sparse-graph matrix-vector products and conjugate gradients, then
+exposes matrix-free applications of (B^T(QLQ|_Q)^{-1}B) and
+(B^T(QLQ|_Q)^{-2}B).
+
+The six new tests compare the matrix-free implementation against explicit
+dense controls on a four-vertex cycle. They cover isometry/projector
+identities, adjointness of (B) and (B^T), the Galerkin block, the
+Feshbach correction, the second-resolvent self-energy slope, and invalid
+graph/fibre inputs.
+
+- CI run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44435219895
+- Result: **PASS**, 127 tests across 19 pytest invocations, zero failures.
+
+**Strict boundary:** these are exact small-graph controls for the generic
+matrix-free primitives. They are not yet a generation-3 Feshbach computation.
+The 221,184-vertex generation-3 graph has not yet been passed through the
+matrix-free solver. Before that step, the implementation still needs
+generation-1/2 cross-checks against the existing Feshbach diagnostics,
+generation-3 residual/gap controls, solver iteration reporting, and a
+scalable coarse-operator norm/eigensolver strategy.
