@@ -4,6 +4,8 @@ on:
   push:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
       - 'MIRROR_WILSON_MATTER.md'
       - 'scripts/mirror_matter_matrix_element_gate.py'
@@ -13,6 +15,8 @@ on:
   pull_request:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
       - 'MIRROR_WILSON_MATTER.md'
       - 'scripts/mirror_matter_matrix_element_gate.py'
