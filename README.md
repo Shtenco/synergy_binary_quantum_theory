@@ -1392,8 +1392,8 @@ Provenance check for the older HDA controls: GitHub job lookup currently reports
 Выборочная интеграция результатов HDA, зеркального Wilson–Dirac сектора, spectral-history и физического причинного конуса собрана в отдельной ветке:
 
 - [BQG_PROOF_INDEX_20261119.md](BQG_PROOF_INDEX_20261119.md) — точные SHA исходных blob/коммитов, проверенные workflow/run, предпосылки теорем, статус каждого результата и границы физических утверждений.
-- Новые независимые CI: `bqg-hda-algebra-regression`, `bqg-mirror-wilson-dirac`, `bqg-spectral-history-algebra`, `bqg-physical-history-reference`.
-- Фактический тяжёлый Peter–Weyl spectral first-edge и B3 не маскируются быстрым алгебраическим regression: они остаются отдельными вычислительными этапами.
+- Пять независимых CI: `bqg-hda-algebra-regression`, `bqg-mirror-wilson-dirac`, `bqg-spectral-history-algebra`, `bqg-physical-history-reference`, `bqg-spectral-history-actual-k5`.
+- Фактический тяжёлый Peter–Weyl K5 spectral first-edge вынесен в отдельный 32-column artifact-producing workflow; B3 остаётся отдельным этапом и заблокирован отсутствием исходных архивных артефактов.
 - Ни один divergent research branch не вливается целиком. Слияние интеграционной ветки разрешается только после проверки всех новых CI и review diff.
 
 
@@ -1408,3 +1408,8 @@ PR [#86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) now s
 
 The integration branch now includes `scripts/bqg_euclidean_master_first_edge_sharded.py` and workflow `bqg-spectral-history-actual-k5`. It computes the 32 exact columns of the finite positive Euclidean master, assembles the first block-Lanczos edge and reports `B1_rank` with independent algebra/PSD/regulator guards. A successful algebra gate does not predetermine closure: nonzero `B1_rank` means the finite history continues to another shell. The B3 preregistration is retained, but its old source artifacts in the separate `binary_quantum_theory` repository are currently unavailable and must be regenerated before B3 can be claimed.
 
+
+
+### CI-аудит интеграции BQG — 19 ноября 2026
+
+На проверенном head `2cca65c400dedd56b6be0a14a4263bb1f892ab8f` завершились успешно четыре конечных workflow: HDA compression (2/2 tests), mirror/Wilson (оба JSON gate `passed=true`), synthetic spectral-history regression (reachable/reduced dimension 7; numerical errors порядка `1e-15`) и physical-history reference (`PASS_REFERENCE_ONLY`, одновременно `OPEN_PHYSICAL`). Их артефакты скачаны и проверены. Настоящий K5 first-edge run `44496628504` на момент аудита оставался в очереди без колонок; W5 run `44496003089` имел 30 queued cells и ноль артефактов. Эти результаты не следует переносить на последующий commit без повторного CI.
