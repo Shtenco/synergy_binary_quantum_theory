@@ -60,8 +60,8 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 - Frozen V09 original commit: `6ae145ae61a19ed5dfb5a7dae5abf8d79d79eff9`; frozen file blob: `a2cc3d5eaee8377e94fd7d24a1a279d2399df133`.
 - Workflow run: `44482668149`.
 - The shard `Jmax2=10 / shadow_no_prune` completed its 5 paired-regression tests, 5 V09 adapter tests and 23 V10 adjoint tests successfully, then the runner received a shutdown signal during the heavy numerical calculation.
-- Other five shards were still queued at last inspection. No artifacts were uploaded. This is **INCOMPLETE / runner interruption**, not a mathematical FAIL and not a PASS.
-- GitHub rejected an immediate per-job rerun because the parent workflow still had queued jobs. Retry only after the parent run reaches a terminal state, or use the resumable adjacent-magnetic-pair sharding from PR #84.
+- At the latest inspection, the Jmax2=10 production shard had started and the other four unfinished shards remained queued; the interrupted shadow shard remained failed due runner shutdown. No artifacts were uploaded. This is **INCOMPLETE / runner interruption**, not a mathematical FAIL and not a PASS.
+- GitHub rejected an immediate per-job rerun because the parent workflow was still running. Retry only after the parent run reaches a terminal state, or use the resumable adjacent-magnetic-pair sharding from PR #84.
 
 ## 6. Merge and claim rules
 
@@ -71,3 +71,11 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 4. Distinguish `proved`, `tested_finite`, `conditional`, `reference_only`, `open_physical`, `incomplete` and `experimental`.
 5. No BIP39/seed encoding step is evidence for a physical holographic principle. Such a connection needs a separately defined physical observable and falsifiable prediction.
 6. Do not merge this integration branch into main until all three new focused workflows are green and the PR diff is reviewed. The physical gates remain fail-closed.
+
+
+## 7. Current integration PR and CI observation
+
+- Selective integration PR: [#87](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/87).
+- Current branch head at last update: `8f72ef584d8d13d31023657364fb895fee853d67`; base `main` remains `401b006d368caf4bfd7578c0d312795cf2f2323a`.
+- The four focused workflow definitions are present and path-filtered. The GitHub connector currently returns no workflow runs and no status checks for the integration head, so **none of the new CI jobs is yet certified green**. This is recorded as pending/unobserved, not as a pass.
+- PR #87 remains Draft and must not be merged until the four workflows have run and their JSON artifacts have been inspected.
