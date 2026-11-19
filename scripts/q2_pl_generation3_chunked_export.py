@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import heapq
 import itertools
 import json
 import resource
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +50,64 @@ def _sha256_memmap(array, chunk_rows: int) -> str:
     for start in range(0, len(array), chunk_rows):
         digest.update(np.ascontiguousarray(array[start:start + chunk_rows]).tobytes())
     return digest.hexdigest()
+
+
+def _count_unique_edges_external(endpoints, *, chunk_rows: int, scratch_dir: Path):
+    """Count unique canonical edges with an external merge; RAM is O(chunk_rows)."""
+    sorted_paths = []
+    for chunk_index, start in enumerate(range(0, len(endpoints), chunk_rows)):
+        block = np.asarray(endpoints[start:start + chunk_rows])
+        block = np.sort(block, axis=1)
+        order = np.lexsort((block[:, 1], block[:, 0]))
+        path = scratch_dir / f"sorted_edges_{chunk_index:04d}.npy"
+        np.save(path, block[order], allow_pickle=False)
+        sorted_paths.append(path)
+
+    def stream(path):
+        mapped = np.load(path, mmap_mode="r", allow_pickle=False)
+        for row in mapped:
+            yield int(row[0]), int(row[1])
+
+    previous = None
+    unique_count = 0
+    duplicate_count = 0
+    for edge in heapq.merge(*(stream(path) for path in sorted_paths)):
+        if edge == previous:
+            duplicate_count += 1
+        else:
+            unique_count += 1
+        previous = edge
+    return unique_count, duplicate_count
+
+
+def _streaming_component_count(n_vertices: int, endpoints, *, chunk_rows: int):
+    """Union-find connectivity scan over endpoint chunks; no CSR graph is built."""
+    parent = np.arange(n_vertices, dtype=np.int32)
+    rank = np.zeros(n_vertices, dtype=np.uint8)
+
+    def find(vertex):
+        vertex = int(vertex)
+        while parent[vertex] != vertex:
+            parent[vertex] = parent[parent[vertex]]
+            vertex = int(parent[vertex])
+        return vertex
+
+    def union(left, right):
+        root_left, root_right = find(left), find(right)
+        if root_left == root_right:
+            return
+        if rank[root_left] < rank[root_right]:
+            root_left, root_right = root_right, root_left
+        parent[root_right] = root_left
+        if rank[root_left] == rank[root_right]:
+            rank[root_left] += 1
+
+    for start in range(0, len(endpoints), chunk_rows):
+        for left, right in np.asarray(endpoints[start:start + chunk_rows]):
+            union(left, right)
+    roots = np.fromiter((find(vertex) for vertex in range(n_vertices)),
+                        dtype=np.int32, count=n_vertices)
+    return int(np.unique(roots).size)
 
 
 def _parent_state():
@@ -188,8 +248,10 @@ def export(output_dir: Path, *, chunk_size: int = 4096) -> dict:
         np.add.at(degree, block[:, 0], 1)
         np.add.at(degree, block[:, 1], 1)
 
-    canonical = np.sort(np.asarray(endpoints), axis=1)
-    unique_edges = len(np.unique(canonical, axis=0))
+    with tempfile.TemporaryDirectory(prefix="g3-edge-sort-", dir=output_dir) as scratch:
+        unique_edges, duplicate_edges = _count_unique_edges_external(
+            endpoints, chunk_rows=chunk_size * 36, scratch_dir=Path(scratch)
+        )
     fibre_sizes = np.bincount(np.asarray(fibre_labels), minlength=len(causal_ids))
     mass_by_parent = {}
     for fibre_id, count in enumerate(fibre_sizes):
@@ -202,24 +264,14 @@ def export(output_dir: Path, *, chunk_size: int = 4096) -> dict:
         ).items()
     }
     mass_ok = mass_by_parent == expected_parent_mass
-
-    try:
-        from scipy.sparse import csr_matrix
-        from scipy.sparse.csgraph import connected_components
-    except ImportError as exc:
-        raise RuntimeError("scipy is required for the connectivity reconciliation") from exc
-    graph = csr_matrix(
-        (np.ones(2 * n_edges, dtype=np.uint8),
-         (np.concatenate((endpoints[:, 0], endpoints[:, 1])),
-          np.concatenate((endpoints[:, 1], endpoints[:, 0])))),
-        shape=(n_child, n_child),
+    component_count = _streaming_component_count(
+        n_child, endpoints, chunk_rows=chunk_size * 36
     )
-    component_count, _ = connected_components(graph, directed=False)
 
     checks = {
         "exact_child_count": n_child == 221184,
         "exact_edge_count": n_edges == 442368,
-        "unique_edges": unique_edges == n_edges,
+        "unique_edges": unique_edges == n_edges and duplicate_edges == 0,
         "four_regular": bool(np.all(degree == 4)),
         "one_neighbour_per_route": bool(np.all(route_degree == 1)),
         "connected": int(component_count) == 1,
@@ -269,7 +321,8 @@ def export(output_dir: Path, *, chunk_size: int = 4096) -> dict:
             )
         },
         "peak_rss_bytes": int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024),
-        "storage_mode": "numpy open_memmap; parent-chunk writes; validation reads bounded edge slices",
+        "duplicate_edges": int(duplicate_edges),
+        "storage_mode": "numpy open_memmap; parent-chunk writes; external merge uniqueness; streaming union-find connectivity; bounded edge slices",
         "scope_boundary": "Finite combinatorial G3 export only; not physical QFI conductance or continuum closure.",
     }
     (output_dir / "G3_CHUNKED_MANIFEST.json").write_text(
