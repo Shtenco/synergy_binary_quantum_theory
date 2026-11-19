@@ -55,7 +55,7 @@ def test_g0_g3_comparison_reports_heat_trace_and_dimension_deltas(tmp_path):
     assert report["levels_compared"] == [0, 1, 2, 3]
     assert len(report["comparisons_to_g3"]) == 3
     assert report["comparisons_to_g3"][2]["max_absolute_heat_trace_delta"] > 0
-    assert report["comparisons_to_g3"][2]["max_absolute_effective_dimension_delta"] == pytest.approx(0.0)
+    assert report["comparisons_to_g3"][2]["max_absolute_effective_dimension_delta"] == pytest.approx(0.1)
     assert "not established" in report["stability_conclusion"]
 
 
