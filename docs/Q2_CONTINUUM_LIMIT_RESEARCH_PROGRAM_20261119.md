@@ -32,6 +32,13 @@ The objective is to construct and test a mathematically specified sequence of me
 10. L. Ambrosio and S. Honda, *New stability results for sequences of metric measure spaces with uniform Ricci bounds from below* (2016). Relevant for extrinsic embeddings into a common metric space, Mosco convergence, Sobolev compactness, and stability of Cheeger constants.
    - https://arxiv.org/abs/1605.07908
 
+11. N. García Trillos, M. Gerlach, M. Hein, D. Slepčev, *Error estimates for spectral convergence of the graph Laplacian on random geometric graphs towards the Laplace--Beltrami operator* (2019). Provides quantitative eigenvalue/eigenvector convergence rates for appropriately scaled geometric graphs sampled from manifolds. It is not directly the same deterministic PL-dual construction, but it is a valuable benchmark for what a graph-to-manifold theorem must quantify.
+   - https://arxiv.org/abs/1801.10108
+12. J. Calder and N. García Trillos, *Improved spectral convergence rates for graph Laplacians on ε-graphs and k-NN graphs*, Applied and Computational Harmonic Analysis 60 (2022), 123--175. Useful for explicit scaling regimes and convergence-rate diagnostics.
+   - https://doi.org/10.1016/j.acha.2022.02.004
+13. M. Belkin and P. Niyogi, *Convergence of Laplacian Eigenmaps* (2008). Shows convergence of suitably constructed graph-Laplacian eigenvectors to Laplace--Beltrami eigenfunctions under manifold sampling assumptions.
+   - https://www.aoml.noaa.gov/ftp/pub/phod/pub/thacker/SSAmanifoldPapers/BelkinNiyogi2008.pdf
+
 These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
 
 ## Required mathematical object at every refinement level
