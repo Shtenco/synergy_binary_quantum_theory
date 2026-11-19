@@ -47,3 +47,18 @@ def test_generation_zero_geometric_dual_conductances_are_positive():
     assert np.all(areas > 0)
     assert np.all(distances > 0)
     assert np.all(np.isfinite(weights))
+
+def test_stable_child_order_matches_exporter_id_contract():
+    import itertools
+    from scripts.q2_pl_graph_export import all_nonempty_faces
+    from scripts.q2_pl_generation3_stream import _child_key
+    from scripts.q2_pl_geometric_mesh_audit import stable_child_order
+
+    parent = [(0, 1, 2, 3)]
+    faces = all_nonempty_faces(parent)
+    face_id = {face: index for index, face in enumerate(faces)}
+    expected = np.asarray([
+        _child_key(parent[0], tuple(parent[0][i] for i in permutation), face_id)
+        for permutation in itertools.permutations(range(4))
+    ], dtype=np.uint32)
+    assert np.array_equal(stable_child_order(parent, faces), expected)
