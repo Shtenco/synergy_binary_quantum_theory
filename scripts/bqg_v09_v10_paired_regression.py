@@ -273,6 +273,14 @@ def run(node, jmax2, mode, output):
                 "V10_seed_column_support": len(v10_column),
                 "V10_seed_column_norm": _norm(v10_column),
                 "V10_seed_column_digest": _sparse_digest(v10_column),
+                "V09_raw_sparse": [
+                    [key, float(complex(value).real), float(complex(value).imag)]
+                    for key, value in sorted(row["raw_B_gauss"].items())
+                ],
+                "V10_seed_sparse": [
+                    [key, float(complex(value).real), float(complex(value).imag)]
+                    for key, value in sorted(v10_column.items())
+                ],
             })
 
     sine_rows = [
