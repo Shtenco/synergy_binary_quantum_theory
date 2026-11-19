@@ -205,13 +205,37 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
     }
 
     original_serializer = V09.serialize_sparse
+    original_add_sparse = V09.add_sparse
     original_lsine_run = LSINE.run
     captured = []
+    term_capture = []
     sine_capture = {}
 
     def capture_serializer(state):
         captured.append(dict(state))
         return original_serializer(state)
+
+    def capture_add_sparse(target, source, scale=1.0):
+        import inspect
+        caller = inspect.currentframe().f_back
+        if caller.f_code.co_name == "executor" and caller.f_locals.get("B_cov") is target:
+            term_index = int(caller.f_locals["term_index"])
+            epsilon = int(caller.f_locals["epsilon"])
+            ordered_edges = tuple(caller.f_locals["a"] for _ in ())
+            # Preserve both the unweighted term output and its signed epsilon contribution.
+            raw_rows = [[repr(k), complex(v).real, complex(v).imag]
+                        for k, v in sorted(source.items(), key=lambda item: repr(item[0]))]
+            weighted_rows = [[repr(k), (complex(v) * complex(scale)).real,
+                              (complex(v) * complex(scale)).imag]
+                             for k, v in sorted(source.items(), key=lambda item: repr(item[0]))]
+            term_capture.append({
+                "term_index": term_index,
+                "epsilon_sign": epsilon,
+                "ordered_edges": list(caller.f_locals["a" : "a"]) if False else None,
+                "raw_covariant_sparse": raw_rows,
+                "epsilon_weighted_covariant_sparse": weighted_rows,
+            })
+        return original_add_sparse(target, source, scale)
 
     def capture_lsine_run(*args, **kwargs):
         result = original_lsine_run(*args, **kwargs)
@@ -220,6 +244,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
         return result
 
     V09.serialize_sparse = capture_serializer
+    V09.add_sparse = capture_add_sparse
     LSINE.run = capture_lsine_run
     v09_rows = []
     try:
@@ -227,8 +252,13 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
         with context:
             for seed_k in seed_ks:
                 captured.clear()
+                term_capture.clear()
                 sine_capture.clear()
                 result = V09.run_column(node, seed_k, jmax2, 0, 24)
+                if len(term_capture) != 24:
+                    raise AssertionError(f"expected 24 captured complex epsilon-term maps, got {len(term_capture)}")
+                for captured_term, diagnostic in zip(term_capture, result["term_diagnostics"]):
+                    captured_term["ordered_edges"] = diagnostic["ordered_edges"]
                 if len(captured) != 3:
                     raise AssertionError(f"expected three V09 serialization calls, got {len(captured)}")
                 raw_A, raw_B_gauss, raw_B_covariant = [dict(x) for x in captured]
@@ -241,6 +271,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                         (int(row["epsilon_sign"]), tuple(row["ordered_edges"]))
                         for row in result["term_diagnostics"]
                     ] == v09_epsilon,
+                    "epsilon_term_maps": list(term_capture),
                     "sine_wrapper_gate_passed": sine_capture.get("passed") is True,
                     "sine_wrapper_diagnostics": sine_capture.get("max_diagnostics", {}),
                     "A_serializer_loss": _serializer_loss(raw_A, result["A_Euclidean_sine_Gauss"]),
@@ -251,6 +282,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                 })
     finally:
         V09.serialize_sparse = original_serializer
+        V09.add_sparse = original_add_sparse
         LSINE.run = original_lsine_run
 
     amp_tol = 0.0 if mode == "shadow_no_prune" else 1e-12
@@ -278,6 +310,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                 "V09_raw_support": len(row["raw_B_gauss"]),
                 "V09_raw_norm": _norm(row["raw_B_gauss"]),
                 "V09_raw_digest": _sparse_digest(row["raw_B_gauss"]),
+                "V09_raw_vs_serialized": _relative_difference(row["serialized_B_gauss"], row["raw_B_gauss"]),
                 "V09_serialized_digest": _sparse_digest(row["serialized_B_gauss"]),
                 "V10_seed_column_support": len(v10_column),
                 "V10_seed_column_norm": _norm(v10_column),
@@ -285,6 +318,10 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                 "V09_raw_sparse": [
                     [key, float(complex(value).real), float(complex(value).imag)]
                     for key, value in sorted(row["raw_B_gauss"].items())
+                ],
+                "V09_serialized_sparse": [
+                    [key, float(complex(value).real), float(complex(value).imag)]
+                    for key, value in sorted(row["serialized_B_gauss"].items())
                 ],
                 "V10_seed_sparse": [
                     [key, float(complex(value).real), float(complex(value).imag)]
@@ -335,6 +372,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
             "epsilon_orbits_identical": epsilon_equal and len(v09_epsilon) == 24,
             "all_requested_V09_columns_complete": len(v09_rows) == len(seed_ks) and all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
             "all_requested_V09_term_orders_match": len(v09_rows) == len(seed_ks) and all(r["term_epsilon_order_matches"] for r in v09_rows),
+            "all_requested_24_complex_epsilon_term_maps_captured": len(v09_rows) == len(seed_ks) and all(len(r["epsilon_term_maps"]) == 24 for r in v09_rows),
             "all_requested_V09_sine_wrapper_gates_pass": len(v09_rows) == len(seed_ks) and all(r["sine_wrapper_gate_passed"] for r in v09_rows),
             "V10_common_basis_complete": closure_complete,
             "V10_algebraic_closure_passed": v10.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
