@@ -157,6 +157,12 @@ def quotient_diagnostics(
             np.sum(np.abs(quotient_eigenvalues) <= threshold)
         ),
         "quotient_is_psd_up_to_roundoff": bool(quotient_eigenvalues[0] >= -1e-9 * scale),
+        # Preserve the complete correlated quotient matrix as the primary
+        # finite-network result; spectra alone would discard off-diagonal data.
+        "quotient_qfi_matrix": quotient_metric.tolist(),
+        "quotient_qfi_offdiagonal_frobenius_norm": float(
+            np.linalg.norm(quotient_metric - np.diag(np.diag(quotient_metric)))
+        ),
         "reference_sections": section_results,
         "max_reference_section_spectrum_error": max_section_spectrum_error,
         "reference_section_spectra_agree": max_section_spectrum_error < 2e-8,
@@ -278,6 +284,7 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
             endpoint_rows.append({
                 "parameter_count": int(mapping.shape[1]),
                 "qfi_shape": list(endpoint_qfi.shape),
+                "qfi_matrix": endpoint_qfi.tolist(),
                 "minimum_eigenvalue": float(endpoint_eigenvalues[0]),
                 "maximum_eigenvalue": float(endpoint_eigenvalues[-1]),
                 "symmetry_error": float(np.linalg.norm(endpoint_qfi - endpoint_qfi.T)),
@@ -310,6 +317,15 @@ def run(seed: int = 20261118, trials: int = 4) -> dict[str, object]:
                 row["reference_section_spectra_agree"] for row in gauge_rows
             ),
             "reference_sections": gauge_rows[0]["reference_sections"],
+            "quotient_qfi_matrices_by_trial": [
+                row["quotient_qfi_matrix"] for row in gauge_rows
+            ],
+            "quotient_qfi_offdiagonal_frobenius_norm_max": max(
+                row["quotient_qfi_offdiagonal_frobenius_norm"] for row in gauge_rows
+            ),
+            "two_sided_endpoint_qfi_matrices_by_trial": [
+                row["qfi_matrix"] for row in endpoint_rows
+            ],
             "quotient_tangent_rank_min": min(
                 row["stabilizer_diagnostics"]["quotient_tangent_rank"] for row in gauge_rows
             ),
