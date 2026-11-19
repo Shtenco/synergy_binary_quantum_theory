@@ -171,9 +171,12 @@ def _sine_composition_probe(node, seed_k, jmax2, mode):
     }
 
 
-def run(node, jmax2, mode, output):
+def run(node, jmax2, mode, output, seed_ks=W5_K):
     if node not in range(5) or jmax2 < 10:
         raise ValueError("node must be 0..4 and Jmax2 must be >=10")
+    seed_ks = tuple(int(k) for k in seed_ks)
+    if not seed_ks or len(set(seed_ks)) != len(seed_ks) or any(k not in W5_K for k in seed_ks):
+        raise ValueError("seed_ks must be a nonempty unique subset of the frozen W5 K values")
     if mode not in ("production", "shadow_no_prune"):
         raise ValueError("invalid mode")
 
@@ -222,7 +225,7 @@ def run(node, jmax2, mode, output):
     try:
         context = PRUNE.bypass() if mode == "shadow_no_prune" else contextlib.nullcontext()
         with context:
-            for seed_k in W5_K:
+            for seed_k in seed_ks:
                 captured.clear()
                 sine_capture.clear()
                 result = V09.run_column(node, seed_k, jmax2, 0, 24)
@@ -260,7 +263,7 @@ def run(node, jmax2, mode, output):
         pruning_mode=mode,
         spectral_zero_factor=1000.0,
         cache_mode="off",
-        seed_Ks=W5_K,
+        seed_Ks=seed_ks,
     )
     closure_complete = "forward_B_columns_sparse" in v10 and "basis_keys_repr" in v10
     comparisons = []
@@ -291,14 +294,14 @@ def run(node, jmax2, mode, output):
 
     sine_rows = [
         _sine_composition_probe(node, seed_k, jmax2, mode)
-        for seed_k in W5_K
+        for seed_k in seed_ks
     ]
 
     report = {
-        "schema": "bqg-w5-v09-v10-paired-regression-v1",
+        "schema": "bqg-w5-v09-v10-paired-regression-v2-seed-shard", 
         "status": "COMPUTED_DIAGNOSTICS_NOT_PHYSICAL_PASS",
         "source_node": node,
-        "seed_Ks": list(W5_K),
+        "seed_Ks": list(seed_ks),
         "Jmax2": jmax2,
         "mode": mode,
         "amp_tol": amp_tol,
@@ -330,9 +333,9 @@ def run(node, jmax2, mode, output):
         "old_vs_new_sine_composition": sine_rows,
         "acceptance": {
             "epsilon_orbits_identical": epsilon_equal and len(v09_epsilon) == 24,
-            "all_five_V09_columns_complete": all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
-            "all_five_V09_term_orders_match": all(r["term_epsilon_order_matches"] for r in v09_rows),
-            "all_five_V09_sine_wrapper_gates_pass": all(r["sine_wrapper_gate_passed"] for r in v09_rows),
+            "all_requested_V09_columns_complete": len(v09_rows) == len(seed_ks) and all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
+            "all_requested_V09_term_orders_match": len(v09_rows) == len(seed_ks) and all(r["term_epsilon_order_matches"] for r in v09_rows),
+            "all_requested_V09_sine_wrapper_gates_pass": len(v09_rows) == len(seed_ks) and all(r["sine_wrapper_gate_passed"] for r in v09_rows),
             "V10_common_basis_complete": closure_complete,
             "V10_algebraic_closure_passed": v10.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
             "direct_adjoint_residual_below_1e-8": (
@@ -341,7 +344,7 @@ def run(node, jmax2, mode, output):
                 and v10["diagnostics"]["direct_adjoint_relative_residual"] < 1e-8
             ),
             "V09_V10_forward_columns_match_below_1e-8": (
-                len(comparisons) == 5
+                len(comparisons) == len(seed_ks)
                 and all(x["V09_raw_pre_serialization_vs_V10"]["relative_l2"] < 1e-8 for x in comparisons)
             ),
             "all_sine_composition_probes_match_below_1e-8": all(
@@ -379,9 +382,11 @@ def main():
     parser.add_argument("--node", type=int, default=0)
     parser.add_argument("--Jmax2", type=int, default=10)
     parser.add_argument("--mode", choices=("production", "shadow_no_prune"), default="shadow_no_prune")
+    parser.add_argument("--seed-K", type=int, choices=W5_K, required=False, help="Run exactly one frozen W5 seed K; omit for the legacy five-seed batch.")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    return run(args.node, args.Jmax2, args.mode, args.output)
+    seed_ks = (args.seed_K,) if args.seed_K is not None else W5_K
+    return run(args.node, args.Jmax2, args.mode, args.output, seed_ks=seed_ks)
 
 
 if __name__ == "__main__":
