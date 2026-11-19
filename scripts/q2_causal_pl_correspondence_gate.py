@@ -314,27 +314,46 @@ def _symmetric_eigenvalues(matrix):
 
 
 def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
-    """Spectrum and finite-time heat trace of M^{-1}K, symmetrized by M."""
+    """Sparse mass-normalized Galerkin operator, full finite spectrum and heat trace."""
     nodes = sorted(causal_edges)
     n = len(nodes)
     index = {node: i for i, node in enumerate(nodes)}
-    matrix = [[0.0] * n for _ in range(n)]
+    rows, columns, values = [], [], []
     scale = 24 ** generation
+    measure = np.asarray([mass_by_edge[node] for node in nodes], dtype=float)
+    if measure.shape != (n,) or np.any(~np.isfinite(measure)) or np.any(measure <= 0):
+        raise ValueError("pushforward measure must be finite and strictly positive")
+
     for edge in conductances:
         i, j = index[edge["source"]], index[edge["target"]]
         weight = edge["integer_multiplicity"] / scale
-        mi, mj = mass_by_edge[edge["source"]], mass_by_edge[edge["target"]]
-        if mi <= 0 or mj <= 0:
-            raise ValueError("pushforward measure must be strictly positive")
-        matrix[i][i] += weight / mi
-        matrix[j][j] += weight / mj
+        mi, mj = measure[i], measure[j]
+        diagonal_i = weight / mi
+        diagonal_j = weight / mj
         off = -weight / (mi * mj) ** 0.5
-        matrix[i][j] += off
-        matrix[j][i] += off
+        rows.extend((i, j, i, j))
+        columns.extend((i, j, j, i))
+        values.extend((diagonal_i, diagonal_j, off, off))
 
-    eigenvalues = _symmetric_eigenvalues(matrix)
-    zero_count = sum(abs(value) <= 1e-9 for value in eigenvalues)
-    positive = [value for value in eigenvalues if value > 1e-9]
+    try:
+        from scipy.sparse import coo_matrix
+    except ImportError as exc:
+        raise RuntimeError("sparse Galerkin diagnostics require scipy") from exc
+    operator = coo_matrix((values, (rows, columns)), shape=(n, n), dtype=float).tocsr()
+    operator.sum_duplicates()
+    asymmetry = operator - operator.T
+    symmetry_error = float(np.max(np.abs(asymmetry.data))) if asymmetry.nnz else 0.0
+
+    # The assembled operator remains sparse for storage and algebra. Since the
+    # current largest quotient has only 512 modes, densify only for a complete
+    # finite-level eigenvalue list and exact heat-trace reconstruction.
+    dense = operator.toarray()
+    eigenvalues = _symmetric_eigenvalues(dense.tolist())
+    minimum = min(eigenvalues) if eigenvalues else 0.0
+    maximum = max(eigenvalues) if eigenvalues else 0.0
+    scale_eig = max(1.0, abs(minimum), abs(maximum))
+    zero_count = sum(abs(value) <= 1e-9 * scale_eig for value in eigenvalues)
+    positive = [value for value in eigenvalues if value > 1e-9 * scale_eig]
     times = [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
     heat = []
     for time in times:
@@ -351,21 +370,33 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
             "time": heat[i]["time"],
             "effective_spectral_dimension": -2.0 * slope,
         })
+    moments = {
+        str(order): float(sum(value ** order for value in eigenvalues) / n)
+        for order in (1, 2, 3)
+    }
     return {
         "operator_spectrum": eigenvalues,
         "operator_zero_mode_count": zero_count,
         "operator_spectral_gap": min(positive) if positive else None,
-        "operator_largest_eigenvalue": max(eigenvalues) if eigenvalues else 0.0,
+        "operator_largest_eigenvalue": maximum,
+        "operator_minimum_eigenvalue": minimum,
         "operator_trace": sum(eigenvalues),
+        "operator_symmetry_error": symmetry_error,
+        "operator_is_psd_up_to_roundoff": minimum >= -1e-9 * scale_eig,
+        "operator_sparse_nnz": int(operator.nnz),
+        "operator_dimension": n,
+        "spectral_moments_per_mode": moments,
+        "pushforward_measure_total": float(np.sum(measure)),
+        "pushforward_measure_min": float(np.min(measure)),
+        "pushforward_measure_max": float(np.max(measure)),
         "heat_trace": heat,
         "effective_spectral_dimension": dimension,
         "spectral_interpretation": (
-            "finite generalized Galerkin operator spectrum only; a plateau "
-            "across refinement generations and a controlled continuum limit "
-            "are not established"
+            "Sparse mass-normalized finite Galerkin operator; complete finite "
+            "spectrum and heat trace are reported. A plateau across refinement "
+            "generations and a controlled continuum limit are not established."
         ),
     }
-
 
 def _certified_q_gap_lower_bound(n, dual):
     """Certified lower bound on lambda_min(QLQ|Q) from graph connectivity.
