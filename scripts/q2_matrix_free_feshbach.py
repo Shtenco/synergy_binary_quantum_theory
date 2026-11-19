@@ -62,6 +62,27 @@ class MatrixFreeFeshbach:
                 (self.n_vertices, self.n_vertices), dtype=float
             ).tocsr()
 
+        # QLQ is invertible on range(Q) exactly when ker(L) has no
+        # component orthogonal to the fibre-constant subspace. For a graph
+        # Laplacian, ker(L) consists of vectors constant on connected
+        # components. Thus every connected component must be a union of
+        # complete fibres; reject partitions that split a fibre across
+        # disconnected components before CG can solve a singular system.
+        from scipy.sparse.csgraph import connected_components
+        self.graph_component_count, component_labels = connected_components(
+            adjacency, directed=False, return_labels=True
+        )
+        fibre_component_pairs = np.unique(
+            np.column_stack((self.fibre_labels, component_labels)), axis=0
+        )
+        components_per_fibre = np.bincount(
+            fibre_component_pairs[:, 0], minlength=self.n_fibres
+        )
+        if np.any(components_per_fibre > 1):
+            raise ValueError(
+                "a fibre spans disconnected graph components; QLQ is singular"
+            )
+
         degree = np.asarray(adjacency.sum(axis=1)).ravel()
         self.laplacian = diags(degree, format="csr") - adjacency
         self._inverse_sqrt_sizes = 1.0 / np.sqrt(self.fibre_sizes)
