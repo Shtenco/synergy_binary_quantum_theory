@@ -27,6 +27,11 @@ The objective is to construct and test a mathematically specified sequence of me
 8. J. Ambjørn, J. Gizbert-Studnicki, A. Görlich, D. Németh, *Is lattice quantum gravity asymptotically safe? Making contact between causal dynamical triangulations and the functional renormalization group*, Physical Review D 110, 126006 (2024). DOI: 10.1103/PhysRevD.110.126006. This is a particularly relevant current bridge between CDT finite-volume scaling and FRG fixed-point language; the authors explicitly state that the numerical precision allows a putative UV fixed point but does not prove its existence.
    - https://doi.org/10.1103/PhysRevD.110.126006
 
+9. N. Gigli, A. Mondino, G. Savaré, *Convergence of pointed non-compact metric measure spaces and stability of Ricci curvature bounds and heat flows*, Proceedings of the London Mathematical Society 111 (2015), 1071--1129. DOI: 10.1112/plms/pdv047. This supplies a measured-space framework, Γ/Mosco convergence of Cheeger energies, heat-flow stability, and spectral convergence under additional hypotheses.
+   - https://doi.org/10.1112/plms/pdv047
+10. L. Ambrosio and S. Honda, *New stability results for sequences of metric measure spaces with uniform Ricci bounds from below* (2016). Relevant for extrinsic embeddings into a common metric space, Mosco convergence, Sobolev compactness, and stability of Cheeger constants.
+   - https://arxiv.org/abs/1605.07908
+
 These works provide mathematical methods and comparison points; they do not validate SBQT's physical interpretation.
 
 ## Required mathematical object at every refinement level
