@@ -146,6 +146,21 @@ If the graph ensemble or action has tunable couplings, identify dimensionless co
 7. **Independent reproduction:** run the same analysis from a second implementation or independently reconstructed artifacts.
 8. **Physical bridge remains separate:** even a proven spectral continuum limit does not prove Lorentzian causal propagation, Einstein dynamics, or physical QFI conductance. Those require independent operator and observable derivations.
 
+## New finite-level result: complete G3 Feshbach matrices (19 November 2026)
+
+Dedicated workflow run 44442960180 completed successfully on the research branch and uploaded artifact 14493520542. The artifact contains both complete 512 x 512 matrices and the manifest. It is the full-column reconstruction, not the four-probe matrix-free report.
+
+- 512/512 coarse basis columns solved for both the correction and self-energy slope.
+- 230,632 total projected-CG iterations; solve time 1,374.05 s; peak RSS 148,156,416 bytes.
+- Maximum first/second solve residuals: 1.4085e-8 and 1.4962e-8.
+- Correction: symmetry error 1.6228e-9, minimum eigenvalue 2.3506e-15, maximum 2.0440, trace 348.2500.
+- Slope: symmetry error 1.1520e-7, minimum eigenvalue -1.3963e-15, maximum 27.8169, trace 514.2515.
+- No eigenvalues below the workflow's negative tolerance in either matrix.
+
+An independent artifact-side check reconstructed the expected constant coarse vector q_i = sqrt(|F_i|), normalized it, and found alignment 1.0 with the numerical null eigenvector of each matrix. The residual norms were 3.17e-9 for the correction and 3.94e-8 for the slope. The remaining 511 eigenvalues are positive at the numerical resolution of this artifact.
+
+This is a strong finite G3 Schur/Feshbach result. It does not supply the missing geometric conductances, a refinement sequence of these matrices, Mosco convergence, or a physical QFI interpretation. The matrices are generated from the unweighted dual graph. Artifact run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44442960180
+
 ## Current decision rule
 
 Status labels must distinguish:
