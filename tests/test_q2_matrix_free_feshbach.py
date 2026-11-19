@@ -97,3 +97,22 @@ def test_matrix_free_operator_rejects_invalid_graph_and_fibres():
         MatrixFreeFeshbach(np.array([[0, 1]]), np.array([], dtype=int))
     with pytest.raises(ValueError, match="nonempty"):
         MatrixFreeFeshbach(np.array([[0, 1]]), np.array([0, 2]))
+
+
+
+def test_disconnected_graph_is_allowed_only_when_fibres_respect_components():
+    # Two disconnected graph components, each a complete union of fibres:
+    # the graph Laplacian kernel is contained in range(P), so QLQ is invertible.
+    valid = MatrixFreeFeshbach(
+        np.array([[0, 1], [2, 3]], dtype=np.int64),
+        np.array([0, 0, 1, 1], dtype=np.int64),
+    )
+    assert valid.graph_component_count == 2
+
+    # Each fibre now spans both graph components. A component-constant
+    # null vector has a nonzero Q part, making QLQ singular.
+    with pytest.raises(ValueError, match="QLQ is singular"):
+        MatrixFreeFeshbach(
+            np.array([[0, 1], [2, 3]], dtype=np.int64),
+            np.array([0, 1, 0, 1], dtype=np.int64),
+        )
