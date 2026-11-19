@@ -20,12 +20,17 @@ SERIALIZER_CUTOFF = 1e-13
 
 
 def _norm(state):
-    return math.hypot(*(abs(complex(z)) for z in state.values())) if state else 0.0
+    value = 0.0
+    for amplitude in state.values():
+        value = math.hypot(value, abs(complex(amplitude)))
+    return value
 
 
 def _relative_difference(a, b):
     keys = set(a) | set(b)
-    err = math.hypot(*(abs(complex(a.get(k, 0j)) - complex(b.get(k, 0j))) for k in keys))
+    err = 0.0
+    for key in keys:
+        err = math.hypot(err, abs(complex(a.get(key, 0j)) - complex(b.get(key, 0j))))
     scale = _norm(b)
     return {
         "absolute_l2": err,
