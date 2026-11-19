@@ -6,6 +6,7 @@ from scripts.q2_pl_geometric_mesh_audit import (
     build_coarse_spectral_sequence,
     build_geometry,
     coarse_finite_volume_operator,
+    coarse_space_approximation_report,
     geometric_dual_weights,
     initial_reference_embedding,
     mesh_metrics,
@@ -106,3 +107,20 @@ def test_geometric_galerkin_spectrum_is_built_for_g0_to_g2():
     assert [row["zero_modes_at_relative_tolerance"] for row in reports] == [1, 1, 1]
     assert reports[1]["smallest_positive_eigenvalue"] > 0
     assert reports[2]["smallest_positive_eigenvalue"] > 0
+
+def test_causal_fibre_projection_diagnostic_detects_missing_coordinate_modes():
+    coordinates, tetrahedra = initial_reference_embedding()
+    _metrics, volumes = mesh_metrics(coordinates, tetrahedra)
+    global_fibre = np.zeros(len(tetrahedra), dtype=np.uint16)
+    global_report = coarse_space_approximation_report(
+        coordinates, tetrahedra, global_fibre, volumes
+    )
+    assert np.allclose(global_report["relative_l2_projection_errors"], 1.0, atol=1e-12)
+    assert not global_report["coordinate_modes_resolved"]
+
+    local_fibres = np.arange(len(tetrahedra), dtype=np.uint16)
+    local_report = coarse_space_approximation_report(
+        coordinates, tetrahedra, local_fibres, volumes
+    )
+    assert np.allclose(local_report["relative_l2_projection_errors"], 0.0, atol=1e-12)
+    assert local_report["coordinate_modes_resolved"]
