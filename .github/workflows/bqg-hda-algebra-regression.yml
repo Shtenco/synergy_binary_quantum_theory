@@ -4,6 +4,8 @@ on:
   push:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
       - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
       - 'PETER_WEYL_TWO_NODE_SINE_HDA_RESULT.md'
@@ -13,6 +15,8 @@ on:
   pull_request:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BCQG_IR_UNIVERSALITY_CLOSURE_THEOREM.md'
       - 'COLLECTIVE_HDA_INTERTWINING_THEOREM.md'
       - 'PETER_WEYL_TWO_NODE_SINE_HDA_RESULT.md'
