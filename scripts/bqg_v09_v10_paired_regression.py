@@ -252,6 +252,7 @@ def run(node, jmax2, mode, output):
         "acceptance": {
             "epsilon_orbits_identical": epsilon_equal and len(v09_epsilon) == 24,
             "all_five_V09_columns_complete": all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
+            "all_five_V09_term_orders_match": all(r["term_epsilon_order_matches"] for r in v09_rows),
             "V10_common_basis_complete": closure_complete,
             "direct_adjoint_residual_below_1e-8": (
                 isinstance(v10.get("diagnostics"), dict)
