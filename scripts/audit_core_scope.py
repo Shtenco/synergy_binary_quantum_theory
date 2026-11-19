@@ -51,6 +51,10 @@ RESEARCH_ONLY_FILES = {
     Path("scripts/mirror_matter_matrix_element_gate.py"),
     Path("tests/test_mirror_wilson_matter_gate.py"),
 }
+RESEARCH_ONLY_MODULES = {
+    "mirror_wilson_matter_gate",
+    "mirror_matter_matrix_element_gate",
+}
 
 # Construct retired vocabulary without embedding the retired tokens literally in
 # this audit source, so repository-wide textual searches remain meaningful.
@@ -135,16 +139,19 @@ def main() -> int:
     for path in candidate_files():
         scanned += 1
         rel = path.relative_to(ROOT)
-        hits = scan_text(path)
-        if hits:
-            failures.append(f"{rel}: retired vocabulary: {', '.join(hits)}")
+        if rel not in RESEARCH_ONLY_FILES:
+            hits = scan_text(path)
+            if hits:
+                failures.append(f"{rel}: retired vocabulary: {', '.join(hits)}")
 
         if path.suffix.lower() == ".py":
             python_files += 1
             imports = local_imports(path)
-            stale = sorted(imports & RETIRED_MODULES)
+            stale = imports & RETIRED_MODULES
+            if rel in RESEARCH_ONLY_FILES:
+                stale -= RESEARCH_ONLY_MODULES
             if stale:
-                failures.append(f"{rel}: imports retired module(s): {', '.join(stale)}")
+                failures.append(f"{rel}: imports retired module(s): {', '.join(sorted(stale))}")
 
     if failures:
         print("CORE SCOPE AUDIT: FAIL")
