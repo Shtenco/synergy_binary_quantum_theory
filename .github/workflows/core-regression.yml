@@ -246,8 +246,8 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Compute exact higher-shell column ${{ matrix.column }}
         run: |
-          python scripts/peter_weyl_higher_shell_lambda_gate.py \\
-            --column ${{ matrix.column }} \\
+          python scripts/peter_weyl_higher_shell_lambda_gate.py \
+            --column ${{ matrix.column }} \
             --output verification_results/columns/column_${{ matrix.column }}.json
       - name: Upload exact higher-shell column
         uses: actions/upload-artifact@v4
@@ -287,8 +287,8 @@ jobs:
           PY
       - name: Reassemble exact 32D Lambda and block-Lanczos matrices
         run: |
-          python scripts/peter_weyl_higher_shell_lambda_gate.py \\
-            --assemble-dir verification_results/columns \\
+          python scripts/peter_weyl_higher_shell_lambda_gate.py \
+            --assemble-dir verification_results/columns \
             --output verification_results/PETER_WEYL_HIGHER_SHELL_LAMBDA.json
       - name: Guard canonical higher-shell spectrum
         run: |
