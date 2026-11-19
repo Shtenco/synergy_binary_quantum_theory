@@ -68,3 +68,18 @@ def test_g3_galerkin_uses_full_g0_g2_heat_time_grid_and_gap():
     assert len(report["heat_trace_normalized"]) == 7
     assert report["spectral_gap"] > 0
     assert report["nonzero_count"] == 4
+
+
+def test_certified_graph_gap_bound_uses_bfs_and_actual_maximum_degree():
+    from scripts.q2_matrix_free_feshbach import MatrixFreeFeshbach
+    from scripts.q2_g3_matrix_free_feshbach import certified_gap_lower_bound_from_root_eccentricity
+
+    edges = np.array([[0, 1], [1, 2], [2, 3]], dtype=np.uint32)
+    labels = np.zeros(4, dtype=np.uint16)
+    model = MatrixFreeFeshbach(edges, labels)
+    bound = certified_gap_lower_bound_from_root_eccentricity(model)
+
+    assert bound["root_eccentricity_upper_bound"] == 3
+    assert bound["lambda_min_q_l_q_certified_lower_bound"] == pytest.approx(1 / 9)
+    assert bound["lambda_max_q_l_q_plus_p_certified_upper_bound"] == pytest.approx(4.0)
+    assert bound["condition_number_certified_upper_bound"] == pytest.approx(36.0)
