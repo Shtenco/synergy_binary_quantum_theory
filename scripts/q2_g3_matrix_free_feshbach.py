@@ -114,7 +114,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
     # eigenvalue 1 on the orthogonal coarse subspace.
     lam_max_upper = 8.0
     spectral_seconds = time.perf_counter() - spectral_started
-    if not np.isfinite(lam_min) or lam_min <= 0 or not np.isfinite(lam_max):
+    if not np.isfinite(lam_min) or lam_min <= 0 or not np.isfinite(lam_max_upper):
         raise ValueError(f"Q-space operator not numerically positive: {lam_min}, {lam_max}")
 
     probes = []
