@@ -315,6 +315,8 @@ def _symmetric_eigenvalues(matrix):
 
 def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
     """Sparse mass-normalized Galerkin operator, full finite spectrum and heat trace."""
+    import numpy as np
+
     nodes = sorted(causal_edges)
     n = len(nodes)
     index = {node: i for i, node in enumerate(nodes)}
