@@ -42,6 +42,10 @@ Source mirror branch was 3 commits ahead / 633 behind main. Only the two matter-
 
 The source branch `spectral-history-closure` was 13 commits ahead / 591 behind main at comparison. The B3 workflow from that branch was deliberately not copied: it downloads source artifacts from the separate `binary_quantum_theory` repository and has external run dependencies. Its preregistration is preserved, but execution remains a separate task.
 
+The integration also imports the actual sharded K5 master first-edge executor: source blob `c30b4c9274d3755fb59153f3662e1bc1b0b44557`, imported as `scripts/bqg_euclidean_master_first_edge_sharded.py` (integration commit `491b44416f2177091bd81c4b939584e81cb8d82c`). New workflow `.github/workflows/bqg-spectral-history-actual-k5.yml` (integration commit `0196b7da0b90f2f4ff6b94f368adcd8526c66322`) computes all 32 exact `M_E|i>` columns, assembles `A0`, `mu2`, `R1†R1=B1†B1`, checks the recurrence/PSD/cutoff guards, and reports whether the finite Euclidean master history is open or closed after its first edge. A PASS of the algebraic guards does not require B1 rank zero; the scientific outcome is reported separately.
+
+The B3 preregistration's external source artifacts were checked directly: run IDs `31844567559` and `31852849936` in `Shtenco/binary_quantum_theory` currently return no downloadable artifacts. Therefore the B3 extension cannot be reproduced from those archived CI downloads at present. Do not run or claim B3 closure until the exact source columns are restored or regenerated with new pinned provenance.
+
 ## 4. Physical history and causal cone
 
 | Evidence | Source blob | Integration | Status and boundary |
@@ -79,3 +83,8 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 - PR head immediately before this index-status update: `8f72ef584d8d13d31023657364fb895fee853d67`; the status update itself is commit `0ac49d573cdbc966feb183900c1e3595d3d5592c`. Base `main` remains `401b006d368caf4bfd7578c0d312795cf2f2323a`.
 - The four focused workflow definitions are present and path-filtered. The GitHub connector currently returns no workflow runs and no status checks for the integration head, so **none of the new CI jobs is yet certified green**. This is recorded as pending/unobserved, not as a pass.
 - PR #87 remains Draft and must not be merged until the four workflows have run and their JSON artifacts have been inspected.
+
+
+## 8. Current PR #87 head
+
+The selective integration branch now also contains the sharded actual K5 first-edge executor and workflow. PR #87 remains Draft. New workflow definitions have no associated run/status result yet, so all new CI outcomes remain pending. The W5 paired rerun is separate in PR #86, run `44496003089`, with 30 seed-sharded jobs queued at last inspection.
