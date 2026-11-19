@@ -129,7 +129,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
 
 def write_report(path: Path, result: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\\n",
+    path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n",
                     encoding="utf-8")
 
 
