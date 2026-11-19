@@ -4,6 +4,8 @@ on:
   push:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'BQG_PHYSICAL_CAUSAL_CONE_AUDIT_20261111.md'
       - 'LEMAITRE_BQG_CAUSAL_CONE_BENCHMARK.md'
@@ -13,6 +15,8 @@ on:
   pull_request:
     branches: ['**']
     paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
       - 'BQG_PHYSICAL_PROBABILITY_AND_CAUSALITY_FRONTIER_20261112.md'
       - 'BQG_PHYSICAL_CAUSAL_CONE_AUDIT_20261111.md'
       - 'LEMAITRE_BQG_CAUSAL_CONE_BENCHMARK.md'
