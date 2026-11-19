@@ -358,6 +358,16 @@ def run(output_dir: Path, *, chunk_size=4096, chunk_rows=50000):
     form = GraphDirichletForm.build(
         len(tetrahedra), endpoints, weights, volumes, scale=1.0
     )
+    fibre_labels = np.load(chunk_dir / "g3_fibre_labels.npy", mmap_mode="r")
+    g3_coarse_operator, g3_coarse_mass = coarse_finite_volume_operator(
+        endpoints, weights, fibre_labels, volumes
+    )
+    g3_coarse_report = coarse_spectral_report(
+        3, g3_coarse_operator, g3_coarse_mass
+    )
+    coarse_spectral_sequence = build_coarse_spectral_sequence()
+    coarse_spectral_sequence.append(g3_coarse_report)
+
     degree = np.bincount(
         np.concatenate((endpoints[:, 0], endpoints[:, 1])),
         minlength=len(tetrahedra),
@@ -375,6 +385,8 @@ def run(output_dir: Path, *, chunk_size=4096, chunk_rows=50000):
         "g3_geometric_dual_conductances.npy": weights,
         "g3_geometric_dual_face_areas.npy": face_areas,
         "g3_geometric_dual_distances.npy": dual_distances,
+        "g3_geometric_coarse_operator.npy": g3_coarse_operator,
+        "g3_geometric_coarse_eigenvalues.npy": np.linalg.eigvalsh(g3_coarse_operator),
     }
     for filename, array in arrays.items():
         np.save(output_dir / filename, array, allow_pickle=False)
@@ -386,7 +398,9 @@ def run(output_dir: Path, *, chunk_size=4096, chunk_rows=50000):
         "reference_embedding": "cross-polytope boundary vertices +/-e_i in R^4; all refined vertices are barycentres of faces",
         "levels": levels,
         "shape_regularity_assessment": assess_shape_regularity(levels),
+        "coarse_geometric_spectral_sequence": coarse_spectral_sequence,
         "g3": {
+            "coarse_spectral": g3_coarse_report,
             "vertices_as_dual_cells": int(len(tetrahedra)),
             "dual_edges": int(len(endpoints)),
             "pl_vertex_count": int(len(coordinates)),
