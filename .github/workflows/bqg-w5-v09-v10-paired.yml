@@ -21,7 +21,9 @@ on:
     paths:
       - '.github/workflows/bqg-w5-v09-v10-paired.yml'
       - 'scripts/bqg_v09_v10_paired_regression.py'
+      - 'scripts/bqg_v09_v10_paired_aggregate.py'
       - 'tests/test_bqg_v09_v10_paired_regression.py'
+      - 'tests/test_bqg_v09_v10_paired_aggregate.py'
   workflow_dispatch:
 
 concurrency:
