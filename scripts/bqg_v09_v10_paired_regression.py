@@ -258,7 +258,9 @@ def run(node, jmax2, mode, output):
             "epsilon_orbits_identical": epsilon_equal and len(v09_epsilon) == 24,
             "all_five_V09_columns_complete": all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
             "all_five_V09_term_orders_match": all(r["term_epsilon_order_matches"] for r in v09_rows),
+            "all_five_V09_sine_wrapper_gates_pass": all(r["sine_wrapper_gate_passed"] for r in v09_rows),
             "V10_common_basis_complete": closure_complete,
+            "V10_algebraic_closure_passed": v10.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
             "direct_adjoint_residual_below_1e-8": (
                 isinstance(v10.get("diagnostics"), dict)
                 and isinstance(v10["diagnostics"].get("direct_adjoint_relative_residual"), (int, float))
@@ -269,7 +271,9 @@ def run(node, jmax2, mode, output):
                 and all(x["V09_raw_pre_serialization_vs_V10"]["relative_l2"] < 1e-8 for x in comparisons)
             ),
             "all_sine_composition_probes_match_below_1e-8": all(
-                x["legacy_vs_new_scalar_map"]["relative_l2"] < 1e-8
+                x["legacy_norm"] > 1e-10
+                and x["new_scalar_norm"] > 1e-10
+                and x["legacy_vs_new_scalar_map"]["relative_l2"] < 1e-8
                 and x["new_non_scalar_norm"] < 1e-9
                 for x in sine_rows
             ),
