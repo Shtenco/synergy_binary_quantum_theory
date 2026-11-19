@@ -77,6 +77,23 @@ Therefore the next geometry task is to export, at every generation, (i) the bary
 
 This is a source-level mathematical distinction, not a claim that the reference embedding is already the physical spacetime metric of SBQT.
 
+## Shape-regularity obstruction measured on G0--G3
+
+The geometric audit artifact (workflow 44446384790) adds a dimensionless tetrahedral quality
+q = 12 (3 V)^(2/3) / sum_{edges} l_e^2,
+which equals 1 for a regular tetrahedron and tends to 0 for degenerate cells. It also records the maximum diameter-to-inradius ratio. The measured sequence is:
+
+| Level | Minimum q | Median q | Maximum diameter / inradius |
+|---|---:|---:|---:|
+| G0 | 1.0000 | 1.0000 | 4.90 |
+| G1 | 0.5968 | 0.5968 | 10.35 |
+| G2 | 0.1954 | 0.4250 | 29.77 |
+| G3 | 0.0531 | 0.2844 | 88.44 |
+
+Thus mesh diameter decreases, but the worst-cell shape quality deteriorates markedly. Uniform shape regularity is not established. Standard finite-element error estimates that assume a uniformly shape-regular family cannot be invoked for this barycentric sequence without a separate argument. This is a real obstruction to a quick FEM convergence claim.
+
+The next geometry gate must compare at least two alternatives: (i) retain barycentric subdivision and prove estimates that tolerate its measured anisotropy, and (ii) construct a quality-controlled refinement family (for example, a compatible red-refinement or mesh-optimization scheme that preserves the same PL complex and causal/fibre structure). Any optimized family must preserve topology, orientation, face pairing, and pushforward measure, and its results must be compared against the unoptimized reference family. We must not optimize cells in a way that silently changes the model's combinatorics.
+
 ## Continuum acceptance theorem to target
 
 The primary target is Mosco convergence of E_n to a closed nonnegative form E on H, with explicit identification of the Hilbert-space convergence/comparison maps. The proof obligations are:
