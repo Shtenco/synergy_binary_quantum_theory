@@ -51,6 +51,20 @@ with the scalar c_n, edge weights, vertex measure, and inner product derived fro
 
 The current G3 coarse matrix U^T L U is a finite fibre-compressed operator. Its construction is useful, but it is not by itself a derivation of the continuum normalization c_n or a proof that the sequence of forms has a limit.
 
+## Critical source-level audit: the current graph operator is not yet a geometric Laplacian
+
+The current exporter starts from the boundary of the four-dimensional cross-polytope: 16 tetrahedral facets. It repeatedly applies barycentric subdivision, which creates 24 child tetrahedra per parent tetrahedron. Thus the generation-3 count 221,184 is exactly 16 x 24^3.
+
+There is a useful canonical *reference embedding*: assign the eight cross-polytope vertices to the points ±e_i in R^4 and place each new barycentric vertex at the Euclidean barycentre of its parent face. Each initial facet is a regular tetrahedron of side sqrt(2) and 3-volume 1/3. The total piecewise-flat boundary 3-volume is therefore 16/3, and barycentric subdivision preserves it. At generation 3, every child tetrahedron has volume 1/(3 x 24^3), with total volume 16/3.
+
+By contrast, the current chunked exporter records measure_total = n_child / 24^3 = 16. This is a combinatorial counting normalization (one unit per initial tetrahedron), not the Euclidean PL 3-volume. The constant factor of three may cancel in some mass-normalized operators, but the two measures must not be given the same geometric interpretation. The continuum program must persist both separately and state which one is used by each operator.
+
+A second distinction is equally important: the current fine graph is the **unweighted dual adjacency graph** of the tetrahedra. Its unit-edge combinatorial Laplacian is a legitimate graph operator, but it is not automatically a finite-volume or finite-element approximation to the Laplace--Beltrami operator of the reference PL metric. A geometric finite-volume candidate would use face-area / dual-distance conductances and cell-volume masses; a primal FEM candidate would use the stiffness and mass matrices obtained by integrating piecewise-linear basis functions on the tetrahedra. These are separate operators and must be compared rather than silently identified.
+
+Therefore the next geometry task is to export, at every generation, (i) the barycentric coordinates of all PL vertices, (ii) each tetrahedron's intrinsic 3-volume and diameter, (iii) shared-face areas and cell-to-face altitudes, (iv) the maximum mesh diameter h_n and mesh-quality bounds, and (v) both combinatorial and geometric measures. Then construct at least one geometry-weighted dual finite-volume operator and one primal FEM operator. Only after this can we test whether the unweighted dual Laplacian, the geometric finite-volume operator, and the FEM operator share the same rescaled low-energy limit.
+
+This is a source-level mathematical distinction, not a claim that the reference embedding is already the physical spacetime metric of SBQT.
+
 ## Continuum acceptance theorem to target
 
 The primary target is Mosco convergence of E_n to a closed nonnegative form E on H, with explicit identification of the Hilbert-space convergence/comparison maps. The proof obligations are:
