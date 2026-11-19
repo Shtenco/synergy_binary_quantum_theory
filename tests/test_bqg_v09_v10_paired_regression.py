@@ -6,7 +6,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import k5_peter_weyl_safe_hda_column as PW
-import bqg_v09_w5_lorentzian_raw_column as V09
+sys.path.insert(0, str(ROOT / "scripts" / "archive"))
+import bqg_v09_w5_lorentzian_raw_column_v09_frozen as V09
 import bqg_v10_w5_lorentzian_adjoint_closure as V10
 
 
