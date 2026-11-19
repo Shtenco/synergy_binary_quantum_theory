@@ -76,6 +76,6 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 ## 7. Current integration PR and CI observation
 
 - Selective integration PR: [#87](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/87).
-- Current branch head at last update: `8f72ef584d8d13d31023657364fb895fee853d67`; base `main` remains `401b006d368caf4bfd7578c0d312795cf2f2323a`.
+- PR head immediately before this index-status update: `8f72ef584d8d13d31023657364fb895fee853d67`; the status update itself is commit `0ac49d573cdbc966feb183900c1e3595d3d5592c`. Base `main` remains `401b006d368caf4bfd7578c0d312795cf2f2323a`.
 - The four focused workflow definitions are present and path-filtered. The GitHub connector currently returns no workflow runs and no status checks for the integration head, so **none of the new CI jobs is yet certified green**. This is recorded as pending/unobserved, not as a pass.
 - PR #87 remains Draft and must not be merged until the four workflows have run and their JSON artifacts have been inspected.
