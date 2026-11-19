@@ -45,11 +45,29 @@ def mesh_metrics(coordinates, tetrahedra):
     if np.any(determinants <= 0) or not np.all(np.isfinite(determinants)):
         raise ValueError("degenerate or non-finite PL tetrahedron")
     volumes = np.sqrt(determinants) / 6.0
-    pair_lengths = [
-        np.linalg.norm(points[:, i, :] - points[:, j, :], axis=1)
+    edge_vectors_all = [
+        points[:, i, :] - points[:, j, :]
         for i in range(4) for j in range(i + 1, 4)
     ]
-    diameters = np.maximum.reduce(pair_lengths)
+    edge_lengths = [np.linalg.norm(vector, axis=1) for vector in edge_vectors_all]
+    edge_squared_sum = np.sum(np.stack([length * length for length in edge_lengths]), axis=0)
+    diameters = np.maximum.reduce(edge_lengths)
+    face_areas = []
+    for omitted in range(4):
+        triangle = np.delete(points, omitted, axis=1)
+        first = triangle[:, 1, :] - triangle[:, 0, :]
+        second = triangle[:, 2, :] - triangle[:, 0, :]
+        g11 = np.einsum("ni,ni->n", first, first)
+        g22 = np.einsum("ni,ni->n", second, second)
+        g12 = np.einsum("ni,ni->n", first, second)
+        face_areas.append(0.5 * np.sqrt(np.maximum(g11 * g22 - g12 * g12, 0.0)))
+    face_areas = np.stack(face_areas, axis=1)
+    surface_areas = np.sum(face_areas, axis=1)
+    inradii = 3.0 * volumes / surface_areas
+    shape_quality = 12.0 * np.power(3.0 * volumes, 2.0 / 3.0) / edge_squared_sum
+    if (np.any(inradii <= 0) or np.any(shape_quality <= 0)
+            or not np.all(np.isfinite(shape_quality))):
+        raise ValueError("invalid tetrahedral shape-quality diagnostic")
     return {
         "tetrahedra": int(len(tets)),
         "vertices": int(len(coordinates)),
@@ -61,6 +79,12 @@ def mesh_metrics(coordinates, tetrahedra):
         ),
         "mesh_diameter_max": float(np.max(diameters)),
         "mesh_diameter_min": float(np.min(diameters)),
+        "shape_quality_min": float(np.min(shape_quality)),
+        "shape_quality_p01": float(np.quantile(shape_quality, 0.01)),
+        "shape_quality_median": float(np.median(shape_quality)),
+        "shape_quality_max": float(np.max(shape_quality)),
+        "inradius_min": float(np.min(inradii)),
+        "max_diameter_to_inradius": float(np.max(diameters / inradii)),
     }, volumes
 
 
