@@ -7,6 +7,8 @@ on:
     paths:
       - '.github/workflows/bqg-w5-v09-v10-paired.yml'
       - 'scripts/bqg_v09_v10_paired_regression.py'
+      - 'scripts/bqg_v09_v10_paired_aggregate.py'
+      - 'tests/test_bqg_v09_v10_paired_aggregate.py'
       - 'scripts/archive/bqg_v09_w5_lorentzian_raw_column_v09_frozen.py'
       - 'scripts/archive/W5_V09_FROZEN_BASELINE.txt'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
@@ -54,6 +56,7 @@ jobs:
           python -m py_compile scripts/archive/bqg_v09_w5_lorentzian_raw_column_v09_frozen.py
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_v09_v10_paired_regression.py
+          python -m py_compile scripts/bqg_v09_v10_paired_aggregate.py
           python -m py_compile scripts/peter_weyl_euclidean_sine_ordering_gate.py
           python -m py_compile scripts/peter_weyl_covariant_K_sine_composition_gate.py
       - name: Run paired-regression invariant tests
@@ -76,5 +79,43 @@ jobs:
         with:
           name: bqg-w5-v09-v10-node0-j${{ matrix.jmax2 }}-${{ matrix.mode }}-run${{ github.run_id }}
           path: verification_results/W5_V09_V10_NODE0_J${{ matrix.jmax2 }}_${{ matrix.mode }}_${{ github.run_id }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate-paired-audit:
+    name: Aggregate pruning and Jmax2 convergence
+    if: always()
+    needs: [paired-regression]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download six paired reports
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-w5-v09-v10-node0-j*-*-run${{ github.run_id }}
+          path: verification_results/paired_reports
+          merge-multiple: true
+      - name: Run paired pruning and cutoff convergence aggregate
+        if: always()
+        run: |
+          python -m py_compile scripts/bqg_v09_v10_paired_aggregate.py
+          python -m unittest discover -s tests -p 'test_bqg_v09_v10_paired_aggregate.py' -v
+          python scripts/bqg_v09_v10_paired_aggregate.py \
+            --input-dir verification_results/paired_reports \
+            --output verification_results/W5_V09_V10_PAIRED_AGGREGATE_${{ github.run_id }}.json
+      - name: Upload aggregate verdict and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-v09-v10-paired-aggregate-run${{ github.run_id }}
+          path: verification_results/W5_V09_V10_PAIRED_AGGREGATE_${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
