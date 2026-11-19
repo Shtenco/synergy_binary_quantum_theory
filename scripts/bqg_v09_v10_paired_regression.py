@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -55,6 +56,27 @@ def _decode_v10_column(result, seed_key):
 
 def _repr_map(state):
     return {repr(key): complex(value) for key, value in state.items() if complex(value) != 0j}
+
+
+def _sparse_digest(state):
+    digest = hashlib.sha256()
+    for key, amplitude in sorted(state.items(), key=lambda item: repr(item[0])):
+        z = complex(amplitude)
+        digest.update(repr(key).encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(z.real.hex().encode("ascii"))
+        digest.update(b",")
+        digest.update(z.imag.hex().encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def _matrix_digest(basis, columns):
+    payload = json.dumps(
+        {"basis": basis, "columns": columns},
+        sort_keys=True, separators=(",", ":"), allow_nan=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _serializer_loss(raw, serialized_rows):
@@ -244,6 +266,13 @@ def run(node, jmax2, mode, output):
                 "seed_K": row["seed_K"],
                 "V09_raw_pre_serialization_vs_V10": _relative_difference(row["raw_B_gauss"], v10_column),
                 "V09_serialized_vs_V10": _relative_difference(row["serialized_B_gauss"], v10_column),
+                "V09_raw_support": len(row["raw_B_gauss"]),
+                "V09_raw_norm": _norm(row["raw_B_gauss"]),
+                "V09_raw_digest": _sparse_digest(row["raw_B_gauss"]),
+                "V09_serialized_digest": _sparse_digest(row["serialized_B_gauss"]),
+                "V10_seed_column_support": len(v10_column),
+                "V10_seed_column_norm": _norm(v10_column),
+                "V10_seed_column_digest": _sparse_digest(v10_column),
             })
 
     sine_rows = [
@@ -271,6 +300,14 @@ def run(node, jmax2, mode, output):
             "closure_complete": closure_complete,
             "closure_size": v10.get("closure_size", v10.get("closure_size_discovered")),
             "basis_id_sha256": v10.get("basis_id_sha256"),
+            "forward_matrix_digest": (
+                _matrix_digest(v10.get("basis_keys_repr", []), v10.get("forward_B_columns_sparse", []))
+                if closure_complete else None
+            ),
+            "direct_adjoint_matrix_digest": (
+                _matrix_digest(v10.get("basis_keys_repr", []), v10.get("direct_Bdag_columns_sparse", []))
+                if closure_complete else None
+            ),
             "diagnostics": v10.get("diagnostics", v10.get("partial_diagnostics")),
             "coefficient_loss_ledger": v10.get("coefficient_loss_ledger"),
             "lower_level_pruning_ledger": v10.get("lower_level_pruning_ledger"),
