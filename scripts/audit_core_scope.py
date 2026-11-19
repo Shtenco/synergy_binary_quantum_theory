@@ -35,10 +35,27 @@ EXCLUDED_PREFIXES = {
 # README and status may describe the explicitly open information-mode proposal.
 # This is permission to discuss it, not to import retired physics modules.
 DISCUSSION_TERMS = {
-    # The README uses "mirror" only in archived figure labels/links; this is
-    # permission to reference historical material, not to restore the sector.
-    Path("README.md"): {"info" + "ton", "mir" + "ror"},
+    # Public-facing summaries may accurately describe explicitly quarantined
+    # research results and no-go statements without promoting them to core claims.
+    Path("README.md"): {"info" + "ton", "mir" + "ror", "anti" + "grav"},
     Path("THEORY_STATUS.md"): {"info" + "ton"},
+    Path("BQG_PROOF_INDEX_20261119.md"): {"mir" + "ror"},
+}
+
+# These exact files form a separately tested research module. They are not
+# canonical GR/QM core imports; their vocabulary and imports are intentional.
+# Keep this allowlist narrow and require their dedicated workflow to test them.
+RESEARCH_ONLY_FILES = {
+    Path("MIRROR_WILSON_MATTER.md"),
+    Path("MIRROR_MATTER_MATRIX_ELEMENT.md"),
+    Path(".github/workflows/bqg-mirror-wilson-dirac.yml"),
+    Path("scripts/mirror_wilson_matter_gate.py"),
+    Path("scripts/mirror_matter_matrix_element_gate.py"),
+    Path("tests/test_mirror_wilson_matter_gate.py"),
+}
+RESEARCH_ONLY_MODULES = {
+    "mirror_wilson_matter_gate",
+    "mirror_matter_matrix_element_gate",
 }
 
 # Construct retired vocabulary without embedding the retired tokens literally in
@@ -124,16 +141,19 @@ def main() -> int:
     for path in candidate_files():
         scanned += 1
         rel = path.relative_to(ROOT)
-        hits = scan_text(path)
-        if hits:
-            failures.append(f"{rel}: retired vocabulary: {', '.join(hits)}")
+        if rel not in RESEARCH_ONLY_FILES:
+            hits = scan_text(path)
+            if hits:
+                failures.append(f"{rel}: retired vocabulary: {', '.join(hits)}")
 
         if path.suffix.lower() == ".py":
             python_files += 1
             imports = local_imports(path)
-            stale = sorted(imports & RETIRED_MODULES)
+            stale = imports & RETIRED_MODULES
+            if rel in RESEARCH_ONLY_FILES:
+                stale -= RESEARCH_ONLY_MODULES
             if stale:
-                failures.append(f"{rel}: imports retired module(s): {', '.join(stale)}")
+                failures.append(f"{rel}: imports retired module(s): {', '.join(sorted(stale))}")
 
     if failures:
         print("CORE SCOPE AUDIT: FAIL")

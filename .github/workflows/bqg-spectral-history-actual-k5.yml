@@ -1,0 +1,155 @@
+name: BQG actual K5 Euclidean master spectral first edge
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
+      - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
+      - 'scripts/bqg_spectral_history_graph_gate.py'
+      - 'scripts/bqg_euclidean_master_first_edge_sharded.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/peter_weyl_logical_anisotropy_gate.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+      - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
+      - 'scripts/peter_weyl_higher_shell_lambda_gate.py'
+      - 'scripts/feshbach_block_krylov_identity_gate.py'
+      - 'scripts/master_constraint_physical_projector_gate.py'
+      - 'scripts/peter_weyl_covariant_K_projection_audit_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
+      - 'scripts/charged_intertwiner_recoupling_gate.py'
+      - 'scripts/peter_weyl_volume_cross_rep_audit.py'
+      - 'scripts/peter_weyl_q_block_gauge_audit.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+      - '.github/workflows/bqg-spectral-history-actual-k5.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'BQG_PROOF_INDEX_20261119.md'
+      - 'BQG_SPECTRAL_HISTORY_GRAPH.md'
+      - 'scripts/bqg_spectral_history_graph_gate.py'
+      - 'scripts/bqg_euclidean_master_first_edge_sharded.py'
+      - 'scripts/k5_peter_weyl_safe_hda_column.py'
+      - 'scripts/peter_weyl_logical_anisotropy_gate.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+      - 'scripts/peter_weyl_zeroaware_volume_migration_experiment.py'
+      - '.github/workflows/bqg-spectral-history-actual-k5.yml'
+      - 'scripts/peter_weyl_higher_shell_lambda_gate.py'
+      - 'scripts/feshbach_block_krylov_identity_gate.py'
+      - 'scripts/master_constraint_physical_projector_gate.py'
+      - 'scripts/peter_weyl_covariant_K_projection_audit_gate.py'
+      - 'scripts/peter_weyl_covariant_K_leg_gate.py'
+      - 'scripts/peter_weyl_lorentzian_K_block_gate.py'
+      - 'scripts/charged_intertwiner_recoupling_gate.py'
+      - 'scripts/peter_weyl_volume_cross_rep_audit.py'
+      - 'scripts/peter_weyl_q_block_gauge_audit.py'
+      - 'scripts/peter_weyl_covariant_volume_leg_gate.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-spectral-history-k5-${{ github.event.pull_request.number || github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  algebraic-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Compile spectral-history sources
+        run: |
+          python -m py_compile scripts/bqg_spectral_history_graph_gate.py
+          python -m py_compile scripts/bqg_euclidean_master_first_edge_sharded.py
+      - name: Feshbach and master-projector controls
+        run: |
+          mkdir -p verification_results
+          python scripts/feshbach_block_krylov_identity_gate.py --output verification_results/FESHBACH_BLOCK_KRYLOV_IDENTITY.json
+          python scripts/master_constraint_physical_projector_gate.py --output verification_results/MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.json
+      - name: Deterministic block-Lanczos regression
+        run: python scripts/bqg_spectral_history_graph_gate.py --mode regression --output verification_results/BQG_SPECTRAL_HISTORY_REGRESSION.json
+      - name: Upload algebraic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-spectral-history-algebra-${{ github.run_id }}
+          path: verification_results/
+          if-no-files-found: error
+          retention-days: 30
+
+  euclidean-master-columns:
+    needs: algebraic-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        column: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Compute one exact K5 master column
+        run: |
+          python scripts/bqg_euclidean_master_first_edge_sharded.py \
+            --column ${{ matrix.column }} \
+            --output verification_results/master/master_column_${{ matrix.column }}.json
+      - name: Upload exact master column
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-master-column-${{ matrix.column }}-${{ github.run_id }}
+          path: verification_results/master/master_column_${{ matrix.column }}.json
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 6
+
+  assemble-euclidean-master-first-edge:
+    needs: euclidean-master-columns
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Download all 32 exact master columns
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-master-column-*-${{ github.run_id }}
+          path: verification_results/master
+          merge-multiple: true
+      - name: Assemble actual K5 Euclidean master first edge
+        run: |
+          python scripts/bqg_euclidean_master_first_edge_sharded.py \
+            --assemble-dir verification_results/master \
+            --output verification_results/BQG_EUCLIDEAN_MASTER_FIRST_SPECTRAL_EDGE.json
+      - name: Upload assembled spectral evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-euclidean-master-first-spectral-edge-${{ github.run_id }}
+          path: verification_results/BQG_EUCLIDEAN_MASTER_FIRST_SPECTRAL_EDGE.json
+          if-no-files-found: error
+          retention-days: 30

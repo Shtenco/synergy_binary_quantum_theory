@@ -991,10 +991,10 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 
 Целевой формат каждого уровня:
 
-[
+$$
 \mathcal P_l=
 (\mathcal H_l,\Omega_l,W_l,E_l,S_l,R_l,\mathcal M_l),
-]
+$$
 
 где (mathcal H_l) — пространство состояний, (Omega_l) — фиксированный фон/seed, (W_l) — общий carrier, (E_l,S_l,R_l) — три оператора с исходными комплексными амплитудами, а (mathcal M_l) — независимая метрическая калибровка и provenance.
 
@@ -1007,25 +1007,25 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 - L1 Euclidean E-worker использует barycentric refinement первого уровня: 384 fine chambers/nodes и 768 dual links, три edge representatives ([0,1,5]) и 24 вторых действия на каждый представитель.
 - Lorentzian V2/V3 использует отдельную 16-cell/global assembly; он не является тем же L1 barycentric state space.
 - Sparse Fourier route использует конечные двумерные Fourier modes и матричные (2\times2) геометрические блоки; это не тот же базис состояний L1.
-- Поэтому объединение уже полученных чисел из этих путей в (H=-\frac23E-\frac{32}{9}S+R) не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
+- Поэтому объединение уже полученных чисел из этих путей в $H=-\frac23E-\frac{32}{9}S+R$ не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
 
 ### Г.3.1. Carrier и leakage
 
 В `COLLECTIVE_KRYLOV_EFFECTIVE_BASIS.md` зафиксирована target-independent конструкция глубины два:
 
-[
+$$
 \mathcal K_l^{(2)}
 =\operatorname{span}\{\Omega_l,O_a\Omega_l,O_bO_a\Omega_l\},
 \qquad O_a,O_b\in\{E,S,R\}.
-]
+$$
 
 Указанная support wall (j_{\rm face}\leq9) — граница поддержки конечного построения, а не доказательство динамического замыкания. Для общего ортопроектора (P_l=W_lW_l^\dagger) должны измеряться:
 
-[
+$$
 \eta_A=\|(I-P_l)A W_l\|,
 \qquad
 \eta_{BA}=\|(I-P_l)O_bO_aW_l\|.
-]
+$$
 
 Нужны все направления базиса, все (A\in\{E,S,R,H\}), все упорядоченные пары и полные singular spectra. Один seed или одна нулевая утечка на искусственно ограниченном support не заменяют эту проверку.
 
@@ -1033,46 +1033,46 @@ python -m unittest discover -s tests -p 'test_v26_highprecision_charge.py' -v
 
 Для полного блока
 
-[
+$$
 C_l=
 \begin{pmatrix}
 A_l&B_l\\
 B_l^\dagger&D_l
 \end{pmatrix}
-]
+$$
 
 кандидат на эффективный блок при нулевом спектральном параметре:
 
-[
+$$
 C_{\mathrm{eff},l}(0)=A_l-B_lD_l^{-1}B_l^\dagger.
-]
+$$
 
 До обращения (D_l) требуется опубликовать его полный спектр, малые eigenvalues, gap и condition number; при малых/нулевых модах — явно задать допустимую процедуру, а не скрывать их псевдообратной. Результат Schur должен совпадать с независимым решением полной блочной системы в пределах заранее объявленной ошибки.
 
 Ранее зарегистрированный depth-two diagnostic
 
-[
+$$
 X_E=Q_\perp EW_g,\quad X_S=Q_\perp SW_g,
-]
-[
+$$
+$$
 L_{EE}=X_E^\dagger X_E,\quad
 L_{SS}=X_S^\dagger X_S,\quad
 L_{ES}=X_E^\dagger X_S+X_S^\dagger X_E
-]
+$$
 
 и комбинация для (G=-2E/3-32S/9),
 
-[
+$$
 L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
-]
+$$
 
 остаются конечномерным denominator-free leakage diagnostic. Это не полный физический Feshbach/Schur reduction.
 
 ### Г.3.3. Прямой HDA
 
-Для одного и того же production operator и общего (W_l) необходимо построить (H_l[N]^{\rm eff}), (H_l[M]^{\rm eff}), (D_l[\beta]^{\rm eff}) и измерить
+Для одного и того же production operator и общего (W_l) необходимо построить $H_l[N]^{\rm eff}$, $H_l[M]^{\rm eff}$, $D_l[\beta]^{\rm eff}$ и измерить
 
-[
+$$
 \Delta_{HH,l}=
 \frac{
 \|[H_l[N]^{\rm eff},H_l[M]^{\rm eff}]
@@ -1080,7 +1080,7 @@ L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
 }{
 \|D_l[\beta]^{\rm eff}\|
 }.
-]
+$$
 
 Дополнительно сохраняются микроскопический residual до сжатия, leakage генераторов, discrepancy между bracket-before-compression и bracket-after-compression и ошибка structure function. Проекция не должна искусственно уменьшать остаток и превращать его в мнимое подтверждение HDA.
 
@@ -1088,19 +1088,19 @@ L_G=\frac49L_{EE}+\frac{1024}{81}L_{SS}+\frac{64}{27}L_{ES},
 
 В `collective_metric_hessian_extractor.py` предусмотрены два маршрута:
 
-[
+$$
 q=B^{-1}Jh
 \quad\text{или}\quad
 q=M_{hq}^{-1}h,
 \qquad K_h=Q^TK_qQ.
-]
+$$
 
 Выбор (B=I) не является независимой физической калибровкой. В ранее проверенном первом блоке зафиксировано
 
-[
+$$
 M_{hq}^TM_{hq}
 =\frac16(P_{A_1}+P_E)+\frac13P_{T_2},
-]
+$$
 
 то есть (s^2_{A_1}=s^2_E=1/6), (s^2_{T_2}=1/3). Это конечный block result, а не последовательная refinement calibration. Для закрытия пункта нужны независимые (M_{hq}^{(l)}) на L0–L3, все шесть singular values, rank, conditioning, covariance и устойчивость базиса.
 
@@ -1108,10 +1108,10 @@ M_{hq}^TM_{hq}
 
 Ранее зарегистрированные контрольные значения:
 
-- L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около (4.83\times10^{-15}), размерность 17 с seed.
+- L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около $4.83\times10^{-15}$, размерность 17 с seed.
 - L1 E-only worker family: 72 shard triplets (3 edge representatives × 24 nodes). Это вычислительное разбиение одного Euclidean E-path, а не 72 независимых физических уровня.
 - Наличие L0 precursor и L1 E-only shard family не означает наличие четырёх сопоставимых физических refinement levels.
-- Общий (c_{\mathrm{DeWitt}}(\epsilon)) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
+- Общий $c_{\mathrm{DeWitt}}(\epsilon)$ нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
 
 ## Г.5. L1 amplitude package v1: что реализовано
 
@@ -1131,13 +1131,13 @@ M_{hq}^TM_{hq}
 
 Определения worker:
 
-[
+$$
 u_e=\frac12\sum_{4\,\mathrm{chambers}\to e}H_c|\Omega\rangle,
 \qquad
 v_{e,w}=H_wu_e,
 \qquad
 v_e=\sum_{w=0}^{23}v_{e,w}.
-]
+$$
 
 Используется `LocalPLPeterWeylEuclidean exact active-cone`, с (J_{\max}=2.5) в shard metadata. Worker заявляет конечные проверки геометрии, ненулевости состояний, конечности амплитуд, spin wall и seed parity. Эти заявления теперь дополнительно пересчитываются producer/validator по raw NPZ, а не принимаются только из JSON.
 
@@ -1383,3 +1383,33 @@ BIP39 следует держать отдельным криптографич�
 - B3 spectral-history extension пока имеет preregistration, а не найденный B3 closure result. Конечный Euclidean first-edge/finite Krylov control нельзя выдавать за полную Lorentzian physical history.
 
 Provenance check for the older HDA controls: GitHub job lookup currently reports run 31855735615 (two-node physical-sine HDA) and 31858615323 (spin-changed operator-first route) as completed/success. Their artifact endpoints currently return no artifacts, so reproduction should use the pinned source revisions and the result documents' recorded digests rather than assuming the old ZIPs are still downloadable.
+
+
+---
+
+## SHA-проверяемый индекс доказательств — 19 ноября 2026
+
+Выборочная интеграция результатов HDA, зеркального Wilson–Dirac сектора, spectral-history и физического причинного конуса собрана в отдельной ветке:
+
+- [BQG_PROOF_INDEX_20261119.md](BQG_PROOF_INDEX_20261119.md) — точные SHA исходных blob/коммитов, проверенные workflow/run, предпосылки теорем, статус каждого результата и границы физических утверждений.
+- Пять независимых CI: `bqg-hda-algebra-regression`, `bqg-mirror-wilson-dirac`, `bqg-spectral-history-algebra`, `bqg-physical-history-reference`, `bqg-spectral-history-actual-k5`.
+- Фактический тяжёлый Peter–Weyl K5 spectral first-edge вынесен в отдельный 32-column artifact-producing workflow; B3 остаётся отдельным этапом и заблокирован отсутствием исходных архивных артефактов.
+- Ни один divergent research branch не вливается целиком. Слияние интеграционной ветки разрешается только после проверки всех новых CI и review diff.
+
+
+
+### W5 V09/V10: seed-sharded rerun
+
+PR [#86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) now splits the paired comparison into 30 independently resumable cells: five frozen seed values, three Peter–Weyl cutoffs and two pruning modes. Each cell preserves the 24 signed complex epsilon-term maps, the pre/post-serialization Gauss coefficients and a reconstruction check. Run `44496003089` is queued on head `303cea6d291506041db602262b25996b1459bf68`; until all 30 JSON reports and the aggregate are inspected, W5 remains **INCOMPLETE**, not PASS.
+
+
+
+### Spectral-history: actual K5 master first-edge calculation
+
+The integration branch now includes `scripts/bqg_euclidean_master_first_edge_sharded.py` and workflow `bqg-spectral-history-actual-k5`. It computes the 32 exact columns of the finite positive Euclidean master, assembles the first block-Lanczos edge and reports `B1_rank` with independent algebra/PSD/regulator guards. A successful algebra gate does not predetermine closure: nonzero `B1_rank` means the finite history continues to another shell. The B3 preregistration is retained, but its old source artifacts in the separate `binary_quantum_theory` repository are currently unavailable and must be regenerated before B3 can be claimed.
+
+
+
+### CI-аудит интеграции BQG — 19 ноября 2026
+
+На проверенном head `2cca65c400dedd56b6be0a14a4263bb1f892ab8f` завершились успешно четыре конечных workflow: HDA compression (2/2 tests), mirror/Wilson (оба JSON gate `passed=true`), synthetic spectral-history regression (reachable/reduced dimension 7; numerical errors порядка `1e-15`) и physical-history reference (`PASS_REFERENCE_ONLY`, одновременно `OPEN_PHYSICAL`). Их артефакты скачаны и проверены. Настоящий K5 first-edge run `44496628504` на момент аудита оставался в очереди без колонок; W5 run `44496003089` имел 30 queued cells и ноль артефактов. Эти результаты не следует переносить на последующий commit без повторного CI.
