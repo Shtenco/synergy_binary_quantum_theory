@@ -192,11 +192,6 @@ def export(output_dir: Path, *, chunk_size: int = 4096) -> dict:
     canonical = np.sort(np.asarray(endpoints), axis=1)
     unique_edges = len(np.unique(canonical, axis=0))
     fibre_sizes = np.bincount(np.asarray(fibre_labels), minlength=len(causal_ids))
-    parent_counts = np.bincount(
-        np.asarray([causal_index.get(parent_by_child[cid], -1)
-                    for cid in causal_ids], dtype=np.int64),
-        minlength=len(causal_ids),
-    )
     mass_by_parent = {}
     for fibre_id, count in enumerate(fibre_sizes):
         parent_id = parent_by_child[causal_ids[fibre_id]]
@@ -262,12 +257,17 @@ def export(output_dir: Path, *, chunk_size: int = 4096) -> dict:
         "connected_components": int(component_count),
         "array_files": {
             name: {
-                "file": f"{name}.npy" if name != "child_tetrahedra" else "g3_child_tetrahedra.npy",
+                "file": filename,
                 "dtype": str(array.dtype),
                 "shape": list(array.shape),
                 "sha256": _sha256_memmap(array, chunk_size * 36),
             }
-            for name, array in files.items()
+            for name, filename, array in (
+                ("child_tetrahedra", "g3_child_tetrahedra.npy", child_tets),
+                ("dual_endpoints", "g3_dual_endpoints.npy", endpoints),
+                ("route_colours", "g3_route_colours.npy", routes),
+                ("fibre_labels", "g3_fibre_labels.npy", fibre_labels),
+            )
         },
         "peak_rss_bytes": int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024),
         "storage_mode": "numpy open_memmap; parent-chunk writes; validation reads bounded edge slices",
