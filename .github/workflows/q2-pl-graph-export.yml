@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - research/bqg-qfi-q2-emergent-graph-audit-20261118
+      - research/bqg-q2-correspondence-audit-hardening-20261119
     paths:
       - 'scripts/q2_pl_graph_export.py'
       - 'tests/test_q2_pl_graph_export.py'
@@ -52,6 +53,7 @@ on:
       - 'tests/test_q2_su2_irrep_singlet_invariance_gate.py'
       - 'BQG_Q2_SU2_IRREP_SINGLET_INVARIANCE_RESULT_20261118.md'
       - 'BQG_Q2_RELATIONAL_GRAPH_QFI_RESULT_20261118.md'
+      - '.github/workflows/q2-pl-graph-export.yml'
       - '.github/workflows/q2-pl-graph-export.yml'
 
 permissions:
