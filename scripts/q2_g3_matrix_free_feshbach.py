@@ -3,7 +3,7 @@
 
 The spectral extrema are Ritz estimates, not certified interval bounds. The
 reported Feshbach correction and slope are deterministic coarse-vector probes,
-not a full 512x512 self-energy matrix.
+not the full 512x512 self-energy matrix.
 """
 from __future__ import annotations
 
