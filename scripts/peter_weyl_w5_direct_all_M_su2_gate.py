@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 import sys
 
@@ -82,6 +83,55 @@ def norm(state):
     if not math.isfinite(value):
         raise ValueError("operator output norm is non-finite")
     return value
+
+
+def current_rss_bytes():
+    """Return current resident memory on Linux runners, or None if unavailable."""
+    try:
+        with open("/proc/self/statm", "r", encoding="ascii") as stream:
+            resident_pages = int(stream.read().split()[1])
+        return resident_pages * int(os.sysconf("SC_PAGE_SIZE"))
+    except (OSError, ValueError, IndexError, AttributeError):
+        return None
+
+
+def _cache_modules():
+    return (
+        KC.CK, KC.PW, KC.CH, KC.CV, KC.KG,
+    )
+
+
+def cache_snapshot(modules=None):
+    """Capture bounded, JSON-safe statistics for every exposed LRU cache."""
+    modules = _cache_modules() if modules is None else tuple(modules)
+    rows = []
+    for module in modules:
+        for name, value in vars(module).items():
+            info = getattr(value, "cache_info", None)
+            if callable(info):
+                stats = info()
+                rows.append({
+                    "module": getattr(module, "__name__", type(module).__name__),
+                    "function": name,
+                    "hits": int(stats.hits),
+                    "misses": int(stats.misses),
+                    "maxsize": stats.maxsize,
+                    "currsize": int(stats.currsize),
+                })
+    return rows
+
+
+def clear_operator_caches(modules=None):
+    """Clear all audit-aware LRU caches in the active W5 operator modules."""
+    modules = _cache_modules() if modules is None else tuple(modules)
+    cleared = []
+    for module in modules:
+        for name, value in vars(module).items():
+            clear = getattr(value, "cache_clear", None)
+            if callable(clear):
+                clear()
+                cleared.append(f"{getattr(module, '__name__', type(module).__name__)}.{name}")
+    return cleared
 
 
 def require_nonzero_output(state, *, label):
@@ -221,6 +271,7 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
     cases = []
     all_outputs = {}
     superposition_rows = []
+    cache_memory_rows = []
     context = PRUNE.bypass() if pruning_mode == "shadow_no_prune" else None
 
     def evaluate():
@@ -240,6 +291,19 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         result[0], label=f"H_E(node={node}, K12={K12}, K34={K34}, M2={M2})"
                     )
                     all_outputs[(node, K12, K34, M2)] = result[0]
+                    cache_memory_rows.append({
+                        "source_node": node,
+                        "K12": K12,
+                        "K34": K34,
+                        "M2": M2,
+                        "current_rss_bytes": current_rss_bytes(),
+                        "caches_before_clear": cache_snapshot(),
+                    })
+                    # The direct sine-H_E path does not use the cached
+                    # highest-weight wrapper. It can still populate lower-level
+                    # recoupling/volume caches. Clear them between independent
+                    # magnetic columns so memory cannot grow across M sectors.
+                    clear_operator_caches()
                     he_by_m[M2] = {
                         "state": result[0],
                         "norm": norm(result[0]),
@@ -560,6 +624,8 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
         "generators_checked": ["J_plus", "J_minus", "J_z"],
         "cases": cases,
         "operator_columns_sparse": operator_columns_sparse,
+        "cache_memory_diagnostics": cache_memory_rows,
+        "cache_memory_policy": "snapshot and clear all exposed operator LRU caches after each independent M column",
         "operator_columns_encoding": "[repr(output_key), real_amplitude, imaginary_amplitude]; complete output support, no seed-subspace projection",
         "scope": (
             "Direct complete declared-M covariance check on the finite charged J=1 recoupling channels at each requested K5 source node; a resumable shard checks one adjacent-M pair. "
