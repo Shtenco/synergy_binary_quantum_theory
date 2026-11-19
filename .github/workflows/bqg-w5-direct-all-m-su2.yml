@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - research/bqg-w5-production-audit-20261113
+      - research/bqg-intrinsic-clock-lorentzian-bridge-20261116
     paths:
       - '.github/workflows/bqg-w5-direct-all-m-su2.yml'
       - 'scripts/peter_weyl_w5_direct_all_M_su2_gate.py'
@@ -29,16 +30,52 @@ on:
       - 'tests/test_bqg_w5_direct_all_m_shadow_equivalence.py'
   workflow_dispatch:
 
-concurrency:
-  group: bqg-w5-direct-all-m-v4-${{ github.ref }}-${{ github.sha }}
-  cancel-in-progress: false
+# The preflight job cancels stale runs through the Actions API; do not use
+# workflow-level concurrency here because an older queued run can block cleanup.
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 jobs:
+  cancel-stale-runs:
+    name: Cancel superseded W5 matrices on this branch
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Cancel older queued or running matrices
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace(/^refs\/heads\//, "");
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRuns,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 417401155,
+                branch,
+                per_page: 100,
+              }
+            );
+            for (const run of runs) {
+              if (run.id === context.runId || run.status === "completed") continue;
+              try {
+                await github.rest.actions.cancelWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: run.id,
+                });
+                core.info(`Cancelled stale W5 run ${run.id} (${run.status}, ${run.head_sha})`);
+              } catch (error) {
+                core.warning(`Could not cancel stale W5 run ${run.id}: ${error.message}`);
+              }
+            }
+
   direct-all-m:
+    needs: cancel-stale-runs
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -47,6 +84,8 @@ jobs:
       matrix:
         pruning_mode: [production, shadow_no_prune]
         node: [0, 1, 2, 3, 4]
+        channel: ['0_2', '2_0']
+        m_pair: ['neg2_0', '0_2']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,14 +108,16 @@ jobs:
           python scripts/peter_weyl_w5_direct_all_M_su2_gate.py \
             --Jmax2 10 \
             --nodes ${{ matrix.node }} \
+            --channel '${{ matrix.channel }}' \
+            --m-pair '${{ matrix.m_pair }}' \
             --pruning-mode ${{ matrix.pruning_mode }} \
-            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}.json
+            --output verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair }}.json
       - name: Upload direct all-M covariance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-${{ github.run_id }}
-          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}.json
+          name: bqg-w5-direct-all-m-${{ matrix.pruning_mode }}-node${{ matrix.node }}-channel${{ matrix.channel }}-mpair${{ matrix.m_pair }}-${{ github.run_id }}
+          path: verification_results/direct_all_M_${{ matrix.pruning_mode }}_node${{ matrix.node }}_channel${{ matrix.channel }}_mpair${{ matrix.m_pair }}.json
           if-no-files-found: warn
           retention-days: 30
 
@@ -92,14 +133,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Download all ten matrix artifacts
+      - name: Download all forty adjacent-M channel-sharded matrix artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: bqg-w5-direct-all-m-*-node*-${{ github.run_id }}
+          pattern: bqg-w5-direct-all-m-*-node*-channel*-mpair*-${{ github.run_id }}
           path: verification_results
           merge-multiple: true
-          if-no-artifact-found: warn
-      - name: Compare all five production/shadow pairs
+      - name: Compare all five-node, two-channel, all-M production/shadow pairs
         if: always()
         run: |
           python scripts/bqg_w5_direct_all_m_shadow_equivalence.py \

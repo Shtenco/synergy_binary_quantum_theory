@@ -13,6 +13,27 @@ import k5_peter_weyl_safe_hda_column as pw
 
 
 class TestDirectAllMSU2FailClosed(unittest.TestCase):
+    def test_operator_cache_snapshot_and_clear_are_bounded_and_observable(self):
+        from functools import lru_cache
+        from types import SimpleNamespace
+
+        @lru_cache(maxsize=4)
+        def cached(value):
+            return value * value
+
+        module = SimpleNamespace(__name__="synthetic_cache_module", cached=cached)
+        self.assertEqual(cached(3), 9)
+        before = gate.cache_snapshot((module,))
+        self.assertEqual(before[0]["currsize"], 1)
+        self.assertEqual(before[0]["maxsize"], 4)
+        cleared = gate.clear_operator_caches((module,))
+        self.assertEqual(cleared, ["synthetic_cache_module.cached"])
+        self.assertEqual(cached.cache_info().currsize, 0)
+
+    def test_current_rss_probe_is_optional_and_nonnegative(self):
+        value = gate.current_rss_bytes()
+        self.assertTrue(value is None or (isinstance(value, int) and value >= 0))
+
     def test_complex_operator_diagnostics_are_losslessly_json_serializable(self):
         import json
         encoded = json.dumps(
@@ -157,6 +178,8 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
             for case in result["cases"]
         ))
         self.assertEqual(len(result["operator_columns_sparse"]), 30)
+        self.assertEqual(len(result["cache_memory_diagnostics"]), 30)
+        self.assertTrue(all("caches_before_clear" in row for row in result["cache_memory_diagnostics"]))
         self.assertTrue(all(len(column["entries"]) >= 1 for column in result["operator_columns_sparse"]))
         self.assertEqual(
             {(column["source_node"], column["K12"], column["K34"], column["input_M2"])
@@ -175,6 +198,70 @@ class TestDirectAllMSU2FailClosed(unittest.TestCase):
                 ("J_minus", 0), ("J_minus", 2),
             },
         )
+
+
+    def test_single_channel_shard_preserves_all_m_and_real_superposition_check(self):
+        def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": 1, "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return {key: 1.0 + 0j}, 0.0, 0.0
+
+        def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            self.assertEqual(charged_nodes, (source_v,))
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": len(state), "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return dict(state), 0.0, 0.0
+
+        with (patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map),
+              patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition)):
+            result = gate.run(
+                Jmax2=4, nodes=(0,), channels=((0, 2),)
+            )
+
+        self.assertTrue(result["passed"], result)
+        self.assertEqual(result["input_charged_sector"]["channels_K12_K34"], [[0, 2]])
+        self.assertEqual(len(result["cases"]), 4)
+        self.assertEqual(len(result["operator_columns_sparse"]), 3)
+        self.assertEqual(len(result["actual_complex_superposition_rows"]), 1)
+
+
+    def test_adjacent_m_pair_shard_checks_both_ladder_directions(self):
+        def identity_map(key, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": 1, "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return {key: 1.0 + 0j}, 0.0, 0.0
+
+        def identity_superposition(state, source_v, Jmax2, charged_nodes, projection_diagnostics=None):
+            if projection_diagnostics is not None:
+                projection_diagnostics[source_v] = {
+                    "samples": len(state), "max_relative_leakage": 0.0,
+                    "basis_kind": "charged_complete_JM_recoupling",
+                }
+            return dict(state), 0.0, 0.0
+
+        for pair, expected_cases in (((-2, 0), {("J_plus", -2), ("J_minus", 0)}),
+                                     ((0, 2), {("J_plus", 0), ("J_minus", 2)})):
+            with self.subTest(pair=pair), \
+                 patch.object(gate.SINE, "complete_HE_sine", side_effect=identity_map), \
+                 patch.object(gate.SINE, "complete_HE_sine_state", side_effect=identity_superposition):
+                result = gate.run(Jmax2=4, nodes=(0,), channels=((0, 2),), m_pair=pair)
+            self.assertTrue(result["passed"], result)
+            self.assertEqual(result["magnetic_components_tested_M2"], list(pair))
+            self.assertEqual(len(result["operator_columns_sparse"]), 2)
+            self.assertEqual(
+                {(case["direction"], case["input_M2"]) for case in result["cases"]},
+                expected_cases,
+            )
 
     def test_graph_changing_term_keeps_all_touched_vertices_in_complete_charge_basis(self):
         node = 0
