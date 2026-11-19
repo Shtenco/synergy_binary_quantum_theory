@@ -1396,3 +1396,9 @@ Provenance check for the older HDA controls: GitHub job lookup currently reports
 - Фактический тяжёлый Peter–Weyl spectral first-edge и B3 не маскируются быстрым алгебраическим regression: они остаются отдельными вычислительными этапами.
 - Ни один divergent research branch не вливается целиком. Слияние интеграционной ветки разрешается только после проверки всех новых CI и review diff.
 
+
+
+### W5 V09/V10: seed-sharded rerun
+
+PR [#86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) now splits the paired comparison into 30 independently resumable cells: five frozen seed values, three Peter–Weyl cutoffs and two pruning modes. Each cell preserves the 24 signed complex epsilon-term maps, the pre/post-serialization Gauss coefficients and a reconstruction check. Run `44496003089` is queued on head `303cea6d291506041db602262b25996b1459bf68`; until all 30 JSON reports and the aggregate are inspected, W5 remains **INCOMPLETE**, not PASS.
+
