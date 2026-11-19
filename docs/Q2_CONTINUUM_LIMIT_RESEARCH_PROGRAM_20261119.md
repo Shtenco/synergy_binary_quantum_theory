@@ -198,6 +198,20 @@ An independent artifact-side check reconstructed the expected constant coarse ve
 
 This is a strong finite G3 Schur/Feshbach result. It does not supply the missing geometric conductances, a refinement sequence of these matrices, Mosco convergence, or a physical QFI interpretation. The matrices are generated from the unweighted dual graph. Artifact run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44442960180
 
+## New finite-level result: complete G3 Feshbach matrices (19 November 2026)
+
+The dedicated GitHub Actions run completed successfully:
+- Run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/44442960180
+- Artifact: `q2-g3-full-feshbach-matrices` (artifact ID 14493520542).
+- Actual graph: 221,184 vertices, 442,368 edges, 512 nonempty coarse fibres, one connected component.
+- All 512 coarse basis columns were solved for both the correction and self-energy-slope matrices (not four probes).
+- 230,632 total projected-CG iterations; 1,374.05 seconds solve time; max first/second solve residuals 1.41e-8 / 1.50e-8.
+- Correction matrix: symmetry max-entry error 1.62e-9; smallest eigenvalue 2.35e-15; largest 2.0440; trace 348.250.
+- Self-energy slope: symmetry max-entry error 1.15e-7; smallest eigenvalue -1.40e-15 (roundoff); largest 27.8169; trace 514.252.
+- Both matrices are 512 x 512 and numerically positive semidefinite to the stated tolerances. Independent artifact inspection also verified the normalized constant coarse mode (proportional to square-root fibre sizes) is annihilated to relative residual about 1.6e-9 / 1.4e-9.
+
+This closes the earlier four-probe limitation for the **finite G3 geometric graph**. It does not establish convergence of these matrices across refinement levels, nor identify them with physical QFI conductance. The solve residuals are numerical stopping diagnostics, not rigorous operator-norm error bounds. The next test is matrix-level refinement stability across independently generated G0--G3 families, using common coarse-space identifications and fixed normalization.
+
 ## Current decision rule
 
 Status labels must distinguish:
