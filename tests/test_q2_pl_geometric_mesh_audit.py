@@ -3,7 +3,9 @@ import pytest
 
 from scripts.q2_pl_geometric_mesh_audit import (
     assess_shape_regularity,
+    build_coarse_spectral_sequence,
     build_geometry,
+    coarse_finite_volume_operator,
     geometric_dual_weights,
     initial_reference_embedding,
     mesh_metrics,
@@ -79,3 +81,28 @@ def test_shape_regularity_assessment_does_not_hide_quality_degradation():
     assert report["aspect_ratio_growth_detected"]
     assert not report["uniform_shape_regularity_established"]
     assert "cannot be assumed" in report["warning"]
+
+def test_coarse_geometric_operator_has_mass_weighted_constant_nullmode():
+    edges = np.asarray([[0, 1], [1, 2]], dtype=np.uint32)
+    conductances = np.asarray([2.0, 3.0])
+    labels = np.asarray([0, 1, 1], dtype=np.uint16)
+    volumes = np.asarray([0.25, 0.25, 0.25])
+    operator, mass = coarse_finite_volume_operator(
+        edges, conductances, labels, volumes
+    )
+    constant = np.sqrt(mass)
+    constant /= np.linalg.norm(constant)
+    assert np.linalg.norm(operator @ constant) < 1e-12
+    assert np.linalg.eigvalsh(operator)[0] >= -1e-12
+    assert mass.sum() == pytest.approx(0.75)
+
+
+def test_geometric_galerkin_spectrum_is_built_for_g0_to_g2():
+    reports = build_coarse_spectral_sequence()
+    assert [row["generation"] for row in reports] == [0, 1, 2]
+    assert [row["coarse_dimension"] for row in reports] == [1, 8, 64]
+    assert all(row["coarse_mass_total"] == pytest.approx(16.0 / 3.0, abs=1e-10)
+               for row in reports)
+    assert [row["zero_modes_at_relative_tolerance"] for row in reports] == [1, 1, 1]
+    assert reports[1]["smallest_positive_eigenvalue"] > 0
+    assert reports[2]["smallest_positive_eigenvalue"] > 0
