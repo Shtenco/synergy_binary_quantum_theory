@@ -1226,3 +1226,66 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 ### Последняя строка книги
 
 **Когда-то мы начали с нуля и единицы. Теперь у нас есть настоящий математический тетраэдр, целый мир конечных расчётов и большой список открытых физических дверей.** Наше путешествие продолжается не потому, что ответ уже найден, а потому, что у каждого следующего шага есть строгий вопрос, который можно проверить.
+
+
+---
+
+## Аудит репозитория и карта доказательств — 19 ноября 2026
+
+Этот раздел фиксирует состояние репозитория по состоянию на 2026-11-19. Это **карта доказательств и границ утверждений**, а не заявление о завершении физической теории. Ссылки на исследовательские ветки намеренно оставлены явными: их нельзя считать уже включёнными в `main`.
+
+### Инвентаризация Git
+
+- Основная ветка: `main`; проверенный базовый commit на момент сравнения: `340fa6c32e9dc1a51574612e8c7203422dc3c37d`.
+- GitHub branch search вернул 177 веток в двух страницах (100 + 77). Это текущая инвентаризация refs, а не построчная проверка каждого исторического коммита.
+- Важнейшие исследовательские ветки: [causal-cone audit](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/bqg-causal-cone-audit-hardening-20261113), [intrinsic-clock/Lorentzian bridge](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/bqg-intrinsic-clock-lorentzian-bridge-20261116), [QFI × Q2 graph audit](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/bqg-qfi-q2-emergent-graph-audit-20261118), [Q2 correspondence hardening](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/bqg-q2-correspondence-audit-hardening-20261119), [W5 production audit](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/bqg-w5-production-audit-20261113), [V09/V10 paired reproduction](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/w5-v09-v10-repro-20261119), [consolidated audit](https://github.com/Shtenco/synergy_binary_quantum_theory/tree/research/consolidated-bqg-audit-20261111).
+- Эти ветки существенно разошлись с `main`: например, Q2 correspondence — 1,131 commits ahead / 12 behind; QFI audit — 1,026 ahead / 12 behind; intrinsic-clock — 776 ahead / 12 behind; causal-cone — 362 ahead / 12 behind. Поэтому целые ветки нельзя механически сливать в `main`: сначала требуется сверка баз, зависимостей, конфликтов и доказательств CI.
+
+### Реестр утверждений на основном срезе
+
+Машиночитаемый `theory_gates.json` содержит 55 записей:
+- 23 `proved` — точные математические утверждения в явно заданных предпосылках;
+- 21 `tested_finite` — конечномерные/численные проверки;
+- 4 `conditional`;
+- 4 `external_extension`;
+- 2 `experimental_test`;
+- 1 `no_go`.
+
+Верхнеуровневые флаги этого файла: `core_theory_closed_declared=false`, `experimentally_confirmed=false`. Исторические фразы о `structural_candidate_closed=true` в старых разделах `THEORY_STATUS.md` не должны переопределять текущий машинный ledger.
+
+В `physicalization_gates.json` отдельно зарегистрированы 9 обязательных физических ворот со статусом `open_physical`: физический проектор/история, связная межблочная история, физический TT-ядро/пропагатор, физический шестикомпонентный Wilson-вектор, единый физический масштаб, Maxwell kernel, фоновая и скалярная космология, совместное замыкание линзирования и динамики. Экспериментальное подтверждение также остаётся `false`.
+
+### Что имеет строгую опору в исходниках
+
+1. **Бинарный selector и тетраэдральный носитель.** Для frozen q=2 route construction уравнение локальной однородности выбирает q=2; три нетривиальных Walsh-характера  формируют точный регулярный тетраэдральный набор с попарным скалярным произведением `-1/3`. Четырёхспиновый Gauss-синглетный сектор и логический geometry qubit — отдельные точные представительные конструкции. См. [MICRO_WALSH_QGEOM_BRIDGE.md](MICRO_WALSH_QGEOM_BRIDGE.md) и [SPATIAL_QUBIT_GEOMETRY_BRIDGE.md](SPATIAL_QUBIT_GEOMETRY_BRIDGE.md).
+
+2. **3D combinatorial route.** Для frozen q=2 rewrite выведено точное `N_g=(4·8^g+10)/7` и монотонное `d_g → 3`. Каноническое minimal+flag PL-завершение — граница 16-cell, гомологически S³; рекурсивные PL-проверки выполнены на заявленных конечных уровнях. Это доказывает свойства выбранной конструкции, но не уникальность произвольной bare-causal склейки и не физический континуум. См. [Q2_DIMENSION3_FIXED_POINT_CLOSURE.md](Q2_DIMENSION3_FIXED_POINT_CLOSURE.md), [GLOBAL_MANIFOLD_Q2_COMPLETION.md](GLOBAL_MANIFOLD_Q2_COMPLETION.md).
+
+3. **Regge → Einstein–Hilbert finite test.** В [REGGE_EH_CUBIC_BRIDGE.md](REGGE_EH_CUBIC_BRIDGE.md) сравниваются независимые Regge и continuum EH действия для одного гладкого поля; квадратичный и кубический коэффициенты на конечных решётках сходятся к ожидаемой нормировке 1/2. Это содержательный нелинейный finite-lattice контроль, но не вывод взаимодействующей физической IR-теории из бинарного ансамбля.
+
+4. **HDA.** [FIXED_CUTOFF_COMPOSITION_BOUND.md](FIXED_CUTOFF_COMPOSITION_BOUND.md) доказывает композиционную оценку при явно фиксированных конечномерных предпосылках и cutoff. Полное graph-changing multi-node off-shell quantum HDA и одновременное снятие cutoff/refinement остаются открытыми.
+
+5. **TT и Wilson basis.** [TT_PROPAGATOR_FIRST_PASS.md](TT_PROPAGATOR_FIRST_PASS.md) задаёт точный reduced two-polarization transfer propagator и его quartic expansion; это не полный constrained Peter–Weyl/history/RG propagator. [S4_TT_QUARTIC_COMPLETE_BASIS.md](S4_TT_QUARTIC_COMPLETE_BASIS.md) доказывает шестимерность общего parity-even S4 TT quartic quotient. [C6_TO_TT_WILSON_COEFFICIENTS.md](C6_TO_TT_WILSON_COEFFICIENTS.md) — корректный extractor лишь для вложенной двухпараметрической гипотезы. Физический шестикомпонентный Wilson-вектор пока не выведен.
+
+6. **QFI и спектральная размерность.** Ветвь [QFI × Q2 audit](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/bqg-qfi-q2-emergent-graph-audit-20261118/BQG_QFI_Q2_EMERGENT_GRAPH_AUDIT_20261118.md) содержит реальные локальные и сетевые QFI-конструкции. Для заданного spin-1/2 singlet-gluing канала получено локальное `F_e=I_3`, то есть `g_e=I_3/4`; отдельные graph/network gates показывают межрёберные корреляции и дополнительные нулевые направления. Это конечные результаты для конкретных состояний и генераторов, не готовая физическая межблочная проводимость.
+   
+   Существенная проверка: однородный множитель conductance `g` лишь меняет масштаб диффузионного времени `τ`, но не выбирает топологию и не меняет её IR spectral dimension. Гиперкубические QFI-калибровки с заранее заданным D не доказывают, что q=2 динамика сама выбрала эту топологию. Конечный Q2→PL causal correspondence построен до поколения 2, но его fibres неравномерны и partition не является exact Markov lumping; Galerkin stiffness не является физической QFI-проводимостью.
+
+7. **Причинный конус и время.** Существуют reduced/finite graph-causality результаты и отдельные причинные/clock audits. Однако constraint order, relational-history order и физическое Lorentzian retarded response не отождествляются. Полный физический общий световой/гравитационный конус требует физического projector/history, физического времени или clock-free boundary history и контролируемого continuum response.
+
+8. **W5 production.** [W5 production audit](https://github.com/Shtenco/synergy_binary_quantum_theory/blob/research/bqg-intrinsic-clock-lorentzian-bridge-20261116/W5_PRODUCTION_AUDIT_20261113.md) фиксирует production pruning nonlinearity, незавершённую production/shadow equivalence и ранее воспроизводившийся scalar-sector guard blocker. Нормированная правка прошла семь regression tests, но тяжёлые all-M/adjoint/no-prune сравнения не дали полного численного вердикта. [PR #86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) хранит парный V09/V10 аудит и остаётся Draft; успешный workflow сам по себе не будет физическим/континуальным PASS.
+
+### Инфотон, гравитон и зеркальный сектор
+
+Исторический аудит [REVIEW_RU.md](docs/information_infoton_review/REVIEW_RU.md) специально различает информационный регистр, коллективный оператор и независимую частицу. Разложение четырёх spin-1/2 представлений содержит j=2, но локальный Gauss-singlet сектор имеет размерность 2 и ортогонален j=2 сектору размерности 5. Поэтому само наличие j=2 в тензорном произведении не доказывает физический гравитон или независимый инфотон. Mathieu/Floquet-резонанс воспроизводится в заданной модели, но динамика и связь в ней заданы, а не выведены из полной BQG.
+
+Зеркальные 16-cell/Q4 staggered-order и orientation-sign проверки — точные конечные результаты в своих моделях. Они не устанавливают ненулевой физический Lorentzian coefficient, физическую массу/полюс медиатора или наблюдаемую mirror force. Аналогично, conditional ADM/HDA TT форма не фиксирует абсолютную нормировку Ньютона: физический масштаб остаётся отдельным открытым gate.
+
+### Последние PR и правило интеграции
+
+- [PR #85](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/85) — конечное Q2 causal–PL correspondence hardening; его описание прямо ограничивает результат конечными комбинаторными/QFI-инвариантами и не заявляет continuum или физическую проводимость.
+- [PR #86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) — парный V09/V10 W5 regression; требует завершённых артефактов closure, adjoint, sine, pruning и cutoff comparison.
+- [PR #84](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/84) — intrinsic-clock/Lorentzian bridge, сохраняет physical clock и полный конус открытыми.
+- [PR #83](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/83) — W5 production blockers и remediation; Draft, не готов к слиянию.
+
+**Правило:** в `main` включать только проверенные переносимые результаты с точным указанием предпосылок, source SHA, workflow run и артефактов. Diverged research branches не сливать целиком ради зелёного CI. Каждое физическое утверждение должно ссылаться на свой gate и сохранять различие между `proved`, `tested_finite`, `conditional` и `open_physical`.
