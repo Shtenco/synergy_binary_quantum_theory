@@ -1,0 +1,55 @@
+name: BQG mirror mass and Wilson-Dirac finite gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
+      - 'MIRROR_WILSON_MATTER.md'
+      - 'scripts/mirror_matter_matrix_element_gate.py'
+      - 'scripts/mirror_wilson_matter_gate.py'
+      - 'tests/test_mirror_wilson_matter_gate.py'
+      - '.github/workflows/bqg-mirror-wilson-dirac.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'MIRROR_MATTER_MATRIX_ELEMENT.md'
+      - 'MIRROR_WILSON_MATTER.md'
+      - 'scripts/mirror_matter_matrix_element_gate.py'
+      - 'scripts/mirror_wilson_matter_gate.py'
+      - 'tests/test_mirror_wilson_matter_gate.py'
+      - '.github/workflows/bqg-mirror-wilson-dirac.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-mirror-wilson-dirac-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  finite-matter-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NumPy
+        run: python -m pip install numpy
+      - name: Compile mirror sources and tests
+        run: python -m py_compile scripts/mirror_matter_matrix_element_gate.py scripts/mirror_wilson_matter_gate.py tests/test_mirror_wilson_matter_gate.py
+      - name: Mirror-covariant mass matrix element
+        run: python scripts/mirror_matter_matrix_element_gate.py --output verification_results/MIRROR_MATTER_MATRIX_ELEMENT.json
+      - name: Wilson-Dirac mirror carrier
+        run: python scripts/mirror_wilson_matter_gate.py --output verification_results/MIRROR_WILSON_MATTER.json
+      - name: Regression tests
+        run: python -m unittest discover -s tests -p 'test_mirror_wilson_matter_gate.py' -v
+      - name: Upload finite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-mirror-wilson-dirac-finite-evidence
+          path: verification_results/
+          if-no-files-found: error
