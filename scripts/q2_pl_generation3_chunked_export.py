@@ -17,21 +17,20 @@ from pathlib import Path
 
 import numpy as np
 
-from q2_pl_generation3_stream import (
-    _advance_one_generation,
-    _child_key,
-)
-from q2_pl_graph_export import (
-    all_nonempty_faces,
-    cross_polytope_boundary_4,
-    dual_graph_payload,
-)
-from q2_causal_graph_export import ROUTE_LABELS
-from q2_causal_pl_correspondence_gate import (
-    _causal_children,
-    _parent_face_sides,
-    _vertex_face_colours,
-)
+try:
+    from .q2_pl_generation3_stream import _advance_one_generation, _child_key
+    from .q2_pl_graph_export import all_nonempty_faces, cross_polytope_boundary_4, dual_graph_payload
+    from .q2_causal_graph_export import ROUTE_LABELS
+    from .q2_causal_pl_correspondence_gate import (
+        _causal_children, _parent_face_sides, _vertex_face_colours,
+    )
+except ImportError:
+    from q2_pl_generation3_stream import _advance_one_generation, _child_key
+    from q2_pl_graph_export import all_nonempty_faces, cross_polytope_boundary_4, dual_graph_payload
+    from q2_causal_graph_export import ROUTE_LABELS
+    from q2_causal_pl_correspondence_gate import (
+        _causal_children, _parent_face_sides, _vertex_face_colours,
+    )
 
 
 PERMUTATIONS = tuple(itertools.permutations(range(4)))
