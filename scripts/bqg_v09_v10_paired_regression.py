@@ -228,12 +228,25 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
             weighted_rows = [[repr(k), (complex(v) * complex(scale)).real,
                               (complex(v) * complex(scale)).imag]
                              for k, v in sorted(source.items(), key=lambda item: repr(item[0]))]
+            term_gauss, weighted_gauss, rejected = {}, {}, []
+            for cov_key, amplitude in source.items():
+                try:
+                    gauss_key = V09.covariant_scalar_to_gauss(cov_key, node)
+                except ValueError:
+                    rejected.append(repr(cov_key))
+                    continue
+                term_gauss[gauss_key] = term_gauss.get(gauss_key, 0j) + complex(amplitude)
+                weighted_gauss[gauss_key] = weighted_gauss.get(gauss_key, 0j) + complex(amplitude) * complex(scale)
             term_capture.append({
                 "term_index": term_index,
                 "epsilon_sign": epsilon,
                 "ordered_edges": list(ordered_edges),
                 "raw_covariant_sparse": raw_rows,
                 "epsilon_weighted_covariant_sparse": weighted_rows,
+                "raw_gauss_sparse": [[repr(k), z.real, z.imag] for k, z in sorted(term_gauss.items(), key=lambda item: repr(item[0]))],
+                "epsilon_weighted_gauss_sparse": [[repr(k), z.real, z.imag] for k, z in sorted(weighted_gauss.items(), key=lambda item: repr(item[0]))],
+                "scalar_rejected_count": len(rejected),
+                "scalar_rejected_keys": rejected[:20],
             })
         return original_add_sparse(target, source, scale)
 
@@ -263,8 +276,24 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                 if len(captured) != 3:
                     raise AssertionError(f"expected three V09 serialization calls, got {len(captured)}")
                 raw_A, raw_B_gauss, raw_B_covariant = [dict(x) for x in captured]
+                term_sum_gauss = {}
+                for term in term_capture:
+                    for key_repr, real, imag in term["epsilon_weighted_gauss_sparse"]:
+                        z = complex(float(real), float(imag))
+                        term_sum_gauss[key_repr] = term_sum_gauss.get(key_repr, 0j) + z
+                term_sum_matches_raw = _relative_difference(term_sum_gauss, _repr_map(raw_B_gauss))["relative_l2"] < 1e-12
+                raw_repr = _repr_map(raw_B_gauss)
+                serialized_repr = {repr(k): complex(v) for k, v in ((key, val) for key, val in raw_B_gauss.items())}
+                serialized_repr = {str(key): complex(float(re), float(im)) for key, re, im in result["B_Lorentzian_raw_KKV_Gauss"]}
+                serializer_roundtrip_ok = (
+                    set(serialized_repr).issubset(raw_repr)
+                    and all(serialized_repr[k] == raw_repr[k] for k in serialized_repr)
+                    and all(abs(v) <= SERIALIZER_CUTOFF for k, v in raw_repr.items() if k not in serialized_repr)
+                )
                 v09_rows.append({
                     "seed_K": seed_k,
+                    "term_sum_gauss_matches_raw": term_sum_matches_raw,
+                    "serializer_roundtrip_ok": serializer_roundtrip_ok,
                     "status": result["status"],
                     "epsilon_terms_completed": result["epsilon_terms_completed"],
                     "term_indices": [int(row["term_index"]) for row in result["term_diagnostics"]],
@@ -374,6 +403,8 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
             "all_requested_V09_columns_complete": len(v09_rows) == len(seed_ks) and all(r["epsilon_terms_completed"] == 24 for r in v09_rows),
             "all_requested_V09_term_orders_match": len(v09_rows) == len(seed_ks) and all(r["term_epsilon_order_matches"] for r in v09_rows),
             "all_requested_24_complex_epsilon_term_maps_captured": len(v09_rows) == len(seed_ks) and all(len(r["epsilon_term_maps"]) == 24 for r in v09_rows),
+            "all_requested_epsilon_terms_reconstruct_final_gauss_column": len(v09_rows) == len(seed_ks) and all(r["term_sum_gauss_matches_raw"] for r in v09_rows),
+            "all_requested_serializer_roundtrips_obey_1e-13_cutoff": len(v09_rows) == len(seed_ks) and all(r["serializer_roundtrip_ok"] for r in v09_rows),
             "all_requested_V09_sine_wrapper_gates_pass": len(v09_rows) == len(seed_ks) and all(r["sine_wrapper_gate_passed"] for r in v09_rows),
             "V10_common_basis_complete": closure_complete,
             "V10_algebraic_closure_passed": v10.get("algebraic_status") == "PASS_ADJOINT_CONSISTENCY",
