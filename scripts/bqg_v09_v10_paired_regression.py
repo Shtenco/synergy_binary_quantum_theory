@@ -65,7 +65,7 @@ def _serializer_loss(raw, serialized_rows):
     }
 
 
-def _sine_composition_probe(node, seed_k, jmax2):
+def _sine_composition_probe(node, seed_k, jmax2, mode):
     import peter_weyl_euclidean_sine_ordering_gate as OLD_SINE
     import peter_weyl_covariant_K_sine_composition_gate as NEW_SINE
     import peter_weyl_covariant_volume_leg_gate as CV
@@ -74,12 +74,13 @@ def _sine_composition_probe(node, seed_k, jmax2):
     import bqg_v09_w5_lorentzian_raw_column as V09
 
     seed = V09.w5_input_key(seed_k)
-    old, old_volume_leak = OLD_SINE.allJ_H_sine(seed, node, jmax2)
-    covariant = CV.gauss_to_covariant({seed: 1.0 + 0j}, node)
-    complete = COMP.covariant_to_complete(covariant, node)
-    complete_key = next(iter(complete))
-    diagnostics = {}
-    with PRUNE.bypass():
+    context = PRUNE.bypass() if mode == "shadow_no_prune" else contextlib.nullcontext()
+    with context:
+        old, old_volume_leak = OLD_SINE.allJ_H_sine(seed, node, jmax2)
+        covariant = CV.gauss_to_covariant({seed: 1.0 + 0j}, node)
+        complete = COMP.covariant_to_complete(covariant, node)
+        complete_key = next(iter(complete))
+        diagnostics = {}
         new, new_volume_leak, new_basis_leak = NEW_SINE.complete_HE_sine(
             complete_key, node, jmax2, charged_nodes=(node,),
             projection_diagnostics=diagnostics,
@@ -180,7 +181,7 @@ def run(node, jmax2, mode, output):
                     "epsilon_terms_completed": result["epsilon_terms_completed"],
                     "term_indices": [int(row["term_index"]) for row in result["term_diagnostics"]],
                     "term_epsilon_order_matches": [
-                        [int(row["epsilon_sign"]), tuple(row["ordered_edges"])]
+                        (int(row["epsilon_sign"]), tuple(row["ordered_edges"]))
                         for row in result["term_diagnostics"]
                     ] == v09_epsilon,
                     "sine_wrapper_gate_passed": result["sine_wrapper_gate_passed"],
@@ -218,7 +219,7 @@ def run(node, jmax2, mode, output):
             })
 
     sine_rows = [
-        _sine_composition_probe(node, seed_k, jmax2)
+        _sine_composition_probe(node, seed_k, jmax2, mode)
         for seed_k in W5_K
     ]
 
