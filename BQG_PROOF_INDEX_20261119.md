@@ -74,17 +74,17 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 3. CI status is valid only for the exact tested head SHA; never transfer an older green run to a newer PR head.
 4. Distinguish `proved`, `tested_finite`, `conditional`, `reference_only`, `open_physical`, `incomplete` and `experimental`.
 5. No BIP39/seed encoding step is evidence for a physical holographic principle. Such a connection needs a separately defined physical observable and falsifiable prediction.
-6. Do not merge this integration branch into main until all three new focused workflows are green and the PR diff is reviewed. The physical gates remain fail-closed.
+6. Do not merge this integration branch into main until all five focused workflows are green on the final head and the PR diff is reviewed. The physical gates remain fail-closed.
 
 
 ## 7. Current integration PR and CI observation
 
 - Selective integration PR: [#87](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/87).
 - PR head immediately before this index-status update: `8f72ef584d8d13d31023657364fb895fee853d67`; the status update itself is commit `0ac49d573cdbc966feb183900c1e3595d3d5592c`. Base `main` remains `401b006d368caf4bfd7578c0d312795cf2f2323a`.
-- The four focused workflow definitions are present and path-filtered. The GitHub connector currently returns no workflow runs and no status checks for the integration head, so **none of the new CI jobs is yet certified green**. This is recorded as pending/unobserved, not as a pass.
+- Five focused workflow definitions are present. At the audited head `2cca65c400dedd56b6be0a14a4263bb1f892ab8f`, HDA, mirror/Wilson, spectral-history algebra and physical-history reference completed successfully (runs `44496628707`, `44496629155`, `44496628696`, `44496628597`). Their finite scopes and artifacts were inspected. The actual 32-column K5 first-edge workflow `44496628504` remained queued with no column artifacts. The head has since received documentation/workflow-trigger corrections; all five checks must be observed again on the resulting final head.
 - PR #87 remains Draft and must not be merged until the four workflows have run and their JSON artifacts have been inspected.
 
 
 ## 8. Current PR #87 head
 
-The selective integration branch now also contains the sharded actual K5 first-edge executor and workflow. PR #87 remains Draft. New workflow definitions have no associated run/status result yet, so all new CI outcomes remain pending. The W5 paired rerun is separate in PR #86, run `44496003089`, with 30 seed-sharded jobs queued at last inspection.
+The selective integration branch contains five focused workflows. At head `2cca65c400dedd56b6be0a14a4263bb1f892ab8f`, four completed successfully: HDA (2 tests), mirror/Wilson (both JSON gates passed), synthetic spectral regression (7-dimensional closure), and physical-history reference (`PASS_REFERENCE_ONLY`, with `OPEN_PHYSICAL`). Actual K5 run `44496628504` was queued and had no column artifacts at the last poll. Because the documentation and K5 dependency-trigger filters are being corrected, the final head must receive fresh runs before merge. W5 is separate: run `44496003089` still has 30 queued jobs and no artifacts; status remains `INCOMPLETE`.
