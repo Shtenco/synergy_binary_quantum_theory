@@ -21,3 +21,13 @@ def test_g3_feshbach_module_has_explicit_probe_scope():
     from scripts import q2_g3_matrix_free_feshbach as module
 
     assert "not the full 512x512 self-energy matrix" in module.__doc__
+
+
+def test_feshbach_report_is_valid_json_with_real_line_ending(tmp_path):
+    from scripts.q2_g3_matrix_free_feshbach import write_report
+
+    target = tmp_path / "report.json"
+    write_report(target, {"passed": True, "generation": 3})
+    raw = target.read_text(encoding="utf-8")
+    assert raw.endswith("\n")
+    assert json.loads(raw) == {"passed": True, "generation": 3}
