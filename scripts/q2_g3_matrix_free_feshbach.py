@@ -49,18 +49,15 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         operator, k=1, which="SA", v0=v0, tol=spectral_tol,
         maxiter=spectral_maxiter, return_eigenvectors=True,
     )
-    largest = eigsh(
+    largest, large_vec = eigsh(
         operator, k=1, which="LA", v0=v0, tol=spectral_tol,
-        maxiter=spectral_maxiter, return_eigenvectors=False,
+        maxiter=spectral_maxiter, return_eigenvectors=True,
     )
     lam_min, lam_max = float(smallest[0]), float(largest[0])
     small_residual = float(np.linalg.norm(model.apply_q_plus_p(small_vec[:, 0]) -
                                           lam_min * small_vec[:, 0]))
-    large_residual = float(np.linalg.norm(model.apply_q_plus_p(
-        eigsh(operator, k=1, which="LA", v0=v0, tol=spectral_tol,
-              maxiter=spectral_maxiter, return_eigenvectors=True)[1][:, 0]
-    ) - lam_max * eigsh(operator, k=1, which="LA", v0=v0, tol=spectral_tol,
-                         maxiter=spectral_maxiter, return_eigenvectors=True)[1][:, 0]))
+    large_residual = float(np.linalg.norm(model.apply_q_plus_p(large_vec[:, 0]) -
+                                          lam_max * large_vec[:, 0]))
     spectral_seconds = time.perf_counter() - spectral_started
     if not np.isfinite(lam_min) or lam_min <= 0 or not np.isfinite(lam_max):
         raise ValueError(f"Q-space operator not numerically positive: {lam_min}, {lam_max}")
