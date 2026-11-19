@@ -24,12 +24,16 @@ class HDACompressionIdentityTests(unittest.TestCase):
         self.assertLessEqual(defect, 2 * eta_a * eta_b + 1e-10)
 
     def test_invariant_carrier_inherits_commutator_exactly(self):
-        rng = np.random.default_rng(7)
-        A = np.diag(np.arange(1.0, 7.0))
-        B = np.diag(np.arange(2.0, 8.0))
+        A = np.zeros((6, 6), dtype=complex)
+        B = np.zeros((6, 6), dtype=complex)
+        A[:3, :3] = np.array([[1, 1j, 0], [-1j, 2, 1], [0, 1, 3]], complex)
+        B[:3, :3] = np.array([[2, 0, 1j], [0, 1, 1], [-1j, 1, 4]], complex)
+        A[3:, 3:] = np.diag([5.0, 6.0, 7.0])
+        B[3:, 3:] = np.diag([8.0, 9.0, 10.0])
         W = np.eye(6, dtype=complex)[:, :3]
         Aeff, Beff = W.conj().T @ A @ W, W.conj().T @ B @ W
         lhs = W.conj().T @ (A @ B - B @ A) @ W
+        self.assertGreater(np.linalg.norm(Aeff @ Beff - Beff @ Aeff), 1e-6)
         self.assertLess(np.linalg.norm(Aeff @ Beff - Beff @ Aeff - lhs), 1e-12)
 
 
