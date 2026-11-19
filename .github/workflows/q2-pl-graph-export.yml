@@ -18,6 +18,8 @@ on:
       - 'tests/test_q2_pl_generation3_preflight.py'
       - 'scripts/q2_pl_generation3_stream.py'
       - 'tests/test_q2_pl_generation3_stream.py'
+      - 'scripts/q2_pl_generation3_chunked_export.py'
+      - 'tests/test_q2_pl_generation3_chunked_export.py'
       - 'scripts/q2_relational_edge_qfi_gate.py'
       - 'tests/test_q2_relational_edge_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md'
@@ -141,6 +143,10 @@ jobs:
         run: python -m pytest -q tests/test_q2_pl_generation3_stream.py
       - name: Export compact generation-3 dual and causal-fibre evidence
         run: python scripts/q2_pl_generation3_stream.py --output verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json
+      - name: Test chunked generation-3 exporter controls
+        run: python -m pytest -q tests/test_q2_pl_generation3_chunked_export.py
+      - name: Export generation-3 graph in bounded parent chunks
+        run: python scripts/q2_pl_generation3_chunked_export.py --output-dir verification_results/g3_chunked --chunk-size 4096
       - name: Export finite causal-to-PL correspondence
         run: python scripts/q2_causal_pl_correspondence_gate.py --max-generation 2 --output verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
       - name: Export finite zero-energy Feshbach corrections
@@ -156,7 +162,9 @@ jobs:
             verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
             verification_results/Q2_FESHBACH_CORRECTION.json
             verification_results/Q2_PL_GENERATION3_PREFLIGHT.json
-            verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json\n            verification_results/g3_chunked/G3_CHUNKED_MANIFEST.json\n            verification_results/g3_chunked/*.npy
+            verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json
+            verification_results/g3_chunked/G3_CHUNKED_MANIFEST.json
+            verification_results/g3_chunked/*.npy
             verification_results/Q2_RELATIONAL_EDGE_QFI.json
             verification_results/Q2_RELATIONAL_NETWORK_QFI.json
             verification_results/Q2_RELATIONAL_STAR_QFI.json
