@@ -59,9 +59,9 @@ The physical-history branch was 378 commits ahead / 26 behind main at comparison
 - PR: [#86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86), head `bae033314cd682d307e460a8e99fc3bf2c1aa31c`.
 - Frozen V09 original commit: `6ae145ae61a19ed5dfb5a7dae5abf8d79d79eff9`; frozen file blob: `a2cc3d5eaee8377e94fd7d24a1a279d2399df133`.
 - Workflow run: `44482668149`.
-- The shard `Jmax2=10 / shadow_no_prune` completed its 5 paired-regression tests, 5 V09 adapter tests and 23 V10 adjoint tests successfully, then the runner received a shutdown signal during the heavy numerical calculation.
-- At the latest inspection, the Jmax2=10 production shard had started and the other four unfinished shards remained queued; the interrupted shadow shard remained failed due runner shutdown. No artifacts were uploaded. This is **INCOMPLETE / runner interruption**, not a mathematical FAIL and not a PASS.
-- GitHub rejected an immediate per-job rerun because the parent workflow was still running. Retry only after the parent run reaches a terminal state, or use the resumable adjacent-magnetic-pair sharding from PR #84.
+- In run `44482668149`, the two Jmax2=10 shards (`shadow_no_prune` and `production`) completed their unit-test stages (5 paired tests, 5 V09 adapter tests, 23 V10 adjoint tests) but each runner received a shutdown signal during the heavy numerical calculation. The remaining four jobs stayed queued; no JSON artifacts were uploaded. This is **INCOMPLETE / runner interruption**, not a mathematical FAIL and not a PASS.
+- The paired harness was then hardened on PR #86: it now shards by one frozen seed K per job (30 jobs = 5 seeds × 3 cutoffs × 2 pruning modes), captures all 24 complex epsilon-term maps before and after signed accumulation, stores raw and serialized Gauss coefficients, verifies term-map reconstruction and the exact `1e-13` serializer cutoff, and aggregates all 30 reports fail-closed. New run `44496003089` was created for head `303cea6d291506041db602262b25996b1459bf68`; at last inspection all 30 jobs were queued and no artifacts existed yet.
+- The old run's failed jobs cannot be restarted while that workflow remains active. The new seed-sharded run is the current execution path; do not call it PASS until all 30 reports and the aggregate JSON are inspected.
 
 ## 6. Merge and claim rules
 
