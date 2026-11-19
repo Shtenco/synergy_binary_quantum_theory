@@ -1283,10 +1283,10 @@ v_e=\sum_{w=0}^{23}v_{e,w}.
 
 ### Последние PR и правило интеграции
 
-- [PR #85](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/85) — конечное Q2 causal–PL correspondence hardening; его описание прямо ограничивает результат конечными комбинаторными/QFI-инвариантами и не заявляет continuum или физическую проводимость.
+- [PR #85](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/85) — конечное Q2 causal–PL correspondence hardening; его описание прямо ограничивает результат конечными комбинаторными/QFI-инвариантами и не заявляет continuum или физическую проводимость. Run 44434220560 (117 tests, 17 JSON artifacts) относится к предыдущему head c851f2dac4dff0e126a17d4b4e46a9c6af2d114b; текущий PR head e7ac35b4c3ece5e4db0abc05df2502aefbf08f44 не имеет найденного PR-triggered workflow run, поэтому прежний PASS нельзя переносить на текущую ревизию.
 - [PR #86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) — парный V09/V10 W5 regression; требует завершённых артефактов closure, adjoint, sine, pruning и cutoff comparison.
-- [PR #84](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/84) — intrinsic-clock/Lorentzian bridge, сохраняет physical clock и полный конус открытыми.
-- [PR #83](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/83) — W5 production blockers и remediation; Draft, не готов к слиянию.
+- [PR #84](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/84) — intrinsic-clock/Lorentzian bridge, сохраняет physical clock и полный конус открытыми; для текущего head 785363b612719972f90569dc27413dd4a165226e PR-triggered workflow run в доступном списке не найден.
+- [PR #83](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/83) — W5 production blockers и remediation; Draft, mergeable=false, PR-triggered workflow run для head eead201073c0ead4cde9fdf93d7cd844036b5f99 не найден.
 
 **Правило:** в `main` включать только проверенные переносимые результаты с точным указанием предпосылок, source SHA, workflow run и артефактов. Diverged research branches не сливать целиком ради зелёного CI. Каждое физическое утверждение должно ссылаться на свой gate и сохранять различие между `proved`, `tested_finite`, `conditional` и `open_physical`.
 
