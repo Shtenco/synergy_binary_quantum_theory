@@ -199,3 +199,17 @@ def test_q2_same_fibre_adjacency_is_valid_but_distinct_edges_need_one_endpoint()
     assert _causal_edge_labels_are_incident("left", "right", edges) is True
     assert _causal_edge_labels_are_incident("same", "parallel", edges) is False
     assert _causal_edge_labels_are_incident("same", "disjoint", edges) is False
+
+
+def test_sparse_galerkin_reports_symmetry_positivity_and_pushforward_measure():
+    result = run(max_generation=2)
+    for row in result["levels"]:
+        assert row["operator_dimension"] == row["causal_active_edges"]
+        assert row["operator_symmetry_error"] < 1e-14
+        assert row["operator_is_psd_up_to_roundoff"] is True
+        assert row["operator_minimum_eigenvalue"] >= -1e-9
+        assert row["pushforward_measure_total"] == 16.0
+        assert row["pushforward_measure_min"] > 0.0
+        assert row["pushforward_measure_max"] >= row["pushforward_measure_min"]
+        assert set(row["spectral_moments_per_mode"]) == {"1", "2", "3"}
+        assert row["operator_sparse_nnz"] <= row["operator_dimension"] ** 2
