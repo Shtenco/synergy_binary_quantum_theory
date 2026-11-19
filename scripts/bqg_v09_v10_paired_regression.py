@@ -72,8 +72,14 @@ def _sparse_digest(state):
 
 
 def _matrix_digest(basis, columns):
+    # Match the repository's 10-significant-digit cutoff fingerprint contract.
+    quantized = [
+        [[int(index), format(float(real), ".10g"), format(float(imag), ".10g")]
+         for index, real, imag in column]
+        for column in columns
+    ]
     payload = json.dumps(
-        {"basis": basis, "columns": columns},
+        {"basis": basis, "columns": quantized},
         sort_keys=True, separators=(",", ":"), allow_nan=False,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
