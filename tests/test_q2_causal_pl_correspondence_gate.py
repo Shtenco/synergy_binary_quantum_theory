@@ -149,3 +149,33 @@ def test_q2_large_symmetric_eigensolver_rejects_asymmetric_input():
     matrix[0, 1] = 0.5
     with pytest.raises(ValueError, match="matrix is not symmetric"):
         _symmetric_eigenvalues(matrix.tolist())
+
+def test_q2_causal_edge_incidence_requires_exactly_one_shared_endpoint():
+    from scripts.q2_causal_pl_correspondence_gate import (
+        _causal_edges_share_exactly_one_endpoint,
+    )
+
+    assert _causal_edges_share_exactly_one_endpoint((0, 1), (1, 2)) is True
+    assert _causal_edges_share_exactly_one_endpoint((0, 1), (2, 3)) is False
+    # Distinct edge labels must not hide a duplicate endpoint pair.
+    assert _causal_edges_share_exactly_one_endpoint((0, 1), (0, 1)) is False
+    assert _causal_edges_share_exactly_one_endpoint((0, 1), (1, 0)) is False
+
+
+def test_q2_correspondence_summary_gates_are_computed_from_diagnostics():
+    result = run(max_generation=2)
+
+    assert result["checks"]["all_parent_face_side_assignments_valid"] is True
+    assert result["checks"]["four_route_face_colours_present"] is True
+    assert len(result["route_colour_diagnostics"]) == 3
+    assert all(
+        row["all_four_route_colours_present_per_vertex"]
+        and row["vertices_checked"] > 0
+        for row in result["route_colour_diagnostics"]
+    )
+    assert all(
+        row["side_assignments_valid"]
+        and row["face_side_assignments"] == row["expected_face_side_assignments"]
+        for row in result["parent_face_diagnostics"]
+    )
+
