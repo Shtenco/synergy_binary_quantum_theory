@@ -414,6 +414,9 @@ def run(output_dir: Path, *, chunk_size=4096, chunk_rows=50000):
     g3_coarse_report = coarse_spectral_report(
         3, g3_coarse_operator, g3_coarse_mass
     )
+    g3_coarse_report["coarse_space_approximation"] = coarse_space_approximation_report(
+        coordinates, tetrahedra, fibre_labels, volumes
+    )
     coarse_spectral_sequence = build_coarse_spectral_sequence()
     coarse_spectral_sequence.append(g3_coarse_report)
 
