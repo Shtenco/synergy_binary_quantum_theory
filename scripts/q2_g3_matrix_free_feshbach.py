@@ -94,7 +94,9 @@ def certified_gap_lower_bound_from_root_eccentricity(model) -> dict:
     n = model.n_vertices
     if n <= 1 or model.graph_component_count != 1:
         raise ValueError("certified gap bound requires a connected nontrivial graph")
-    degrees = np.asarray(model.laplacian.diagonal(), dtype=float)\n    adjacency = (diags(degrees) - model.laplacian).tocsr()\n    lambda_max_upper = max(1.0, 2.0 * float(degrees.max()))
+    degrees = np.asarray(model.laplacian.diagonal(), dtype=float)
+    adjacency = (diags(degrees) - model.laplacian).tocsr()
+    lambda_max_upper = max(1.0, 2.0 * float(degrees.max()))
     distances = np.full(n, -1, dtype=np.int32)
     queue = np.empty(n, dtype=np.int32)
     distances[0] = 0
@@ -119,8 +121,8 @@ def certified_gap_lower_bound_from_root_eccentricity(model) -> dict:
     return {
         "root_eccentricity_upper_bound": eccentricity,
         "lambda_min_q_l_q_certified_lower_bound": lower_bound,
-        "lambda_max_q_l_q_plus_p_certified_upper_bound": 8.0,
-        "condition_number_certified_upper_bound": 8.0 / lower_bound,
+        "lambda_max_q_l_q_plus_p_certified_upper_bound": lambda_max_upper,
+        "condition_number_certified_upper_bound": lambda_max_upper / lower_bound,
         "proof": "connected graph diameter <= 2*root eccentricity; lambda_2(L) >= 1/((n-1)*eccentricity); lambda_max(L) <= 2*d_max; range(Q) is orthogonal to constants",
     }
 
@@ -205,7 +207,8 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         })
 
     passed = (
-        lam_min > 0 and certified_gap["lambda_min_q_l_q_certified_lower_bound"] > 0\n        and small_residual <= max(1e-6, spectral_tol * 10)
+        lam_min > 0 and certified_gap["lambda_min_q_l_q_certified_lower_bound"] > 0
+        and small_residual <= max(1e-6, spectral_tol * 10)
         and correction_min >= -1e-8 and slope_min >= -1e-8
         and max_cg_residual <= max(1e-7, cg_rtol * 100)
         and max_second_residual <= max(1e-7, cg_rtol * 100)
