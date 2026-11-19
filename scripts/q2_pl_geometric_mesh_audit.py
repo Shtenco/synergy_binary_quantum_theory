@@ -15,11 +15,13 @@ from pathlib import Path
 import numpy as np
 
 try:
-    from .q2_pl_graph_export import barycentric_subdivision, cross_polytope_boundary_4
+    from .q2_pl_graph_export import barycentric_subdivision, cross_polytope_boundary_4, dual_graph_payload
+    from .q2_pl_generation3_stream import _advance_one_generation
     from .q2_pl_generation3_chunked_export import export as export_g3_chunked
     from .q2_dirichlet_form_convergence import GraphDirichletForm
 except ImportError:
-    from q2_pl_graph_export import barycentric_subdivision, cross_polytope_boundary_4
+    from q2_pl_graph_export import barycentric_subdivision, cross_polytope_boundary_4, dual_graph_payload
+    from q2_pl_generation3_stream import _advance_one_generation
     from q2_pl_generation3_chunked_export import export as export_g3_chunked
     from q2_dirichlet_form_convergence import GraphDirichletForm
 
@@ -158,6 +160,130 @@ def geometric_dual_weights(coordinates, tetrahedra, edge_endpoints, cell_volumes
         weights[start:stop] = conductance
 
     return weights, face_areas, dual_distances
+
+
+def coarse_finite_volume_operator(edge_endpoints, conductances, fibre_labels,
+                                   cell_volumes):
+    """Mass-normalized Galerkin compression to fibre-constant functions."""
+    import scipy.sparse as sp
+
+    edges = np.asarray(edge_endpoints, dtype=np.int64)
+    weights = np.asarray(conductances, dtype=float)
+    labels = np.asarray(fibre_labels, dtype=np.int64)
+    volumes = np.asarray(cell_volumes, dtype=float)
+    if labels.ndim != 1 or volumes.shape != labels.shape:
+        raise ValueError("fibre labels and cell volumes must be matching vectors")
+    if edges.ndim != 2 or edges.shape[1] != 2 or weights.shape != (len(edges),):
+        raise ValueError("dual edges and conductances have incompatible shapes")
+    if np.any(labels < 0) or np.any(volumes <= 0) or np.any(weights <= 0):
+        raise ValueError("labels, volumes, and conductances must be positive/valid")
+    n_coarse = int(labels.max()) + 1
+    mass = np.bincount(labels, weights=volumes, minlength=n_coarse)
+    if np.any(mass <= 0):
+        raise ValueError("every coarse fibre must have positive geometric mass")
+    left = labels[edges[:, 0]]
+    right = labels[edges[:, 1]]
+    crossing = left != right
+    a, b, w = left[crossing], right[crossing], weights[crossing]
+    rows = np.concatenate((a, b, a, b))
+    cols = np.concatenate((a, b, b, a))
+    data = np.concatenate((w, w, -w, -w))
+    stiffness = sp.coo_matrix((data, (rows, cols)),
+                              shape=(n_coarse, n_coarse)).tocsr()
+    dense = stiffness.toarray()
+    inverse_sqrt_mass = 1.0 / np.sqrt(mass)
+    operator = (inverse_sqrt_mass[:, None] * dense) * inverse_sqrt_mass[None, :]
+    operator = 0.5 * (operator + operator.T)
+    return operator, mass
+
+
+def coarse_spectral_report(generation, operator, mass):
+    eigenvalues = np.linalg.eigvalsh(operator)
+    tolerance = max(1e-10, float(np.max(np.abs(eigenvalues), initial=0.0)) * 1e-12)
+    positive = eigenvalues[eigenvalues > tolerance]
+    heat_times = (1e-5, 1e-4, 1e-3, 1e-2)
+    return {
+        "generation": int(generation),
+        "coarse_dimension": int(len(eigenvalues)),
+        "coarse_mass_total": float(np.sum(mass)),
+        "coarse_mass_min": float(np.min(mass)),
+        "coarse_mass_max": float(np.max(mass)),
+        "zero_modes_at_relative_tolerance": int(np.count_nonzero(np.abs(eigenvalues) <= tolerance)),
+        "zero_mode_tolerance": tolerance,
+        "smallest_positive_eigenvalue": float(positive[0]) if len(positive) else None,
+        "largest_eigenvalue": float(eigenvalues[-1]),
+        "trace": float(np.sum(eigenvalues)),
+        "symmetry_error": float(np.max(np.abs(operator - operator.T), initial=0.0)),
+        "minimum_eigenvalue": float(eigenvalues[0]),
+        "first_12_eigenvalues": eigenvalues[:12].tolist(),
+        "heat_trace": {
+            str(t): float(np.sum(np.exp(-t * eigenvalues)))
+            for t in heat_times
+        },
+        "scope": "finite-volume geometric operator compressed to causal-fibre-constant functions; not a continuum convergence result",
+    }
+
+
+def build_coarse_spectral_sequence():
+    """Build G0--G2 geometric dual operators and their causal-fibre compressions."""
+    coordinates, tetrahedra = initial_reference_embedding()
+    parent_map = {tuple(t): "e0" for t in tetrahedra}
+    orientations = {
+        tuple(t): (-1 if sum(v % 2 for v in t) % 2 else 1)
+        for t in tetrahedra
+    }
+    causal_edges = {"e0": (0, 1)}
+    next_vertex = 2
+    chain_by_tet = None
+    previous_faces = None
+    reports = []
+
+    for generation in range(3):
+        _metrics, volumes = mesh_metrics(coordinates, tetrahedra)
+        dual = dual_graph_payload(generation, tetrahedra, chain_by_tet, previous_faces)
+        endpoints = np.asarray(
+            [(edge["source"], edge["target"]) for edge in dual["edges"]],
+            dtype=np.uint32,
+        )
+        weights, _areas, _distances = geometric_dual_weights(
+            coordinates, tetrahedra, endpoints, volumes, chunk_rows=50000
+        )
+        fibre_ids = sorted(set(parent_map.values()))
+        fibre_index = {key: index for index, key in enumerate(fibre_ids)}
+        labels = np.asarray(
+            [fibre_index[parent_map[tuple(tet)]] for tet in tetrahedra],
+            dtype=np.uint16,
+        )
+        if len(fibre_ids) != (1, 8, 64)[generation]:
+            raise ValueError(f"unexpected causal-fibre count at G{generation}")
+        operator, mass = coarse_finite_volume_operator(
+            endpoints, weights, labels, volumes
+        )
+        report = coarse_spectral_report(generation, operator, mass)
+        report.update({
+            "fine_vertices": int(len(tetrahedra)),
+            "fine_edges": int(len(endpoints)),
+            "fine_graph_components": int(dual["component_count"]),
+        })
+        reports.append(report)
+
+        if generation < 2:
+            (children, child_map, child_orientations, child_causal,
+             next_vertex, previous_faces, chain_by_tet) = _advance_one_generation(
+                tetrahedra, parent_map, orientations, causal_edges,
+                next_vertex, generation, chain_by_tet, previous_faces,
+            )
+            coordinates, generated_children, _faces = refine_embedding(
+                coordinates, tetrahedra
+            )
+            if not np.array_equal(np.asarray(children), np.asarray(generated_children)):
+                raise ValueError("refinement helper disagrees with causal exporter ordering")
+            tetrahedra = generated_children
+            parent_map = child_map
+            orientations = child_orientations
+            causal_edges = child_causal
+
+    return reports
 
 
 def _sha256(array):
