@@ -28,6 +28,11 @@ on:
       - 'tests/test_bqg_v09_v10_paired_aggregate.py'
       - 'scripts/bqg_v09_v10_paired_seed_aggregate.py'
       - 'tests/test_bqg_v09_v10_paired_seed_aggregate.py'
+      - 'scripts/archive/bqg_v09_w5_lorentzian_raw_column_v09_frozen.py'
+      - 'scripts/archive/W5_V09_FROZEN_BASELINE.txt'
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/peter_weyl_euclidean_sine_ordering_gate.py'
+      - 'scripts/peter_weyl_covariant_K_sine_composition_gate.py'
   workflow_dispatch:
 
 concurrency:
