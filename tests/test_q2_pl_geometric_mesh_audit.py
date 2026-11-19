@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from scripts.q2_pl_geometric_mesh_audit import (
+    assess_shape_regularity,
     build_geometry,
     geometric_dual_weights,
     initial_reference_embedding,
@@ -66,3 +67,15 @@ def test_stable_child_order_matches_exporter_id_contract():
         for permutation in itertools.permutations(range(4))
     ], dtype=np.uint32)
     assert np.array_equal(stable_child_order(parent, faces), expected)
+
+def test_shape_regularity_assessment_does_not_hide_quality_degradation():
+    levels = [
+        {"shape_quality_min": 1.0, "max_diameter_to_inradius": 4.9},
+        {"shape_quality_min": 0.6, "max_diameter_to_inradius": 10.0},
+        {"shape_quality_min": 0.2, "max_diameter_to_inradius": 30.0},
+    ]
+    report = assess_shape_regularity(levels)
+    assert report["shape_quality_degradation_detected"]
+    assert report["aspect_ratio_growth_detected"]
+    assert not report["uniform_shape_regularity_established"]
+    assert "cannot be assumed" in report["warning"]
