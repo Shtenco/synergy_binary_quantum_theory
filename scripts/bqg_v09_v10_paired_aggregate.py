@@ -132,7 +132,9 @@ def aggregate(reports):
 
     pruning_failures = []
     for row in pruning_comparisons:
-        if not row["V10_basis_identical"] or not row["V10_closure_size_identical"]:
+        if (not row["V10_basis_identical"] or not row["V10_closure_size_identical"]
+                or not row["V10_forward_matrix_digest_identical"]
+                or not row["V10_direct_adjoint_matrix_digest_identical"]):
             pruning_failures.append({"Jmax2": row["Jmax2"], "reason": "production/shadow basis differs"})
         for col in row["seed_column_differences"]:
             if col.get("status") == "MISSING_COLUMN" or col.get("V09_raw_shadow_vs_production", 1.0) > 1e-10 or col.get("V10_shadow_vs_production", 1.0) > 1e-10:
@@ -140,7 +142,9 @@ def aggregate(reports):
 
     convergence_failures = []
     for row in cutoff_convergence:
-        if not row["basis_identical"] or not row["closure_size_identical"]:
+        if (not row["basis_identical"] or not row["closure_size_identical"]
+                or not row["forward_matrix_digest_identical"]
+                or not row["direct_adjoint_matrix_digest_identical"]):
             convergence_failures.append({"mode": row["mode"], "Jmax2": row["candidate_Jmax2"], "reason": "reachable basis changed with cutoff"})
         for col in row["seed_column_differences"]:
             if col.get("status") == "MISSING_COLUMN" or col.get("V09_raw_cutoff_relative_difference", 1.0) > 1e-8 or col.get("V10_seed_cutoff_relative_difference", 1.0) > 1e-8:
