@@ -104,7 +104,8 @@ def compare_reports(refinement_path: Path, g3_path: Path) -> dict:
         "schema": "q2-g0-g3-galerkin-refinement-comparison-v1",
         "status": "PASS_FINITE_G0_G3_REFINEMENT_COMPARISON",
         "passed": True,
-        "levels_compared": [0, 1, 2, 3],\n        "level_summaries": level_summaries,
+        "levels_compared": [0, 1, 2, 3],
+        "level_summaries": level_summaries,
         "operator_semantics": (
             "Mass-normalized finite Galerkin stiffness from PL dual-edge "
             "multiplicities and the pushforward fibre measure; geometric "
