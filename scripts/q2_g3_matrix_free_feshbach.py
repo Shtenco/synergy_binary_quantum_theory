@@ -80,6 +80,51 @@ def galerkin_spectral_report(matrix, *, measure_total, times=None):
     }
 
 
+def certified_gap_lower_bound_from_root_eccentricity(model) -> dict:
+    """Bound lambda_2(L) below using a BFS eccentricity upper bound.
+
+    For a connected n-vertex graph of diameter D,
+    lambda_2(L) >= 2 / ((n - 1) D). A BFS eccentricity e from any root
+    satisfies D <= 2e, hence lambda_2(L) >= 1 / ((n - 1) e).
+    Since constants belong to the fibre-constant P space, the same lower
+    bound applies to QLQ on range(Q).
+    """
+    from scipy.sparse import diags
+
+    n = model.n_vertices
+    if n <= 1 or model.graph_component_count != 1:
+        raise ValueError("certified gap bound requires a connected nontrivial graph")
+    adjacency = (diags(np.full(n, 4.0)) - model.laplacian).tocsr()
+    distances = np.full(n, -1, dtype=np.int32)
+    queue = np.empty(n, dtype=np.int32)
+    distances[0] = 0
+    queue[0] = 0
+    head, tail = 0, 1
+    while head < tail:
+        vertex = int(queue[head])
+        head += 1
+        next_distance = distances[vertex] + 1
+        for offset in range(adjacency.indptr[vertex], adjacency.indptr[vertex + 1]):
+            neighbour = int(adjacency.indices[offset])
+            if distances[neighbour] < 0:
+                distances[neighbour] = next_distance
+                queue[tail] = neighbour
+                tail += 1
+    if tail != n:
+        raise ValueError("BFS did not reach every graph vertex")
+    eccentricity = int(distances.max())
+    if eccentricity <= 0:
+        raise ValueError("invalid BFS eccentricity")
+    lower_bound = 1.0 / ((n - 1) * eccentricity)
+    return {
+        "root_eccentricity_upper_bound": eccentricity,
+        "lambda_min_q_l_q_certified_lower_bound": lower_bound,
+        "lambda_max_q_l_q_plus_p_certified_upper_bound": 8.0,
+        "condition_number_certified_upper_bound": 8.0 / lower_bound,
+        "proof": "connected graph diameter <= 2*root eccentricity; lambda_2(L) >= 1/((n-1)*eccentricity); range(Q) is orthogonal to constants",
+    }
+
+
 def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         spectral_tol: float = 1e-5, spectral_maxiter: int = 5000) -> dict:
     endpoints = np.load(export_dir / "g3_dual_endpoints.npy", mmap_mode="r")
@@ -97,6 +142,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         raise ValueError("unexpected G3 Feshbach dimensions")
     if model.graph_component_count != 1:
         raise ValueError("G3 Feshbach requires a connected graph")
+    certified_gap = certified_gap_lower_bound_from_root_eccentricity(model)
 
     galerkin = coarse_galerkin_matrix(endpoints, labels, model.fibre_sizes)
     galerkin_report = galerkin_spectral_report(
@@ -159,7 +205,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         })
 
     passed = (
-        lam_min > 0 and small_residual <= max(1e-6, spectral_tol * 10)
+        lam_min > 0 and certified_gap["lambda_min_q_l_q_certified_lower_bound"] > 0\n        and small_residual <= max(1e-6, spectral_tol * 10)
         and correction_min >= -1e-8 and slope_min >= -1e-8
         and max_cg_residual <= max(1e-7, cg_rtol * 100)
         and max_second_residual <= max(1e-7, cg_rtol * 100)
@@ -180,7 +226,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
             "lambda_max_upper_bound": lam_max_upper,
             "condition_ratio_estimate": lam_max_upper / lam_min,
             "smallest_eigenpair_residual": small_residual,
-            "method": "scipy eigsh on matrix-free QLQ+P; Ritz estimates, not certified bounds",
+            "method": "smallest Ritz value from scipy eigsh; certified condition bound is reported separately",
             "tolerance": spectral_tol,
         },
         "sparse_galerkin": galerkin_report,
