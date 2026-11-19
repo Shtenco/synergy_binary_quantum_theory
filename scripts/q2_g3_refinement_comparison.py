@@ -32,6 +32,39 @@ def compare_reports(refinement_path: Path, g3_path: Path) -> dict:
                for row in g3_spectral["normalized_heat_trace"]}
     g3_dimension = {float(row["t"]): float(row["spectral_dimension"])
                     for row in g3_spectral["heat_trace_normalized"]}
+    level_summaries = []
+    for generation in range(3):
+        level = by_generation[generation]
+        gap = level["operator_spectral_gap"]
+        level_summaries.append({
+            "generation": generation,
+            "dimension": int(level["operator_dimension"]),
+            "sparse_nnz": int(level["operator_sparse_nnz"]),
+            "spectral_gap": gap,
+            "spectral_gap_ratio_to_g3": (
+                float(gap) / float(g3_spectral["spectral_gap"])
+                if gap is not None and g3_spectral["spectral_gap"] is not None
+                else None
+            ),
+            "minimum_eigenvalue": float(level["operator_minimum_eigenvalue"]),
+            "maximum_eigenvalue": float(level["operator_largest_eigenvalue"]),
+            "trace": float(level["operator_trace"]),
+            "zero_mode_count": int(level["operator_zero_mode_count"]),
+            "measure_total": float(level["pushforward_measure_total"]),
+        })
+    level_summaries.append({
+        "generation": 3,
+        "dimension": int(g3_spectral["dimension"]),
+        "sparse_nnz": int(g3_spectral["nonzero_count"]),
+        "spectral_gap": g3_spectral["spectral_gap"],
+        "spectral_gap_ratio_to_g3": 1.0 if g3_spectral["spectral_gap"] is not None else None,
+        "minimum_eigenvalue": float(g3_spectral["minimum_eigenvalue"]),
+        "maximum_eigenvalue": float(g3_spectral["maximum_eigenvalue"]),
+        "trace": float(g3_spectral["trace"]),
+        "zero_mode_count": int(g3_spectral["zero_mode_count"]),
+        "measure_total": float(g3_spectral["measure_total"]),
+    })
+
     comparisons = []
     for generation in range(3):
         level = by_generation[generation]
@@ -71,7 +104,7 @@ def compare_reports(refinement_path: Path, g3_path: Path) -> dict:
         "schema": "q2-g0-g3-galerkin-refinement-comparison-v1",
         "status": "PASS_FINITE_G0_G3_REFINEMENT_COMPARISON",
         "passed": True,
-        "levels_compared": [0, 1, 2, 3],
+        "levels_compared": [0, 1, 2, 3],\n        "level_summaries": level_summaries,
         "operator_semantics": (
             "Mass-normalized finite Galerkin stiffness from PL dual-edge "
             "multiplicities and the pushforward fibre measure; geometric "
