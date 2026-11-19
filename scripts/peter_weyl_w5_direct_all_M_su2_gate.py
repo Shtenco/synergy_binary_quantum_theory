@@ -291,19 +291,23 @@ def run(Jmax2=10, pruning_mode="production", nodes=(0,), channels=((0, 2), (2, 0
                         result[0], label=f"H_E(node={node}, K12={K12}, K34={K34}, M2={M2})"
                     )
                     all_outputs[(node, K12, K34, M2)] = result[0]
-                    cache_memory_rows.append({
-                        "source_node": node,
-                        "K12": K12,
-                        "K34": K34,
-                        "M2": M2,
-                        "current_rss_bytes": current_rss_bytes(),
-                        "caches_before_clear": cache_snapshot(),
-                    })
+                    rss_before_clear = current_rss_bytes()
+                    caches_before_clear = cache_snapshot()
                     # The direct sine-H_E path does not use the cached
                     # highest-weight wrapper. It can still populate lower-level
                     # recoupling/volume caches. Clear them between independent
                     # magnetic columns so memory cannot grow across M sectors.
                     clear_operator_caches()
+                    cache_memory_rows.append({
+                        "source_node": node,
+                        "K12": K12,
+                        "K34": K34,
+                        "M2": M2,
+                        "current_rss_bytes_before_clear": rss_before_clear,
+                        "current_rss_bytes_after_clear": current_rss_bytes(),
+                        "caches_before_clear": caches_before_clear,
+                        "caches_after_clear": cache_snapshot(),
+                    })
                     he_by_m[M2] = {
                         "state": result[0],
                         "norm": norm(result[0]),
