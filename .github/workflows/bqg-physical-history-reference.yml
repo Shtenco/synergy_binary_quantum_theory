@@ -41,7 +41,9 @@ jobs:
       - name: Compile source and tests
         run: python -m py_compile scripts/bqg_physical_history_decoherence_engine.py tests/test_bqg_physical_history_decoherence_engine.py
       - name: Run finite reference engine
-        run: python scripts/bqg_physical_history_decoherence_engine.py > verification_results/PHYSICAL_HISTORY_REFERENCE.json
+        run: |
+          mkdir -p verification_results
+          python scripts/bqg_physical_history_decoherence_engine.py > verification_results/PHYSICAL_HISTORY_REFERENCE.json
       - name: Run regression tests
         run: python -m unittest discover -s tests -p 'test_bqg_physical_history_decoherence_engine.py' -v
       - name: Enforce fail-closed physical status
