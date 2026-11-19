@@ -1383,3 +1383,16 @@ BIP39 следует держать отдельным криптографич�
 - B3 spectral-history extension пока имеет preregistration, а не найденный B3 closure result. Конечный Euclidean first-edge/finite Krylov control нельзя выдавать за полную Lorentzian physical history.
 
 Provenance check for the older HDA controls: GitHub job lookup currently reports run 31855735615 (two-node physical-sine HDA) and 31858615323 (spin-changed operator-first route) as completed/success. Their artifact endpoints currently return no artifacts, so reproduction should use the pinned source revisions and the result documents' recorded digests rather than assuming the old ZIPs are still downloadable.
+
+
+---
+
+## SHA-проверяемый индекс доказательств — 19 ноября 2026
+
+Выборочная интеграция результатов HDA, зеркального Wilson–Dirac сектора, spectral-history и физического причинного конуса собрана в отдельной ветке:
+
+- [BQG_PROOF_INDEX_20261119.md](BQG_PROOF_INDEX_20261119.md) — точные SHA исходных blob/коммитов, проверенные workflow/run, предпосылки теорем, статус каждого результата и границы физических утверждений.
+- Новые независимые CI: `bqg-hda-algebra-regression`, `bqg-mirror-wilson-dirac`, `bqg-spectral-history-algebra`, `bqg-physical-history-reference`.
+- Фактический тяжёлый Peter–Weyl spectral first-edge и B3 не маскируются быстрым алгебраическим regression: они остаются отдельными вычислительными этапами.
+- Ни один divergent research branch не вливается целиком. Слияние интеграционной ветки разрешается только после проверки всех новых CI и review diff.
+
