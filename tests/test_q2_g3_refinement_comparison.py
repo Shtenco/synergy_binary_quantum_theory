@@ -15,6 +15,14 @@ def _fixture():
     for generation in range(3):
         levels.append({
             "generation": generation,
+            "operator_dimension": [1, 8, 64][generation],
+            "operator_sparse_nnz": [0, 40, 424][generation],
+            "operator_spectral_gap": [None, 1.0, 0.1][generation],
+            "operator_minimum_eigenvalue": 0.0,
+            "operator_largest_eigenvalue": 2.0 + generation,
+            "operator_trace": 3.0 + generation,
+            "operator_zero_mode_count": 1,
+            "pushforward_measure_total": 16.0,
             "heat_trace": [
                 {"time": t, "normalized_heat_trace": 1.0 / (1.0 + generation + t)}
                 for t in times
@@ -32,6 +40,10 @@ def _fixture():
             "spectral_gap": 0.04,
             "zero_mode_count": 1,
             "measure_total": 16.0,
+            "minimum_eigenvalue": 0.0,
+            "maximum_eigenvalue": 3.0,
+            "trace": 10.0,
+            "nonzero_count": 4,
             "normalized_heat_trace": [
                 {"t": t, "value": 1.0 / (4.0 + t)} for t in times
             ],
@@ -54,6 +66,9 @@ def test_g0_g3_comparison_reports_heat_trace_and_dimension_deltas(tmp_path):
     assert report["passed"] is True
     assert report["levels_compared"] == [0, 1, 2, 3]
     assert len(report["comparisons_to_g3"]) == 3
+    assert len(report["level_summaries"]) == 4
+    assert report["level_summaries"][2]["spectral_gap_ratio_to_g3"] == pytest.approx(2.5)
+    assert report["level_summaries"][3]["spectral_gap_ratio_to_g3"] == 1.0
     assert report["comparisons_to_g3"][2]["max_absolute_heat_trace_delta"] > 0
     assert report["comparisons_to_g3"][2]["max_absolute_effective_dimension_delta"] == pytest.approx(0.1)
     assert "not established" in report["stability_conclusion"]
