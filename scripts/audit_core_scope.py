@@ -46,6 +46,8 @@ DISCUSSION_TERMS = {
 # canonical GR/QM core imports; their vocabulary and imports are intentional.
 # Keep this allowlist narrow and require their dedicated workflow to test them.
 RESEARCH_ONLY_FILES = {
+    Path("MIRROR_WILSON_MATTER.md"),
+    Path("MIRROR_MATTER_MATRIX_ELEMENT.md"),
     Path(".github/workflows/bqg-mirror-wilson-dirac.yml"),
     Path("scripts/mirror_wilson_matter_gate.py"),
     Path("scripts/mirror_matter_matrix_element_gate.py"),
