@@ -65,6 +65,30 @@ def graph_cycle_rank(node_count: int, edges) -> int:
     return len(edges) - node_count + components
 
 
+def _relative_singular_rank(singular_values: np.ndarray, tolerance: float) -> int:
+    """Rank estimate invariant under an overall rescaling of the contraction map."""
+    values = np.asarray(singular_values, dtype=float)
+    if values.size == 0 or values[0] <= 0.0:
+        return 0
+    return int(np.count_nonzero(values > tolerance * values[0]))
+
+
+def _positive_spectrum(eigenvalues: np.ndarray, tolerance: float) -> np.ndarray:
+    """Select positive eigenvalues using a scale-relative spectral threshold."""
+    values = np.asarray(eigenvalues, dtype=float)
+    if values.size == 0:
+        return values
+    scale = float(np.max(np.abs(values)))
+    if scale == 0.0:
+        return values[:0]
+    return values[values > tolerance * scale]
+
+
+def _relative_threshold(scale: float, tolerance: float) -> float:
+    """Return a nonzero relative tolerance without imposing a unit scale."""
+    return tolerance * max(abs(float(scale)), np.finfo(float).tiny)
+
+
 def analyze_graph_block_fusion_gram(
     graph_name: str = "star_4",
     two_j: int = 1,
@@ -117,16 +141,17 @@ def analyze_graph_block_fusion_gram(
     input_dimension = local_dimension ** node_count
     boundary_leg_count = 4 * node_count - 2 * len(edges)
     boundary_invariant_dimension = singlet_multiplicity(two_j, boundary_leg_count)
-    rank_threshold = rank_tolerance * max(1.0, float(singular_values[0]))
-    rank = int(np.sum(singular_values > rank_threshold))
-    positive_eigenvalues = eigenvalues[
-        eigenvalues > rank_tolerance * max(1.0, float(eigenvalues[-1]))
-    ]
+    rank_threshold = _relative_threshold(
+        float(singular_values[0]) if singular_values.size else 0.0,
+        rank_tolerance,
+    )
+    rank = _relative_singular_rank(singular_values, rank_tolerance)
+    positive_eigenvalues = _positive_spectrum(eigenvalues, rank_tolerance)
     gram_scalar = float(np.trace(gram).real / input_dimension)
     gram_scalar_error = float(np.max(np.abs(
         gram - gram_scalar * np.eye(input_dimension, dtype=complex)
     )))
-    gram_is_scalar = gram_scalar_error <= scalar_tolerance * max(1.0, abs(gram_scalar))
+    gram_is_scalar = gram_scalar_error <= _relative_threshold(gram_scalar, scalar_tolerance)
     cycle_rank = graph_cycle_rank(node_count, edges)
     tree_expected_scale = (
         float(dimension ** (-2 * len(edges))) if cycle_rank == 0 else None
@@ -154,12 +179,12 @@ def analyze_graph_block_fusion_gram(
     passed = (
         rank > 0
         and rank <= min(input_dimension, boundary_invariant_dimension)
-        and minimum_eigenvalue >= -scalar_tolerance
+        and minimum_eigenvalue >= -_relative_threshold(maximum_eigenvalue, scalar_tolerance)
         and local_gauss_residual < scalar_tolerance
         and max_gauss_residual < scalar_tolerance
         and (
             tree_expected_gram_error is None
-            or tree_expected_gram_error < scalar_tolerance
+            or tree_expected_gram_error < _relative_threshold(tree_expected_scale, scalar_tolerance)
         )
     )
     if cycle_rank == 0:
