@@ -8,7 +8,9 @@ on:
       - '.github/workflows/bqg-w5-v09-v10-paired.yml'
       - 'scripts/bqg_v09_v10_paired_regression.py'
       - 'scripts/bqg_v09_v10_paired_aggregate.py'
+      - 'scripts/bqg_v09_v10_paired_seed_aggregate.py'
       - 'tests/test_bqg_v09_v10_paired_aggregate.py'
+      - 'tests/test_bqg_v09_v10_paired_seed_aggregate.py'
       - 'scripts/archive/bqg_v09_w5_lorentzian_raw_column_v09_frozen.py'
       - 'scripts/archive/W5_V09_FROZEN_BASELINE.txt'
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
@@ -24,6 +26,8 @@ on:
       - 'scripts/bqg_v09_v10_paired_aggregate.py'
       - 'tests/test_bqg_v09_v10_paired_regression.py'
       - 'tests/test_bqg_v09_v10_paired_aggregate.py'
+      - 'scripts/bqg_v09_v10_paired_seed_aggregate.py'
+      - 'tests/test_bqg_v09_v10_paired_seed_aggregate.py'
   workflow_dispatch:
 
 concurrency:
@@ -35,7 +39,7 @@ permissions:
 
 jobs:
   paired-regression:
-    name: W5 paired V09/V10 Jmax2=${{ matrix.jmax2 }} mode=${{ matrix.mode }}
+    name: W5 paired V09/V10 K=${{ matrix.seed_k }} Jmax2=${{ matrix.jmax2 }} mode=${{ matrix.mode }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -44,6 +48,7 @@ jobs:
       matrix:
         jmax2: [10, 12, 14]
         mode: [shadow_no_prune, production]
+        seed_k: [0, 2, 4, 6, 8]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,6 +64,7 @@ jobs:
           python -m py_compile scripts/bqg_v10_w5_lorentzian_adjoint_closure.py
           python -m py_compile scripts/bqg_v09_v10_paired_regression.py
           python -m py_compile scripts/bqg_v09_v10_paired_aggregate.py
+          python -m py_compile scripts/bqg_v09_v10_paired_seed_aggregate.py
           python -m py_compile scripts/peter_weyl_euclidean_sine_ordering_gate.py
           python -m py_compile scripts/peter_weyl_covariant_K_sine_composition_gate.py
       - name: Run paired-regression invariant tests
@@ -67,20 +73,21 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_bqg_v09_w5_lorentzian_raw_column.py' -v
           python -m unittest discover -s tests -p 'test_bqg_v10_w5_lorentzian_adjoint_closure.py' -v
-      - name: Compare all five W5 seeds on the identical source node and cutoff
+      - name: Compare one frozen W5 seed on the identical source node and cutoff
         run: |
           mkdir -p verification_results
           python scripts/bqg_v09_v10_paired_regression.py \
             --node 0 \
             --Jmax2 ${{ matrix.jmax2 }} \
             --mode ${{ matrix.mode }} \
-            --output verification_results/W5_V09_V10_NODE0_J${{ matrix.jmax2 }}_${{ matrix.mode }}_${{ github.run_id }}.json
+            --seed-K ${{ matrix.seed_k }} \
+            --output verification_results/W5_V09_V10_NODE0_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_${{ matrix.mode }}_${{ github.run_id }}.json
       - name: Upload paired numerical evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bqg-w5-v09-v10-node0-j${{ matrix.jmax2 }}-${{ matrix.mode }}-run${{ github.run_id }}
-          path: verification_results/W5_V09_V10_NODE0_J${{ matrix.jmax2 }}_${{ matrix.mode }}_${{ github.run_id }}.json
+          name: bqg-w5-v09-v10-node0-k${{ matrix.seed_k }}-j${{ matrix.jmax2 }}-${{ matrix.mode }}-run${{ github.run_id }}
+          path: verification_results/W5_V09_V10_NODE0_K${{ matrix.seed_k }}_J${{ matrix.jmax2 }}_${{ matrix.mode }}_${{ github.run_id }}.json
           if-no-files-found: warn
           retention-days: 30
 
@@ -97,20 +104,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Download six paired reports
+      - name: Download all thirty seed-sharded paired reports
         if: always()
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          pattern: bqg-w5-v09-v10-node0-j*-*-run${{ github.run_id }}
+          pattern: bqg-w5-v09-v10-node0-k*-j*-*-run${{ github.run_id }}
           path: verification_results/paired_reports
           merge-multiple: true
       - name: Run paired pruning and cutoff convergence aggregate
         if: always()
         run: |
           python -m py_compile scripts/bqg_v09_v10_paired_aggregate.py
-          python -m unittest discover -s tests -p 'test_bqg_v09_v10_paired_aggregate.py' -v
-          python scripts/bqg_v09_v10_paired_aggregate.py \
+          python -m py_compile scripts/bqg_v09_v10_paired_seed_aggregate.py
+          python -m unittest discover -s tests -p 'test_bqg_v09_v10_paired_seed_aggregate.py' -v
+          python scripts/bqg_v09_v10_paired_seed_aggregate.py \
             --input-dir verification_results/paired_reports \
             --output verification_results/W5_V09_V10_PAIRED_AGGREGATE_${{ github.run_id }}.json
       - name: Upload aggregate verdict and diagnostics
