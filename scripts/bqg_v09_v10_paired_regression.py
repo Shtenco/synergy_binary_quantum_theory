@@ -283,7 +283,6 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                         term_sum_gauss[key_repr] = term_sum_gauss.get(key_repr, 0j) + z
                 term_sum_matches_raw = _relative_difference(term_sum_gauss, _repr_map(raw_B_gauss))["relative_l2"] < 1e-12
                 raw_repr = _repr_map(raw_B_gauss)
-                serialized_repr = {repr(k): complex(v) for k, v in ((key, val) for key, val in raw_B_gauss.items())}
                 serialized_repr = {str(key): complex(float(re), float(im)) for key, re, im in result["B_Lorentzian_raw_KKV_Gauss"]}
                 serializer_roundtrip_ok = (
                     set(serialized_repr).issubset(raw_repr)
