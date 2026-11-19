@@ -3,8 +3,7 @@ from scripts.q2_causal_pl_correspondence_gate import run
 
 def test_q2_causal_to_pl_correspondence_preserves_adjacency_and_refinement():
     result = run(max_generation=2)
-    print("ADJACENCY_DIAGNOSTICS", [(row["generation"], row["adjacency_violation_count"], row["adjacency_violation_examples"]) for row in result["levels"]])
-    assert result["passed"] is True, {"checks": result["checks"]}
+    assert result["passed"] is True, {"checks": result["checks"], "levels": [(row["generation"], row["adjacency_violation_count"]) for row in result["levels"]]}
     assert result["checks"]["all_levels_preserve_dual_adjacency"] is True
     assert result["checks"]["refinement_naturality"] is True
     assert [
@@ -180,3 +179,21 @@ def test_q2_correspondence_summary_gates_are_computed_from_diagnostics():
         for row in result["parent_face_diagnostics"]
     )
 
+
+
+def test_q2_same_fibre_adjacency_is_valid_but_distinct_edges_need_one_endpoint():
+    from scripts.q2_causal_pl_correspondence_gate import (
+        _causal_edge_labels_are_incident,
+    )
+
+    edges = {
+        "same": (0, 1),
+        "left": (0, 2),
+        "right": (2, 3),
+        "parallel": (0, 1),
+        "disjoint": (4, 5),
+    }
+    assert _causal_edge_labels_are_incident("same", "same", edges) is True
+    assert _causal_edge_labels_are_incident("left", "right", edges) is True
+    assert _causal_edge_labels_are_incident("same", "parallel", edges) is False
+    assert _causal_edge_labels_are_incident("same", "disjoint", edges) is False
