@@ -156,7 +156,7 @@ jobs:
             verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
             verification_results/Q2_FESHBACH_CORRECTION.json
             verification_results/Q2_PL_GENERATION3_PREFLIGHT.json
-            verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json
+            verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json\n            verification_results/g3_chunked/G3_CHUNKED_MANIFEST.json\n            verification_results/g3_chunked/*.npy
             verification_results/Q2_RELATIONAL_EDGE_QFI.json
             verification_results/Q2_RELATIONAL_NETWORK_QFI.json
             verification_results/Q2_RELATIONAL_STAR_QFI.json
