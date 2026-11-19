@@ -1402,3 +1402,9 @@ Provenance check for the older HDA controls: GitHub job lookup currently reports
 
 PR [#86](https://github.com/Shtenco/synergy_binary_quantum_theory/pull/86) now splits the paired comparison into 30 independently resumable cells: five frozen seed values, three Peter–Weyl cutoffs and two pruning modes. Each cell preserves the 24 signed complex epsilon-term maps, the pre/post-serialization Gauss coefficients and a reconstruction check. Run `44496003089` is queued on head `303cea6d291506041db602262b25996b1459bf68`; until all 30 JSON reports and the aggregate are inspected, W5 remains **INCOMPLETE**, not PASS.
 
+
+
+### Spectral-history: actual K5 master first-edge calculation
+
+The integration branch now includes `scripts/bqg_euclidean_master_first_edge_sharded.py` and workflow `bqg-spectral-history-actual-k5`. It computes the 32 exact columns of the finite positive Euclidean master, assembles the first block-Lanczos edge and reports `B1_rank` with independent algebra/PSD/regulator guards. A successful algebra gate does not predetermine closure: nonzero `B1_rank` means the finite history continues to another shell. The B3 preregistration is retained, but its old source artifacts in the separate `binary_quantum_theory` repository are currently unavailable and must be regenerated before B3 can be claimed.
+
