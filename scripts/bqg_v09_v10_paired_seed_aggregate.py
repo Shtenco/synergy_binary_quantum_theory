@@ -10,6 +10,22 @@ CUTOFFS = (10, 12, 14)
 MODES = ("shadow_no_prune", "production")
 SEEDS = (0, 2, 4, 6, 8)
 TOL = 1e-8
+EXPECTED_SCHEMA = "bqg-w5-v09-v10-paired-regression-v2-seed-shard"
+EXPECTED_STATUS = "COMPUTED_DIAGNOSTICS_NOT_PHYSICAL_PASS"
+REQUIRED_ACCEPTANCE = (
+    "epsilon_orbits_identical",
+    "all_requested_V09_columns_complete",
+    "all_requested_V09_term_orders_match",
+    "all_requested_24_complex_epsilon_term_maps_captured",
+    "all_requested_epsilon_terms_reconstruct_final_gauss_column",
+    "all_requested_serializer_roundtrips_obey_1e-13_cutoff",
+    "all_requested_V09_sine_wrapper_gates_pass",
+    "V10_common_basis_complete",
+    "V10_algebraic_closure_passed",
+    "direct_adjoint_residual_below_1e-8",
+    "V09_V10_forward_columns_match_below_1e-8",
+    "all_sine_composition_probes_match_below_1e-8",
+)
 
 
 def _decode(rows):
@@ -30,10 +46,18 @@ def aggregate(reports):
     indexed, malformed, duplicates = {}, [], []
     for report in reports:
         try:
+            if report.get("schema") != EXPECTED_SCHEMA:
+                raise ValueError("unexpected or missing report schema")
+            if report.get("status") != EXPECTED_STATUS:
+                raise ValueError("unexpected or missing report status")
+            if int(report.get("source_node", -1)) != 0:
+                raise ValueError("report source_node must be exactly 0")
             seed_values = tuple(int(x) for x in report["seed_Ks"])
             if len(seed_values) != 1:
                 raise ValueError("each report must contain exactly one seed_K")
             key = (int(report["Jmax2"]), str(report["mode"]), seed_values[0])
+            if key[0] not in CUTOFFS or key[1] not in MODES or key[2] not in SEEDS:
+                raise ValueError("report cell is outside the preregistered W5 grid")
         except Exception as exc:
             malformed.append(str(exc))
             continue
@@ -45,11 +69,23 @@ def aggregate(reports):
     unexpected = sorted(set(indexed) - expected)
     per_report_failures = []
     for key, report in indexed.items():
-        failed = [name for name, value in report.get("acceptance", {}).items() if value is not True]
+        acceptance = report.get("acceptance")
+        if not isinstance(acceptance, dict):
+            acceptance = {}
+        missing_acceptance = [name for name in REQUIRED_ACCEPTANCE if name not in acceptance]
+        failed = [name for name in REQUIRED_ACCEPTANCE if acceptance.get(name) is not True]
+        if missing_acceptance:
+            failed.append("missing_required_acceptance_keys:" + ",".join(missing_acceptance))
         if failed:
             per_report_failures.append({"cell": list(key), "failed_checks": failed})
         rows = report.get("V09_vs_V10_forward_columns", [])
-        if len(rows) != 1 or int(rows[0].get("seed_K", -1)) != key[2]:
+        row_ok = (
+            isinstance(rows, list)
+            and len(rows) == 1
+            and isinstance(rows[0], dict)
+            and rows[0].get("seed_K") == key[2]
+        )
+        if not row_ok:
             per_report_failures.append({"cell": list(key), "failed_checks": ["exactly_one_matching_seed_column"]})
 
     pruning = []
@@ -107,7 +143,7 @@ def aggregate(reports):
 
     passed = not missing and not unexpected and not malformed and not duplicates and not per_report_failures and len(pruning) == 15 and not pruning_failures and len(convergence) == 20 and not convergence_failures
     return {
-        "schema": "bqg-w5-v09-v10-seed-sharded-aggregate-v1",
+        "schema": "bqg-w5-v09-v10-seed-sharded-aggregate-v2-fail-closed",
         "status": "PASS_PAIRED_V09_V10_SEED_CUTOFF_AUDIT" if passed else "INCOMPLETE_OR_FAILED_PAIRED_V09_V10_AUDIT",
         "passed": passed,
         "expected_report_count": len(expected),
