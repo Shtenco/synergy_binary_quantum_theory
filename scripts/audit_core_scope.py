@@ -35,10 +35,21 @@ EXCLUDED_PREFIXES = {
 # README and status may describe the explicitly open information-mode proposal.
 # This is permission to discuss it, not to import retired physics modules.
 DISCUSSION_TERMS = {
-    # The README uses "mirror" only in archived figure labels/links; this is
-    # permission to reference historical material, not to restore the sector.
-    Path("README.md"): {"info" + "ton", "mir" + "ror"},
+    # Public-facing summaries may accurately describe explicitly quarantined
+    # research results and no-go statements without promoting them to core claims.
+    Path("README.md"): {"info" + "ton", "mir" + "ror", "anti" + "grav"},
     Path("THEORY_STATUS.md"): {"info" + "ton"},
+    Path("BQG_PROOF_INDEX_20261119.md"): {"mir" + "ror"},
+}
+
+# These exact files form a separately tested research module. They are not
+# canonical GR/QM core imports; their vocabulary and imports are intentional.
+# Keep this allowlist narrow and require their dedicated workflow to test them.
+RESEARCH_ONLY_FILES = {
+    Path(".github/workflows/bqg-mirror-wilson-dirac.yml"),
+    Path("scripts/mirror_wilson_matter_gate.py"),
+    Path("scripts/mirror_matter_matrix_element_gate.py"),
+    Path("tests/test_mirror_wilson_matter_gate.py"),
 }
 
 # Construct retired vocabulary without embedding the retired tokens literally in
