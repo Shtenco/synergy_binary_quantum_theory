@@ -16,6 +16,8 @@ def test_cross_polytope_reference_boundary_has_volume_16_over_3():
     assert metrics["pl_volume_total"] == pytest.approx(16.0 / 3.0, abs=1e-12)
     assert metrics["cell_volume_min"] == pytest.approx(1.0 / 3.0, abs=1e-12)
     assert metrics["mesh_diameter_max"] == pytest.approx(np.sqrt(2.0), abs=1e-12)
+    assert metrics["shape_quality_min"] == pytest.approx(1.0, abs=1e-12)
+    assert metrics["max_diameter_to_inradius"] > 0
     assert np.allclose(volumes, 1.0 / 3.0)
 
 
@@ -26,6 +28,8 @@ def test_barycentric_refinement_conserves_pl_volume_and_shrinks_mesh():
                for row in levels)
     assert levels[0]["mesh_diameter_max"] > levels[1]["mesh_diameter_max"]
     assert levels[1]["mesh_diameter_max"] > levels[2]["mesh_diameter_max"]
+    assert all(row["shape_quality_min"] > 0 for row in levels)
+    assert levels[2]["shape_quality_min"] <= levels[0]["shape_quality_min"]
     assert tetrahedra.shape == (9216, 4)
 
 
