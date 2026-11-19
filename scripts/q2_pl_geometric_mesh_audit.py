@@ -164,6 +164,27 @@ def _sha256(array):
     return hashlib.sha256(np.ascontiguousarray(array).tobytes()).hexdigest()
 
 
+def assess_shape_regularity(levels):
+    quality = [float(row["shape_quality_min"]) for row in levels]
+    aspect = [float(row["max_diameter_to_inradius"]) for row in levels]
+    quality_degrades = any(b < a - 1e-12 for a, b in zip(quality, quality[1:]))
+    aspect_grows = any(b > a + 1e-12 for a, b in zip(aspect, aspect[1:]))
+    return {
+        "minimum_shape_quality_by_generation": quality,
+        "maximum_diameter_to_inradius_by_generation": aspect,
+        "shape_quality_degradation_detected": bool(quality_degrades),
+        "aspect_ratio_growth_detected": bool(aspect_grows),
+        "uniform_shape_regularity_established": False,
+        "warning": (
+            "Barycentric refinement shows deteriorating tetrahedral shape quality; "
+            "standard shape-regular finite-element estimates cannot be assumed "
+            "without a separate proof or a better refinement family."
+        ) if quality_degrades and aspect_grows else (
+            "Finite generations do not establish uniform shape regularity."
+        ),
+    }
+
+
 def build_geometry(max_generation=3):
     coordinates, tetrahedra = initial_reference_embedding()
     levels = []
@@ -238,6 +259,7 @@ def run(output_dir: Path, *, chunk_size=4096, chunk_rows=50000):
         "passed": True,
         "reference_embedding": "cross-polytope boundary vertices +/-e_i in R^4; all refined vertices are barycentres of faces",
         "levels": levels,
+        "shape_regularity_assessment": assess_shape_regularity(levels),
         "g3": {
             "vertices_as_dual_cells": int(len(tetrahedra)),
             "dual_edges": int(len(endpoints)),
