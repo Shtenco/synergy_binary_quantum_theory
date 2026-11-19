@@ -51,7 +51,11 @@ def galerkin_spectral_report(matrix, *, measure_total, times=None):
     eigenvalues = np.linalg.eigvalsh(0.5 * (matrix + matrix.T))
     heat = np.asarray([np.mean(np.exp(-t * eigenvalues)) for t in times])
     log_t, log_heat = np.log(times), np.log(heat)
-    spectral_dimension = -2.0 * np.gradient(log_heat, log_t)
+    spectral_dimension = np.asarray([
+        -2.0 * (log_heat[i + 1] - log_heat[i - 1]) /
+        (log_t[i + 1] - log_t[i - 1])
+        for i in range(1, len(times) - 1)
+    ])
     positive = eigenvalues[eigenvalues > 1e-10]
     return {
         "dimension": int(matrix.shape[0]),
@@ -65,8 +69,12 @@ def galerkin_spectral_report(matrix, *, measure_total, times=None):
         "trace": float(np.trace(matrix)),
         "measure_total": float(measure_total),
         "heat_trace_normalized": [
-            {"t": float(t), "value": float(h), "spectral_dimension": float(d)}
-            for t, h, d in zip(times, heat, spectral_dimension)
+            {"t": float(times[i]), "value": float(heat[i]),
+             "spectral_dimension": float(spectral_dimension[i - 1])}
+            for i in range(1, len(times) - 1)
+        ],
+        "normalized_heat_trace": [
+            {"t": float(t), "value": float(h)} for t, h in zip(times, heat)
         ],
         "eigenvalues": eigenvalues.tolist(),
     }
