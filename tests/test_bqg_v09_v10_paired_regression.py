@@ -1,3 +1,4 @@
+import hashlib
 import sys
 import unittest
 from pathlib import Path
@@ -12,6 +13,14 @@ import bqg_v10_w5_lorentzian_adjoint_closure as V10
 
 
 class TestW5V09V10PairedRegression(unittest.TestCase):
+    def test_frozen_v09_file_matches_original_git_blob(self):
+        path = Path(V09.__file__)
+        raw = path.read_bytes()
+        git_blob = hashlib.sha1(
+            b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+        ).hexdigest()
+        self.assertEqual(git_blob, "a2cc3d5eaee8377e94fd7d24a1a279d2399df133")
+
     def test_all_five_seed_keys_are_identical(self):
         for K in (0, 2, 4, 6, 8):
             self.assertEqual(V09.w5_input_key(K), V10.w5_input_key(K))
