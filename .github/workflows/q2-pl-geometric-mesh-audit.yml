@@ -47,5 +47,7 @@ jobs:
             verification_results/q2_pl_geometry/g3_geometric_dual_conductances.npy
             verification_results/q2_pl_geometry/g3_geometric_dual_face_areas.npy
             verification_results/q2_pl_geometry/g3_geometric_dual_distances.npy
+            verification_results/q2_pl_geometry/g3_geometric_coarse_operator.npy
+            verification_results/q2_pl_geometry/g3_geometric_coarse_eigenvalues.npy
           if-no-files-found: error
           retention-days: 30
