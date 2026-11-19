@@ -22,6 +22,53 @@ except ImportError:
     from q2_matrix_free_feshbach import MatrixFreeFeshbach
 
 
+def coarse_galerkin_matrix(edge_endpoints, fibre_labels, fibre_sizes, *, chunk_rows=100000):
+    """Build U.T @ L @ U directly from cross-fibre edge counts."""
+    labels = np.asarray(fibre_labels)
+    sizes = np.asarray(fibre_sizes, dtype=float)
+    n_fibres = len(sizes)
+    matrix = np.zeros((n_fibres, n_fibres), dtype=float)
+    for start in range(0, len(edge_endpoints), chunk_rows):
+        block = np.asarray(edge_endpoints[start:start + chunk_rows])
+        left = labels[block[:, 0]].astype(np.int64, copy=False)
+        right = labels[block[:, 1]].astype(np.int64, copy=False)
+        crossing = left != right
+        left, right = left[crossing], right[crossing]
+        if not len(left):
+            continue
+        weights = 1.0 / np.sqrt(sizes[left] * sizes[right])
+        np.add.at(matrix, (left, left), 1.0 / sizes[left])
+        np.add.at(matrix, (right, right), 1.0 / sizes[right])
+        np.add.at(matrix, (left, right), -weights)
+        np.add.at(matrix, (right, left), -weights)
+    return matrix
+
+
+def galerkin_spectral_report(matrix, *, measure_total, times=None):
+    times = np.asarray(times if times is not None else
+                       [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0], dtype=float)
+    symmetry_error = float(np.max(np.abs(matrix - matrix.T)))
+    eigenvalues = np.linalg.eigvalsh(0.5 * (matrix + matrix.T))
+    heat = np.asarray([np.mean(np.exp(-t * eigenvalues)) for t in times])
+    log_t, log_heat = np.log(times), np.log(heat)
+    spectral_dimension = -2.0 * np.gradient(log_heat, log_t)
+    return {
+        "dimension": int(matrix.shape[0]),
+        "symmetry_error": symmetry_error,
+        "minimum_eigenvalue": float(eigenvalues[0]),
+        "maximum_eigenvalue": float(eigenvalues[-1]),
+        "negative_eigenvalue_count_below_tolerance": int(np.sum(eigenvalues < -1e-10)),
+        "zero_mode_count": int(np.sum(np.abs(eigenvalues) <= 1e-10)),
+        "trace": float(np.trace(matrix)),
+        "measure_total": float(measure_total),
+        "heat_trace_normalized": [
+            {"t": float(t), "value": float(h), "spectral_dimension": float(d)}
+            for t, h, d in zip(times, heat, spectral_dimension)
+        ],
+        "eigenvalues": eigenvalues.tolist(),
+    }
+
+
 def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         spectral_tol: float = 1e-5, spectral_maxiter: int = 5000) -> dict:
     endpoints = np.load(export_dir / "g3_dual_endpoints.npy", mmap_mode="r")
@@ -39,6 +86,16 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
         raise ValueError("unexpected G3 Feshbach dimensions")
     if model.graph_component_count != 1:
         raise ValueError("G3 Feshbach requires a connected graph")
+
+    galerkin = coarse_galerkin_matrix(endpoints, labels, model.fibre_sizes)
+    galerkin_report = galerkin_spectral_report(
+        galerkin, measure_total=model.n_vertices / float(24 ** 3)
+    )
+    if (galerkin_report["symmetry_error"] > 1e-12
+            or galerkin_report["minimum_eigenvalue"] < -1e-10
+            or galerkin_report["zero_mode_count"] != 1
+            or abs(galerkin_report["measure_total"] - 16.0) > 1e-12):
+        raise ValueError(f"G3 sparse Galerkin checks failed: {galerkin_report}")
 
     operator = model._operator()
     rng = np.random.default_rng(20261119)
@@ -115,7 +172,7 @@ def run(export_dir: Path, *, cg_rtol: float = 1e-8, cg_maxiter: int = 10000,
             "method": "scipy eigsh on matrix-free QLQ+P; Ritz estimates, not certified bounds",
             "tolerance": spectral_tol,
         },
-        "feshbach_probes": probes,
+        "sparse_galerkin": galerkin_report,\n        "feshbach_probes": probes,
         "minimum_correction_quadratic_form": correction_min,
         "minimum_self_energy_slope_quadratic_form": slope_min,
         "maximum_cg_residual": max_cg_residual,
