@@ -97,7 +97,7 @@ def current_rss_bytes():
 
 def _cache_modules():
     return (
-        KC.CK, KC.PW, KC.CH, KC.CV, KC.KG,
+        CK, CK.PW, CK.CH, CK.CV, CK.KG,
     )
 
 
