@@ -221,7 +221,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
         if caller.f_code.co_name == "executor" and caller.f_locals.get("B_cov") is target:
             term_index = int(caller.f_locals["term_index"])
             epsilon = int(caller.f_locals["epsilon"])
-            ordered_edges = tuple(caller.f_locals["a"] for _ in ())
+            ordered_edges = (caller.f_locals["a"], caller.f_locals["b"], caller.f_locals["c"])
             # Preserve both the unweighted term output and its signed epsilon contribution.
             raw_rows = [[repr(k), complex(v).real, complex(v).imag]
                         for k, v in sorted(source.items(), key=lambda item: repr(item[0]))]
@@ -231,7 +231,7 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
             term_capture.append({
                 "term_index": term_index,
                 "epsilon_sign": epsilon,
-                "ordered_edges": list(caller.f_locals["a" : "a"]) if False else None,
+                "ordered_edges": list(ordered_edges),
                 "raw_covariant_sparse": raw_rows,
                 "epsilon_weighted_covariant_sparse": weighted_rows,
             })
@@ -258,7 +258,8 @@ def run(node, jmax2, mode, output, seed_ks=W5_K):
                 if len(term_capture) != 24:
                     raise AssertionError(f"expected 24 captured complex epsilon-term maps, got {len(term_capture)}")
                 for captured_term, diagnostic in zip(term_capture, result["term_diagnostics"]):
-                    captured_term["ordered_edges"] = diagnostic["ordered_edges"]
+                    if captured_term["ordered_edges"] != diagnostic["ordered_edges"]:
+                        raise AssertionError("captured epsilon-term edge order differs from V09 diagnostics")
                 if len(captured) != 3:
                     raise AssertionError(f"expected three V09 serialization calls, got {len(captured)}")
                 raw_A, raw_B_gauss, raw_B_covariant = [dict(x) for x in captured]
