@@ -149,15 +149,22 @@ class MatrixFreeFeshbach:
         rhs = np.asarray(rhs, dtype=float)
         if rhs.shape != (self.n_vertices,):
             raise ValueError("right-hand side has the wrong shape")
+        iteration_count = 0
+
+        def count_iteration(_):
+            nonlocal iteration_count
+            iteration_count += 1
+
         solution, info = cg(
-            self._operator(), rhs, rtol=rtol, atol=atol, maxiter=maxiter
+            self._operator(), rhs, rtol=rtol, atol=atol, maxiter=maxiter,
+            callback=count_iteration,
         )
         residual = float(np.linalg.norm(self.apply_q_plus_p(solution) - rhs))
         if info != 0:
             raise RuntimeError(f"projected CG did not converge: info={info}")
         if not np.isfinite(residual) or residual > max(atol * 10, rtol * np.linalg.norm(rhs) * 10):
             raise RuntimeError(f"projected CG residual too large: {residual}")
-        return solution, {"info": int(info), "residual_norm": residual}
+        return solution, {"info": int(info), "iterations": int(iteration_count), "residual_norm": residual}
 
     def apply_feshbach_correction(self, coarse, **solve_options):
         """Apply B^T (QLQ|_Q)^-1 B and return solve diagnostics."""
