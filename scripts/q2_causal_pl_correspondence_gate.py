@@ -732,13 +732,8 @@ def run(max_generation=2, compute_feshbach=False):
             "vertices_checked": len(vertex_colours),
             "all_four_route_colours_present_per_vertex": route_colours_valid,
         })
-        levels.append(_summarise(
-            generation, tetrahedra, parent_map, causal_edges, dual,
-            compute_feshbach=compute_feshbach,
-        ))
-        if generation == max_generation:
-            break
-
+        # Validate every generation, including the terminal exported level.
+        # Otherwise the final level's orientation/side rule would be unchecked.
         face_sides, face_info = _parent_face_sides(
             tetrahedra, parent_map, causal_edges, orientations, dual
         )
@@ -746,6 +741,12 @@ def run(max_generation=2, compute_feshbach=False):
             "generation": generation,
             **face_info,
         })
+        levels.append(_summarise(
+            generation, tetrahedra, parent_map, causal_edges, dual,
+            compute_feshbach=compute_feshbach,
+        ))
+        if generation == max_generation:
+            break
 
         children, faces, child_chains = barycentric_subdivision(tetrahedra)
         parent_index = {tuple(tet): i for i, tet in enumerate(tetrahedra)}
