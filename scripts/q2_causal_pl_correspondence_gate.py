@@ -38,6 +38,20 @@ from q2_pl_graph_export import (
 from q2_causal_graph_export import ROUTE_LABELS
 
 
+def _causal_edges_share_exactly_one_endpoint(edge_a, edge_b):
+    """Return whether two distinct endpoint pairs meet at exactly one vertex."""
+    return len(set(edge_a) & set(edge_b)) == 1
+
+
+def _causal_edge_labels_are_incident(edge_id_a, edge_id_b, causal_edges):
+    """Same coarse edge is valid; distinct coarse edges must meet at one endpoint."""
+    if edge_id_a == edge_id_b:
+        return True
+    return _causal_edges_share_exactly_one_endpoint(
+        causal_edges[edge_id_a], causal_edges[edge_id_b]
+    )
+
+
 def _permutation_data(chain, faces, parent):
     """Recover the ordered parent-vertex permutation from a barycentric flag."""
     permutation = []
@@ -109,10 +123,15 @@ def _parent_face_sides(tetrahedra, parent_map, causal_edges, orientations, dual)
             side_b = "L" if ub == shared else "R"
         sides[(ta, face)] = side_a
         sides[(tb, face)] = side_b
+    valid_values = all(side in {"L", "R"} for side in sides.values())
+    expected_assignments = 2 * len(dual["edges"])
     return sides, {
         "same_parent_edge_faces": same_edge_faces,
         "distinct_incident_parent_edge_faces": distinct_edge_faces,
         "face_side_assignments": len(sides),
+        "expected_face_side_assignments": expected_assignments,
+        "side_assignment_values_valid": valid_values,
+        "side_assignments_valid": valid_values and len(sides) == expected_assignments,
     }
 
 
@@ -295,27 +314,48 @@ def _symmetric_eigenvalues(matrix):
 
 
 def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
-    """Spectrum and finite-time heat trace of M^{-1}K, symmetrized by M."""
+    """Sparse mass-normalized Galerkin operator, full finite spectrum and heat trace."""
+    import numpy as np
+
     nodes = sorted(causal_edges)
     n = len(nodes)
     index = {node: i for i, node in enumerate(nodes)}
-    matrix = [[0.0] * n for _ in range(n)]
+    rows, columns, values = [], [], []
     scale = 24 ** generation
+    measure = np.asarray([mass_by_edge[node] for node in nodes], dtype=float)
+    if measure.shape != (n,) or np.any(~np.isfinite(measure)) or np.any(measure <= 0):
+        raise ValueError("pushforward measure must be finite and strictly positive")
+
     for edge in conductances:
         i, j = index[edge["source"]], index[edge["target"]]
         weight = edge["integer_multiplicity"] / scale
-        mi, mj = mass_by_edge[edge["source"]], mass_by_edge[edge["target"]]
-        if mi <= 0 or mj <= 0:
-            raise ValueError("pushforward measure must be strictly positive")
-        matrix[i][i] += weight / mi
-        matrix[j][j] += weight / mj
+        mi, mj = measure[i], measure[j]
+        diagonal_i = weight / mi
+        diagonal_j = weight / mj
         off = -weight / (mi * mj) ** 0.5
-        matrix[i][j] += off
-        matrix[j][i] += off
+        rows.extend((i, j, i, j))
+        columns.extend((i, j, j, i))
+        values.extend((diagonal_i, diagonal_j, off, off))
 
-    eigenvalues = _symmetric_eigenvalues(matrix)
-    zero_count = sum(abs(value) <= 1e-9 for value in eigenvalues)
-    positive = [value for value in eigenvalues if value > 1e-9]
+    try:
+        from scipy.sparse import coo_matrix
+    except ImportError as exc:
+        raise RuntimeError("sparse Galerkin diagnostics require scipy") from exc
+    operator = coo_matrix((values, (rows, columns)), shape=(n, n), dtype=float).tocsr()
+    operator.sum_duplicates()
+    asymmetry = operator - operator.T
+    symmetry_error = float(np.max(np.abs(asymmetry.data))) if asymmetry.nnz else 0.0
+
+    # The assembled operator remains sparse for storage and algebra. Since the
+    # current largest quotient has only 512 modes, densify only for a complete
+    # finite-level eigenvalue list and exact heat-trace reconstruction.
+    dense = operator.toarray()
+    eigenvalues = _symmetric_eigenvalues(dense.tolist())
+    minimum = min(eigenvalues) if eigenvalues else 0.0
+    maximum = max(eigenvalues) if eigenvalues else 0.0
+    scale_eig = max(1.0, abs(minimum), abs(maximum))
+    zero_count = sum(abs(value) <= 1e-9 * scale_eig for value in eigenvalues)
+    positive = [value for value in eigenvalues if value > 1e-9 * scale_eig]
     times = [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
     heat = []
     for time in times:
@@ -332,21 +372,33 @@ def _spectral_diagnostics(generation, causal_edges, mass_by_edge, conductances):
             "time": heat[i]["time"],
             "effective_spectral_dimension": -2.0 * slope,
         })
+    moments = {
+        str(order): float(sum(value ** order for value in eigenvalues) / n)
+        for order in (1, 2, 3)
+    }
     return {
         "operator_spectrum": eigenvalues,
         "operator_zero_mode_count": zero_count,
         "operator_spectral_gap": min(positive) if positive else None,
-        "operator_largest_eigenvalue": max(eigenvalues) if eigenvalues else 0.0,
+        "operator_largest_eigenvalue": maximum,
+        "operator_minimum_eigenvalue": minimum,
         "operator_trace": sum(eigenvalues),
+        "operator_symmetry_error": symmetry_error,
+        "operator_is_psd_up_to_roundoff": minimum >= -1e-9 * scale_eig,
+        "operator_sparse_nnz": int(operator.nnz),
+        "operator_dimension": n,
+        "spectral_moments_per_mode": moments,
+        "pushforward_measure_total": float(np.sum(measure)),
+        "pushforward_measure_min": float(np.min(measure)),
+        "pushforward_measure_max": float(np.max(measure)),
         "heat_trace": heat,
         "effective_spectral_dimension": dimension,
         "spectral_interpretation": (
-            "finite generalized Galerkin operator spectrum only; a plateau "
-            "across refinement generations and a controlled continuum limit "
-            "are not established"
+            "Sparse mass-normalized finite Galerkin operator; complete finite "
+            "spectrum and heat trace are reported. A plateau across refinement "
+            "generations and a controlled continuum limit are not established."
         ),
     }
-
 
 def _certified_q_gap_lower_bound(n, dual):
     """Certified lower bound on lambda_min(QLQ|Q) from graph connectivity.
@@ -626,14 +678,23 @@ def _feshbach_diagnostics(generation, tetrahedra, parent_map, causal_edges, dual
 
 def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_feshbach=False):
     fibres = Counter(parent_map[tuple(tet)] for tet in tetrahedra)
-    adjacency_ok = True
+    adjacency_violations = []
     for edge in dual["edges"]:
         a = tuple(dual["vertices"][edge["source"]]["tetrahedron"])
         b = tuple(dual["vertices"][edge["target"]]["tetrahedron"])
         ea, eb = parent_map[a], parent_map[b]
-        if not (set(causal_edges[ea]) & set(causal_edges[eb])):
-            adjacency_ok = False
-            break
+        endpoints_a, endpoints_b = causal_edges[ea], causal_edges[eb]
+        if not _causal_edge_labels_are_incident(ea, eb, causal_edges):
+            adjacency_violations.append({
+                "pl_dual_source": edge["source"],
+                "pl_dual_target": edge["target"],
+                "causal_source_edge": ea,
+                "causal_target_edge": eb,
+                "causal_source_endpoints": list(endpoints_a),
+                "causal_target_endpoints": list(endpoints_b),
+                "shared_endpoint_count": len(set(endpoints_a) & set(endpoints_b)),
+            })
+    adjacency_ok = not adjacency_violations
     histogram = Counter(fibres.values())
     measure_scale = 24 ** generation
     lumpability = _lumpability_diagnostics(tetrahedra, parent_map, dual)
@@ -660,6 +721,8 @@ def _summarise(generation, tetrahedra, parent_map, causal_edges, dual, compute_f
         "pushforward_measure_max": max(value / measure_scale for value in fibres.values()),
         "pl_dual_adjacencies": len(dual["edges"]),
         "adjacency_preserved": adjacency_ok,
+        "adjacency_violation_count": len(adjacency_violations),
+        "adjacency_violation_examples": adjacency_violations[:10],
         **lumpability,
         **quotient,
         **spectrum,
@@ -685,6 +748,7 @@ def run(max_generation=2, compute_feshbach=False):
     levels = []
     refinement_checks = []
     face_diagnostics = []
+    route_colour_diagnostics = []
     measure_checks = []
 
     for generation in range(max_generation + 1):
@@ -692,13 +756,17 @@ def run(max_generation=2, compute_feshbach=False):
             generation, tetrahedra, chain_by_tet, previous_faces
         )
         vertex_colours = _vertex_face_colours(dual)
-        levels.append(_summarise(
-            generation, tetrahedra, parent_map, causal_edges, dual,
-            compute_feshbach=compute_feshbach,
-        ))
-        if generation == max_generation:
-            break
-
+        route_colours_valid = all(
+            sorted(mapping.values()) == [0, 1, 2, 3]
+            for mapping in vertex_colours
+        )
+        route_colour_diagnostics.append({
+            "generation": generation,
+            "vertices_checked": len(vertex_colours),
+            "all_four_route_colours_present_per_vertex": route_colours_valid,
+        })
+        # Validate every generation, including the terminal exported level.
+        # Otherwise the final level's orientation/side rule would be unchecked.
         face_sides, face_info = _parent_face_sides(
             tetrahedra, parent_map, causal_edges, orientations, dual
         )
@@ -706,6 +774,12 @@ def run(max_generation=2, compute_feshbach=False):
             "generation": generation,
             **face_info,
         })
+        levels.append(_summarise(
+            generation, tetrahedra, parent_map, causal_edges, dual,
+            compute_feshbach=compute_feshbach,
+        ))
+        if generation == max_generation:
+            break
 
         children, faces, child_chains = barycentric_subdivision(tetrahedra)
         parent_index = {tuple(tet): i for i, tet in enumerate(tetrahedra)}
@@ -794,8 +868,13 @@ def run(max_generation=2, compute_feshbach=False):
             row["every_child_maps_to_a_child_of_its_parent"]
             for row in refinement_checks
         ),
-        "all_parent_face_side_assignments_valid": True,
-        "four_route_face_colours_present": True,
+        "all_parent_face_side_assignments_valid": all(
+            row["side_assignments_valid"] for row in face_diagnostics
+        ),
+        "four_route_face_colours_present": all(
+            row["all_four_route_colours_present_per_vertex"]
+            for row in route_colour_diagnostics
+        ),
     }
     return {
         "status": "candidate q2 causal-to-PL edge correspondence",
@@ -811,6 +890,7 @@ def run(max_generation=2, compute_feshbach=False):
         ),
         "levels": levels,
         "parent_face_diagnostics": face_diagnostics,
+        "route_colour_diagnostics": route_colour_diagnostics,
         "refinement_checks": refinement_checks,
         "measure_checks": measure_checks,
         "measure_definition": (

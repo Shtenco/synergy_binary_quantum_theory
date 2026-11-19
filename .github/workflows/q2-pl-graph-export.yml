@@ -1,18 +1,31 @@
-name: q2-pl-graph-export
+name: q2-pl-graph-export\n\n# Includes the bounded-memmap generation-3 export and manifest reconciliation.
 
 on:
   workflow_dispatch:
   push:
     branches:
       - research/bqg-qfi-q2-emergent-graph-audit-20261118
+      - research/bqg-q2-correspondence-audit-hardening-20261119
     paths:
       - 'scripts/q2_pl_graph_export.py'
       - 'tests/test_q2_pl_graph_export.py'
       - 'scripts/q2_causal_pl_correspondence_gate.py'
       - 'tests/test_q2_causal_pl_correspondence_gate.py'
       - 'tests/test_q2_feshbach_correction_gate.py'
+      - 'scripts/q2_matrix_free_feshbach.py'
+      - 'scripts/q2_g3_matrix_free_feshbach.py'
+      - 'scripts/q2_g3_refinement_comparison.py'
+      - 'tests/test_q2_g3_refinement_comparison.py'
+      - 'tests/test_q2_matrix_free_feshbach.py'
+      - 'tests/test_q2_g3_matrix_free_feshbach.py'
+      - 'scripts/q2_dirichlet_form_convergence.py'
+      - 'tests/test_q2_dirichlet_form_convergence.py'
       - 'scripts/q2_pl_generation3_preflight.py'
       - 'tests/test_q2_pl_generation3_preflight.py'
+      - 'scripts/q2_pl_generation3_stream.py'
+      - 'tests/test_q2_pl_generation3_stream.py'
+      - 'scripts/q2_pl_generation3_chunked_export.py'
+      - 'tests/test_q2_pl_generation3_chunked_export.py'
       - 'scripts/q2_relational_edge_qfi_gate.py'
       - 'tests/test_q2_relational_edge_qfi_gate.py'
       - 'BQG_Q2_RELATIONAL_EDGE_QFI_RESULT_20261118.md'
@@ -74,6 +87,14 @@ jobs:
         run: python -m pytest -q tests/test_q2_causal_pl_correspondence_gate.py
       - name: Run finite Feshbach correction tests
         run: python -m pytest -q tests/test_q2_feshbach_correction_gate.py
+      - name: Run matrix-free Feshbach operator controls
+        run: python -m pytest -q tests/test_q2_matrix_free_feshbach.py
+      - name: Run generation-3 Feshbach input and scope controls
+        run: python -m pytest -q tests/test_q2_g3_matrix_free_feshbach.py
+      - name: Run graph Dirichlet-form and recovery-probe controls
+        run: python -m pytest -q tests/test_q2_dirichlet_form_convergence.py
+      - name: Run generation-3 refinement comparison controls
+        run: python -m pytest -q tests/test_q2_g3_refinement_comparison.py
       - name: Run generation-3 preflight tests
         run: python -m pytest -q tests/test_q2_pl_generation3_preflight.py
       - name: Run relational edge QFI tests
@@ -130,12 +151,24 @@ jobs:
         run: python scripts/q2_relational_network_qfi_gate.py --output verification_results/Q2_RELATIONAL_NETWORK_QFI.json
       - name: Run generation-3 allocation-free capacity preflight
         run: python scripts/q2_pl_generation3_preflight.py --output verification_results/Q2_PL_GENERATION3_PREFLIGHT.json
+      - name: Run compact generation-3 dual and causal-fibre regression
+        run: python -m pytest -q tests/test_q2_pl_generation3_stream.py
+      - name: Export compact generation-3 dual and causal-fibre evidence
+        run: python scripts/q2_pl_generation3_stream.py --output verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json
+      - name: Test chunked generation-3 exporter controls
+        run: python -m pytest -q tests/test_q2_pl_generation3_chunked_export.py
+      - name: Export generation-3 graph in bounded parent chunks
+        run: python scripts/q2_pl_generation3_chunked_export.py --output-dir verification_results/g3_chunked --chunk-size 4096
+      - name: Run generation-3 matrix-free Feshbach spectral and resolvent probes
+        run: python scripts/q2_g3_matrix_free_feshbach.py --export-dir verification_results/g3_chunked --output verification_results/Q2_G3_MATRIX_FREE_FESHBACH.json
       - name: Export finite causal-to-PL correspondence
         run: python scripts/q2_causal_pl_correspondence_gate.py --max-generation 2 --output verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
       - name: Export finite zero-energy Feshbach corrections
         run: python scripts/q2_causal_pl_correspondence_gate.py --max-generation 2 --feshbach --output verification_results/Q2_FESHBACH_CORRECTION.json
       - name: Export all audited PL refinement levels
         run: python scripts/q2_pl_graph_export.py --max-generation 2 --output verification_results/Q2_PL_GRAPH_EXPORT.json
+      - name: Compare Galerkin heat traces and spectral dimensions across G0-G3
+        run: python scripts/q2_g3_refinement_comparison.py --refinement verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json --g3 verification_results/Q2_G3_MATRIX_FREE_FESHBACH.json --output verification_results/Q2_G0_G3_REFINEMENT_COMPARISON.json
       - name: Upload graph identity and adjacency artifact
         uses: actions/upload-artifact@v4
         with:
@@ -145,6 +178,11 @@ jobs:
             verification_results/Q2_CAUSAL_PL_CORRESPONDENCE.json
             verification_results/Q2_FESHBACH_CORRECTION.json
             verification_results/Q2_PL_GENERATION3_PREFLIGHT.json
+            verification_results/Q2_PL_GENERATION3_COMPACT_GATE.json
+            verification_results/Q2_G3_MATRIX_FREE_FESHBACH.json
+            verification_results/Q2_G0_G3_REFINEMENT_COMPARISON.json
+            verification_results/g3_chunked/G3_CHUNKED_MANIFEST.json
+            verification_results/g3_chunked/*.npy
             verification_results/Q2_RELATIONAL_EDGE_QFI.json
             verification_results/Q2_RELATIONAL_NETWORK_QFI.json
             verification_results/Q2_RELATIONAL_STAR_QFI.json

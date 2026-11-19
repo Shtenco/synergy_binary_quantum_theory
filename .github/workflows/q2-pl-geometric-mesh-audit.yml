@@ -1,0 +1,53 @@
+name: Q2 PL geometric mesh and finite-volume audit
+
+on:
+  push:
+    branches:
+      - research/bqg-q2-correspondence-audit-hardening-20261119
+    paths:
+      - '.github/workflows/q2-pl-geometric-mesh-audit.yml'
+      - 'scripts/q2_pl_geometric_mesh_audit.py'
+      - 'scripts/q2_dirichlet_form_convergence.py'
+      - 'scripts/q2_pl_graph_export.py'
+      - 'scripts/q2_pl_generation3_stream.py'
+      - 'scripts/q2_pl_generation3_chunked_export.py'
+      - 'scripts/q2_causal_graph_export.py'
+      - 'scripts/q2_causal_pl_correspondence_gate.py'
+      - 'tests/test_q2_pl_geometric_mesh_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  geometric-mesh-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy scipy pytest
+      - name: Test reference PL geometry and finite-volume conductances
+        run: python -m pytest -q tests/test_q2_pl_geometric_mesh_audit.py
+      - name: Build G3 reference PL geometry and geometric dual operator
+        run: python scripts/q2_pl_geometric_mesh_audit.py --output-dir verification_results/q2_pl_geometry --chunk-size 4096 --chunk-rows 50000
+      - name: Upload geometric mesh and operator artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: q2-pl-geometric-mesh-audit
+          path: |
+            verification_results/q2_pl_geometry/Q2_PL_GEOMETRIC_MESH_AUDIT.json
+            verification_results/q2_pl_geometry/g3_pl_vertex_coordinates.npy
+            verification_results/q2_pl_geometry/g3_pl_tetrahedra.npy
+            verification_results/q2_pl_geometry/g3_pl_cell_volumes.npy
+            verification_results/q2_pl_geometry/g3_geometric_dual_endpoints.npy
+            verification_results/q2_pl_geometry/g3_geometric_dual_conductances.npy
+            verification_results/q2_pl_geometry/g3_geometric_dual_face_areas.npy
+            verification_results/q2_pl_geometry/g3_geometric_dual_distances.npy
+            verification_results/q2_pl_geometry/g3_geometric_coarse_operator.npy
+            verification_results/q2_pl_geometry/g3_geometric_coarse_eigenvalues.npy
+          if-no-files-found: error
+          retention-days: 30

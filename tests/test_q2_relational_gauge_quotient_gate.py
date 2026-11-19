@@ -84,3 +84,25 @@ def test_projective_tangent_jacobian_reconstructs_full_half_link_qfi():
     realified = np.concatenate([tangent.real, tangent.imag], axis=0)
     reconstructed = 4.0 * (realified.T @ realified)
     assert np.allclose(reconstructed, qfi, atol=2e-10, rtol=2e-10)
+
+
+def test_end_to_end_exports_complete_correlated_quotient_and_endpoint_matrices():
+    result = run(seed=20261119, trials=2)
+    assert result["passed"] is True
+    expected_dimensions = {"path_3": (27, 12), "cycle_4": (36, 24)}
+    for name, row in result["graphs"].items():
+        quotient_dim, endpoint_dim = expected_dimensions[name]
+        quotient_matrices = row["quotient_qfi_matrices_by_trial"]
+        endpoint_matrices = row["two_sided_endpoint_qfi_matrices_by_trial"]
+        assert len(quotient_matrices) == 2
+        assert len(endpoint_matrices) == 2
+        for matrix in quotient_matrices:
+            matrix = np.asarray(matrix, dtype=float)
+            assert matrix.shape == (quotient_dim, quotient_dim)
+            assert np.allclose(matrix, matrix.T, atol=1e-10)
+            assert np.linalg.eigvalsh(matrix).min() >= -1e-9
+        for matrix in endpoint_matrices:
+            matrix = np.asarray(matrix, dtype=float)
+            assert matrix.shape == (endpoint_dim, endpoint_dim)
+            assert np.allclose(matrix, matrix.T, atol=1e-10)
+            assert np.linalg.eigvalsh(matrix).min() >= -1e-9

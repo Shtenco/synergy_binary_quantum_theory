@@ -287,6 +287,7 @@ def run():
             fibre_labels[24 * parent_id + perm_rank] = causal_index[causal_id]
 
     fibre_sizes = np.bincount(fibre_labels, minlength=len(causal_ids))
+    fibre_size_histogram = Counter(int(size) for size in fibre_sizes)
     if len(causal_ids) != 512 or np.any(fibre_sizes == 0):
         raise ValueError("generation-3 causal map is not surjective onto 512 fibres")
 
@@ -345,6 +346,12 @@ def run():
             "causal_fibres": len(causal_ids),
             "fibre_size_min": int(fibre_sizes.min()),
             "fibre_size_max": int(fibre_sizes.max()),
+            "fibre_size_mean": float(fibre_sizes.mean()),
+            "fibre_size_histogram": {
+                str(size): fibre_size_histogram[size]
+                for size in sorted(fibre_size_histogram)
+            },
+            "pushforward_measure_total": float(fibre_sizes.sum() / (24 ** 3)),
             "connected_components": int(component_count),
         },
         "small_level_incidence_comparisons": comparison,

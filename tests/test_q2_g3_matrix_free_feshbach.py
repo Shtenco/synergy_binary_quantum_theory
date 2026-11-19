@@ -1,0 +1,86 @@
+import json
+import numpy as np
+import pytest
+
+from scripts.q2_g3_matrix_free_feshbach import run
+
+
+def test_g3_feshbach_refuses_non_g3_export(tmp_path):
+    np.save(tmp_path / "g3_dual_endpoints.npy",
+            np.array([[0, 1], [1, 2]], dtype=np.uint32))
+    np.save(tmp_path / "g3_fibre_labels.npy",
+            np.array([0, 0, 1], dtype=np.uint16))
+    (tmp_path / "G3_CHUNKED_MANIFEST.json").write_text(
+        json.dumps({"passed": True}), encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="unexpected G3 graph dimensions"):
+        run(tmp_path)
+
+
+def test_g3_feshbach_module_has_explicit_probe_scope():
+    from scripts import q2_g3_matrix_free_feshbach as module
+
+    assert "not the full 512x512 self-energy matrix" in module.__doc__
+
+
+def test_feshbach_report_is_valid_json_with_real_line_ending(tmp_path):
+    from scripts.q2_g3_matrix_free_feshbach import write_report
+
+    target = tmp_path / "report.json"
+    write_report(target, {"passed": True, "generation": 3})
+    raw = target.read_text(encoding="utf-8")
+    assert raw.endswith("\n")
+    assert json.loads(raw) == {"passed": True, "generation": 3}
+
+
+def test_coarse_galerkin_matrix_is_the_normalized_fibre_compression():
+    from scripts.q2_g3_matrix_free_feshbach import coarse_galerkin_matrix
+
+    edges = np.array([[0, 1], [1, 2]], dtype=np.uint32)
+    labels = np.array([0, 0, 1], dtype=np.uint16)
+    sizes = np.array([2.0, 1.0])
+    matrix = coarse_galerkin_matrix(edges, labels, sizes, chunk_rows=1)
+    expected = np.array([[0.5, -1 / np.sqrt(2)], [-1 / np.sqrt(2), 1.0]])
+    assert np.allclose(matrix, expected, atol=1e-14)
+    assert np.allclose(matrix, matrix.T, atol=1e-14)
+    assert np.linalg.eigvalsh(matrix)[0] >= -1e-14
+
+
+def test_galerkin_spectral_report_counts_connected_zero_mode():
+    from scripts.q2_g3_matrix_free_feshbach import galerkin_spectral_report
+
+    matrix = np.array([[0.5, -1 / np.sqrt(2)], [-1 / np.sqrt(2), 1.0]])
+    report = galerkin_spectral_report(matrix, measure_total=16.0)
+    assert report["zero_mode_count"] == 1
+    assert report["negative_eigenvalue_count_below_tolerance"] == 0
+    assert report["symmetry_error"] == 0
+    assert report["measure_total"] == 16.0
+
+
+def test_g3_galerkin_uses_full_g0_g2_heat_time_grid_and_gap():
+    from scripts.q2_g3_matrix_free_feshbach import galerkin_spectral_report
+
+    matrix = np.array([[0.5, -1 / np.sqrt(2)], [-1 / np.sqrt(2), 1.0]])
+    report = galerkin_spectral_report(matrix, measure_total=16.0)
+    assert [row["t"] for row in report["normalized_heat_trace"]] == [
+        0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0
+    ]
+    assert len(report["heat_trace_normalized"]) == 7
+    assert report["spectral_gap"] > 0
+    assert report["nonzero_count"] == 4
+
+
+def test_certified_graph_gap_bound_uses_bfs_and_actual_maximum_degree():
+    from scripts.q2_matrix_free_feshbach import MatrixFreeFeshbach
+    from scripts.q2_g3_matrix_free_feshbach import certified_gap_lower_bound_from_root_eccentricity
+
+    edges = np.array([[0, 1], [1, 2], [2, 3]], dtype=np.uint32)
+    labels = np.zeros(4, dtype=np.uint16)
+    model = MatrixFreeFeshbach(edges, labels)
+    bound = certified_gap_lower_bound_from_root_eccentricity(model)
+
+    assert bound["root_eccentricity_upper_bound"] == 3
+    assert bound["lambda_min_q_l_q_certified_lower_bound"] == pytest.approx(1 / 9)
+    assert bound["lambda_min_q_l_q_plus_p_certified_lower_bound"] == pytest.approx(1 / 9)
+    assert bound["lambda_max_q_l_q_plus_p_certified_upper_bound"] == pytest.approx(4.0)
+    assert bound["condition_number_certified_upper_bound"] == pytest.approx(36.0)
