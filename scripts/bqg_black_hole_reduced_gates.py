@@ -137,6 +137,17 @@ def entropy_coefficient_gate() -> dict:
         Abar = punctures * casimir
         rows.append({"punctures": punctures, "log_state_count": S,
                      "dimensionless_area": Abar, "S_over_Abar": S / Abar})
+    singlet_rows = []
+    for punctures in (8, 16, 32, 64, 128, 256):
+        singlet_multiplicity = math.comb(punctures, punctures // 2) // (punctures // 2 + 1)
+        singlet_entropy = math.log(singlet_multiplicity)
+        singlet_area = punctures * casimir
+        singlet_rows.append({
+            "punctures": punctures,
+            "SU2_singlet_multiplicity": singlet_multiplicity,
+            "singlet_entropy_nats": singlet_entropy,
+            "S_over_Abar": singlet_entropy / singlet_area,
+        })
     spin_cutoffs = (1, 2, 3, 5, 10, 20, 50)
     roots = [{"j_max": cutoff, "entropy_slope_per_dimensionless_area": spin_spectrum_entropy_root(cutoff)}
              for cutoff in spin_cutoffs]
@@ -144,14 +155,21 @@ def entropy_coefficient_gate() -> dict:
     roots[-1]["a_star_over_lP2_required_for_1_over_4"] = 4.0 * variable_spin_slope
     root_converged = abs(roots[-1]["entropy_slope_per_dimensionless_area"] -
                          roots[-2]["entropy_slope_per_dimensionless_area"]) < 1e-8
+    singlet_approaching = singlet_rows[-1]["S_over_Abar"] > singlet_rows[-2]["S_over_Abar"]
     passed = (max(abs(x["S_over_Abar"] - dimensionless_slope) for x in rows) < 1e-13
-              and root_converged)
+              and root_converged and singlet_approaching)
     return {
         "passed": passed, "fixed_spin": j, "degeneracy_per_puncture": degeneracy,
         "entropy_per_puncture_nats": entropy_per_puncture,
         "dimensionless_S_over_A_slope": dimensionless_slope,
         "a_star_over_lP2_required_to_match_BH_1_over_4": required_a_over_lP2,
         "fixed_j_refinement_in_puncture_number": rows,
+        "global_SU2_singlet_projection_control": {
+            "formula": "multiplicity of spin-0 in (1/2)^tensor N = Catalan(N/2) = binomial(N,N/2)/(N/2+1), N even",
+            "refinement": singlet_rows,
+            "asymptotic": "log Catalan(N/2) = N log(2) - (3/2) log(N) + O(1)",
+            "scope": "global SU(2) singlet projection for fixed j=1/2 punctures; not the complete physical BQG horizon constraint space",
+        },
         "variable_spin_ordered_puncture_model": {
             "generating_function_equation": "sum_j (2j+1) exp(-lambda sqrt(j(j+1))) = 1",
             "cutoff_convergence": roots,
@@ -160,8 +178,8 @@ def entropy_coefficient_gate() -> dict:
             "assumptions": "ordered/distinguishable puncture sequences; no global SU(2) singlet projection or physical BQG boundary constraint",
         },
         "physical_Bekenstein_Hawking_coefficient_derived": False,
-        "reason": "Both fixed-spin and variable-spin counts determine dimensionless slopes only. Converting to physical area requires a_* and the physical gauge-invariant boundary state count; tuning a_* to hit 1/4 is calibration.",
-        "scope": "exact finite counting controls and a converged combinatorial saddle model; not the BQG horizon entropy",
+        "reason": "The SU(2) singlet count adds a gauge-invariant finite control, but the physical horizon area scale a_* and full boundary constraint space remain unknown. Fitting a_* to hit 1/4 is calibration.",
+        "scope": "exact fixed-spin and singlet counts plus a converged combinatorial saddle model; not the BQG horizon entropy",
     }
 
 
