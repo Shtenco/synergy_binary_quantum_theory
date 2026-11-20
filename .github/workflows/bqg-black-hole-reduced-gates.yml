@@ -15,6 +15,10 @@ on:
       - "research/black_holes_bqg/**"
       - ".github/workflows/bqg-black-hole-reduced-gates.yml"
 
+concurrency:
+  group: bqg-black-hole-reduced-gates-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
