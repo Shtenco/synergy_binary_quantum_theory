@@ -1,0 +1,209 @@
+# BH-1–BH-7: reduced derivations, numerical controls and physical gaps
+
+**Status:** reduced controls specified; none of BH-1–BH-7 is yet a physical BQG result.  
+**Units:** the Hawking/evaporation toy uses \(G=\hbar=c=k_B=1\).
+
+This document separates imported semiclassical controls from quantities that must be calculated using the BQG physical-history amplitude.
+
+## BH-1 — Marginally trapped surface
+
+On a spacelike slice, let \(S\) have induced metric \(q_{ab}\), outward spacelike unit normal \(s^\mu\), and future unit normal \(n^\mu\) to the slice. Define
+
+\[
+\ell^\mu=n^\mu+s^\mu,\qquad k^\mu=n^\mu-s^\mu,\qquad \ell\cdot k=-2.
+\]
+
+The null expansions are
+
+\[
+\theta_{(\ell)}=q^{\mu\nu}\nabla_\mu\ell_\nu,\qquad
+\theta_{(k)}=q^{\mu\nu}\nabla_\mu k_\nu.
+\]
+
+A future marginally outer trapped surface obeys \(\theta_{(\ell)}=0\), \(\theta_{(k)}<0\). A future outer trapping horizon additionally obeys \(\mathcal L_k\theta_{(\ell)}<0\). An event horizon is global and cannot be identified from one slice.
+
+### Benchmark used by the gate
+
+Painlevé–Gullstrand form:
+
+\[
+ds^2=-dt^2+(dr+v(r)dt)^2+r^2d\Omega^2,\qquad v(r)=\sqrt{2M/r}.
+\]
+
+With \(n=\partial_t-v\partial_r\), \(s=\partial_r\),
+
+\[
+\theta_{(\ell)}=\frac{2}{r}(1-v),\qquad
+\theta_{(k)}=-\frac{2}{r}(1+v).
+\]
+
+The marginal surface is \(r_H=2M\); the ingoing expansion is negative there. The script locates the zero on successively refined radial meshes and checks second-order convergence.
+
+**Scope:** a marginal-surface finder tested on an inserted GR metric, not a BQG emergent horizon.
+
+### BQG calculation still required
+
+The physical history must supply the Lorentzian metric, lapse/shift or equivalent null-cone data, extrinsic curvature, discrete surface, null normals and refinement-stable expansions. A high-density graph cut, entanglement cut or QFI-distance sphere is not a horizon unless it passes these geometric tests.
+
+## BH-2 — Discrete area
+
+Two objects must remain separate.
+
+The Regge area of a triangulated two-surface is
+
+\[
+A_{\rm Regge}(S)=\sum_{f\subset S}A_f,
+\]
+
+with each triangle area computed from its induced edge metric. It should converge under shape-regular refinement.
+
+The SU(2) flux-Casimir candidate is
+
+\[
+\widehat A_H=a_*\sum_{p\cap H}\sqrt{j_p(j_p+1)}.
+\]
+
+The Casimir dependence is fixed by SU(2). The BQG theory has not yet derived the horizon-intersection-to-puncture map, the physical self-adjoint area operator, or the coefficient \(a_*\) from its common microscopic action scale.
+
+The script separately checks icosphere Regge-area convergence to \(4\pi R^2\) and the \(j=1/2\) Casimir eigenvalue \(\sqrt{3/4}\). It does not identify their normalizations.
+
+**BQG requirement:** construct the horizon intersection operator from the same SU(2) fluxes used in metric reconstruction; prove gauge invariance, positivity/self-adjointness and subdivision consistency; determine \(a_*\) independently of the entropy target.
+
+## BH-3 — Entropy without fitting \(1/4\)
+
+For \(N\) distinguishable \(j=1/2\) punctures,
+
+\[
+\Omega_N=2^N,\qquad S_N=\ln\Omega_N=N\ln2,
+\]
+\[
+\bar A_N=N\sqrt{3/4}.
+\]
+
+Therefore
+
+\[
+\frac{S_N}{\bar A_N}
+=\frac{\ln2}{\sqrt{3/4}}
+=0.8003774225686291\ldots
+\]
+
+If \(A_N=a_*\bar A_N\), then \(S_N/A_N=0.8003774225686291\ldots/a_*\). Matching \(1/(4\ell_P^2)\) in this restricted counting would require
+
+\[
+\frac{a_*}{\ell_P^2}=3.201509690274516\ldots
+\]
+
+This is a required normalization, not a prediction. Choosing it to force \(1/4\) is circular calibration.
+
+A physical derivation must count the constrained horizon state space after SU(2) gauge invariance, closure, boundary/edge modes, the BQG physical projector and the correct puncture quotient. It must compute
+
+\[
+S(A)=\ln\dim\mathcal H_{\rm phys}
+(A\leq\widehat A_H<A+\Delta A)
+\]
+
+and obtain \(S/A\to1/(4\ell_P^2)\) using an independently fixed area normalization. Subleading terms must be reported.
+
+## BH-4 — Hawking spectrum and flux
+
+For a collapsing geometry with late-time null-coordinate peeling
+
+\[
+U(u)=U_H-Ce^{-\kappa u},
+\]
+
+the Bogoliubov mixing gives
+
+\[
+\langle N_\omega\rangle
+=\frac{1}{e^{2\pi\omega/\kappa}-1},\qquad T_H=\frac{\kappa}{2\pi}.
+\]
+
+For the Schwarzschild benchmark, \(\kappa=1/(4M)\), hence \(T_H=1/(8\pi M)\).
+
+The finite gate integrates one massless chiral \(1+1\)-dimensional bosonic channel with unit transmission:
+
+\[
+P_{1+1}=\int_0^\infty\frac{d\omega}{2\pi}
+\frac{\omega}{e^{\omega/T_H}-1}
+=\frac{\pi T_H^2}{12}
+=\frac{1}{768\pi M^2}.
+\]
+
+This is not the four-dimensional luminosity. In four dimensions the flux requires spin-dependent greybody transmission functions:
+
+\[
+P_{4D}=\sum_{s,\ell,m}\int_0^\infty\frac{d\omega}{2\pi}
+\frac{\omega\,\Gamma_{s\ell m}(\omega;M)}
+{e^{\omega/T_H}-(-1)^{2s}}.
+\]
+
+The BQG theory must derive the physical in/out mode map, canonical Bogoliubov identities, outgoing density matrix and greybody factors from its own Lorentzian physical geometry and fluctuation operator.
+
+## BH-5 — Evaporation and energy balance
+
+For the reduced one-channel control,
+
+\[
+\frac{dM}{dt}=-P=-\frac{\alpha}{M^2},
+\qquad \alpha=\frac{1}{768\pi}.
+\]
+
+It integrates to
+
+\[
+M(t)^3=M_0^3-3\alpha t,\qquad
+t_{\rm evap}=\frac{M_0^3}{3\alpha}.
+\]
+
+The script solves the ODE by RK4 and independently integrates radiated energy, checking
+
+\[
+M_0-M(t)=\int_0^tP(t')dt'.
+\]
+
+The coefficient belongs to the declared \(1+1\) toy channel. The BQG replacement must compute backreaction from the same state-dependent flux used in BH-4 and demonstrate mass-energy balance, including any explicitly derived remnant or additional channels.
+
+## BH-6 — Page curve from a full density matrix
+
+The finite unitary control prepares a pure \(N\)-qubit black-hole register, scrambles the remaining black-hole qubits with Haar-random two-qubit unitaries, swaps one qubit at a time into a pure radiation register, and computes the radiation reduced density matrix by partial trace. Its entropy is evaluated from the eigenvalues of \(\rho_R\).
+
+The full norm is conserved. Radiation entropy starts at zero, rises as entanglement is transferred, and returns to zero after all black-hole qubits are emitted. Several sizes and seeds are tested.
+
+This is a finite random-circuit Page-curve control, not a BQG evaporation model. It has no geometric horizon, Hawking temperature or gravitational backreaction.
+
+The BQG calculation must define the radiation algebra from asymptotic outgoing physical modes, compute its reduced state from the same physical global state, and verify positivity, unit trace, constraint preservation, energy balance, entropy/mutual-information flow and late-time purity. If gauge constraints obstruct tensor factorization, the algebraic entropy must be used. The curve must not be inserted as the minimum of two guessed entropy curves.
+
+## BH-7 — Stability
+
+The script tests:
+- second-order radial convergence of the benchmark horizon;
+- Regge sphere-area convergence under icosphere refinement;
+- Planck-flux quadrature convergence;
+- RK4 energy-balance convergence;
+- Page-curve consistency across finite Hilbert-space sizes and random seeds.
+
+These are numerical stability tests of reduced controls. They do not establish BQG independence from Peter–Weyl cutoff, graph refinement, master-constraint spectral window, clock prescription or boundary regulator.
+
+The physical protocol must freeze one microscopic model, use at least two independent refinement families and multiple regulator paths, and compute every BH-0–BH-6 observable from the same normalized physical-history measure.
+
+## Status ledger
+
+| Gate | Reduced control | Physical BQG status |
+|---|---|---|
+| BH-1 | PG marginal-surface finder | Open: physical Lorentzian metric/history |
+| BH-2 | Regge sphere and SU(2) Casimir | Open: physical horizon area operator and \(a_*\) |
+| BH-3 | Exact fixed-\(j\) counting | Open: constrained horizon state count and unfit \(1/4\) |
+| BH-4 | Exponential peeling and \(1+1\) Planck flux | Open: BQG Bogoliubov map and 4D greybody factors |
+| BH-5 | RK4 energy-conserving toy evaporation | Open: BQG backreaction and physical luminosity |
+| BH-6 | Exact finite unitary random-circuit Page curve | Open: BQG radiation algebra/density matrix |
+| BH-7 | Numerical convergence of reduced controls | Open: common physical continuum/refinement limit |
+
+## Reproduction
+
+~~~bash
+python scripts/bqg_black_hole_reduced_gates.py
+~~~
+
+The script prints JSON with a top-level reduced-control pass and per-gate diagnostics. A pass is explicitly not a physical BQG completion.
