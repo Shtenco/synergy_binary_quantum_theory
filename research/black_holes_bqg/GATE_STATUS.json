@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "scope": "research-only black-hole extension; does not alter the canonical physicalization ledger",
+  "branch": "research/bqg-infoton-black-holes-20261120",
+  "physical_completion_claimed": false,
+  "gates": [
+    {
+      "id": "BH-0",
+      "name": "Physical projector, Lorentzian history and metric",
+      "reduced_control": "Exact finite master-constraint kernel theorem and finite C8 relational-projector/source-functional positive controls exist in canonical research documents; no unified BH-specific physical-limit control is claimed",
+      "reduced_control_status": "finite_prerequisites_documented_physical_limit_open",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No refinement-stable physical rigging map, positive physical inner product, normalized causal Lorentzian amplitudes, relational lapse/shift/extrinsic curvature, or connected physical TT kernel from one frozen BQG constraint family"
+    },
+    {
+      "id": "BH-1",
+      "name": "Dynamical trapping horizon",
+      "reduced_control": "Painleve-Gullstrand Schwarzschild marginal-surface finder with radial refinement",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No BQG-derived Lorentzian physical-history metric and null expansions"
+    },
+    {
+      "id": "BH-2",
+      "name": "Discrete horizon area",
+      "reduced_control": "Regge icosphere convergence and SU(2) Casimir spectrum",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No physical horizon-intersection/puncture map or independently derived area normalization a_star"
+    },
+    {
+      "id": "BH-3",
+      "name": "Bekenstein-Hawking entropy",
+      "reduced_control": "Exact fixed-spin count and variable-spin ordered-puncture generating-function root",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No constrained physical boundary Hilbert space; coefficient 1/4 would require an unallowed fit of a_star"
+    },
+    {
+      "id": "BH-4",
+      "name": "Hawking spectrum and flux",
+      "reduced_control": "Exponential peeling, Planck occupation and one chiral 1+1D unit-transmission flux",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No BQG Bogoliubov map or four-dimensional greybody factors"
+    },
+    {
+      "id": "BH-5",
+      "name": "Evaporation and backreaction",
+      "reduced_control": "RK4 mass-loss integration with independent radiated-energy accounting",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No BQG stress tensor/flux backreaction derived from the physical state"
+    },
+    {
+      "id": "BH-6",
+      "name": "Page curve",
+      "reduced_control": "Finite Haar-scrambling unitary qubit release and exact radiation density matrix",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No BQG radiation algebra, factorization prescription or density matrix from physical evaporation"
+    },
+    {
+      "id": "BH-7",
+      "name": "Regulator/refinement stability",
+      "reduced_control": "Radial horizon and Regge area convergence, flux quadrature, RK4 final-mass convergence against analytic solution, separate energy-balance check, and finite Page-size/seed checks",
+      "reduced_control_status": "passed_CI_reduced_control",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No common BQG physical-history continuum/refinement limit across independent regulator paths"
+    }
+  ],
+  "required_shared_prerequisites": [
+    "ANOMALY_CONTROLLED_CONSTRAINT_FAMILY",
+    "REFINEMENT_STABLE_PHYSICAL_PROJECTOR_OR_RIGGING_MAP",
+    "POSITIVE_PHYSICAL_INNER_PRODUCT_AND_NORMALIZED_BORN_PROBABILITIES",
+    "NORMALIZED_CAUSAL_LORENTZIAN_HISTORY_AMPLITUDES",
+    "RELATIONAL_LORENTZIAN_METRIC_AND_CAUSAL_STRUCTURE",
+    "CONNECTED_INTERBLOCK_HISTORY",
+    "PHYSICAL_TT_KERNEL"
+  ],
+  "reproduction": "python scripts/bqg_black_hole_reduced_gates.py",
+  "measure_clarification": "Do not require an oscillatory Lorentzian path-integral integrand to be a positive probability density. Require a positive physical inner product/Born probability prescription and consistently normalized Lorentzian amplitudes; these are distinct objects."
+}
