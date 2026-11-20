@@ -79,5 +79,19 @@
     "PHYSICAL_TT_KERNEL"
   ],
   "reproduction": "python scripts/bqg_black_hole_reduced_gates.py",
-  "measure_clarification": "Do not require an oscillatory Lorentzian path-integral integrand to be a positive probability density. Require a positive physical inner product/Born probability prescription and consistently normalized Lorentzian amplitudes; these are distinct objects."
+  "measure_clarification": "Do not require an oscillatory Lorentzian path-integral integrand to be a positive probability density. Require a positive physical inner product/Born probability prescription and consistently normalized Lorentzian amplitudes; these are distinct objects.",
+  "subgates": [
+    {
+      "id": "BH0_COMMON_GAUSS_KEY_DOMAIN",
+      "name": "Common Gauss-key seed-column compatibility",
+      "status": "implemented_waiting_for_CI",
+      "physical_status": "open_physical",
+      "evidence": [
+        "scripts/bqg_common_gauss_habitat_audit.py",
+        "research/black_holes_bqg/COMMON_GAUSS_HABITAT_AUDIT.md"
+      ],
+      "scope": "Same five W5 seed keys tested under existing Euclidean H_E, raw Lorentzian KKV map and direct adjoint at Jmax2=10; key-schema and scalar-reduction compatibility only",
+      "hard_limit": "Does not establish a common closed operator domain, joint constraint algebra, common kernel, physical projector or refinement limit"
+    }
+  ]
 }
