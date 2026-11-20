@@ -84,7 +84,7 @@
     {
       "id": "BH0_COMMON_GAUSS_KEY_DOMAIN",
       "name": "Common Gauss-key seed-column compatibility",
-      "status": "implemented_waiting_for_dependency_fixed_CI",
+      "status": "implemented_waiting_for_extended_timeout_CI",
       "physical_status": "open_physical",
       "evidence": [
         "scripts/bqg_common_gauss_habitat_audit.py",
@@ -99,6 +99,13 @@
           "failure": "CI environment installed NumPy but omitted SymPy, required by the existing Peter-Weyl operator engine",
           "remediation_commit": "f5ec5ae0afb9c616284cd40d849af780f6d1e44e",
           "remediation": "Install sympy>=1.12 alongside numpy; rerun required before finite audit can be marked passed"
+        },
+        {
+          "run_id": 44771655699,
+          "conclusion": "cancelled_by_10_minute_job_timeout_during_common_operator_map_evaluation",
+          "failure": "The audit reached the actual Euclidean/Lorentzian operator evaluation after compile and foundation controls passed, but exceeded the 10-minute job timeout; no operator verdict was produced.",
+          "remediation_commit": "6192ef6ea22fd9d8ea3fbfe5086c38d4ac629419",
+          "remediation": "Increase the workflow timeout to 30 minutes; rerun the unchanged five-seed audit so coverage and claim scope are preserved."
         }
       ]
     }
