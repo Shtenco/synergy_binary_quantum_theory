@@ -1,0 +1,37 @@
+name: BQG black-hole reduced gates
+
+on:
+  push:
+    branches:
+      - research/bqg-infoton-black-holes-20261120
+    paths:
+      - "scripts/bqg_black_hole_reduced_gates.py"
+      - "research/black_holes_bqg/**"
+      - ".github/workflows/bqg-black-hole-reduced-gates.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/bqg_black_hole_reduced_gates.py"
+      - "research/black_holes_bqg/**"
+      - ".github/workflows/bqg-black-hole-reduced-gates.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  reduced-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install minimal numerical dependency
+        run: python -m pip install "numpy>=1.24"
+      - name: Compile gate
+        run: python -m py_compile scripts/bqg_black_hole_reduced_gates.py
+      - name: Run BH-1 through BH-7 reduced controls
+        run: |
+          python scripts/bqg_black_hole_reduced_gates.py > /tmp/bqg_bh_gates.json
+          python -c "import json; d=json.load(open('/tmp/bqg_bh_gates.json')); print(json.dumps({k:v['passed'] for k,v in d['gates'].items()}, indent=2)); assert d['passed_reduced_controls']"
