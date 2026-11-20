@@ -49,3 +49,12 @@ A passing result is a finite mathematical/numerical control only. It is **not** 
 - Do not promote observer-smoothing exponents to vacuum spectra. The explicit reduced Gaussian TT vacuum result is \(P_{TT}(k)\sim k^{-1}\); the full interacting physical-history result remains open.
 
 A physical completion requires one common frozen BQG microscopic model to pass the constraint, continuum, horizon, entropy, Hawking-flux, energy-balance and radiation-unitarity gates without changing models between stages.
+
+
+## Black-hole calculation layer
+
+The staged mathematical derivations and their strict physical boundaries are recorded in [REDUCED_GATES.md](black_holes_bqg/REDUCED_GATES.md). The executable BH-1–BH-7 controls are in [bqg_black_hole_reduced_gates.py](../scripts/bqg_black_hole_reduced_gates.py), with a dedicated CI workflow.
+
+These controls cover a Painlevé–Gullstrand marginal-surface finder, Regge sphere-area refinement, SU(2) Casimir area dependence, exact fixed-spin state counting, a semiclassical \(1+1\) Planck-flux integral, energy-balanced toy evaporation, and a finite unitary Page curve.
+
+**They do not close the physical BQG gates.** In particular, the area scale \(a_*\) is undetermined, the entropy coefficient \(1/4\) is not derived, the Hawking calculation has no BQG Bogoliubov map or four-dimensional greybody factors, and the Page curve is a random-unitary control rather than BQG radiation.
