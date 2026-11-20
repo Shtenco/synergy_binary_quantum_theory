@@ -53,7 +53,7 @@ A physical completion requires one common frozen BQG microscopic model to pass t
 
 ## Black-hole calculation layer
 
-The staged mathematical derivations and their strict physical boundaries are recorded in [REDUCED_GATES.md](black_holes_bqg/REDUCED_GATES.md). The executable BH-1–BH-7 controls are in [bqg_black_hole_reduced_gates.py](../scripts/bqg_black_hole_reduced_gates.py), with a dedicated CI workflow.
+The staged mathematical derivations and their strict physical boundaries are recorded in [REDUCED_GATES.md](black_holes_bqg/REDUCED_GATES.md). The machine-readable physical status is in [GATE_STATUS.json](black_holes_bqg/GATE_STATUS.json). The executable BH-1–BH-7 controls are in [bqg_black_hole_reduced_gates.py](../scripts/bqg_black_hole_reduced_gates.py), with a dedicated CI workflow.
 
 These controls cover a Painlevé–Gullstrand marginal-surface finder, Regge sphere-area refinement, SU(2) Casimir area dependence, exact fixed-spin state counting, a semiclassical \(1+1\) Planck-flux integral, energy-balanced toy evaporation, and a finite unitary Page curve.
 
