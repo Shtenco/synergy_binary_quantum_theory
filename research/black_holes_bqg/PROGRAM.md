@@ -18,7 +18,7 @@ The dependency chain is
 \to \text{unitary radiation channel}.
 \]
 
-The current repository has an exact reduced free TT propagator and several finite information/entanglement results, but the full constrained Peter–Weyl/history/RG propagator, physical projector and Lorentzian history measure remain open. Consequently, the programme distinguishes (A) exact finite-network statements, (B) conditional effective-theory checks and (C) physical BQG derivations still required.
+The current repository has an exact finite master-constraint kernel theorem, a combined C8 clock/system projector positive control, a finite metric-source functional, a reduced free TT propagator and several finite information/entanglement results. But the refinement-stable physical rigging map, normalized Lorentzian history amplitudes, physical inner product and causal metric remain open. The detailed stop conditions are in [BH-0: physical projector, Lorentzian history and metric](BH0_PHYSICAL_METRIC_GATE.md). Consequently, the programme distinguishes (A) exact finite-network statements, (B) conditional effective-theory checks and (C) physical BQG derivations still required.
 
 ## 2. Geometry and the horizon are derived, not inserted
 
@@ -151,7 +151,7 @@ No mechanism is selected by this document. The BQG calculation must decide.
 
 | Gate | Required output | Pass condition |
 |---|---|---|
-| BH-0 | Physical Lorentzian background | constraint closure, positive physical measure, causal metric |
+| BH-0 | Physical projector, Lorentzian history and metric | anomaly-controlled constraints; nontrivial positive physical inner product; normalized causal amplitudes; derived Lorentzian metric and TT pole; refinement stability |
 | BH-1 | Trapping horizon | stable zero of outgoing expansion; convergent under refinement |
 | BH-2 | Area operator | gauge-invariant spectrum and continuum scaling |
 | BH-3 | Horizon entropy | \(S/A\to k_B/(4\ell_P^2)\) without fitted coefficient |
