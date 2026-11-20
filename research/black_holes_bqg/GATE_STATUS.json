@@ -5,6 +5,14 @@
   "physical_completion_claimed": false,
   "gates": [
     {
+      "id": "BH-0",
+      "name": "Physical projector, Lorentzian history and metric",
+      "reduced_control": "Exact finite master-constraint kernel theorem and finite C8 relational-projector/source-functional positive controls exist in canonical research documents; no unified BH-specific physical-limit control is claimed",
+      "reduced_control_status": "finite_prerequisites_documented_physical_limit_open",
+      "physical_bqg_status": "open_physical",
+      "blocker": "No refinement-stable physical rigging map, positive physical inner product, normalized causal Lorentzian amplitudes, relational lapse/shift/extrinsic curvature, or connected physical TT kernel from one frozen BQG constraint family"
+    },
+    {
       "id": "BH-1",
       "name": "Dynamical trapping horizon",
       "reduced_control": "Painleve-Gullstrand Schwarzschild marginal-surface finder with radial refinement",
@@ -62,10 +70,14 @@
     }
   ],
   "required_shared_prerequisites": [
-    "PHYSICAL_PROJECTOR_HISTORY",
+    "ANOMALY_CONTROLLED_CONSTRAINT_FAMILY",
+    "REFINEMENT_STABLE_PHYSICAL_PROJECTOR_OR_RIGGING_MAP",
+    "POSITIVE_PHYSICAL_INNER_PRODUCT_AND_NORMALIZED_BORN_PROBABILITIES",
+    "NORMALIZED_CAUSAL_LORENTZIAN_HISTORY_AMPLITUDES",
+    "RELATIONAL_LORENTZIAN_METRIC_AND_CAUSAL_STRUCTURE",
     "CONNECTED_INTERBLOCK_HISTORY",
-    "PHYSICAL_TT_KERNEL",
-    "positive normalized Lorentzian physical-history measure"
+    "PHYSICAL_TT_KERNEL"
   ],
-  "reproduction": "python scripts/bqg_black_hole_reduced_gates.py"
+  "reproduction": "python scripts/bqg_black_hole_reduced_gates.py",
+  "measure_clarification": "Do not require an oscillatory Lorentzian path-integral integrand to be a positive probability density. Require a positive physical inner product/Born probability prescription and consistently normalized Lorentzian amplitudes; these are distinct objects."
 }
