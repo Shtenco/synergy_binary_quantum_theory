@@ -84,14 +84,23 @@
     {
       "id": "BH0_COMMON_GAUSS_KEY_DOMAIN",
       "name": "Common Gauss-key seed-column compatibility",
-      "status": "implemented_waiting_for_CI",
+      "status": "implemented_waiting_for_dependency_fixed_CI",
       "physical_status": "open_physical",
       "evidence": [
         "scripts/bqg_common_gauss_habitat_audit.py",
         "research/black_holes_bqg/COMMON_GAUSS_HABITAT_AUDIT.md"
       ],
       "scope": "Same five W5 seed keys tested under existing Euclidean H_E, raw Lorentzian KKV map and direct adjoint at Jmax2=10; key-schema and scalar-reduction compatibility only",
-      "hard_limit": "Does not establish a common closed operator domain, joint constraint algebra, common kernel, physical projector or refinement limit"
+      "hard_limit": "Does not establish a common closed operator domain, joint constraint algebra, common kernel, physical projector or refinement limit",
+      "ci_history": [
+        {
+          "run_id": 44769473741,
+          "conclusion": "failure_before_operator_execution",
+          "failure": "CI environment installed NumPy but omitted SymPy, required by the existing Peter-Weyl operator engine",
+          "remediation_commit": "f5ec5ae0afb9c616284cd40d849af780f6d1e44e",
+          "remediation": "Install sympy>=1.12 alongside numpy; rerun required before finite audit can be marked passed"
+        }
+      ]
     }
   ]
 }
