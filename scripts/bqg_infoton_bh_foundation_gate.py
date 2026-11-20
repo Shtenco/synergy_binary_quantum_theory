@@ -159,7 +159,7 @@ def unitary_page_toy(n_bh: int = 5, seed: int = 20261120) -> dict:
         for a in range(active):
             for b in range(a + 1, active):
                 state = apply_two_qubit(state, haar_unitary4(rng), a, b, 2 * n_bh)
-        state = apply_two_qubit(state, np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]], complex), 0, n_bh + emitted, 2 * n_bh)
+        state = apply_two_qubit(state, np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]], complex), active - 1, n_bh + emitted, 2 * n_bh)
         entropies.append(entropy_of_radiation(state, n_bh, emitted + 1))
     norm_error = abs(float(np.vdot(state, state).real) - 1.0)
     passed = norm_error < 1e-10 and entropies[0] < 1e-10 and entropies[-1] < 1e-9 and max(entropies) > 0.5
