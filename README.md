@@ -1396,7 +1396,7 @@ Provenance check for the older HDA controls: GitHub job lookup currently reports
 
 ### Чёрные дыры: семь вычислительных ворот
 
-Физический нулевой этап описан в [BH-0: проектор, лоренцева история и метрика](research/black_holes_bqg/BH0_PHYSICAL_METRIC_GATE.md): конечная теорема master constraint не заменяет физический предел риггинг-карты, положительное физическое скалярное произведение, нормированные причинные амплитуды и выведенную лоренцеву метрику. Документ [REDUCED_GATES.md](research/black_holes_bqg/REDUCED_GATES.md) фиксирует определения и воспроизводимые редуцированные проверки BH-1–BH-7. Исполняемый контроль: `python scripts/bqg_black_hole_reduced_gates.py`. Машинный статус: [GATE_STATUS.json](research/black_holes_bqg/GATE_STATUS.json).
+Физический нулевой этап описан в [BH-0: проектор, лоренцева история и метрика](research/black_holes_bqg/BH0_PHYSICAL_METRIC_GATE.md). Для проверки совместимости реальных евклиновых и лоренцевых отображений добавлен [Common Gauss-key habitat audit](research/black_holes_bqg/COMMON_GAUSS_HABITAT_AUDIT.md) и скрипт `scripts/bqg_common_gauss_habitat_audit.py`; это только тест общего кинематического интерфейса, не физический проектор. BH-0 требует: конечная теорема master constraint не заменяет физический предел риггинг-карты, положительное физическое скалярное произведение, нормированные причинные амплитуды и выведенную лоренцеву метрику. Документ [REDUCED_GATES.md](research/black_holes_bqg/REDUCED_GATES.md) фиксирует определения и воспроизводимые редуцированные проверки BH-1–BH-7. Исполняемый контроль: `python scripts/bqg_black_hole_reduced_gates.py`. Машинный статус: [GATE_STATUS.json](research/black_holes_bqg/GATE_STATUS.json).
 
 Важно различать контрольные модели и физический результат:
 
