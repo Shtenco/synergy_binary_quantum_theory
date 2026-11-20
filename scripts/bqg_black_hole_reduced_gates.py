@@ -321,18 +321,27 @@ def refinement_stability_gate(parts: dict) -> dict:
     horizon_errors = [x["relative_radius_error"] for x in parts["BH1"]["refinement"]]
     area_errors = [x["relative_error"] for x in parts["BH2"]["triangulation_refinement"]]
     flux_errors = [x["relative_integral_error"] for x in parts["BH4"]["quadrature"]]
-    evaporation_errors = [x["energy_balance_error"] for x in parts["BH5"]["convergence"]]
+    # The RK4 energy-balance residual uses the same stages for dM/dt and P;
+    # it is a conservation consistency check dominated by roundoff, not a
+    # truncation-error estimator.  Measure convergence against the independent
+    # analytic solution at the fixed target time instead.
+    evaporation_mass_errors = [x["final_mass_error"] for x in parts["BH5"]["convergence"]]
+    energy_balance_errors = [x["energy_balance_error"] for x in parts["BH5"]["convergence"]]
     passed = (horizon_errors[-1] < horizon_errors[0] / 100.0 and
               area_errors[-1] < area_errors[0] / 100.0 and
               flux_errors[-1] < flux_errors[0] / 100.0 and
-              evaporation_errors[-1] < evaporation_errors[0] / 100.0)
+              evaporation_mass_errors[-1] < evaporation_mass_errors[0] / 100.0 and
+              evaporation_mass_errors[-1] < 1e-8 and
+              energy_balance_errors[-1] < 1e-8)
     return {
         "passed": passed,
         "horizon_error_reduction": horizon_errors[0] / horizon_errors[-1],
         "area_error_reduction": area_errors[0] / area_errors[-1],
         "flux_quadrature_error_reduction": flux_errors[0] / flux_errors[-1],
-        "evaporation_energy_error_reduction": evaporation_errors[0] / evaporation_errors[-1],
-        "scope": "numerical regulator/refinement stability of the reduced controls only; no physical BQG regulator independence",
+        "evaporation_mass_solution_error_reduction": evaporation_mass_errors[0] / evaporation_mass_errors[-1],
+        "final_evaporation_mass_error": evaporation_mass_errors[-1],
+        "final_energy_balance_error": energy_balance_errors[-1],
+        "scope": "numerical convergence of reduced controls only; energy balance is checked separately from RK4 solution error; no physical BQG regulator independence",
     }
 
 
