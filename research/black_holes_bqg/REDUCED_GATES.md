@@ -112,6 +112,23 @@ If \(A_N=a_*\bar A_N\), then \(S_N/A_N=0.8003774225686291\ldots/a_*\). Matching 
 
 This is a required normalization, not a prediction. Choosing it to force \(1/4\) is circular calibration.
 
+A further finite control imposes a global SU(2) singlet on \(N\) spin-\(1/2\) punctures. For even \(N\), the exact invariant-subspace multiplicity is the Catalan number
+
+\[
+\dim\operatorname{Inv}\left[(\tfrac12)^{\otimes N}\right]
+=C_{N/2}
+=\frac{1}{N/2+1}\binom{N}{N/2}.
+\]
+
+Thus
+
+\[
+S_{\rm singlet}(N)=\ln C_{N/2}
+=N\ln2-\frac32\ln N+O(1).
+\]
+
+The leading entropy-per-Casimir-area slope is the same fixed-spin value, while the singlet projection produces a definite logarithmic correction. This is a stronger gauge-invariant counting control than the unconstrained \(2^N\) count, but it still assumes a set of punctures and does not implement the BQG master projector, horizon boundary algebra or physical-history measure.
+
 A second, explicitly different combinatorial control allows all half-integer spins and treats punctures as ordered/distinguishable. Its exponential growth parameter \(\lambda\) is determined by
 
 \[
