@@ -1,5 +1,7 @@
 # BH-1–BH-7: reduced derivations, numerical controls and physical gaps
 
+**Precondition:** BH-0 is specified in [BH0_PHYSICAL_METRIC_GATE.md](BH0_PHYSICAL_METRIC_GATE.md). The calculations below are conditional/reduced controls and cannot be promoted to physical BQG results while BH-0 is open.
+
 **Status:** reduced controls specified; none of BH-1–BH-7 is yet a physical BQG result.  
 **Units:** the Hawking/evaporation toy uses \(G=\hbar=c=k_B=1\).
 
@@ -244,17 +246,18 @@ The script tests:
 - second-order radial convergence of the benchmark horizon;
 - Regge sphere-area convergence under icosphere refinement;
 - Planck-flux quadrature convergence;
-- RK4 energy-balance convergence;
+- RK4 final-mass convergence against the independent analytic solution, with energy-balance residual checked separately;
 - Page-curve consistency across finite Hilbert-space sizes and random seeds.
 
 These are numerical stability tests of reduced controls. They do not establish BQG independence from Peter–Weyl cutoff, graph refinement, master-constraint spectral window, clock prescription or boundary regulator.
 
-The physical protocol must freeze one microscopic model, use at least two independent refinement families and multiple regulator paths, and compute every BH-0–BH-6 observable from the same normalized physical-history measure.
+The physical protocol must freeze one microscopic model, use at least two independent refinement families and multiple regulator paths, and compute every BH-0–BH-6 observable from the same consistently normalized physical-history amplitudes and positive physical inner product. An oscillatory Lorentzian integrand is not itself required to be a positive probability density.
 
 ## Status ledger
 
 | Gate | Reduced control | Physical BQG status |
 |---|---|---|
+| BH-0 | Finite master-constraint and relational-projector prerequisites documented separately | Open: physical rigging-map limit, physical inner product, Lorentzian history and metric |
 | BH-1 | PG marginal-surface finder | Open: physical Lorentzian metric/history |
 | BH-2 | Regge sphere and SU(2) Casimir | Open: physical horizon area operator and \(a_*\) |
 | BH-3 | Exact fixed-\(j\) counting | Open: constrained horizon state count and unfit \(1/4\) |
