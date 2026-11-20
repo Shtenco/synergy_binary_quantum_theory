@@ -145,7 +145,7 @@ def hawking_spectrum_gate() -> dict:
     for n in (100, 200, 400, 800, 1600):
         x = np.linspace(1e-6, 40.0, n + 1)
         integrand = x / np.expm1(x)
-        integral = float(np.trapezoid(integrand, x))
+        integral = float(np.sum((integrand[1:] + integrand[:-1]) * np.diff(x) / 2.0))
         flux = temperature**2 * integral / (2.0 * math.pi)
         rows.append({"quadrature_points": n + 1, "dimensionless_integral": integral,
                      "relative_integral_error": abs(integral - exact_integral) / exact_integral,
