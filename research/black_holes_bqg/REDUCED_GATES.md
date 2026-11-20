@@ -222,7 +222,7 @@ M(t)^3=M_0^3-3\alpha t,\qquad
 t_{\rm evap}=\frac{M_0^3}{3\alpha}.
 \]
 
-The script solves the ODE by RK4 and independently integrates radiated energy, checking
+The script solves the ODE by RK4 and accumulates radiated energy in a separate bookkeeping variable using the same RK4 stage fluxes, checking
 
 \[
 M_0-M(t)=\int_0^tP(t')dt'.
