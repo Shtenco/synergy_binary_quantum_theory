@@ -28,12 +28,17 @@ def trapping_horizon_gate() -> dict:
         rh = r[i] - theta_out[i] * (r[i + 1] - r[i]) / (theta_out[i + 1] - theta_out[i])
         flow_h = math.sqrt(2.0 * mass / rh)
         theta_in = -2.0 * (1.0 + flow_h) / rh
+        dtheta_out_dr = 2.0 * (flow_h / (2.0 * rh**2) - (1.0 - flow_h) / rh**2)
+        k_radial = -(1.0 + flow_h)
+        outer_derivative = k_radial * dtheta_out_dr
         rows.append({"radial_cells": cells, "r_h": float(rh),
                      "relative_radius_error": abs(float(rh) - 2 * mass) / (2 * mass),
-                     "theta_in_at_root": theta_in})
+                     "theta_in_at_root": theta_in,
+                     "Lie_k_theta_out": outer_derivative})
     errors = [x["relative_radius_error"] for x in rows]
     order = math.log(errors[-2] / errors[-1], 2)
-    passed = all(x["theta_in_at_root"] < 0 for x in rows) and errors[-1] < 2e-6 and 1.9 < order < 2.1
+    passed = (all(x["theta_in_at_root"] < 0 and x["Lie_k_theta_out"] < 0 for x in rows)
+              and errors[-1] < 2e-6 and 1.9 < order < 2.1)
     return {
         "passed": passed, "benchmark": "Schwarzschild in Painleve-Gullstrand coordinates",
         "null_expansions": "theta_out=2(1-sqrt(2M/r))/r; theta_in=-2(1+sqrt(2M/r))/r",
