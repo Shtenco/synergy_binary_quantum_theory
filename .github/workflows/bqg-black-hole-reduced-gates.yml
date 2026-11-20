@@ -3,6 +3,7 @@ name: BQG black-hole reduced gates
 on:
   push:
     branches:
+      - main
       - research/bqg-infoton-black-holes-20261120
     paths:
       - "scripts/bqg_black_hole_reduced_gates.py"
@@ -14,6 +15,8 @@ on:
     branches: [main]
     paths:
       - "scripts/bqg_black_hole_reduced_gates.py"
+      - "scripts/bqg_infoton_bh_foundation_gate.py"
+      - "scripts/bqg_common_gauss_habitat_audit.py"
       - "research/black_holes_bqg/**"
       - ".github/workflows/bqg-black-hole-reduced-gates.yml"
 
