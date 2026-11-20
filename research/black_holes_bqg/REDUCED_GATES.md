@@ -63,7 +63,23 @@ The SU(2) flux-Casimir candidate is
 \widehat A_H=a_*\sum_{p\cap H}\sqrt{j_p(j_p+1)}.
 \]
 
-The Casimir dependence is fixed by SU(2). The BQG theory has not yet derived the horizon-intersection-to-puncture map, the physical self-adjoint area operator, or the coefficient \(a_*\) from its common microscopic action scale.
+The Casimir dependence follows from the flux construction. For a face \(f\), let the dimensionless SU(2) flux generators be \(\widehat J_f^i\), with
+
+\[
+[\widehat J_f^i,\widehat J_f^j]
+=i\epsilon^{ij}{}_k\widehat J_f^k,\qquad
+\widehat J_f^2=\sum_i\widehat J_f^i\widehat J_f^i.
+\]
+
+If the physical area is the norm of the face flux, its candidate spectral form is
+
+\[
+\widehat a_f=a_*\sqrt{\widehat J_f^2},
+\qquad
+\widehat a_f|j,m\rangle=a_*\sqrt{j(j+1)}|j,m\rangle.
+\]
+
+The BQG theory has not yet derived the horizon-intersection-to-flux map, proved that this kinematical operator descends to the physical horizon Hilbert space, or fixed \(a_*\) from its common microscopic action scale.
 
 The script separately checks icosphere Regge-area convergence to \(4\pi R^2\) and the \(j=1/2\) Casimir eigenvalue \(\sqrt{3/4}\). It does not identify their normalizations.
 
