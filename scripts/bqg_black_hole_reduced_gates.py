@@ -107,6 +107,22 @@ def area_operator_gate() -> dict:
     }
 
 
+def spin_spectrum_entropy_root(jmax: int) -> float:
+    """Solve sum_j (2j+1) exp[-lambda sqrt(j(j+1))] = 1 by bisection."""
+    spins = np.arange(1, 2 * jmax + 1, dtype=float) / 2.0
+    casimirs = np.sqrt(spins * (spins + 1.0))
+    degeneracies = 2.0 * spins + 1.0
+    lo, hi = 0.0, 10.0
+    for _ in range(120):
+        mid = (lo + hi) / 2.0
+        value = float(np.sum(degeneracies * np.exp(-mid * casimirs)))
+        if value > 1.0:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
 def entropy_coefficient_gate() -> dict:
     """Exact fixed-j counting exposes the unresolved area normalization."""
     j = 0.5
@@ -121,16 +137,31 @@ def entropy_coefficient_gate() -> dict:
         Abar = punctures * casimir
         rows.append({"punctures": punctures, "log_state_count": S,
                      "dimensionless_area": Abar, "S_over_Abar": S / Abar})
-    passed = max(abs(x["S_over_Abar"] - dimensionless_slope) for x in rows) < 1e-13
+    spin_cutoffs = (1, 2, 3, 5, 10, 20, 50)
+    roots = [{"j_max": cutoff, "entropy_slope_per_dimensionless_area": spin_spectrum_entropy_root(cutoff)}
+             for cutoff in spin_cutoffs]
+    variable_spin_slope = roots[-1]["entropy_slope_per_dimensionless_area"]
+    roots[-1]["a_star_over_lP2_required_for_1_over_4"] = 4.0 * variable_spin_slope
+    root_converged = abs(roots[-1]["entropy_slope_per_dimensionless_area"] -
+                         roots[-2]["entropy_slope_per_dimensionless_area"]) < 1e-8
+    passed = (max(abs(x["S_over_Abar"] - dimensionless_slope) for x in rows) < 1e-13
+              and root_converged)
     return {
         "passed": passed, "fixed_spin": j, "degeneracy_per_puncture": degeneracy,
         "entropy_per_puncture_nats": entropy_per_puncture,
         "dimensionless_S_over_A_slope": dimensionless_slope,
         "a_star_over_lP2_required_to_match_BH_1_over_4": required_a_over_lP2,
-        "refinement_in_puncture_number": rows,
+        "fixed_j_refinement_in_puncture_number": rows,
+        "variable_spin_ordered_puncture_model": {
+            "generating_function_equation": "sum_j (2j+1) exp(-lambda sqrt(j(j+1))) = 1",
+            "cutoff_convergence": roots,
+            "limiting_dimensionless_entropy_slope": variable_spin_slope,
+            "required_a_star_over_lP2_for_1_over_4": 4.0 * variable_spin_slope,
+            "assumptions": "ordered/distinguishable puncture sequences; no global SU(2) singlet projection or physical BQG boundary constraint",
+        },
         "physical_Bekenstein_Hawking_coefficient_derived": False,
-        "reason": "The counting gives S/Abar exactly, but converting Abar to physical area requires a_*; choosing a_* to hit 1/4 would be calibration, not derivation.",
-        "scope": "exact fixed-j microstate count and explicit no-fit obstruction",
+        "reason": "Both fixed-spin and variable-spin counts determine dimensionless slopes only. Converting to physical area requires a_* and the physical gauge-invariant boundary state count; tuning a_* to hit 1/4 is calibration.",
+        "scope": "exact finite counting controls and a converged combinatorial saddle model; not the BQG horizon entropy",
     }
 
 
