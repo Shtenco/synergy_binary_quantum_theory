@@ -139,6 +139,8 @@ Any failure blocks BH-1 through BH-7 as physical BQG claims. Reduced Schwarzschi
 
 The following main-branch documents provide exact finite pieces and explicit open boundaries:
 
+- `GRAPH_CHANGING_HDA_TARGET.md` and `THREE_NODE_GRAPH_HDA_RESULT.md`: finite graph-changing HDA controls and the corrected habitat-level anomaly criterion. These do not yet provide a common continuum physical projector.
+- `BQG_W5_LORENTZIAN_ADJOINT_CLOSURE.md`: finite W5-seeded Lorentzian adjoint-closure runner; a PASS at a declared cutoff does not identify the physical Hermitian constraint or its joint kernel.
 - `MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.md`: positive master constraint, exact finite kernel theorem and isolated-zero projector; continuum rigging limit remains open.
 - `Q2_RELATIONAL_HISTORY_PROJECTOR.md`: exact combined C8 clock/system projector; its system step (R=J) is a positive control, not physical evolution.
 - `Q2_RELATIONAL_METRIC_SOURCE_GENERATING_FUNCTIONAL.md`: exact finite source functional and metric tangent response; not a spacetime propagator.
