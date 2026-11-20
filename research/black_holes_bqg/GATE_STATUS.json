@@ -63,10 +63,10 @@
     {
       "id": "BH-7",
       "name": "Regulator/refinement stability",
-      "reduced_control": "Convergence of BH-1, BH-2, BH-4 and BH-5 reduced controls plus finite Page-size/seed checks",
+      "reduced_control": "Radial horizon and Regge area convergence, flux quadrature, RK4 final-mass convergence against analytic solution, separate energy-balance check, and finite Page-size/seed checks",
       "reduced_control_status": "implemented_waiting_for_CI",
       "physical_bqg_status": "open_physical",
-      "blocker": "No common BQG physical-history continuum/refinement limit"
+      "blocker": "No common BQG physical-history continuum/refinement limit across independent regulator paths"
     }
   ],
   "required_shared_prerequisites": [
