@@ -37,7 +37,7 @@ With \(n=\partial_t-v\partial_r\), \(s=\partial_r\),
 \theta_{(k)}=-\frac{2}{r}(1+v).
 \]
 
-The marginal surface is \(r_H=2M\); the ingoing expansion is negative there. The script locates the zero on successively refined radial meshes and checks second-order convergence.
+The marginal surface is \(r_H=2M\); the ingoing expansion is negative there. The script also checks the future-outer condition \(\mathcal L_k\theta_{(\ell)}<0\), locates the zero on successively refined radial meshes, and checks second-order convergence.
 
 **Scope:** a marginal-surface finder tested on an inserted GR metric, not a BQG emergent horizon.
 
