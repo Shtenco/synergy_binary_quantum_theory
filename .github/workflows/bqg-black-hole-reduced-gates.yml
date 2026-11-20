@@ -6,6 +6,7 @@ on:
       - research/bqg-infoton-black-holes-20261120
     paths:
       - "scripts/bqg_black_hole_reduced_gates.py"
+      - "scripts/bqg_infoton_bh_foundation_gate.py"
       - "research/black_holes_bqg/**"
       - ".github/workflows/bqg-black-hole-reduced-gates.yml"
   pull_request:
