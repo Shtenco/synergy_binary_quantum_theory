@@ -96,6 +96,14 @@ If \(A_N=a_*\bar A_N\), then \(S_N/A_N=0.8003774225686291\ldots/a_*\). Matching 
 
 This is a required normalization, not a prediction. Choosing it to force \(1/4\) is circular calibration.
 
+A second, explicitly different combinatorial control allows all half-integer spins and treats punctures as ordered/distinguishable. Its exponential growth parameter \(\lambda\) is determined by
+
+\[
+\sum_{j=1/2}^{j_{\max}}(2j+1)e^{-\lambda\sqrt{j(j+1)}}=1.
+\]
+
+The numerical cutoff sequence converges to approximately \(\lambda=1.7220128568\) in dimensionless Casimir-area units. Matching \(1/4\) in this *unprojected ordered-puncture model* would require \(a_*/\ell_P^2=4\lambda\approx6.8880514273\). Its disagreement with the fixed-\(j\) required scale is useful: the coefficient depends on the state-counting assumptions. Neither result is a BQG prediction because neither includes the physical SU(2)-invariant horizon Hilbert space and its boundary constraints.
+
 A physical derivation must count the constrained horizon state space after SU(2) gauge invariance, closure, boundary/edge modes, the BQG physical projector and the correct puncture quotient. It must compute
 
 \[
