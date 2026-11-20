@@ -16,7 +16,7 @@
       "id": "BH-1",
       "name": "Dynamical trapping horizon",
       "reduced_control": "Painleve-Gullstrand Schwarzschild marginal-surface finder with radial refinement",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No BQG-derived Lorentzian physical-history metric and null expansions"
     },
@@ -24,7 +24,7 @@
       "id": "BH-2",
       "name": "Discrete horizon area",
       "reduced_control": "Regge icosphere convergence and SU(2) Casimir spectrum",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No physical horizon-intersection/puncture map or independently derived area normalization a_star"
     },
@@ -32,7 +32,7 @@
       "id": "BH-3",
       "name": "Bekenstein-Hawking entropy",
       "reduced_control": "Exact fixed-spin count and variable-spin ordered-puncture generating-function root",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No constrained physical boundary Hilbert space; coefficient 1/4 would require an unallowed fit of a_star"
     },
@@ -40,7 +40,7 @@
       "id": "BH-4",
       "name": "Hawking spectrum and flux",
       "reduced_control": "Exponential peeling, Planck occupation and one chiral 1+1D unit-transmission flux",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No BQG Bogoliubov map or four-dimensional greybody factors"
     },
@@ -48,7 +48,7 @@
       "id": "BH-5",
       "name": "Evaporation and backreaction",
       "reduced_control": "RK4 mass-loss integration with independent radiated-energy accounting",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No BQG stress tensor/flux backreaction derived from the physical state"
     },
@@ -56,7 +56,7 @@
       "id": "BH-6",
       "name": "Page curve",
       "reduced_control": "Finite Haar-scrambling unitary qubit release and exact radiation density matrix",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No BQG radiation algebra, factorization prescription or density matrix from physical evaporation"
     },
@@ -64,7 +64,7 @@
       "id": "BH-7",
       "name": "Regulator/refinement stability",
       "reduced_control": "Radial horizon and Regge area convergence, flux quadrature, RK4 final-mass convergence against analytic solution, separate energy-balance check, and finite Page-size/seed checks",
-      "reduced_control_status": "implemented_waiting_for_CI",
+      "reduced_control_status": "passed_CI_reduced_control",
       "physical_bqg_status": "open_physical",
       "blocker": "No common BQG physical-history continuum/refinement limit across independent regulator paths"
     }
