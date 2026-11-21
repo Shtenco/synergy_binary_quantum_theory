@@ -8,6 +8,7 @@ on:
       - '.github/workflows/bqg-depth6-32-rematerialize.yml'
       - 'scripts/run_depth6_32_ledger_batch.py'
       - 'scripts/depth6_32_global_peeling.py'
+      - 'tests/test_depth6_32_global_peeling.py'
   workflow_dispatch:
 
 permissions:
@@ -263,6 +264,8 @@ jobs:
             'q_key_count':gate['q_key_count'],'raw_blocks':len(raw_seen),
             'raw_columns':raw_columns,'rank_certified':False},sort_keys=True))
           PY
+      - name: Test global q-peeling rank witness
+        run: python -m unittest discover -s tests -p 'test_depth6_32_global_peeling.py'
       - name: Run fail-closed global q-peeling and residual rank gate
         env:
           OPENBLAS_NUM_THREADS: '1'
