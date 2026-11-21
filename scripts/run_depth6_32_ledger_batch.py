@@ -43,9 +43,10 @@ def run_batch(records, *, shard: int, nshards: int, out_dir: Path,
         oid=int(rec['orbit_id'])
         m=int(rec['m'])
         keymeta_path=block_dir/f'orbit-{oid:04d}.keymeta.pkl.gz'
+        raw_path=block_dir/f'orbit-{oid:04d}.raw.pkl.gz'
         meta=keymeta_backend.compute_and_persist_block(
             rec,selector_backend,master_backend,basis_backend,
-            keymeta_path=keymeta_path,raw_path=None,tol=tol,
+            keymeta_path=keymeta_path,raw_path=raw_path,tol=tol,
         )
         if int(meta['orbit_id'])!=oid or int(meta['m'])!=m:
             raise RuntimeError(f'orbit {oid}: persisted KEYMETA identity mismatch')
@@ -56,6 +57,8 @@ def run_batch(records, *, shard: int, nshards: int, out_dir: Path,
             'keymeta_sha256':_sha256_file(keymeta_path),
             'q_key_count':int(meta['q_key_count']),
             'rows':int(meta['rows']),
+            'raw_file':raw_path.name,
+            'raw_sha256':_sha256_file(raw_path),
         })
         columns+=m
 
@@ -68,7 +71,7 @@ def run_batch(records, *, shard: int, nshards: int, out_dir: Path,
         'completed_blocks':len(manifest),
         'completed_columns':columns,
         'records':manifest,
-        'raw_matrices_persisted':False,
+        'raw_matrices_persisted':True,
         'rank_certified':False,
         'numerical_closure_claimed':False,
         'claim_boundary':(
