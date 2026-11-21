@@ -84,7 +84,7 @@
     {
       "id": "BH0_COMMON_GAUSS_KEY_DOMAIN",
       "name": "Common Gauss-key seed-column compatibility",
-      "status": "implemented_waiting_for_extended_timeout_CI",
+      "status": "implemented_waiting_for_parallel_seed_CI",
       "physical_status": "open_physical",
       "evidence": [
         "scripts/bqg_common_gauss_habitat_audit.py",
@@ -106,6 +106,13 @@
           "failure": "The audit reached the actual Euclidean/Lorentzian operator evaluation after compile and foundation controls passed, but exceeded the 10-minute job timeout; no operator verdict was produced.",
           "remediation_commit": "6192ef6ea22fd9d8ea3fbfe5086c38d4ac629419",
           "remediation": "Increase the workflow timeout to 30 minutes; rerun the unchanged five-seed audit so coverage and claim scope are preserved."
+        },
+        {
+          "run_id": 44790814249,
+          "conclusion": "cancelled_after_30_minute_job_timeout_during_combined_five_seed_operator_evaluation",
+          "failure": "The unchanged five-seed audit still did not finish within 30 minutes. Compilation and independent infoton/Page-curve controls passed; no common-domain operator verdict was produced.",
+          "remediation_commit": "a9074036a3591cc308b4aced5e1b8004002e1f11",
+          "remediation": "Split the unchanged five-seed family into five independent CI matrix jobs, one K seed per worker, preserving Jmax2=10, source node 0, actual Euclidean/Lorentzian maps, and direct adjoint. Each seed has a 20-minute budget; fail-fast is disabled."
         }
       ]
     }
