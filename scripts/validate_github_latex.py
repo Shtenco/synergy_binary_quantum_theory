@@ -80,7 +80,7 @@ def validate_markdown(path: Path) -> tuple[int, list[Problem]]:
         # Normalize the standard LaTeX delimiters supported by GitHub.
         # Without this, valid \\( ... \\) and \\[ ... \\] math is
         # incorrectly scanned as plain Markdown prose.
-        line = line.replace(r"\[", lambda _: "$").replace(r"\]", lambda _: "$")
+        line = line.replace(r"\[", lambda _: "$" + "$").replace(r"\]", lambda _: "$")
         line = line.replace(r"\(", "$").replace(r"\)", "$")
         if re.match(r"^\s*(```|~~~)", line):
             in_fence = not in_fence
