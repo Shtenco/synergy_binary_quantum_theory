@@ -6,6 +6,7 @@ on:
       - bqg/depth6-numerical-completion
     paths:
       - '.github/workflows/bqg-depth6-32-rematerialize.yml'
+      - 'scripts/run_depth6_32_ledger_batch.py'
   workflow_dispatch:
 
 permissions:
@@ -197,6 +198,7 @@ jobs:
                   raise RuntimeError(f'shard {s}: invalid status')
           if shard_ids!=set(range(112)):
               raise RuntimeError(f'shard coverage incomplete: {len(shard_ids)}/112')
+          import hashlib
           files=list(root.rglob('orbit-*.keymeta.pkl.gz'))
           blocks=[]
           for p in files:
@@ -204,19 +206,57 @@ jobs:
           gate=K.validate_keymeta_union(blocks,target_blocks=2755,target_columns=130903)
           if not gate['exact_keymeta_coverage'] or not gate['global_peeling_allowed']:
               raise RuntimeError('exact KEYMETA union gate failed')
+          raw_files=list(root.rglob('orbit-*.raw.pkl.gz'))
+          if len(raw_files)!=2755:
+              raise RuntimeError(f'expected 2755 raw matrices, got {len(raw_files)}')
+          raw_seen=set()
+          raw_columns=0
+          for p in raw_files:
+              with gzip.open(p,'rb') as f: raw=pickle.load(f)
+              oid=int(raw['orbit_id'])
+              if oid in raw_seen: raise RuntimeError(f'duplicate raw orbit {oid}')
+              raw_seen.add(oid)
+              if raw.get('kind')!='BQG_DEPTH6_32_FROZEN_MASTER_BLOCK_RAW':
+                  raise RuntimeError(f'orbit {oid}: invalid raw payload kind')
+              m=int(raw['m']); raw_columns+=m
+              W=raw['basis']
+              if getattr(W,'ndim',None)!=2 or W.shape[1]!=m:
+                  raise RuntimeError(f'orbit {oid}: raw basis shape mismatch')
+              mm=raw['master_map']
+              km=next((b for b in blocks if int(b['orbit_id'])==oid),None)
+              if km is None: raise RuntimeError(f'orbit {oid}: KEYMETA missing')
+              if set(mm.keys())!=set(km['q_rows'].keys()):
+                  raise RuntimeError(f'orbit {oid}: raw/KEYMETA q-key mismatch')
+              for q,M in mm.items():
+                  if int(M.shape[0])!=int(km['q_rows'][q]) or int(M.shape[1])!=m:
+                      raise RuntimeError(f'orbit {oid}: raw matrix shape mismatch for q={q!r}')
+          if raw_seen!=set(int(b['orbit_id']) for b in blocks):
+              raise RuntimeError('raw and KEYMETA orbit sets differ')
+          if raw_columns!=130903:
+              raise RuntimeError(f'raw column total mismatch: {raw_columns}')
           gate['shards']=112
           gate['shard_coverage']='112/112'
+          gate['raw_blocks']=len(raw_seen)
+          gate['raw_columns']=raw_columns
+          gate['raw_matrices_persisted']=True
           gate['rank_certified']=False
           gate['numerical_closure_claimed']=False
           A.write_json_gate(Path('BQG_DEPTH6_32_KEYMETA_UNION_GATE.json'),gate)
-          print(json.dumps({'status':'PASS_EXACT_KEYMETA_COVERAGE',
+          raw_gate={'kind':'BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE',
+            'status':'PASS_RAW_MATRIX_COVERAGE_ONLY','blocks':len(raw_seen),
+            'columns':raw_columns,'rank_certified':False,'numerical_closure_claimed':False,
+            'claim_boundary':'All frozen master blocks and actual q matrices persisted and shape-checked; no global rank or kernel certificate.'}
+          Path('BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE.json').write_text(json.dumps(raw_gate,indent=2,sort_keys=True)+'\\n')
+          print(json.dumps({'status':'PASS_EXACT_KEYMETA_AND_RAW_COVERAGE',
             'shards':112,'blocks':gate['blocks'],'columns':gate['columns'],
-            'q_key_count':gate['q_key_count'],'global_peeling_allowed':True,
-            'rank_certified':False},sort_keys=True))
+            'q_key_count':gate['q_key_count'],'raw_blocks':len(raw_seen),
+            'raw_columns':raw_columns,'rank_certified':False},sort_keys=True))
           PY
       - uses: actions/upload-artifact@v4
         with:
           name: bqg-depth6-32-keymeta-union-gate
-          path: BQG_DEPTH6_32_KEYMETA_UNION_GATE.json
+          path: |
+            BQG_DEPTH6_32_KEYMETA_UNION_GATE.json
+            BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE.json
           if-no-files-found: error
           retention-days: 30
