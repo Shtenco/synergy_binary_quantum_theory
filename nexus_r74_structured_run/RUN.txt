@@ -1,0 +1,1 @@
+Run the frozen 32-question NEXUS R7.4 benchmark with structured A/B/C/D output on five real Q4 teachers.
