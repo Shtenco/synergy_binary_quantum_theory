@@ -1,0 +1,165 @@
+name: BQG depth6 32 authorized KEYMETA-first replay
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - bqg/depth6-32-canonical-recovery
+    paths:
+      - '.github/START_DEPTH6_32_KEYMETA'
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fail-closed replay authorization
+        env:
+          PYTHONPATH: ${{ github.workspace }}/scripts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import depth6_32_replay_authorization as A
+          ledger=json.loads(Path('BQG_DEPTH6_32_REMATERIALIZED_ASSIGNMENT_LEDGER_2026-10-02.json').read_text())
+          gate=json.loads(Path('BQG_DEPTH6_32_IDENTITY_REMATERIALIZATION_GATE_2026-10-02.json').read_text())
+          auth=A.authorize_replay(ledger,gate)
+          assert auth['numerical_replay_authorized'] is True
+          assert auth['blocks']==2755 and auth['columns']==130903 and auth['covered_shards']==112
+          assert auth['rank_certified'] is False and auth['numerical_closure_claimed'] is False
+          Path('BQG_DEPTH6_32_REPLAY_AUTHORIZATION.json').write_text(json.dumps(auth,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(auth,sort_keys=True))
+          PY
+      - id: matrix
+        name: Build exact 112-shard matrix
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          print('matrix='+json.dumps({'shard':list(range(112))},separators=(',',':')))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-depth6-32-replay-authorization
+          path: BQG_DEPTH6_32_REPLAY_AUTHORIZATION.json
+          retention-days: 30
+
+  keymeta:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install --disable-pip-version-check -q numpy scipy sympy
+      - name: Extract immutable frozen Stage-A engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          FROZEN_COMMIT=887e76fba5210524650002da0b54653d2c5b37fd
+          EXPECTED_BLOB=cbbaa80f6b6b61d353458db1fa1f03f824730532
+          git fetch --no-tags origin "$FROZEN_COMMIT"
+          ACTUAL_BLOB="$(git rev-parse "$FROZEN_COMMIT:mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64")"
+          test "$ACTUAL_BLOB" = "$EXPECTED_BLOB"
+          mkdir -p frozen_engine
+          git show "$FROZEN_COMMIT:mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64" > /tmp/bundle.b64
+          base64 -d /tmp/bundle.b64 | tar xzf - -C frozen_engine
+      - name: Replay one frozen shard KEYMETA-first
+        env:
+          PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}/frozen_engine
+        run: |
+          set -euo pipefail
+          python -u scripts/run_depth6_32_ledger_batch.py \
+            --ledger BQG_DEPTH6_32_REMATERIALIZED_ASSIGNMENT_LEDGER_2026-10-02.json \
+            --gate BQG_DEPTH6_32_IDENTITY_REMATERIALIZATION_GATE_2026-10-02.json \
+            --shard '${{ matrix.shard }}' \
+            --nshards 112 \
+            --out-dir "keymeta-shard-${{ matrix.shard }}"
+      - name: Upload compact shard KEYMETA immediately
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-depth6-32-keymeta-shard-${{ matrix.shard }}
+          path: keymeta-shard-${{ matrix.shard }}/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 30
+
+  aggregate:
+    needs: keymeta
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependency for KEYMETA loader
+        run: python -m pip install --disable-pip-version-check -q numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-depth6-32-keymeta-shard-*
+          path: all-keymeta
+          merge-multiple: false
+      - name: Require exact 112/112 actual-q KEYMETA coverage
+        env:
+          PYTHONPATH: ${{ github.workspace }}/scripts
+        run: |
+          python - <<'PY'
+          import gzip,json,pickle
+          from pathlib import Path
+          import depth6_32_keymeta_first as K
+          import depth6_32_keymeta_aggregate as A
+
+          root=Path('all-keymeta')
+          manifests=list(root.rglob('shard-*-manifest.json'))
+          if len(manifests)!=112:
+              raise RuntimeError(f'expected 112 shard manifests, got {len(manifests)}')
+          shard_ids=set()
+          blocks=[]
+          for p in manifests:
+              m=json.loads(p.read_text())
+              shard=int(m['shard'])
+              if shard in shard_ids:
+                  raise RuntimeError(f'duplicate shard manifest {shard}')
+              shard_ids.add(shard)
+              if m['status']!='PASS_KEYMETA_FIRST_SHARD_COMPLETE':
+                  raise RuntimeError(f'shard {shard}: non-PASS manifest')
+          if shard_ids!=set(range(112)):
+              raise RuntimeError(f'112/112 shard identity mismatch: got {len(shard_ids)}')
+
+          files=list(root.rglob('orbit-*.keymeta.pkl.gz'))
+          for p in files:
+              with gzip.open(p,'rb') as f:
+                  blocks.append(pickle.load(f))
+          gate=K.validate_keymeta_union(blocks,target_blocks=2755,target_columns=130903)
+          if not gate['exact_keymeta_coverage'] or not gate['global_peeling_allowed']:
+              raise RuntimeError('exact KEYMETA coverage gate did not open')
+          gate['shards']=112
+          gate['shard_coverage']='112/112'
+          gate['rank_certified']=False
+          gate['numerical_closure_claimed']=False
+          A.write_json_gate(Path('BQG_DEPTH6_32_KEYMETA_UNION_GATE.json'),gate)
+          print(json.dumps({'status':'PASS_EXACT_KEYMETA_COVERAGE','shards':112,'blocks':gate['blocks'],'columns':gate['columns'],'q_key_count':gate['q_key_count'],'global_peeling_allowed':gate['global_peeling_allowed'],'rank_certified':False},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-depth6-32-keymeta-union-gate
+          path: BQG_DEPTH6_32_KEYMETA_UNION_GATE.json
+          retention-days: 30
