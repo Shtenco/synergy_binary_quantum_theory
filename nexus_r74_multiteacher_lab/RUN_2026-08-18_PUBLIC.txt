@@ -1,0 +1,3 @@
+NEXUS R7.4 public five-teacher benchmark trigger.
+Frozen test source is on base main.
+Teachers: Qwen3-4B-Thinking-2507, Phi-4-mini-reasoning, Ministral-3-3B, SmolLM3-3B, Gemma3-4B.
