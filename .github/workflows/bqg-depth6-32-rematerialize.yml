@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/bqg-depth6-32-rematerialize.yml'
       - 'scripts/run_depth6_32_ledger_batch.py'
+      - 'scripts/depth6_32_global_peeling.py'
   workflow_dispatch:
 
 permissions:
@@ -189,6 +190,7 @@ jobs:
           if len(manifests)!=112:
               raise RuntimeError(f'expected 112 manifests, got {len(manifests)}')
           shard_ids=set()
+          expected_raw={}
           for p in manifests:
               m=json.loads(p.read_text())
               s=int(m['shard'])
@@ -196,6 +198,10 @@ jobs:
               shard_ids.add(s)
               if m.get('status')!='PASS_KEYMETA_FIRST_SHARD_COMPLETE':
                   raise RuntimeError(f'shard {s}: invalid status')
+              for rec in m.get('records',[]):
+                  oid=int(rec['orbit_id'])
+                  if oid in expected_raw: raise RuntimeError(f'duplicate manifest raw orbit {oid}')
+                  expected_raw[oid]=(str(rec['raw_file']),str(rec['raw_sha256']))
           if shard_ids!=set(range(112)):
               raise RuntimeError(f'shard coverage incomplete: {len(shard_ids)}/112')
           import hashlib
@@ -211,6 +217,7 @@ jobs:
               raise RuntimeError(f'expected 2755 raw matrices, got {len(raw_files)}')
           raw_seen=set()
           raw_columns=0
+          import hashlib
           for p in raw_files:
               with gzip.open(p,'rb') as f: raw=pickle.load(f)
               oid=int(raw['orbit_id'])
@@ -218,6 +225,10 @@ jobs:
               raw_seen.add(oid)
               if raw.get('kind')!='BQG_DEPTH6_32_FROZEN_MASTER_BLOCK_RAW':
                   raise RuntimeError(f'orbit {oid}: invalid raw payload kind')
+              if oid not in expected_raw: raise RuntimeError(f'orbit {oid}: missing manifest raw hash')
+              if p.name!=expected_raw[oid][0]: raise RuntimeError(f'orbit {oid}: raw filename mismatch')
+              h=hashlib.sha256(p.read_bytes()).hexdigest()
+              if h!=expected_raw[oid][1]: raise RuntimeError(f'orbit {oid}: raw SHA256 mismatch')
               m=int(raw['m']); raw_columns+=m
               W=raw['basis']
               if getattr(W,'ndim',None)!=2 or W.shape[1]!=m:
@@ -252,11 +263,22 @@ jobs:
             'q_key_count':gate['q_key_count'],'raw_blocks':len(raw_seen),
             'raw_columns':raw_columns,'rank_certified':False},sort_keys=True))
           PY
+      - name: Run fail-closed global q-peeling and residual rank gate
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+        run: |
+          set +e
+          python scripts/depth6_32_global_peeling.py --root all-keymeta --out BQG_DEPTH6_32_NUMERICAL_RANK_CERTIFICATE.json
+          rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then exit "$rc"; fi
+          exit 0
       - uses: actions/upload-artifact@v4
         with:
           name: bqg-depth6-32-keymeta-union-gate
           path: |
             BQG_DEPTH6_32_KEYMETA_UNION_GATE.json
             BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE.json
+            BQG_DEPTH6_32_NUMERICAL_RANK_CERTIFICATE.json
           if-no-files-found: error
           retention-days: 30
