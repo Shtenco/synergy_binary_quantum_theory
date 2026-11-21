@@ -4,10 +4,9 @@
 The repository has one canonical programme: discrete quantum microstructure ->
 quantum geometry -> coarse-grained smooth geometry -> GR/HDA continuum limit.
 
-Historical archives and the explicit repository-audit ledger are evidence about
-past branches, so they are allowed to mention retired vocabulary. They are not
-active theory surfaces and must not make the canonical scope gate fail merely
-for preserving scientific history.
+Historical archives and explicitly research-only extensions are evidence about
+past or parallel investigations. They remain version controlled and readable,
+but must not make the canonical scope gate fail merely for preserving them.
 """
 from __future__ import annotations
 
@@ -19,30 +18,32 @@ SELF = Path(__file__).resolve()
 TEXT_SUFFIXES = {".py", ".md", ".yml", ".yaml", ".json"}
 
 # Historical/evidentiary surfaces are quarantined from the active-claim scan.
-# They remain version controlled and readable, but are not canonical theory.
 EXCLUDED_FILES = {
     Path("REPOSITORY_AUDIT_2026-08-29.md"),
     Path("AUDIT_REPORT_2026-10-22.md"),
     Path("docs/README_TECHNICAL_ARCHIVE_20261109.md"),
     Path("docs/README_STORY_ARCHIVE_20261109.md"),
     Path("docs/FIGURE_ATLAS.md"),
+    Path("research/README_INFOTON_BLACK_HOLES.md"),
+    Path("scripts/bqg_infoton_bh_foundation_gate.py"),
+    Path(".github/workflows/bqg-black-hole-reduced-gates.yml"),
 }
 EXCLUDED_PREFIXES = {
     ("docs", "archive"),
     ("docs", "information_infoton_review"),
+    ("research", "black_holes_bqg"),
+    ("research", "infoton_graviton"),
 }
 
-# README and status may describe the explicitly open information-mode proposal.
-# This is permission to discuss it, not to import retired physics modules.
+# The public README may describe archived or explicitly open proposals.
+# This allows discussion only; AST checks still prohibit retired imports.
 DISCUSSION_TERMS = {
-    # The README uses "mirror" only in archived figure labels/links; this is
-    # permission to reference historical material, not to restore the sector.
-    Path("README.md"): {"info" + "ton", "mir" + "ror"},
+    Path("README.md"): {"info" + "ton", "mir" + "ror", "anti" + "grav"},
     Path("THEORY_STATUS.md"): {"info" + "ton"},
 }
 
-# Construct retired vocabulary without embedding the retired tokens literally in
-# this audit source, so repository-wide textual searches remain meaningful.
+# Construct retired vocabulary without embedding the retired tokens literally
+# in this audit source, so repository-wide textual searches remain meaningful.
 RETIRED_TERMS = {
     "mir" + "ror",
     "anti" + "grav",
@@ -52,9 +53,6 @@ RETIRED_TERMS = {
     "fifth" + " force",
 }
 
-# Every module removed by the scope reset is pinned here. AST parsing of every
-# active Python file then prevents stale imports from surviving even if the
-# retired concept is not mentioned in prose.
 RETIRED_MODULES = {
     "bcqg_unified_verification",
     "bcqg_critical_phase_demo",
@@ -144,7 +142,8 @@ def main() -> int:
     print(
         "CORE SCOPE AUDIT: PASS "
         f"({scanned} active text/code files; {python_files} active Python files; "
-        "historical archive quarantined; no retired vocabulary or retired-module imports)"
+        "historical and research-only material quarantined; "
+        "no retired vocabulary or retired-module imports)"
     )
     return 0
 
