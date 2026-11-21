@@ -1,0 +1,151 @@
+name: bqg-spectral-history-b3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_b3_formula_regression.py'
+      - 'scripts/peter_weyl_spectral_history_b3_gate.py'
+      - '.github/workflows/bqg-spectral-history-b3.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_b3_formula_regression.py'
+      - 'scripts/peter_weyl_spectral_history_b3_gate.py'
+      - '.github/workflows/bqg-spectral-history-b3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  formula-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Compile B3 sources
+        run: |
+          python -m py_compile \
+            scripts/bqg_b3_formula_regression.py \
+            scripts/peter_weyl_spectral_history_b3_gate.py
+      - name: Independent known-B3 reconstruction
+        run: |
+          python scripts/bqg_b3_formula_regression.py \
+            --output verification_results/BQG_B3_FORMULA_REGRESSION.json
+      - name: Upload formula evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-b3-formula-regression
+          path: verification_results/BQG_B3_FORMULA_REGRESSION.json
+          if-no-files-found: error
+
+  extend-h3-columns:
+    needs: formula-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        column: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Download certified source column
+        if: matrix.column != 28
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Shtenco/binary_quantum_theory
+          run-id: 31844567559
+          name: lambda-column-${{ matrix.column }}
+          path: source
+      - name: Download repaired certified column 28
+        if: matrix.column == 28
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Shtenco/binary_quantum_theory
+          run-id: 31852849936
+          name: peter-weyl-higher-shell-lambda-repaired
+          path: source
+      - name: Extend exact column from H2 to H3
+        run: |
+          SRC=$(find source -type f -name 'column_${{ matrix.column }}.json' -print -quit)
+          test -n "$SRC"
+          python scripts/peter_weyl_spectral_history_b3_gate.py \
+            --extend-column "$SRC" \
+            --output verification_results/b3/column_${{ matrix.column }}_b3.json
+      - name: Upload H3 column
+        uses: actions/upload-artifact@v4
+        with:
+          name: b3-column-${{ matrix.column }}
+          path: verification_results/b3/column_${{ matrix.column }}_b3.json
+          if-no-files-found: error
+          compression-level: 6
+
+  assemble-b3:
+    needs: extend-h3-columns
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Download all fresh H3 columns
+        uses: actions/download-artifact@v4
+        with:
+          pattern: b3-column-*
+          path: verification_results/b3
+          merge-multiple: true
+      - name: Download certified B1/B2 reference
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Shtenco/binary_quantum_theory
+          run-id: 31852849936
+          name: peter-weyl-higher-shell-lambda-repaired
+          path: reference
+      - name: Assemble B3 and test depth-2 closure
+        run: |
+          REF=$(find reference -type f -name 'PETER_WEYL_HIGHER_SHELL_LAMBDA.json' -print -quit)
+          test -n "$REF"
+          python scripts/peter_weyl_spectral_history_b3_gate.py \
+            --assemble-b3-dir verification_results/b3 \
+            --reference "$REF" \
+            --output verification_results/BQG_PETER_WEYL_SPECTRAL_HISTORY_B3.json
+      - name: Upload B3 closure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-peter-weyl-spectral-history-b3
+          path: verification_results/BQG_PETER_WEYL_SPECTRAL_HISTORY_B3.json
+          if-no-files-found: error
