@@ -13,7 +13,7 @@ link receives two hits and is disjoint from the plaquette; exactly four changed
 edges selects the branch where that source link returns to its seed spin.
 """
 from __future__ import annotations
-import argparse,json,math,sys,traceback
+import argparse,json,math,sys,traceback,re
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
@@ -46,7 +46,9 @@ def signature(key):
     }
 
 
-def run(local_index,parent_id=0):
+def run(local_index,parent_id=0,source_commit=None):
+    if source_commit is not None and not re.fullmatch(r'[0-9a-f]{40}', source_commit):
+        raise ValueError('source_commit must be a full lowercase 40-character Git SHA')
     ZVM.patch_and_clear()
     coarse=seed_16cell_boundary()
     fine,parent=barycentric_with_parent(coarse)
@@ -104,6 +106,7 @@ def run(local_index,parent_id=0):
         'passed':bool(all(hard.values())),
         'science_status':'L1_BLOCK_E_Q4_EXACT_PROJECTION',
         'local_fine_index':local_index,
+        'source_commit':source_commit,
         'global_fine_node':u,
         'parent_coarse_tetra':parent_id,
         'L1_nodes':D.n_tets,
@@ -122,9 +125,10 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--local-index',type=int,choices=range(24),required=True)
     p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--source-commit',type=str,default=None)
     a=p.parse_args()
     try:
-        o=run(a.local_index);code=0 if o['passed'] else 1
+        o=run(a.local_index,source_commit=a.source_commit);code=0 if o['passed'] else 1
     except Exception as exc:
         o={'status':'worker exception','passed':False,'science_status':'INFRASTRUCTURE_DIAGNOSTIC','local_fine_index':a.local_index,'error_type':type(exc).__name__,'error':str(exc),'traceback':traceback.format_exc()};code=1
     a.output.parent.mkdir(parents=True,exist_ok=True)
