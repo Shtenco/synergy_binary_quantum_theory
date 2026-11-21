@@ -12,25 +12,23 @@
 
 # Theory status — structural candidate versus physicalization frontier
 
-> ## Canonical update — 29 September 2026
+> ## Canonical update — 21 November 2026
 >
-> The repository now has a separate fail-closed finite depth-6 truth ledger: \`depth6_frontier.json\`, verified by \`scripts/verify_depth6_frontier.py\`.
+> The fail-closed finite depth-6 ledger is authoritative: `depth6_frontier.json`, verified by `scripts/verify_depth6_frontier.py`.
 >
 > Current finite depth-6 status:
 >
-> - corrected $K_5$ shell: $264\,962$ Gauss-admissible spin assignments;
-> - Hilbert dimension: $\boxed{3\,111\,637}$;
-> - CLOSED irreps: $[1^5]$, $[5]$, $[4,1]$;
-> - structural support is closed for all remaining mixed irreps;
-> - the $S_4$-sign shortcut for $[2,1,1,1]$ contains 16 **exact** $H_0$-null directions, all lifted by $H_1$ with rank $16/16$ and $\sigma_{\min}=1.1304521906426823$;
-> - the remaining giant component has a planned $130007\times130007$ sparse minor with $47\,543\,521$ expected nonzero scalar entries and rank-aware max-flow $130007/130007$;
-> - that sparse minor has **not yet been rank-revealing factorized**, so $[2,1,1,1]$ remains ACTIVE / NOT YET CLOSED;
-> - the full finite depth-6 theorem $\ker M^{(d=6)}=\operatorname{span}\{|0\rangle\}\ ?$ is therefore **NOT YET PROVED**.
+> - corrected K5 shell: 264,962 Gauss-admissible spin assignments;
+> - Hilbert dimension: 3,111,637;
+> - four sectors have finite numerical closure certificates: `[1^5]`, `[5]`, `[4,1]`, and `[2,1,1,1]`;
+> - the `[2,1,1,1]` sector is CLOSED_FINITE_NUMERICAL: its 16 exact H0-null directions are all lifted by H1 (rank 16/16, sigma_min approximately 1.13045219), and its certified master-kernel dimension is zero;
+> - structural support is closed for all seven S5 irreps;
+> - three independent numerical master witnesses remain: `[3,2]` (recovery-first; 130,903-dimensional sector), `[3,1,1]` (153,455), and `[2,2,1]` (130,503);
+> - the full finite depth-6 theorem `ker M^(d=6)=span{|0>}` is still NOT_YET_PROVED.
 >
-> This update supersedes any older prose or orchestration snippet that could be read as saying that total $S_4$-sign $H_0$ is injective. It is not: the 16 exact $H_0$-null directions are a real local-geometric effect. The relevant object is the **master constraint**, not $H_0$ alone.
+> The former planned 130007 x 130007 H0-only minor is explicitly superseded; it is not a current blocker. The 16 exact H0-null directions are real, but the preserved H0-complement certificate plus fresh H1 lift closes the `[2,1,1,1]` master sector.
 >
-> Even a future successful finite depth-6 theorem will not close the continuum theory. Refinement stability, the theory-specific physical projector/rigging-map limit, connected physical history, the interacting TT kernel, the physical six-Wilson vector and one common physical scale remain open.
-
+> Even completion of all remaining finite sectors will not close the continuum theory. Refinement stability, the theory-specific physical projector/rigging-map limit, connected physical history, the interacting TT kernel, the physical six-Wilson vector and one common physical scale remain open.
 
 
 **Canonical status update: 2026-09-29**
