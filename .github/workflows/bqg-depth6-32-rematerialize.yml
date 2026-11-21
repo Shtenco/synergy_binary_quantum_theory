@@ -257,7 +257,7 @@ jobs:
             'status':'PASS_RAW_MATRIX_COVERAGE_ONLY','blocks':len(raw_seen),
             'columns':raw_columns,'rank_certified':False,'numerical_closure_claimed':False,
             'claim_boundary':'All frozen master blocks and actual q matrices persisted and shape-checked; no global rank or kernel certificate.'}
-          Path('BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE.json').write_text(json.dumps(raw_gate,indent=2,sort_keys=True)+'\\n')
+          Path('BQG_DEPTH6_32_RAW_MATRIX_COVERAGE_GATE.json').write_text(json.dumps(raw_gate,indent=2,sort_keys=True)+'\n')
           print(json.dumps({'status':'PASS_EXACT_KEYMETA_AND_RAW_COVERAGE',
             'shards':112,'blocks':gate['blocks'],'columns':gate['columns'],
             'q_key_count':gate['q_key_count'],'raw_blocks':len(raw_seen),
