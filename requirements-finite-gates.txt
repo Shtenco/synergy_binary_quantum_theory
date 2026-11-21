@@ -1,0 +1,5 @@
+# Minimal numerical dependencies for finite Peter-Weyl column workers.
+# These gates use NumPy linear algebra and SymPy Clebsch-Gordan coefficients;
+# installing the full ML stack (including CUDA-enabled PyTorch) is unnecessary.
+numpy>=1.24
+sympy>=1.12
