@@ -44,6 +44,9 @@ jobs:
             CANONICAL_THEORY_PACKAGE.md PREDICTIONS_AND_EXPERIMENTAL_TESTS.md \
             BIT_TO_SPACETIME_CENTRAL_EQUATION.md
 
+      - name: Test LaTeX delimiter normalization and fail-closed behavior
+        run: python scripts/test_validate_github_latex.py
+
       - name: Validate README local links
         run: python scripts/verify_readme_links.py
       - name: Frozen binary to smooth-spacetime gate
