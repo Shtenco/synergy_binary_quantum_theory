@@ -115,13 +115,18 @@ def central_projector(irrep):
 def run(directory: Path):
     meta = []
     states = []
+    source_commits = set()
     for i in range(24):
         d, s = load_column(directory / f"q4_{i}.json")
         if int(d["local_fine_index"]) != i:
             raise RuntimeError(f"column/index mismatch at {i}")
         meta.append(d)
         states.append(s)
+        source_commits.add(d.get('source_commit'))
 
+    if len(source_commits) != 1 or None in source_commits:
+        raise RuntimeError(f'columns must share one explicit source commit, got {sorted(str(x) for x in source_commits)}')
+    source_commit = next(iter(source_commits))
     G = np.zeros((24, 24), complex)
     for i in range(24):
         for j in range(24):
@@ -204,8 +209,8 @@ def run(directory: Path):
     return {
         "status": "reanalysis of certified L1 q4 Euclidean tangent amplitudes",
         "passed": bool(passed),
-        "source_workflow_run": 31965359681,
-        "source_head_sha": "919f64856c2e2b232c94ffbd48593f1c4d0c2d6b",
+        "source_commit": source_commit,
+        "source_provenance": "all 24 columns were recomputed from the same checked-out source commit and individually record that commit",
         "source_science_status": "L1_BLOCK_E_Q4_EXACT_PROJECTION",
         "columns": 24,
         "column_supports": [int(d["support"]) for d in meta],
