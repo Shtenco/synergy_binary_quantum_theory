@@ -192,6 +192,7 @@ jobs:
         run: |
           python scripts/collective_l1_block_e_q4_worker.py \
             --local-index ${{ matrix.local_index }} \
+            --source-commit "$GITHUB_SHA" \
             --output q4_${{ matrix.local_index }}.json
       - uses: actions/upload-artifact@v4
         with:
@@ -233,8 +234,9 @@ jobs:
       - name: Guard canonical L1 metric values
         run: |
           python - <<'PY'
-          import json
+          import json, os
           p=json.load(open('verification_results/L1_Q4_S4_METRIC_COMPRESSION.json'))
+          assert p['source_commit'] == os.environ['GITHUB_SHA']
           assert p['passed'] is True
           assert p['columns'] == 24
           assert p['left_regular_S4_commutator_relative_max'] < 1e-12
