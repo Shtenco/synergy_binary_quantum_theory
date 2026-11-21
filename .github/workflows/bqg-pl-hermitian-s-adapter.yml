@@ -1,0 +1,84 @@
+name: BQG frozen PL Hermitian S adapter
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/bqg_pl_hermitian_s_adapter.py'
+      - '.github/workflows/bqg-pl-hermitian-s-adapter.yml'
+  workflow_dispatch:
+
+jobs:
+  frozen-adapter-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Checkout frozen upstream physics
+        uses: actions/checkout@v4
+        with:
+          ref: 2b2c9f623544f5d38f7ffd7f37617f91f4dae306
+          path: upstream
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: upstream/requirements.txt
+
+      - name: Install frozen upstream requirements
+        run: python -m pip install -r upstream/requirements.txt
+
+      - name: Verify frozen upstream SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          got="$(git -C upstream rev-parse HEAD)"
+          test "$got" = "2b2c9f623544f5d38f7ffd7f37617f91f4dae306"
+
+      - name: Compile adapter
+        run: python -m py_compile current/scripts/bqg_pl_hermitian_s_adapter.py
+
+      - name: Re-run frozen direct-Hermitian identity
+        working-directory: upstream
+        run: |
+          mkdir -p verification_results
+          python scripts/lorentzian_direct_hermitian_identity_gate.py \
+            --output verification_results/LORENTZIAN_DIRECT_HERMITIAN_IDENTITY.json
+
+      - name: Adapter import and bookkeeping preflight
+        run: |
+          mkdir -p verification_results
+          python current/scripts/bqg_pl_hermitian_s_adapter.py \
+            --upstream-root upstream \
+            --expected-upstream-sha 2b2c9f623544f5d38f7ffd7f37617f91f4dae306 \
+            --selftest-only \
+            --output verification_results/BQG_PL_HERMITIAN_S_ADAPTER.json
+
+      - name: Hard guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          ident = json.load(open('upstream/verification_results/LORENTZIAN_DIRECT_HERMITIAN_IDENTITY.json', encoding='utf-8'))
+          a = json.load(open('verification_results/BQG_PL_HERMITIAN_S_ADAPTER.json', encoding='utf-8'))
+          assert ident['passed'], ident
+          assert a['passed'], a
+          assert a['upstream_sha'] == '2b2c9f623544f5d38f7ffd7f37617f91f4dae306'
+          assert a['bookkeeping']['oriented_terms'] == 24
+          assert a['bookkeeping']['unique_oriented_terms'] == 24
+          assert a['bookkeeping']['pair_contributions'] == 12
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bqg-pl-hermitian-s-adapter-preflight
+          path: |
+            upstream/verification_results/LORENTZIAN_DIRECT_HERMITIAN_IDENTITY.json
+            verification_results/BQG_PL_HERMITIAN_S_ADAPTER.json
+          if-no-files-found: error

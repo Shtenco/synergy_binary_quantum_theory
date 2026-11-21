@@ -1,0 +1,104 @@
+name: bqg-signed-five-block-bridge
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/bqg_fiveblock_p_carrier_producer.py'
+      - 'scripts/bqg_signed_5block_operator_assembler.py'
+      - 'scripts/bqg_multiblock_tt_wilson_extractor.py'
+      - 'scripts/s4_tt_six_wilson_predictor.py'
+      - '.github/workflows/bqg-signed-five-block-bridge.yml'
+      - 'BQG_MULTIBLOCK_TT_WILSON_PRODUCTION_STATUS.md'
+      - 'PHYSICAL_TT_KERNEL_FROM_EXISTING_BQG.md'
+      - 'PHYSICAL_TT_KERNEL_LEADING_IR_DERIVATION.md'
+  workflow_dispatch:
+
+jobs:
+  bridge-selftests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Signed gravitational operator assembler selftest
+        run: python scripts/bqg_signed_5block_operator_assembler.py --selftest
+      - name: Schur metric TT six-Wilson extractor selftest
+        run: python scripts/bqg_multiblock_tt_wilson_extractor.py --selftest
+
+  fiveblock-p-carrier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Checkout frozen upstream physics
+        uses: actions/checkout@v4
+        with:
+          ref: 2b2c9f623544f5d38f7ffd7f37617f91f4dae306
+          path: upstream
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: upstream/requirements.txt
+
+      - name: Install frozen upstream requirements
+        run: python -m pip install -r upstream/requirements.txt
+
+      - name: Verify frozen upstream SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          got="$(git -C upstream rev-parse HEAD)"
+          test "$got" = "2b2c9f623544f5d38f7ffd7f37617f91f4dae306"
+
+      - name: Re-run complete six-link face recoupling prerequisite
+        working-directory: upstream
+        run: |
+          mkdir -p verification_results
+          python scripts/collective_face_complete_recoupling_gate.py \
+            --output verification_results/COLLECTIVE_FACE_COMPLETE_RECOUPLING.json
+
+      - name: Build exact five-block 30-column strict P carrier
+        run: |
+          mkdir -p verification_results
+          python current/scripts/bqg_fiveblock_p_carrier_producer.py \
+            --upstream-root upstream \
+            --expected-upstream-sha 2b2c9f623544f5d38f7ffd7f37617f91f4dae306 \
+            --output verification_results/BQG_FIVEBLOCK_P_CARRIER.json \
+            --npz verification_results/BQG_FIVEBLOCK_P_CARRIER.npz
+
+      - name: Hard guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          rec = json.load(open('upstream/verification_results/COLLECTIVE_FACE_COMPLETE_RECOUPLING.json', encoding='utf-8'))
+          p = json.load(open('verification_results/BQG_FIVEBLOCK_P_CARRIER.json', encoding='utf-8'))
+          assert rec['passed'], rec
+          assert rec['patterns_tested'] == 61, rec
+          assert p['passed'], p
+          assert p['upstream_sha'] == '2b2c9f623544f5d38f7ffd7f37617f91f4dae306'
+          assert p['P_Gram_rank'] == 30, p
+          assert p['checks']['global_P_Gram_I30'], p
+          assert p['checks']['cross_block_basis_support_disjoint'], p
+          assert p['checks']['strict_boundary_links_unchanged'], p
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bqg-fiveblock-p-carrier
+          path: |
+            upstream/verification_results/COLLECTIVE_FACE_COMPLETE_RECOUPLING.json
+            verification_results/BQG_FIVEBLOCK_P_CARRIER.json
+            verification_results/BQG_FIVEBLOCK_P_CARRIER.npz
+          if-no-files-found: warn
