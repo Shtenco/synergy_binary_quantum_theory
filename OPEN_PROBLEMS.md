@@ -29,74 +29,22 @@ See:
 ---
 
 
-## 0. Immediate finite master-kernel frontier — 29 September 2026
+## 0. Immediate finite master-kernel frontier — updated 21 November 2026
 
-Before the continuum physicalization programme below can be promoted from a legal interface to a theory-specific construction, the current corrected $K_5$ depth-6 master-kernel calculation must be finished honestly.
+The corrected K5 depth-6 calculation is governed by the machine-readable `depth6_frontier.json` and `scripts/verify_depth6_frontier.py`. The verifier was executed in the 21 November core-regression run and returned `valid=true`, while correctly retaining `finite_depth6_theorem_status=NOT_YET_PROVED`.
 
-Machine source of truth:
+Current ledger:
 
-- \`depth6_frontier.json\`
-- \`scripts/verify_depth6_frontier.py\`
+- Gauss-admissible spin assignments: 264,962; Hilbert dimension: 3,111,637.
+- Four finite numerical sectors are closed: `[1^5]`, `[5]`, `[4,1]`, and `[2,1,1,1]`.
+- For `[2,1,1,1]`, the 16 exact H0-null directions are lifted by H1 with rank 16/16 and sigma_min approximately 1.13045219. The master-kernel dimension is zero; the sector is `CLOSED_FINITE_NUMERICAL`.
+- Structural support is closed for all seven S5 irreps.
+- Three numerical witnesses remain: `[3,2]` (130,903-dimensional, recovery-first), `[3,1,1]` (153,455-dimensional), and `[2,2,1]` (130,503-dimensional).
+- The full finite depth-6 theorem remains `NOT_YET_PROVED`; no claim about the full master kernel is made.
 
-Current status:
+The previously planned 130007 x 130007 H0-only sparse minor is superseded by the preserved H0-complement certificate and fresh 16-dimensional H1 lift. It must not be treated as a current blocker or recomputed.
 
-$$
-\boxed{\dim\mathcal H_{d=6}=3\,111\,637}
-$$
-
-with CLOSED sectors
-
-$$
-\boxed{[1^5],\ [5],\ [4,1]}.
-$$
-
-Structural support is closed for all remaining mixed irreps, but structural support is not the same as numerical master-kernel closure.
-
-The $S_4$-sign route relevant to $[2,1,1,1]$ has 16 exact $H_0$-null directions. They are genuine local-geometric null directions, not numerical artifacts. They are, however, fully lifted by $H_1$:
-
-$$
-\boxed{\operatorname{rank}H_1|_{16}=16/16},
-\qquad
-\boxed{\sigma_{\min}=1.1304521906426823}.
-$$
-
-The remaining giant component has a rank-aware Hall flow
-
-$$
-\boxed{130007/130007},
-$$
-
-and a planned sparse square minor
-
-$$
-\boxed{130007\times130007}
-$$
-
-with $47\,543\,521$ expected nonzero scalar entries. Its rank-revealing factorization has **not yet been completed**.
-
-Therefore:
-
-$$
-\boxed{[2,1,1,1]_{d=6}\ \text{ACTIVE / NOT YET CLOSED}}
-$$
-
-and
-
-$$
-\boxed{\ker M^{(d=6)}=\operatorname{span}\{|0\rangle\}\ ?}
-$$
-
-remains a target rather than a theorem.
-
-After that sector, the remaining mixed sectors are
-
-$$
-[3,2],\quad[3,1,1],\quad[2,2,1].
-$$
-
-A future finite depth-6 PASS will still not imply continuum closure; the refinement/rigging/history gates below remain independently necessary.
-
----
+A future completion of the remaining three numerical witnesses will still not imply continuum closure. Refinement stability, the physical projector/rigging limit, connected physical history, the interacting TT kernel, the physical six-Wilson vector and common physical scale remain independent open gates.
 
 
 ## 1. Open physical gates that DO matter
