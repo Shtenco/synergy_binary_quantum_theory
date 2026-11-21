@@ -1,6 +1,6 @@
 # q=2 -> exact causal-volume dimension-three fixed point
 
-Status: **exact asymptotic scaling theorem for the frozen q=2 route rewrite, cross-checked independently by PL topology and diffusion/scaling observables**.
+Status: **exact asymptotic scaling theorem for the frozen q=2 route rewrite, cross-checked by structurally distinct PL-topology and diffusion/scaling observables that share upstream route-family assumptions**.
 
 This note closes the specific “dimension gradient” that had previously appeared only numerically as
 
@@ -8,7 +8,7 @@ This note closes the specific “dimension gradient” that had previously appea
 ... -> 2.9517 -> 2.99385 -> 2.999229782 -> ...
 ```
 
-The limit is not guessed from a fit. Once `q=2` has been selected independently by the local binary homogeneity equation
+The limit is not guessed from a fit. Once `q=2` has been fixed upstream by the local binary homogeneity equation
 
 \[
 q+2=2^q,
@@ -16,9 +16,11 @@ q+2=2^q,
 
 the frozen route rewrite has an analytic growth law whose unique infrared causal-volume exponent is exactly three.
 
+The qualifier **upstream** matters.  The equation `q+2=2^q` is a declared local valence-homogeneity requirement of the chosen route family.  Its solution is exact inside that family, but the requirement itself is an architectural/model-selection assumption unless a deeper microscopic theorem derives it.
+
 ---
 
-## 1. Independent microscopic input: q=2
+## 1. Upstream microscopic input: q=2
 
 The local selector is
 
@@ -38,7 +40,7 @@ Therefore the number of route midpoints created per active causal edge is
 B=2^q=4.
 \]
 
-This value is fixed before any dimension measurement below.
+This value is frozen before any dimension measurement below.  That prevents fitting `q` to the desired exponent, but it does **not** make every downstream q=2 consequence statistically independent of every other one.
 
 ---
 
@@ -165,16 +167,16 @@ d_*^{\rm causal-volume}
 Equivalently, for general frozen `q`, the same route rule has
 
 \[
-d_*^{\rm causal-volume}=\log_2(2^{q+1})=q+1.
+\boxed{d_*^{\rm causal-volume}=\log_2(2^{q+1})=q+1.}
 \]
 
-Because `q=2` was selected independently, the dimension is not inserted by choosing a three-dimensional lattice.
+Thus `d*=3` is an exact theorem of the frozen route rewrite once `q=2` is supplied.  It is not inserted by choosing a three-dimensional lattice.  It is, however, algebraically downstream of the q-selector, so the logical strength of the result depends on the status of the valence-homogeneity rule that selected `q=2`.
 
 ---
 
-## 5. Why this is stronger than one fitted exponent
+## 5. Structurally different checks and their common cause
 
-The project now has three logically different reasons that point to the same spatial dimension.
+The project has several mathematically different constructions that point to spatial dimension three.  They should be distinguished from statistically independent observations.
 
 ### A. Exact local topology
 
@@ -186,7 +188,7 @@ S^2.
 
 A vertex of a combinatorial three-manifold has an `S^2` link.
 
-### B. Exact global PL completion and stability
+### B. Exact selected global PL completion and stability
 
 The canonical minimal+flag completion is the boundary of the 16-cell,
 
@@ -242,7 +244,9 @@ d_{\rm eff}^{\rm slice}\simeq3.00439,
 }
 \]
 
-These are not the same estimator repeated three times.
+These checks use different mathematics and can catch different implementation failures.  However they are not all statistically independent because the local `S^2` shell, selected `S^3` completion and exact `d*=q+1` growth law share the same upstream q=2 route architecture.  Their agreement is therefore **internal cross-consistency**, not a multiplication of independent evidential probabilities.
+
+A stronger independent geometrogenesis test would generate an ensemble from a dimension-blind frozen microscopic dynamics and measure topology/diffusion/volume exponents without conditioning the construction on the q=2 completion.
 
 ---
 
@@ -275,7 +279,7 @@ A separate continuum heat-kernel formula is sometimes written
 d_s^{\rm history}=1+\frac{D}{z},
 \]
 
-where `D` denotes the spatial volume/Hausdorff dimension. If one calls `D/z` itself a spatial spectral exponent, then the equivalent formula is simply
+where `D` denotes the primitive spatial volume/Hausdorff dimension. If one calls `D/z` itself a spatial spectral exponent, then the equivalent formula is simply
 
 \[
 d_s^{\rm history}=1+d_s^{\rm slice}.
@@ -289,7 +293,7 @@ Thus the strengthened dimension chain is
 \boxed{
 q=2
 \to S^2\ \text{local link}
-\to M^3\cong S^3\ \text{PL phase}
+\to M^3\cong S^3\ \text{selected PL phase}
 \to d_{\rm causal-volume}=3\ \text{fixed point}
 \to d_H/z\simeq3.00439
 \to z\simeq1
@@ -297,17 +301,19 @@ q=2
 }
 \]
 
+This is a coherent chain of consequences and checks.  It is not a chain of statistically independent measurements at every arrow.
+
 ---
 
 ## 7. Exact scope and non-claims
 
 The theorem proved here is the asymptotic **causal-volume exponent of the frozen q=2 route rewrite** relative to its causal depth scale.
 
-It does not by itself prove that every graph metric, every possible nonflag global gluing, or every interacting quantum ensemble has Hausdorff dimension three. That is why the repository keeps the PL-link, diffusion/scaling and Hodge/two-form gates independent.
+It does not by itself prove that every graph metric, every possible nonflag global gluing, or every interacting quantum ensemble has Hausdorff dimension three. The repository therefore keeps the PL-link, diffusion/scaling and Hodge/two-form calculations as **separate falsification gates**, while recognizing that some share upstream assumptions and are not statistically independent.
 
 Likewise, the existence/stability of the canonical `S^3` PL completion is not a theorem that the bare causal graph uniquely forces that gluing.
 
-The scientific strength comes from agreement of independent observables, not from relabelling one exponent as several different results.
+The scientific strength comes from exact conditional theorems, structurally different failure modes and preregistered tests — not from counting correlated consequences as independent evidence.
 
 ---
 

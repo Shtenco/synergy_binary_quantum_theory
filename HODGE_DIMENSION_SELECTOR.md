@@ -77,10 +77,10 @@ For a continuum kinetic operator with anisotropic scaling
 K(\omega,k)\sim \omega^2+|k|^{2z}
 \]
 
-in `D` spatial dimensions, the heat return probability scales as
+in `D` spatial dimensions, the heat return probability factorizes as
 
 \[
-P(\sigma)
+P_{\rm history}(\sigma)
 \propto
 \int d\omega\,d^Dk\,
 \exp[-\sigma(\omega^2+|k|^{2z})]
@@ -88,39 +88,83 @@ P(\sigma)
 \sigma^{-\frac12-\frac{D}{2z}}.
 \]
 
-Therefore the full history/spacetime spectral dimension is
+The spatial heat return alone scales as
 
 \[
-\boxed{d_s^{\rm history}=1+\frac{d_s^{\rm slice}}{z}}
+P_{\rm slice}(\sigma)
+\propto
+\int d^Dk\,e^{-\sigma |k|^{2z}}
+\propto
+\sigma^{-\frac{D}{2z}}.
 \]
 
-when the spatial spectral dimension is the relevant `D` in the scaling window.
-
-A canonical `3+1` limit must therefore satisfy three independently measured statements:
+Therefore, with the standard definition
 
 \[
-d_s^{\rm slice}\to3,
+d_s=-2\frac{d\ln P}{d\ln\sigma},
+\]
+
+the measured spatial spectral dimension is
+
+\[
+\boxed{d_s^{\rm slice}=\frac{D}{z}},
+\]
+
+while the full history/spacetime spectral dimension is
+
+\[
+\boxed{d_s^{\rm history}=1+\frac{D}{z}=1+d_s^{\rm slice}.}
+\]
+
+This distinction is essential.  The older expression
+
+\[
+1+\frac{d_s^{\rm slice}}{z}
+\]
+
+would divide by the dynamical exponent **twice** if `d_s^slice` already denotes the measured heat-kernel spectral dimension.  It is valid to write `1+D/z` when `D` is an independently defined spatial/Hausdorff dimension; it is valid to write `1+d_s^slice` when `d_s^slice` is the measured spatial spectral dimension.  These two notations must not be mixed.
+
+A canonical `3+1` limit may therefore be tested by separately measuring
+
+\[
+D\to3,
 \qquad
 z\to1,
 \qquad
- d_s^{\rm history}\to4,
+d_s^{\rm slice}\to3,
+\qquad
+d_s^{\rm history}\to4,
 \]
 
-plus the consistency defect
+with the two consistency defects
 
 \[
 \boxed{
-\Delta_{3+1}
-=
-\left|
- d_s^{\rm history}
--\left(1+\frac{d_s^{\rm slice}}{z}\right)
-\right|
+\Delta_{\rm slice}
+=\left|d_s^{\rm slice}-\frac{D}{z}\right|
+\to0
+}
+\]
+
+and
+
+\[
+\boxed{
+\Delta_{\rm history}
+=\left|d_s^{\rm history}-\left(1+d_s^{\rm slice}\right)\right|
 \to0.
 }
 \]
 
-This prevents counting the causal time direction twice.  If the microscopic object being diffused on is already the full causal history complex, one should target `d_s -> 4` directly and **not** add another time dimension.
+Equivalently, when `D` and `z` are the primitive independently measured quantities,
+
+\[
+\Delta_{D,z}
+=\left|d_s^{\rm history}-\left(1+\frac{D}{z}\right)\right|
+\to0.
+\]
+
+This prevents counting the causal time direction twice **and** prevents dividing the already-renormalized spatial spectral dimension by `z` twice.  If the microscopic object being diffused on is already the full causal history complex, one should target `d_s -> 4` directly and **not** add another time dimension.
 
 ## Operational lattice gate
 
@@ -161,7 +205,7 @@ For an edge/face Hodge closure candidate require
 }
 \]
 
-in the **same** scaling window in which independent graph observables give `d_s^slice -> 3` and `z -> 1`.
+in the **same** scaling window in which independent graph observables give `D -> 3`, `d_s^slice -> 3` and `z -> 1`.
 
 A stronger test constructs maps in both directions and requires the composition to approach the signature-appropriate Hodge-square relation.
 
