@@ -1,0 +1,63 @@
+name: modular-complex-arithmetic
+
+on:
+  push:
+    branches:
+      - research/modular-complex-arithmetic-bridge
+    paths:
+      - 'MODULAR_COMPLEX_TO_ORDINARY_ARITHMETIC.md'
+      - 'FINITE_PHASE_TO_INTEGER_RATIONAL_LIFT.md'
+      - 'ARCHIMEDEAN_COMPLETION_AND_COMPLEX_EMERGENCE.md'
+      - 'Q2_ORIENTATION_TO_COMPLEX_CONJUGATION.md'
+      - 'PHASE_INVARIANT_QUADRATIC_WEIGHT.md'
+      - 'REALIFICATION_OF_QUANTUM_DYNAMICS.md'
+      - 'scripts/modular_complex_arithmetic_bridge_gate.py'
+      - 'scripts/finite_phase_integer_rational_lift_gate.py'
+      - 'scripts/archimedean_completion_complex_emergence_gate.py'
+      - 'scripts/q2_orientation_complex_conjugation_gate.py'
+      - 'scripts/phase_invariant_quadratic_weight_gate.py'
+      - 'scripts/realification_quantum_dynamics_gate.py'
+      - '.github/workflows/modular-complex-arithmetic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run exact modular-complex arithmetic bridge gate
+        run: |
+          mkdir -p verification_results
+          python scripts/modular_complex_arithmetic_bridge_gate.py \
+            --json verification_results/modular_complex_arithmetic_bridge_gate.json
+      - name: Run finite-phase integer/rational lift gate
+        run: |
+          python scripts/finite_phase_integer_rational_lift_gate.py \
+            --json verification_results/finite_phase_integer_rational_lift_gate.json
+      - name: Run Archimedean completion / complex emergence gate
+        run: |
+          python scripts/archimedean_completion_complex_emergence_gate.py \
+            --json verification_results/archimedean_completion_complex_emergence_gate.json
+      - name: Run q2 orientation / complex conjugation gate
+        run: |
+          python scripts/q2_orientation_complex_conjugation_gate.py \
+            --json verification_results/q2_orientation_complex_conjugation_gate.json
+      - name: Run phase-invariant quadratic weight gate
+        run: |
+          python scripts/phase_invariant_quadratic_weight_gate.py \
+            --json verification_results/phase_invariant_quadratic_weight_gate.json
+      - name: Run realification of Hermitian quantum dynamics gate
+        run: |
+          python scripts/realification_quantum_dynamics_gate.py \
+            --json verification_results/realification_quantum_dynamics_gate.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modular-complex-arithmetic-gates
+          path: verification_results/*.json
