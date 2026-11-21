@@ -69,4 +69,4 @@ jobs:
       - name: Audit one W5 seed column
         run: |
           python scripts/bqg_common_gauss_habitat_audit.py --seed-K ${{ matrix.seed_k }} --output /tmp/bqg_common_habitat_${{ matrix.seed_k }}.json
-          python -c "import json; d=json.load(open('/tmp/bqg_common_habitat_${{ matrix.seed_k }}.json')); print(json.dumps({'passed': d['passed'], 'seed_K': d['seed_K'], 'union_supports': d['union_supports'], 'checks': d['checks']}, indent=2)); assert d['passed'"
+          python -c "import json; d=json.load(open('/tmp/bqg_common_habitat_${{ matrix.seed_k }}.json')); print(json.dumps({'passed': d['passed'], 'seed_K': d['seed_K'], 'union_supports': d['union_supports'], 'checks': d['checks']}, indent=2)); assert d['passed']"
