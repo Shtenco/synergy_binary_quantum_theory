@@ -35,7 +35,7 @@ def freeze(state):
     return tuple(sorted(state.items(),key=lambda kv:repr(kv[0])))
 
 
-def run(v=0,a=None,b=None,c=None):
+def run(v=0,a=None,b=None,c=None,executor=None):
     old_he=KC.CK.apply_HE_complete_key
     old_gauss=KC.KG.apply_HE_local
     old_k=KC.apply_K_complete_custom
@@ -115,6 +115,10 @@ def run(v=0,a=None,b=None,c=None):
     if hasattr(KC.CK.HE_complete_cached,'cache_clear'):
         KC.CK.HE_complete_cached.cache_clear()
     try:
+        # Preserve every original sine-H_E adapter and cache while a v0.8
+        # amplitude assembler runs. The default single-triple path is unchanged.
+        if executor is not None:
+            return executor()
         out=RAW.run(v,a,b,c)
         infos={
             'HE_reduced':he_reduced.cache_info(),
