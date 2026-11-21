@@ -1,0 +1,108 @@
+name: BQG depth6 32 identity rematerialization isolated
+
+on:
+  push:
+    branches:
+      - bqg/depth6-numerical-completion
+    paths:
+      - '.github/workflows/bqg-depth6-32-rematerialize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rematerialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen engine dependencies
+        run: python -m pip install --disable-pip-version-check -q numpy scipy sympy
+      - name: Extract and pin immutable Stage-A engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          FROZEN_COMMIT=887e76fba5210524650002da0b54653d2c5b37fd
+          EXPECTED_BLOB=cbbaa80f6b6b61d353458db1fa1f03f824730532
+          git fetch --no-tags origin "$FROZEN_COMMIT"
+          ACTUAL_BLOB="$(git rev-parse "$FROZEN_COMMIT:mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64")"
+          test "$ACTUAL_BLOB" = "$EXPECTED_BLOB"
+          mkdir -p frozen_engine
+          git show "$FROZEN_COMMIT:mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64" > /tmp/bundle.b64
+          base64 -d /tmp/bundle.b64 | tar xzf - -C frozen_engine
+          printf '%s\n' "$FROZEN_COMMIT" > frozen_engine/FROZEN_COMMIT
+          printf '%s\n' "$ACTUAL_BLOB" > frozen_engine/FROZEN_BUNDLE_BLOB
+      - name: Re-materialize assignment identity and verify historical evidence
+        env:
+          PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}/frozen_engine
+        run: |
+          python -u - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          import github_mixed_master_shard as G
+          import bqg_depth6_41 as Z
+          import bqg_depth6_generic_jucys_selector as J
+          import depth6_32_identity_rematerialization as R
+          ROOT=Path('.')
+          persisted=json.loads((ROOT/'BQG_DEPTH6_32_ASSIGNMENT_LEDGER_2026-10-02.json').read_text())
+          stagea=json.loads((ROOT/'BQG_DEPTH6_32_STAGEA_LOG_SALVAGE_2026-10-02.json').read_text())
+          shell=G.shell(6)
+          reps=sorted({Z.canon5(tuple(s))[0] for s in shell})
+          seed=J.CFG['32'][0]
+          records=[]
+          for oid,rep in enumerate(reps):
+              m=J.exact_mult(rep,'32')
+              if not m: continue
+              d=J.layout(rep,seed)[2]
+              records.append({'orbit_id':int(oid),'rep':[int(x) for x in rep],
+                              'm':int(m),'coord_dim':int(d),'proxy':int(max(1,d)*max(1,m))})
+          historical={}
+          for row in stagea['rows']:
+              shard,status,blocks,columns,proxy=row[:5]
+              if blocks is not None:
+                  historical[str(shard)]={'assigned_blocks':int(blocks),
+                    'assigned_columns':int(columns),'proxy':float(proxy)}
+          gate=R.validate_rematerialized_identity(records,
+            persisted_records=persisted['records'],historical_batches=historical,
+            expected_shell_states=264962,observed_shell_states=len(shell),
+            expected_s5_orbits=2757,observed_s5_orbits=len(reps),
+            target_blocks=2755,target_columns=130903,nshards=112)
+          bins,loads=R.cost_balanced(records,112)
+          shard_by_id={int(rec['orbit_id']):shard for shard,batch in enumerate(bins) for rec in batch}
+          full=[]
+          for rec in sorted(records,key=lambda x:x['orbit_id']):
+              full.append({**rec,'source_shard':int(shard_by_id[rec['orbit_id']]),
+                'identity_source':'DETERMINISTIC_REMATERIALIZATION_FROM_FROZEN_STAGE_A_ENGINE',
+                'frozen_engine_commit':'887e76fba5210524650002da0b54653d2c5b37fd',
+                'frozen_bundle_blob_sha':'cbbaa80f6b6b61d353458db1fa1f03f824730532',
+                'source_stage_a_run_id':36899125190})
+          raw=json.dumps(full,sort_keys=True,separators=(',',':')).encode()
+          ledger={'schema_version':1,'kind':'BQG_DEPTH6_32_REMATERIALIZED_ASSIGNMENT_LEDGER',
+            'date':'2026-11-22','irrep':'[3,2]','status':'COMPLETE_IDENTITY_REMATERIALIZATION_ONLY',
+            'target_blocks':2755,'target_columns':130903,'source_stage_a_run_id':36899125190,
+            'frozen_engine_commit':'887e76fba5210524650002da0b54653d2c5b37fd',
+            'frozen_bundle_blob_sha':'cbbaa80f6b6b61d353458db1fa1f03f824730532',
+            'shell_states':len(shell),'s5_orbits':len(reps),'records':full,
+            'identity_sha256':hashlib.sha256(raw).hexdigest(),'acceptance_gate':gate,
+            'rank_certified':False,'actual_q_coverage_certified':False,
+            'numerical_closure_claimed':False,
+            'claim_boundary':'Identity rematerialization only; no actual-q, rank, kernel, or closure claim.'}
+          Path('BQG_DEPTH6_32_REMATERIALIZED_ASSIGNMENT_LEDGER_2026-11-22.json').write_text(json.dumps(ledger,indent=2,sort_keys=True)+'\n')
+          Path('BQG_DEPTH6_32_IDENTITY_REMATERIALIZATION_GATE_2026-11-22.json').write_text(json.dumps(gate,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'gate':gate,'ledger_sha256':ledger['identity_sha256']},sort_keys=True))
+          PY
+      - name: Upload complete identity snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-depth6-32-identity-snapshot
+          path: |
+            BQG_DEPTH6_32_REMATERIALIZED_ASSIGNMENT_LEDGER_2026-11-22.json
+            BQG_DEPTH6_32_IDENTITY_REMATERIALIZATION_GATE_2026-11-22.json
+          if-no-files-found: error
+          retention-days: 30
