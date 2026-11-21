@@ -127,41 +127,15 @@ def main():
           'rank_certified':True,'certified_rank':130903,
           'sigma_min_lower_bound':min(x['sigma_min_estimate'] for x in peeled),
           'numerical_closure_claimed':True})
-    elif residual_columns>a.max_residual_columns:
-        result['status']='RESIDUAL_REQUIRES_SPARSE_QR'
-        result['residual_limit']={'max_columns':a.max_residual_columns,
-          'max_bytes':a.max_residual_bytes}
     else:
-        active_order=sorted(active)
-        offsets={}
-        c=0
-        for oid in active_order:
-            offsets[oid]=(c,c+int(km[oid]['m']))
-            c+=int(km[oid]['m'])
-        q_list=sorted((q for q,n in q_occ.items() if n>0),key=repr)
-        nrows=sum(q_rows[q] for q in q_list)
-        nbytes=nrows*residual_columns*np.dtype(np.complex128).itemsize
-        result['residual_shape']=[int(nrows),int(residual_columns)]
-        result['residual_dense_bytes_estimate']=int(nbytes)
-        if nbytes>a.max_residual_bytes:
-            result['status']='RESIDUAL_REQUIRES_SPARSE_QR'
-        else:
-            A=np.zeros((nrows,residual_columns),dtype=np.complex128)
-            row0=0
-            for q in q_list:
-                nr=q_rows[q]
-                for oid in active_order:
-                    if q not in km[oid]['q_rows']: continue
-                    mm=load_raw(oid,raw_paths[oid],km[oid])
-                    lo,hi=offsets[oid]
-                    A[row0:row0+nr,lo:hi]=np.asarray(mm[q])
-                row0+=nr
-            w=rank_witness(A,a.rtol)
-            result['residual_svd']=w
-            result['status']='PASS_FULL_COLUMN_RANK_AFTER_RESIDUAL_SVD' if w['rank']==residual_columns else 'RANK_DEFICIENT_OR_UNRESOLVED'
-            if w['rank']==residual_columns:
-                result.update({'rank_certified':True,'certified_rank':130903,
-                  'numerical_closure_claimed':True})
+        # A shared q key plus equal row counts is not, by itself, a proof that
+        # row coordinates are identically ordered across different orbit
+        # blocks. Do not assemble a global residual matrix until the frozen
+        # backend exposes/pins a row-basis identity contract.
+        result['status']='RESIDUAL_REQUIRES_ROW_BASIS_IDENTITY_CERTIFICATE'
+        result['residual_limit']={'max_columns':a.max_residual_columns,
+          'max_bytes':a.max_residual_bytes,
+          'reason':'cross-block q-row coordinate alignment is not yet independently certified'}
     a.out.write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k not in ('peeling_witnesses','residual_svd')},sort_keys=True))
     if not result['rank_certified']: raise SystemExit(2)
