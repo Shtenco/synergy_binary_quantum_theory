@@ -1,0 +1,37 @@
+name: physical-boundary-source-dressing
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - PHYSICAL_BOUNDARY_SOURCE_DRESSING.md
+      - scripts/boundary_projector_source_dressing_gate.py
+      - .github/workflows/physical-boundary-source-dressing.yml
+  pull_request:
+    paths:
+      - PHYSICAL_BOUNDARY_SOURCE_DRESSING.md
+      - scripts/boundary_projector_source_dressing_gate.py
+      - .github/workflows/physical-boundary-source-dressing.yml
+
+jobs:
+  exact-boundary-source-dressing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run exact enlarged-projector boundary source control
+        run: |
+          python scripts/boundary_projector_source_dressing_gate.py \
+            --output verification_results/BOUNDARY_PROJECTOR_SOURCE_DRESSING.json
+      - name: Upload deterministic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boundary-projector-source-dressing
+          path: verification_results/BOUNDARY_PROJECTOR_SOURCE_DRESSING.json
+          if-no-files-found: error

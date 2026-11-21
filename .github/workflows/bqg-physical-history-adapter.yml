@@ -1,0 +1,68 @@
+name: bqg-physical-history-adapter
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/bqg_physical_history_adapter_gate.py'
+      - 'scripts/bqg_constraint_master_assembler_gate.py'
+      - 'scripts/dtarget_hda_certificate_gate.py'
+      - 'scripts/quantum_hda_habitat_residual_gate.py'
+      - 'scripts/flux_habitat_diffeo_gate.py'
+      - 'scripts/peter_weyl_euclidean_constraint_column.py'
+      - 'scripts/k5_logical_source_stabilizer_s4_gate.py'
+      - 'scripts/hda_kernel_redundancy_gate.py'
+      - 'scripts/q2_relational_metric_source_gate.py'
+      - 'scripts/master_constraint_physical_projector_gate.py'
+      - 'scripts/physical_cosmology_background_scalar_gate.py'
+      - 'scripts/binary_history_interference_lensing_gate.py'
+      - 'QUANTUM_HDA_HABITAT_RESIDUAL_PREREGISTRATION.md'
+      - 'FLUX_HABITAT_DIFFEO_BRIDGE.md'
+      - 'GRAPH_CHANGING_HDA_TARGET.md'
+      - 'UNIFIED_PHYSICAL_COSMOLOGY_INTERFERENCE.md'
+      - 'BQG_PHYSICAL_HISTORY_ADAPTER.md'
+      - 'FULL_CONSTRAINT_FAMILY_PHYSICAL_MASTER.md'
+      - '.github/workflows/bqg-physical-history-adapter.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adapter-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy sympy scipy
+      - name: Re-run exact master-projector theorem control
+        run: python scripts/master_constraint_physical_projector_gate.py --output verification_results/MASTER_CONSTRAINT_PHYSICAL_PROJECTOR.json
+      - name: Re-run existing relational metric-source control
+        run: python scripts/q2_relational_metric_source_gate.py --output verification_results/Q2_RELATIONAL_METRIC_SOURCE.json
+      - name: Verify exact HDA-kernel redundancy and near-zero warning
+        run: python scripts/hda_kernel_redundancy_gate.py --output verification_results/HDA_KERNEL_REDUNDANCY.json
+      - name: Freeze target-side Dtarget certificate (not quantum HDA authorization)
+        run: python scripts/dtarget_hda_certificate_gate.py --output verification_results/DTARGET_HDA_TARGET_SIDE_CERTIFICATE.json
+      - name: Regression-test actual quantum HH-Dtarget residual contract
+        run: python scripts/quantum_hda_habitat_residual_gate.py --self-test
+      - name: Regression-test E/L/Dtarget outgoing-column master assembler
+        run: python scripts/bqg_constraint_master_assembler_gate.py --output verification_results/BQG_CONSTRAINT_MASTER_ASSEMBLER.json
+      - name: Export one real Euclidean Peter-Weyl column in production schema
+        run: python scripts/peter_weyl_euclidean_constraint_column.py --node 0 --input-index 0 --output verification_results/EUCLIDEAN_COLUMN_NODE0_INPUT0.json
+      - name: Compute exact 32D K5 source-stabilizer S4 representation
+        run: python scripts/k5_logical_source_stabilizer_s4_gate.py --output verification_results/K5_LOGICAL_SOURCE_STABILIZER_S4.json
+      - name: Run unified constraint-to-history adapter regression
+        run: python scripts/bqg_physical_history_adapter_gate.py --output verification_results/BQG_PHYSICAL_HISTORY_ADAPTER.json
+      - name: Re-run existing background and scalar-cosmology reference map
+        run: python scripts/physical_cosmology_background_scalar_gate.py --output verification_results/PHYSICAL_COSMOLOGY_BACKGROUND_SCALAR_REFERENCE.json
+      - name: Re-run existing interference and lensing reference map
+        run: python scripts/binary_history_interference_lensing_gate.py --output verification_results/BINARY_HISTORY_INTERFERENCE_LENSING_REFERENCE.json
+      - name: Upload unified physicalization evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-physical-history-adapter-evidence
+          path: verification_results/*.json

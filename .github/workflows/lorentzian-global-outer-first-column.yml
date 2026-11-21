@@ -1,0 +1,111 @@
+name: lorentzian-global-outer-first-column
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/peter_weyl_lorentzian_global_outer_a_worker.py'
+      - 'scripts/peter_weyl_lorentzian_global_outer_aggregate.py'
+      - '.github/workflows/lorentzian-global-outer-first-column.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  ALL_MIDDLE_RUN_ID: '33971440632'
+  ALL_MIDDLE_HEAD_SHA: 'd1907fc723517ac405133b23e6add0e816e270a6'
+
+jobs:
+  outer-a:
+    strategy:
+      fail-fast: false
+      matrix:
+        outer_a: [1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download canonical all-middle packet
+        uses: actions/download-artifact@v4
+        with:
+          name: lorentzian-all-middle-prefixes-input0
+          path: all_middle
+          github-token: ${{ github.token }}
+          run-id: ${{ env.ALL_MIDDLE_RUN_ID }}
+      - name: Apply at most four globally grouped outer C(K) actions
+        run: |
+          mkdir -p outer_results
+          python scripts/peter_weyl_lorentzian_global_outer_a_worker.py \
+            --middle-dir all_middle \
+            --outer-a ${{ matrix.outer_a }} \
+            --source-node 0 \
+            --input-index 0 \
+            --middle-run-id $ALL_MIDDLE_RUN_ID \
+            --middle-head-sha $ALL_MIDDLE_HEAD_SHA \
+            --output outer_results/outer_a_${{ matrix.outer_a }}.json
+      - name: Upload exact outer-edge contribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-global-outer-a-${{ matrix.outer_a }}
+          path: outer_results/outer_a_${{ matrix.outer_a }}.json
+          if-no-files-found: error
+
+  aggregate:
+    needs: outer-a
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download all four exact outer-edge contributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lorentzian-global-outer-a-*
+          path: outer_results
+          merge-multiple: true
+      - name: Reconstruct fail-closed candidate first H_L column
+        run: |
+          mkdir -p final_results
+          python scripts/peter_weyl_lorentzian_global_outer_aggregate.py \
+            --packet-glob 'outer_results/outer_a_*.json' \
+            --output final_results/LORENTZIAN_GLOBAL_FIRST_COLUMN_CANDIDATE_INPUT00.json
+      - name: Verify strict fail-closed claim boundary
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('final_results/LORENTZIAN_GLOBAL_FIRST_COLUMN_CANDIDATE_INPUT00.json'))
+          assert p['passed'] is True
+          assert p['schema']=='BQG_LORENTZIAN_GLOBAL_FIRST_COLUMN_CANDIDATE_V1'
+          assert p['input_logical_basis_index']==0
+          assert p['outer_CK_call_count']<=16
+          assert len(p['live_ordered_triples'])==12
+          assert len(p['zero_before_outer_ordered_triples'])==12
+          assert p['production_equivalence_certified'] is False
+          assert p['physical_projector_eligible'] is False
+          assert p['science_status'] in {
+              'GLOBAL_GROUPED_RAW_HL_COLUMN_ZERO',
+              'GLOBAL_GROUPED_RAW_HL_COLUMN_NONZERO_WITH_LOGICAL_RETURN',
+              'GLOBAL_GROUPED_RAW_HL_COLUMN_NONZERO_LOGICAL_RETURN_ZERO',
+          }
+          print('PASS candidate first-column packet is fail-closed for production',p['science_status'])
+          PY
+      - name: Upload candidate first raw Lorentzian column
+        uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-global-first-column-candidate-input00
+          path: final_results/LORENTZIAN_GLOBAL_FIRST_COLUMN_CANDIDATE_INPUT00.json
+          if-no-files-found: error

@@ -1,0 +1,57 @@
+name: bqg-physical-spectral-history-certificate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - recovery/bqg-physical-spectral-history-2026-09-06
+    paths:
+      - BQG_PHYSICAL_SPECTRAL_HISTORY_CERTIFICATE.md
+      - scripts/bqg_physical_spectral_history_certificate_gate.py
+      - scripts/bqg_spectral_history_graph_gate.py
+      - .github/workflows/bqg-physical-spectral-history-certificate.yml
+  pull_request:
+    paths:
+      - BQG_PHYSICAL_SPECTRAL_HISTORY_CERTIFICATE.md
+      - scripts/bqg_physical_spectral_history_certificate_gate.py
+      - scripts/bqg_spectral_history_graph_gate.py
+      - .github/workflows/bqg-physical-spectral-history-certificate.yml
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-link-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run evidence-linked physical history self-test
+        run: |
+          python scripts/bqg_physical_spectral_history_certificate_gate.py \
+            --self-test \
+            --output verification_results/BQG_PHYSICAL_SPECTRAL_HISTORY_CERTIFICATE_SELFTEST.json
+      - name: Assert finite success cannot bypass missing refinement
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('verification_results/BQG_PHYSICAL_SPECTRAL_HISTORY_CERTIFICATE_SELFTEST.json').read_text())
+          assert d['passed'] is True
+          assert d['missing_refinement_top_level_passed'] is False
+          assert d['self_promotion_rejected'] is True
+          assert d['missing_refinement_status'] == 'FINITE_FULL_MASTER_SPECTRAL_HISTORY_CERTIFIED_REFINEMENT_OPEN'
+          print('evidence-linked physicalization negative controls passed')
+          PY
+      - name: Upload certificate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-physical-spectral-history-certificate-selftest
+          path: verification_results/BQG_PHYSICAL_SPECTRAL_HISTORY_CERTIFICATE_SELFTEST.json
+          if-no-files-found: error

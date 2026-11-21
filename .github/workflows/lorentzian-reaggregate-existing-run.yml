@@ -1,0 +1,86 @@
+name: lorentzian-reaggregate-existing-run
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'triggers/reaggregate-lorentzian.txt'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  reaggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/physical-scalar-kernel-dynamics
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Resolve latest successful source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow physical-scalar-kernel-dynamics-sharded.yml --branch research/physical-scalar-kernel-dynamics --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using source run $run_id"
+
+      - name: Download already computed 24 term artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          rm -rf downloaded shard_results
+          mkdir -p downloaded shard_results
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'epsilon-shard-*' --dir downloaded
+          find downloaded -type f -name 'shard_*.json' -print -exec cp {} shard_results/ \;
+          python - <<'PY'
+          from pathlib import Path
+          got=sorted(int(p.stem.split('_')[-1]) for p in Path('shard_results').glob('shard_*.json'))
+          print('recovered terms:',got)
+          assert got == list(range(24)), got
+          PY
+
+      - name: Reaggregate with current science-preserving aggregator
+        run: |
+          mkdir -p results
+          python scripts/peter_weyl_lorentzian_epsilon_aggregate.py \
+            --input-dir shard_results \
+            --shards 24 \
+            --source-node 0 \
+            --input-index 0 \
+            --output results/peter_weyl_lorentzian_epsilon_logical_return_sharded.json
+
+      - name: Upload reusable full outgoing column evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: epsilon-lorentzian-reaggregated-full-column
+          path: results/peter_weyl_lorentzian_epsilon_logical_return_sharded.json
+          if-no-files-found: error
+
+      - name: Publish reaggregated result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin research/physical-scalar-kernel-dynamics
+          git add results/peter_weyl_lorentzian_epsilon_logical_return_sharded.json
+          if git diff --cached --quiet; then
+            echo "Result unchanged"
+          else
+            git commit -m "Record reusable full Lorentzian outgoing column [skip ci]"
+            git push origin HEAD:research/physical-scalar-kernel-dynamics
+          fi

@@ -1,0 +1,67 @@
+name: projected-heat-first-moment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/bqg_projected_heat_first_moment_gate.py'
+      - '.github/workflows/projected-heat-first-moment.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  EUCLIDEAN_PACKET_RUN_ID: '33970844680'
+
+jobs:
+  first-moment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download complete 5x32 Euclidean microscopic packet
+        uses: actions/download-artifact@v4
+        with:
+          name: bqg-euclidean-boundary-packet
+          path: euclidean_packet
+          github-token: ${{ github.token }}
+          run-id: ${{ env.EUCLIDEAN_PACKET_RUN_ID }}
+      - name: Reconstruct actual first projected-heat moment
+        run: |
+          mkdir -p results
+          python scripts/bqg_projected_heat_first_moment_gate.py \
+            --packet-dir euclidean_packet \
+            --output results/BQG_PROJECTED_HEAT_FIRST_MOMENT.json
+      - name: Verify history claim boundary
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('results/BQG_PROJECTED_HEAT_FIRST_MOMENT.json'))
+          assert p['passed'] is True
+          assert p['schema']=='BQG_PROJECTED_HEAT_FIRST_MOMENT_V1'
+          assert p['mu1']['rank']==32 and p['mu1']['nullity']==0
+          assert abs(p['mu1']['trace']-398.6080475325508)<2e-10
+          assert p['projected_heat_short_tau']['compressed_exponential_used'] is False
+          assert p['block_krylov_status']['actual_moments_available']==[0,1]
+          assert p['block_krylov_status']['physical_projector_limit_available'] is False
+          assert p['production_frontier']['physical_projector_emitted'] is False
+          print('PASS actual BQG E-sector history moment', {
+            'eig_min':p['mu1']['eigenvalue_min'],
+            'eig_max':p['mu1']['eigenvalue_max'],
+            'trace_slope':p['projected_heat_short_tau']['trace_first_derivative_at_tau0'],
+          })
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-projected-heat-first-moment
+          path: results/BQG_PROJECTED_HEAT_FIRST_MOMENT.json
+          if-no-files-found: error

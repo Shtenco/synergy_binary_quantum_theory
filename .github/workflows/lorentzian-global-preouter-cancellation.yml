@@ -1,0 +1,61 @@
+name: lorentzian-global-preouter-cancellation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/peter_weyl_lorentzian_global_preouter_cancellation_gate.py'
+      - '.github/workflows/lorentzian-global-preouter-cancellation.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  ALL_MIDDLE_RUN_ID: '33971440632'
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download canonical all-middle packet
+        uses: actions/download-artifact@v4
+        with:
+          name: lorentzian-all-middle-prefixes-input0
+          path: all_middle
+          github-token: ${{ github.token }}
+          run-id: ${{ env.ALL_MIDDLE_RUN_ID }}
+      - name: Measure globally signed pre-outer cancellation
+        run: |
+          mkdir -p results
+          python scripts/peter_weyl_lorentzian_global_preouter_cancellation_gate.py \
+            --prefix-dir all_middle \
+            --output results/GLOBAL_PREOUTER_CANCELLATION_INPUT00.json
+      - name: Freeze measured first-column result
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('results/GLOBAL_PREOUTER_CANCELLATION_INPUT00.json'))
+          assert p['passed'] is True
+          assert p['source_node']==0 and p['input_logical_basis_index']==0
+          assert p['direct_K_global_cancellation_certified'] is True
+          assert p['all_aux_channels_cancellation_certified'] is True
+          rows={tuple(r['indices_ij']):r for r in p['global_signed_middle_sums']}
+          assert set(rows)=={(0,0),(0,1),(1,0),(1,1)}
+          print('PASS measured global pre-outer cancellation', {k:v['relative_residual'] for k,v in rows.items()})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-global-preouter-cancellation-input00
+          path: results/GLOBAL_PREOUTER_CANCELLATION_INPUT00.json
+          if-no-files-found: error

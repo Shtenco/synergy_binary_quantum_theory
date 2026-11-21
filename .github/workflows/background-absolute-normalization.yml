@@ -1,0 +1,37 @@
+name: background-absolute-normalization
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - BACKGROUND_ABSOLUTE_NORMALIZATION_VACUUM_ENERGY.md
+      - scripts/background_absolute_normalization_gate.py
+      - .github/workflows/background-absolute-normalization.yml
+  pull_request:
+    paths:
+      - BACKGROUND_ABSOLUTE_NORMALIZATION_VACUUM_ENERGY.md
+      - scripts/background_absolute_normalization_gate.py
+      - .github/workflows/background-absolute-normalization.yml
+
+jobs:
+  background-normalization-firewall:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run absolute-normalization positive and negative controls
+        run: |
+          python scripts/background_absolute_normalization_gate.py \
+            --output verification_results/BACKGROUND_ABSOLUTE_NORMALIZATION.json
+      - name: Upload deterministic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: background-absolute-normalization
+          path: verification_results/BACKGROUND_ABSOLUTE_NORMALIZATION.json
+          if-no-files-found: error

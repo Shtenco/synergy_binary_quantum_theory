@@ -1,0 +1,37 @@
+name: near-zero-rigging-limit
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - PHYSICAL_PROJECTOR_NEAR_ZERO_RIGGING_LIMIT.md
+      - scripts/near_zero_rigging_limit_gate.py
+      - .github/workflows/near-zero-rigging-limit.yml
+  pull_request:
+    paths:
+      - PHYSICAL_PROJECTOR_NEAR_ZERO_RIGGING_LIMIT.md
+      - scripts/near_zero_rigging_limit_gate.py
+      - .github/workflows/near-zero-rigging-limit.yml
+
+jobs:
+  asymptotic-projector-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run near-zero rigging positive and negative controls
+        run: |
+          python scripts/near_zero_rigging_limit_gate.py \
+            --output verification_results/NEAR_ZERO_RIGGING_LIMIT.json
+      - name: Upload deterministic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: near-zero-rigging-limit
+          path: verification_results/NEAR_ZERO_RIGGING_LIMIT.json
+          if-no-files-found: error

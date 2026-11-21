@@ -1,0 +1,140 @@
+name: lorentzian-pruned-first-column
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/peter_weyl_lorentzian_outer_from_middle_worker.py'
+      - 'scripts/peter_weyl_lorentzian_outer_from_middle_grouped_k_worker.py'
+      - 'scripts/peter_weyl_lorentzian_pruned_first_column_aggregate.py'
+      - 'scripts/peter_weyl_lorentzian_pruned_prefix_worker.py'
+      - 'PETER_WEYL_LORENTZIAN_MIDDLE_PREFIX_RESULT.md'
+      - '.github/workflows/lorentzian-pruned-first-column.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific dependencies
+        run: python -m pip install --upgrade pip numpy scipy sympy
+      - name: Verify exact 12-prefix / 24-triple epsilon DAG
+        run: |
+          python scripts/peter_weyl_lorentzian_pruned_prefix_worker.py \
+            --plan-only \
+            --output results/lorentzian_plan.json
+          python - <<'PY'
+          import json
+          p=json.load(open('results/lorentzian_plan.json'))
+          assert p['passed'] is True
+          assert p['ordered_prefix_count']==12
+          assert p['ordered_triple_count']==24
+          assert p['unique_ordered_triple_count']==24
+          print('PASS exact Lorentzian DAG coverage')
+          PY
+
+  outer:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { idx: 0, b: 1, c: 2 }
+          - { idx: 1, b: 1, c: 3 }
+          - { idx: 3, b: 2, c: 1 }
+          - { idx: 4, b: 2, c: 3 }
+          - { idx: 6, b: 3, c: 1 }
+          - { idx: 7, b: 3, c: 2 }
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific dependencies
+        run: python -m pip install --upgrade pip numpy scipy sympy
+      - name: Download exact certified middle-prefix artifact from run 33964666509
+        uses: actions/download-artifact@v4
+        with:
+          name: lorentzian-middle-prefix-${{ matrix.idx }}
+          path: results/middle
+          github-token: ${{ github.token }}
+          repository: Shtenco/binary_quantum_theory
+          run-id: 33964666509
+      - name: Continue exact outer C(K), grouped over k by linearity
+        run: |
+          python scripts/peter_weyl_lorentzian_outer_from_middle_grouped_k_worker.py \
+            --middle-prefix-json results/middle/prefix_${{ matrix.idx }}.json \
+            --source-node 0 \
+            --input-index 0 \
+            --output results/outer/prefix_${{ matrix.idx }}.json
+      - name: Verify requested prefix provenance and grouped execution
+        run: |
+          python - <<'PY'
+          import json
+          idx=${{ matrix.idx }}
+          b=${{ matrix.b }}
+          c=${{ matrix.c }}
+          p=json.load(open(f'results/outer/prefix_{idx}.json'))
+          assert p['passed'] is True
+          assert p['schema']=='BQG_LORENTZIAN_OUTER_FROM_MIDDLE_V1'
+          assert p['execution_mode']=='exact_grouped_k_linearity_v2'
+          assert p['prefix']['b']==b and p['prefix']['c']==c
+          assert p['middle_artifact']['science_status']=='MIDDLE_PREFIX_NONZERO'
+          assert p['hard_integrity_checks']['exactly_eight_unique_aux_paths'] is True
+          assert p['hard_integrity_checks']['exactly_four_grouped_ij_channels'] is True
+          assert p['outer_CK_call_count']==8
+          print('PASS grouped-k outer provenance', idx, (b,c), p['science_status'])
+          PY
+      - name: Upload exact signed prefix continuation
+        uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-outer-prefix-${{ matrix.idx }}
+          path: results/outer/prefix_${{ matrix.idx }}.json
+          if-no-files-found: error
+
+  aggregate:
+    needs: outer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific dependencies
+        run: python -m pip install --upgrade pip numpy scipy sympy
+      - name: Download all six exact outer-prefix artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lorentzian-outer-prefix-*
+          path: results/outer
+          merge-multiple: true
+      - name: Assemble complete first raw Lorentzian outgoing column
+        run: |
+          python scripts/peter_weyl_lorentzian_pruned_first_column_aggregate.py \
+            --worker results/outer/prefix_0.json \
+            --worker results/outer/prefix_1.json \
+            --worker results/outer/prefix_3.json \
+            --worker results/outer/prefix_4.json \
+            --worker results/outer/prefix_6.json \
+            --worker results/outer/prefix_7.json \
+            --zero-prefix-result PETER_WEYL_LORENTZIAN_MIDDLE_PREFIX_RESULT.md \
+            --output results/lorentzian_pruned_first_column.json
+      - name: Upload complete first raw H_L column
+        uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-pruned-first-column
+          path: results/lorentzian_pruned_first_column.json
+          if-no-files-found: error

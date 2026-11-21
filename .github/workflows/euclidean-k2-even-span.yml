@@ -1,0 +1,125 @@
+name: euclidean-k2-even-span
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'PETER_WEYL_EUCLIDEAN_K2_EVEN_SPAN_PREREGISTRATION.md'
+      - 'scripts/peter_weyl_euclidean_k2_even_shard.py'
+      - 'scripts/peter_weyl_euclidean_k2_even_aggregate.py'
+      - '.github/workflows/euclidean-k2-even-span.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  EUCLIDEAN_PACKET_RUN_ID: '33970844680'
+
+jobs:
+  k2-shard:
+    strategy:
+      fail-fast: false
+      matrix:
+        target_node: [0, 1, 2, 3, 4]
+        source_node: [0, 1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download certified reusable 5x32 Euclidean packet
+        uses: actions/download-artifact@v4
+        with:
+          name: bqg-euclidean-boundary-packet
+          path: euclidean_packet
+          github-token: ${{ github.token }}
+          run-id: ${{ env.EUCLIDEAN_PACKET_RUN_ID }}
+      - name: Compute only 32 second actions for this target/source pair
+        run: |
+          mkdir -p k2_shard
+          python scripts/peter_weyl_euclidean_k2_even_shard.py \
+            --packet-dir euclidean_packet \
+            --target-node ${{ matrix.target_node }} \
+            --source-node ${{ matrix.source_node }} \
+            --output k2_shard/K2_w${{ matrix.target_node }}_v${{ matrix.source_node }}.json
+      - name: Verify shard claim boundary
+        run: |
+          python - <<'PY'
+          import json, os
+          w=os.environ['W']; v=os.environ['V']
+          p=json.load(open(f'k2_shard/K2_w{w}_v{v}.json'))
+          assert p['passed'] is True
+          assert p['schema']=='BQG_EUCLIDEAN_K2_EVEN_SHARD_V1'
+          assert p['columns']==32
+          assert len(p['states'])==32
+          assert p['Jmax']==2.5
+          print('PASS K2-even reusable shard',w,v,p['support_min'],p['support_max'])
+          PY
+        env:
+          W: ${{ matrix.target_node }}
+          V: ${{ matrix.source_node }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-euclidean-k2-even-w${{ matrix.target_node }}-v${{ matrix.source_node }}
+          path: k2_shard/K2_w${{ matrix.target_node }}_v${{ matrix.source_node }}.json
+          if-no-files-found: error
+
+  aggregate-k2-even:
+    needs: k2-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download all 25 reusable K2-even shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bqg-euclidean-k2-even-w*-v*
+          path: k2_shards
+          merge-multiple: true
+      - name: Rank-reveal the enlarged even carrier
+        run: |
+          mkdir -p results
+          python scripts/peter_weyl_euclidean_k2_even_aggregate.py \
+            --shard-glob 'k2_shards/K2_w*_v*.json' \
+            --output-json results/BQG_EUCLIDEAN_K2_EVEN_SPAN.json \
+            --output-npz results/BQG_EUCLIDEAN_K2_EVEN_SPAN.npz
+      - name: Verify no rank or projector outcome was pre-imposed
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('results/BQG_EUCLIDEAN_K2_EVEN_SPAN.json'))
+          assert p['passed'] is True
+          assert p['schema']=='BQG_EUCLIDEAN_K2_EVEN_SPAN_V1'
+          assert p['labelled_two_hit_columns']==800
+          assert p['history_relevance']['first_enlarged_even_constraint_generated_carrier_measured'] is True
+          assert p['history_relevance']['identified_with_master_krylov_MV0'] is False
+          assert p['history_relevance']['mu2_computed'] is False
+          assert p['history_relevance']['physical_projector_emitted'] is False
+          assert p['total_even_carrier_dimension_through_two_hits']==32+p['G2_perp']['rank_new_even_directions']
+          print('PASS K2-even rank reveal', {
+            'rank_G2':p['G2']['rank'],
+            'new_even_rank':p['G2_perp']['rank_new_even_directions'],
+            'even_carrier_dim':p['total_even_carrier_dimension_through_two_hits'],
+          })
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-euclidean-k2-even-span
+          path: |
+            results/BQG_EUCLIDEAN_K2_EVEN_SPAN.json
+            results/BQG_EUCLIDEAN_K2_EVEN_SPAN.npz
+          if-no-files-found: error

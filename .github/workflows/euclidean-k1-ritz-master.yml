@@ -1,0 +1,79 @@
+name: euclidean-k1-ritz-master
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - PETER_WEYL_EUCLIDEAN_K1_RITZ_MASTER_PREREGISTRATION.md
+      - scripts/peter_weyl_euclidean_k1_ritz_shard.py
+      - scripts/peter_weyl_euclidean_k1_ritz_aggregate.py
+      - .github/workflows/euclidean-k1-ritz-master.yml
+  pull_request:
+    paths:
+      - PETER_WEYL_EUCLIDEAN_K1_RITZ_MASTER_PREREGISTRATION.md
+      - scripts/peter_weyl_euclidean_k1_ritz_shard.py
+      - scripts/peter_weyl_euclidean_k1_ritz_aggregate.py
+      - .github/workflows/euclidean-k1-ritz-master.yml
+
+jobs:
+  target-node-shards:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [0, 1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compute one positive second-action Gram
+        run: |
+          python scripts/peter_weyl_euclidean_k1_ritz_shard.py \
+            --target-node ${{ matrix.node }} \
+            --output-npz verification_results/k1_ritz_node_${{ matrix.node }}.npz \
+            --output-json verification_results/k1_ritz_node_${{ matrix.node }}.json
+      - name: Upload target-node Ritz shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k1-ritz-node-${{ matrix.node }}
+          path: |
+            verification_results/k1_ritz_node_${{ matrix.node }}.npz
+            verification_results/k1_ritz_node_${{ matrix.node }}.json
+          if-no-files-found: warn
+
+  aggregate-k1-ritz:
+    needs: target-node-shards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download five target-node shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: k1-ritz-node-*
+          path: verification_results/k1_ritz_shards
+          merge-multiple: true
+      - name: Aggregate generalized Euclidean K1 Ritz master
+        run: |
+          python scripts/peter_weyl_euclidean_k1_ritz_aggregate.py \
+            --input-dir verification_results/k1_ritz_shards \
+            --output verification_results/PETER_WEYL_EUCLIDEAN_K1_RITZ_MASTER.json
+      - name: Upload aggregated K1 Ritz spectrum
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: euclidean-k1-ritz-master
+          path: verification_results/PETER_WEYL_EUCLIDEAN_K1_RITZ_MASTER.json
+          if-no-files-found: warn

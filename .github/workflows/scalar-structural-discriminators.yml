@@ -1,0 +1,44 @@
+name: scalar-structural-discriminators
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - PHYSICAL_SCALAR_IR_DISCRIMINATORS.md
+      - PHYSICAL_PROJECTOR_BLOCK_KRYLOV_HABITAT.md
+      - scripts/scalar_ir_pole_discriminator_gate.py
+      - scripts/regge_background_scale_discriminator_gate.py
+      - scripts/boundary_projector_krylov_positive_control.py
+      - .github/workflows/scalar-structural-discriminators.yml
+  pull_request:
+    paths:
+      - PHYSICAL_SCALAR_IR_DISCRIMINATORS.md
+      - PHYSICAL_PROJECTOR_BLOCK_KRYLOV_HABITAT.md
+      - scripts/scalar_ir_pole_discriminator_gate.py
+      - scripts/regge_background_scale_discriminator_gate.py
+      - scripts/boundary_projector_krylov_positive_control.py
+      - .github/workflows/scalar-structural-discriminators.yml
+
+jobs:
+  exact-structural-discriminators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run exact scalar IR response discriminator
+        run: python scripts/scalar_ir_pole_discriminator_gate.py
+
+      - name: Run exact Regge/background homogeneity discriminator
+        run: python scripts/regge_background_scale_discriminator_gate.py
+
+      - name: Run boundary-projector / block-Krylov positive control
+        run: python scripts/boundary_projector_krylov_positive_control.py

@@ -1,0 +1,91 @@
+name: lorentzian-all-middle-prefixes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/peter_weyl_lorentzian_all_middle_prefixes_gate.py'
+      - '.github/workflows/lorentzian-all-middle-prefixes.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  input0-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific dependencies
+        run: python -m pip install --upgrade pip numpy scipy sympy
+      - name: Compute all 12 prefixes in one shared cache session
+        run: |
+          python scripts/peter_weyl_lorentzian_all_middle_prefixes_gate.py \
+            --source-node 0 \
+            --input-index 0 \
+            --output-dir results/batched
+      - name: Verify frozen zero/live partition
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('results/batched/middle_prefix_summary.json'))
+          assert p['passed'] is True
+          assert p['unique_CV_state_count']==16
+          assert p['explicit_unique_CV_evaluations']==16
+          assert p['nonzero_prefix_indices']==[0,1,3,4,6,7], p
+          assert p['zero_prefix_indices']==[2,5,8,9,10,11], p
+          print('PASS frozen input0 zero/live partition',p['zero_prefix_indices'],p['nonzero_prefix_indices'])
+          PY
+      - name: Download six independently measured live-prefix artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lorentzian-middle-prefix-*
+          path: results/reference
+          github-token: ${{ github.token }}
+          repository: Shtenco/binary_quantum_theory
+          run-id: 33964666509
+      - name: Compare batched sparse states to independent prefix runs
+        run: |
+          python - <<'PY'
+          import json,math,glob,os
+          live=[0,1,3,4,6,7]
+          def dec(rows):
+              d={}
+              for r in rows:
+                  k=(tuple(r['spins']),tuple(r['Kother']),int(r['J2']),int(r['M2']),int(r['K12']),int(r['K34']))
+                  d[k]=d.get(k,0j)+complex(*r['amp'])
+              return d
+          worst=0.0; worst_rel=0.0
+          for idx in live:
+              a=json.load(open(f'results/batched/prefix_{idx}.json'))
+              hits=glob.glob(f'results/reference/**/prefix_{idx}.json',recursive=True)
+              assert len(hits)==1,(idx,hits)
+              b=json.load(open(hits[0]))
+              assert a['science_status']==b['science_status']=='MIDDLE_PREFIX_NONZERO'
+              assert a['ordered_pair']==b['ordered_pair']
+              pa={tuple(x['indices']):x for x in a['paths']}; pb={tuple(x['indices']):x for x in b['paths']}
+              assert set(pa)==set(pb)=={(i,j,k) for i in range(2) for j in range(2) for k in range(2)}
+              for key in sorted(pa):
+                  sa=dec(pa[key]['middle_state']); sb=dec(pb[key]['middle_state']); keys=set(sa)|set(sb)
+                  diff=math.sqrt(sum(abs(sa.get(q,0)-sb.get(q,0))**2 for q in keys))
+                  norm=max(math.sqrt(sum(abs(z)**2 for z in sa.values())),math.sqrt(sum(abs(z)**2 for z in sb.values())),1e-300)
+                  mx=max((abs(sa.get(q,0)-sb.get(q,0)) for q in keys),default=0.0)
+                  worst=max(worst,mx); worst_rel=max(worst_rel,diff/norm)
+                  assert len(sa)==len(sb)
+                  assert mx<5e-12,(idx,key,mx)
+                  assert diff/norm<5e-11,(idx,key,diff/norm)
+          print('PASS batched-vs-independent middle sparse regression',{'max_abs':worst,'max_rel_l2':worst_rel})
+          PY
+      - name: Upload reusable all-prefix packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lorentzian-all-middle-prefixes-input0
+          path: results/batched/
+          if-no-files-found: warn

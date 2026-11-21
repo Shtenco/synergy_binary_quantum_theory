@@ -1,0 +1,80 @@
+name: Quantum HDA Habitat Residual Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/quantum_hda_habitat_residual_gate.py'
+      - 'QUANTUM_HDA_HABITAT_RESIDUAL_PREREGISTRATION.md'
+      - '.github/workflows/quantum-hda-habitat-residual.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  gate-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run embedded fail-closed regression suite
+        run: python scripts/quantum_hda_habitat_residual_gate.py --self-test
+
+      - name: Build synthetic exact-closure and open-residual packets
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import json
+          from pathlib import Path
+
+          path = Path('scripts/quantum_hda_habitat_residual_gate.py')
+          spec = importlib.util.spec_from_file_location('hda_gate', path)
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          out = Path('results/quantum_hda_gate_ci')
+          out.mkdir(parents=True, exist_ok=True)
+          (out / 'exact_packet.json').write_text(json.dumps(mod._synthetic_packet('exact'), indent=2) + '\n')
+          (out / 'wrong_target_packet.json').write_text(json.dumps(mod._synthetic_packet('wrong-target'), indent=2) + '\n')
+          PY
+
+      - name: Exact beta-independent packet must certify
+        run: |
+          python scripts/quantum_hda_habitat_residual_gate.py \
+            --packet results/quantum_hda_gate_ci/exact_packet.json \
+            --output results/quantum_hda_gate_ci/exact_certificate.json
+
+      - name: Wrong target must fail closed
+        shell: bash
+        run: |
+          set +e
+          python scripts/quantum_hda_habitat_residual_gate.py \
+            --packet results/quantum_hda_gate_ci/wrong_target_packet.json \
+            --output results/quantum_hda_gate_ci/wrong_target_certificate.json
+          rc=$?
+          set -e
+          if [ "$rc" -ne 2 ]; then
+            echo "Expected fail-closed exit code 2, got $rc"
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          p = json.load(open('results/quantum_hda_gate_ci/wrong_target_certificate.json'))
+          assert p['quantum_habitat_residual_certified'] is False
+          assert p['science_status'] == 'OPEN_QUANTUM_HDA_RESIDUAL'
+          assert p['norm_squared_polynomial']['lambda_fit_used_for_certification'] is False
+          print('PASS wrong-target fail-closed regression')
+          PY
+
+      - name: Upload gate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum-hda-habitat-residual-gate-evidence
+          path: results/quantum_hda_gate_ci
+          if-no-files-found: error

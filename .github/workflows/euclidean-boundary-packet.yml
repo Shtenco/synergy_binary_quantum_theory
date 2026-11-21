@@ -1,0 +1,36 @@
+name: euclidean-boundary-packet
+
+on:
+  push:
+    branches:
+      - research/physical-scalar-kernel-dynamics
+    paths:
+      - 'scripts/peter_weyl_euclidean_boundary_packet.py'
+      - '.github/workflows/euclidean-boundary-packet.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Production provenance refresh: current producer emits the explicit pruning
+# perturbation bound required by higher projected-heat moment gates.
+jobs:
+  build-packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install scientific dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Build all 160 Euclidean outgoing columns with pruning certificate
+        run: python scripts/peter_weyl_euclidean_boundary_packet.py --output-dir euclidean_boundary_packet
+      - name: Upload reusable E-sector packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-euclidean-boundary-packet
+          path: euclidean_boundary_packet/
+          if-no-files-found: error
