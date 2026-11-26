@@ -1,0 +1,197 @@
+{
+  "node": 3,
+  "source_provenance": {
+    "repository": "Shtenco/synergy_binary_quantum_theory",
+    "commit": "f6bfcd775b8c3cd33c6c235d48293e40657baf9d",
+    "bundle_path": "mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64",
+    "bundle_sha256": "2a42c6cdbf82b3b65a2ada02116e31cc9dd30c514589bb2885992050d1d16d32",
+    "source_module_sha256": {
+      "bqg_block_apply_invariants.py": "199a73d45645981f6a6c195bce8b595519172a71a0555004d14b5b7a4afb39f5",
+      "bqg_depth6_generic_master_row.py": "0435668bb05595598a020fbb1b4dde471b6cb09b634fbe078a5976336f8b505e",
+      "bqg_safe_boundary_master_gate.py": "9570b696e241ab1b01e5e327f86798ad6099f90b39d8db5cd5ceeac04a268c05",
+      "bqg_reduced_transfer_hamiltonian.py": "7179b328431a31ffec5ce1e66ec94e97d02f78ec49323b9d4e87ab6cb881fe8f",
+      "bqg_covariant_volume_recoupling.py": "45ab0a5befc51ad8323e3c9d658662318bcb2d58460387e8fe0b8b1f6e1afba4"
+    },
+    "comparison_scope": "endpoint local_hit_outputs, oriented coupled tensors, reversed-edge adjoints, path ordering, radial adjoint order, oriented simplex signs, and final local-J=0 Gauss projection",
+    "identity_with_historical_branch_sum": "not established"
+  },
+  "oriented_term_count": 12,
+  "terms": [
+    {
+      "spec": [
+        3,
+        1,
+        2,
+        4
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 1, 1, 0, 1, 0, 0), ((0, 0, 0, 0), (1, 1, 0, 0), (1, 1, 0, 0), (1, 1, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        2,
+        4,
+        1
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 0, 0, 0, 1, 1, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 2, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        4,
+        1,
+        2
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 0, 1, 1, 0, 0, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (1, 1, 2, 0), (1, 1, 0, 0)))": "Matrix([\n[-3**(1/4)/6, -3**(1/4)/3],\n[ 3**(1/4)/3,  3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        0,
+        2,
+        4
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 1, 1, 0, 0, 0, 0, 1, 0, 0), ((1, 1, 0, 0), (0, 0, 0, 0), (1, 1, 0, 0), (1, 1, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        2,
+        4,
+        0
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 0, 0, 0, 1, 1, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 2, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        4,
+        0,
+        2
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 1, 1, 0, 0, 0, 0, 0, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (1, 1, 2, 0), (1, 1, 0, 0)))": "Matrix([\n[-3**(1/4)/6, -3**(1/4)/3],\n[ 3**(1/4)/3,  3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        0,
+        1,
+        4
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((1, 0, 1, 0, 0, 1, 0, 0, 0, 0), ((1, 1, 0, 0), (1, 1, 0, 0), (0, 0, 0, 0), (2, 0, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        1,
+        4,
+        0
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 0, 1, 1, 0, 0, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (1, 1, 2, 0), (1, 1, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        4,
+        0,
+        1
+      ],
+      "orientation_sign": 1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 1, 1, 0, 0, 0, 0, 0, 1), ((0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (1, 1, 2, 0), (1, 1, 0, 0)))": "Matrix([\n[-3**(1/4)/6, -3**(1/4)/3],\n[ 3**(1/4)/3,  3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        0,
+        1,
+        2
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((1, 0, 1, 0, 0, 1, 0, 0, 0, 0), ((1, 1, 0, 0), (1, 1, 0, 0), (0, 0, 0, 0), (2, 0, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        1,
+        2,
+        0
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 0, 0, 0, 1, 1, 0, 1, 0, 0), ((0, 0, 0, 0), (1, 1, 0, 0), (1, 1, 0, 0), (1, 1, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[ 3**(1/4)/6,  3**(1/4)/3],\n[-3**(1/4)/3, -3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    },
+    {
+      "spec": [
+        3,
+        2,
+        0,
+        1
+      ],
+      "orientation_sign": -1,
+      "adjoint_channel_matrices_by_output_state": {
+        "((0, 1, 1, 0, 0, 0, 0, 1, 0, 0), ((1, 1, 0, 0), (0, 0, 0, 0), (1, 1, 0, 0), (1, 1, 2, 0), (0, 0, 0, 0)))": "Matrix([\n[-3**(1/4)/6, -3**(1/4)/3],\n[ 3**(1/4)/3,  3**(1/4)/6]])"
+      },
+      "hermitian_half_sum_output": {},
+      "term_annihilates_vacuum": true
+    }
+  ],
+  "node_constraint_pre_gauss_output": {},
+  "node_constraint_output": {},
+  "node_constraint_annihilates_vacuum": true,
+  "exact_cg_arithmetic": true,
+  "exact_volume_input": "For three doubled-spin-1 legs and one spin-zero leg, Q^2=(3/16)I on J=1 and Q=0 on J=3; hence V=3^(1/4)/2 I on J=1.",
+  "forward_radial_piece": "zero analytically: volume acts on vacuum or after only one fundamental hit, leaving fewer than three nonzero incident legs",
+  "scope": "exact reduced-basis forward-plus-adjoint H_node across all 12 oriented terms, with source-matched final Gauss projection; forward radial part is zero analytically on vacuum; source node formula assembled directly",
+  "source_gauss_projection_applied": true
+}

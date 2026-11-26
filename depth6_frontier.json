@@ -1,6 +1,7 @@
 {
-  "schema_version": 1,
-  "status_date": "2026-10-01",
+  "schema_version": 2,
+  "status_date": "2026-11-25",
+  "ledger_revision_note": "Kernel-evidence statuses reconciled with preserved certificates; unsupported [5] and [4,1] rank/kernel assertions are retained only as unverified historical ledger claims.",
   "scope": "corrected finite K5 depth-6 master-kernel frontier",
   "status": "NUMERICAL_WITNESSES_PENDING",
   "shell": {
@@ -18,24 +19,47 @@
     "[2,1,1,1]": 103318,
     "[1^5]": 26794
   },
-  "closed_irreps": {
+  "sector_kernel_evidence": {
     "[1^5]": {
-      "status": "CLOSED",
+      "status": "CLOSED_FINITE_NUMERICAL",
       "rank": 26794,
       "dimension": 26794,
-      "kernel": "empty"
+      "kernel": "empty",
+      "certificate": "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json",
+      "derivation": "numerical consequence of the zero whole S4-sign master kernel and the [1^5] direct-sum [2,1,1,1] decomposition"
     },
     "[5]": {
-      "status": "CLOSED",
-      "dimension": 27227,
-      "nonvacuum_rank": 27226,
-      "kernel": "zero-spin vacuum line only"
+      "status": "UNVERIFIED_LEDGER_CLAIM",
+      "ledger_claim": {
+        "dimension": 27227,
+        "nonvacuum_rank": 27226,
+        "kernel": "zero-spin vacuum line only"
+      },
+      "evidence": null,
+      "reconstructed_operator_vacuum_inclusion": {
+        "status": "EXACT_FINITE_FOR_RECOVERED_GENERIC_MASTER_MAP",
+        "node_constraint": "H_v |0> = 0 for each v in {0,1,2,3,4}",
+        "master_consequence": "<0|sum_v H_v^dagger H_v|0> = 0",
+        "artifacts": [
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE0_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE1_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE2_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE3_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE4_20261126.json"
+        ],
+        "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
+        "limitation": "historical branch-sum ledger not established; no rank claim on the vacuum complement",
+        "master_map_assembly": "The recovered generic master_map is assembled from node maps v=0,1 plus the S3-related v=2 representative with weight sqrt(3), followed by linear S3/S2 coordinate maps; exact zero of each node map implies exact zero output on the all-zero [5] coordinate."
+      }
     },
     "[4,1]": {
-      "status": "CLOSED",
-      "rank": 104146,
-      "dimension": 104146,
-      "kernel": "empty"
+      "status": "UNVERIFIED_LEDGER_CLAIM",
+      "ledger_claim": {
+        "rank": 104146,
+        "dimension": 104146,
+        "kernel": "empty"
+      },
+      "evidence": null
     },
     "[2,1,1,1]": {
       "status": "CLOSED_FINITE_NUMERICAL",

@@ -1,0 +1,138 @@
+{
+  "status": "SUPERSEDED_FLOATING_PRECURSOR",
+  "exact_q0_certified": false,
+  "exact_q0_next_microlemma": "derive the four adjoint SU(2) index-channel coefficients for every oriented simplex term in exact CG/recoupling arithmetic; the exact local volume block is already reduced to (3^(1/4)/2) I_2",
+  "scope": "one all-zero K5 spin-orbit block in the remote generic depth-6 master-map implementation",
+  "source": {
+    "repository": "Shtenco/synergy_binary_quantum_theory",
+    "commit": "f6bfcd775b8c3cd33c6c235d48293e40657baf9d",
+    "bundle_path": "mixed_parallel/bqg_mixed_master_bundle.tar.gz.b64",
+    "bundle_sha256": "2a42c6cdbf82b3b65a2ada02116e31cc9dd30c514589bb2885992050d1d16d32",
+    "bundle_encoded_bytes": 32616,
+    "contained_modules": 13,
+    "generic_map_module": "bqg_depth6_generic_master_row.py",
+    "node_action_module": "bqg_block_apply_invariants.py"
+  },
+  "input": {
+    "doubled_edge_spins": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "orbit_multiplicity_dimension": 1,
+    "S5_representation": "trivial [5]",
+    "normalized_input_coordinate": [
+      1.0
+    ]
+  },
+  "computation": {
+    "generic_master_map_call": "master_map(rep=(0,)*10, key='32', W=identity(1), tol=1e-13); key selects the trivial S3 seed only; explicit W is the unique [5] vector on the all-zero orbit",
+    "generic_map_returned_output_blocks": 0,
+    "internal_numeric_pruning": "The source uses floating CG/recoupling data and fixed local thresholds (including 1e-13 in the radial-local matrix and 1e-11 in node accumulation). Empty output is therefore not an exact-arithmetic certificate.",
+    "oriented_term_unpruned_residual_norms_after_signed_sum": {
+      "representative_vertex_0": 0.0,
+      "representative_vertex_1": 2.4037033579794548e-17,
+      "representative_vertex_2": 2.7755575615628914e-17
+    },
+    "maximum_single_oriented_term_residual_norm": {
+      "representative_vertex_0": 2.7755575615628914e-17,
+      "representative_vertex_1": 7.436320742970896e-17,
+      "representative_vertex_2": 7.81515553431286e-17
+    },
+    "adjoint_radial_index_channel_example": {
+      "representative_vertex": 0,
+      "fixed_local_spec": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "output_channel_amplitudes_i0j0_i0j1_i1j0_i1j1": [
+        0.21934566882541573,
+        0.4386913376508314,
+        -0.4386913376508314,
+        -0.21934566882541573
+      ],
+      "sum_after_index_contraction": 0.0
+    },
+    "triangle_adjoint_loop_channel_matrix": {
+      "fixed_geometry": "v=0, a=1, b=2; vacuum all-zero input",
+      "observed_float_matrix": [
+        [
+          -1.0000000000000007,
+          -1.4142135623730958
+        ],
+        [
+          1.4142135623730958,
+          1.0000000000000007
+        ]
+      ],
+      "exact_CG_candidate": "[[-1, -sqrt(2)], [sqrt(2), 1]]",
+      "candidate_vs_float_max_absolute_error": 6.661338147750939e-16,
+      "candidate_status": "numerical candidate; exact derivation not yet implemented as a convention-matched symbolic reduced-basis evaluator"
+    },
+    "adjoint_channel_factorization_candidate": {
+      "triangle_loop_factor": "L=[[-1,-sqrt(2)],[sqrt(2),1]]",
+      "radial_volume_factor_elementwise": "R=-(3**(1/4)/6)*[[1,sqrt(2)],[sqrt(2),1]]",
+      "entrywise_product": "L ⊙ R=(3**(1/4)/6)*[[1,2],[-2,-1]]",
+      "index_sum": 0,
+      "proof_status": "the local volume scalar is exact; the loop/radial factors are reconstructed from finite floating CG output and still need exact symbolic derivation"
+    },
+    "independent_evaluator_audit": {
+      "attempt": "A direct symbolic magnetic-index path evaluator was implemented temporarily from the factorized-link conventions.",
+      "result": "It returned zero for channels where the recovered reduced-transfer backend returns nonzero values.",
+      "disposition": "The mismatched evaluator was removed; do not cite it as proof of the triangle CG table.",
+      "implication": "Orientation, endpoint-index, or normalization conventions were not fully ported. An exact evaluator must be derived against local_hit_outputs/reduced-basis transfer directly."
+    },
+    "exact_local_volume_block_reduction": {
+      "reproducer": "scripts/depth6_vacuum_volume_exact_block.py",
+      "doubled_local_spins": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "doubled_total_spin": 1,
+      "recoupling_labels": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "Q_matrix": "(sqrt(3)/4) * [[0, i], [-i, 0]]",
+      "volume_matrix": "(3**(1/4)/2) * I_2",
+      "basis_convention": "K=(12) coupled to L=(34), then total J; signs match the recovered covariant-volume source basis",
+      "symbolic_pauli_crosscheck": "For Q123=epsilon_ijk J1^i J2^j J3^k with Ji=sigma_i/2, the coupled K=0,1; J=1/2, M=1/2 basis gives [[0,-i*sqrt(3)/4],[i*sqrt(3)/4,0]]. The four-valent source convention has Q_source=-Q123 because the j4=0 term is (-1)^3 Q123.",
+      "channel_matrix_candidate": "(3**(1/4)/6) * [[1, 2], [-2, -1]]",
+      "candidate_vs_float_max_absolute_error": 6.106226635438361e-16,
+      "candidate_status": "inferred from finite floating recoupling; exact hit-path coefficient derivation still required"
+    }
+  },
+  "conclusion": "This artifact is the original floating-point precursor only. Its prior claim_boundary remains valid for this computation; the exact follow-up is documented in superseded_by and the linked node artifacts.",
+  "claim_boundary": "Not itself an exact proof of q0=0 and not a rank witness. A separate convention-matched exact reduced-basis evaluator now proves vacuum annihilation for all five nodes of the recovered map; this does not prove historical ledger identity or full depth-6 kernel closure.",
+  "superseded_by": {
+    "status": "EXACT_FINITE_FOR_RECOVERED_GENERIC_MASTER_MAP",
+    "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
+    "node_artifacts": [
+      "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE0_20261126.json",
+      "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE1_20261126.json",
+      "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE2_20261126.json",
+      "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE3_20261126.json",
+      "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE4_20261126.json"
+    ],
+    "result": "H_v|0>=0 for every node v=0,...,4; q0=0 for the recovered positive master",
+    "limitation": "identity with historical branch-sum ledger and nonvacuum rank remain unproved",
+    "master_map_assembly": "The recovered generic master_map is assembled from node maps v=0,1 plus the S3-related v=2 representative with weight sqrt(3), followed by linear S3/S2 coordinate maps; exact zero of each node map implies exact zero output on the all-zero [5] coordinate."
+  }
+}

@@ -57,7 +57,7 @@ def main() -> int:
     data = json.loads(LEDGER.read_text(encoding="utf-8"))
     cert = json.loads(CERT_2111.read_text(encoding="utf-8"))
 
-    require(errors, data.get("schema_version") == 1, "ledger schema_version must be 1")
+    require(errors, data.get("schema_version") == 2, "ledger schema_version must be 2")
     require(errors, cert.get("schema_version") == 1, "2111 certificate schema_version must be 1")
     require(errors, data.get("status") == "NUMERICAL_WITNESSES_PENDING", "frontier status mismatch")
 
@@ -85,12 +85,65 @@ def main() -> int:
         require(errors, s.get("columns") == columns, f"{key} structural column ledger mismatch")
         require(errors, s.get("remainder") == remainder, f"{key} structural remainder must remain zero")
 
-    closed = data.get("closed_irreps", {})
-    required_closed = {"[1^5]", "[5]", "[4,1]", "[2,1,1,1]"}
-    require(errors, set(closed) == required_closed, "closed_irreps must contain the four certified sectors")
-    for key in ("[1^5]", "[5]", "[4,1]"):
-        require(errors, closed.get(key, {}).get("status") == "CLOSED", f"{key} is not marked CLOSED")
-    c2111 = closed.get("[2,1,1,1]", {})
+    sector_evidence = data.get("sector_kernel_evidence", {})
+    required_sectors = {"[1^5]", "[5]", "[4,1]", "[2,1,1,1]"}
+    require(
+        errors,
+        set(sector_evidence) == required_sectors,
+        "sector_kernel_evidence must describe the four previously claimed sectors",
+    )
+    # [1^5] is a finite numerical consequence of the saved whole S4-sign result,
+    # not an exact-arithmetic proof and not an independent sector certificate.
+    c1f5 = sector_evidence.get("[1^5]", {})
+    require(errors, c1f5.get("status") == "CLOSED_FINITE_NUMERICAL", "[1^5] must remain finite numerical only")
+    require(errors, c1f5.get("rank") == 26794, "[1^5] numerical rank mismatch")
+    require(errors, c1f5.get("dimension") == 26794, "[1^5] dimension mismatch")
+    require(errors, c1f5.get("kernel") == "empty", "[1^5] numerical kernel mismatch")
+    require(errors, c1f5.get("certificate") == CERT_2111.name, "[1^5] S4-sign certificate pointer mismatch")
+    require(errors, "whole S4-sign" in c1f5.get("derivation", ""), "[1^5] numerical derivation must identify its scope")
+
+    # [5] now has an exact vacuum-inclusion witness for the recovered node map,
+    # but still lacks both a nonvacuum rank certificate and identity with the
+    # historical branch-sum operator. Preserve the original claim as unverified.
+    c5 = sector_evidence.get("[5]", {})
+    require(errors, c5.get("status") == "UNVERIFIED_LEDGER_CLAIM", "[5] unsupported CLOSED claim must remain unverified")
+    require(errors, c5.get("ledger_claim", {}).get("dimension") == 27227, "[5] original dimension claim missing")
+    require(errors, c5.get("ledger_claim", {}).get("nonvacuum_rank") == 27226, "[5] original rank claim missing")
+    require(errors, c5.get("evidence") is None, "[5] must not imply a missing certificate exists")
+    vacuum = c5.get("reconstructed_operator_vacuum_inclusion", {})
+    require(errors, vacuum.get("status") == "EXACT_FINITE_FOR_RECOVERED_GENERIC_MASTER_MAP", "[5] reconstructed exact vacuum result missing or overstated")
+    require(errors, vacuum.get("node_constraint") == "H_v |0> = 0 for each v in {0,1,2,3,4}", "[5] exact node-vacuum scope mismatch")
+    require(errors, vacuum.get("master_consequence") == "<0|sum_v H_v^dagger H_v|0> = 0", "[5] exact vacuum master consequence mismatch")
+    require(errors, len(vacuum.get("artifacts", [])) == 5, "[5] exact vacuum artifact list incomplete")
+    require(errors, "historical branch-sum ledger not established" in vacuum.get("limitation", ""), "[5] historical-operator limitation missing")
+    require(errors, "exact zero of each node map implies exact zero" in vacuum.get("master_map_assembly", ""), "[5] generic master-map assembly implication missing")
+    for node in range(5):
+        artifact_path = ROOT / "verification_results" / f"DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE{node}_20261126.json"
+        try:
+            artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"[5] exact vacuum node {node} artifact unavailable/invalid: {exc}")
+            continue
+        require(errors, artifact.get("node") == node, f"[5] exact vacuum node {node} label mismatch")
+        require(errors, artifact.get("exact_cg_arithmetic") is True, f"[5] node {node} is not exact-CG arithmetic")
+        require(errors, artifact.get("node_constraint_annihilates_vacuum") is True, f"[5] node {node} vacuum image is nonzero")
+        require(errors, artifact.get("node_constraint_pre_gauss_output") == {}, f"[5] node {node} pre-Gauss exact output is nonzero")
+        require(errors, artifact.get("source_gauss_projection_applied") is True, f"[5] node {node} source Gauss projection missing")
+        terms = artifact.get("terms", [])
+        require(errors, len(terms) == 12, f"[5] node {node} oriented-term coverage mismatch")
+        require(errors, all(term.get("term_annihilates_vacuum") is True for term in terms), f"[5] node {node} has a nonzero term output")
+        provenance = artifact.get("source_provenance", {})
+        require(errors, provenance.get("commit") == "f6bfcd775b8c3cd33c6c235d48293e40657baf9d", f"[5] node {node} source commit mismatch")
+        require(errors, provenance.get("bundle_sha256") == "2a42c6cdbf82b3b65a2ada02116e31cc9dd30c514589bb2885992050d1d16d32", f"[5] node {node} bundle hash mismatch")
+        require(errors, "final local-J=0 Gauss projection" in provenance.get("comparison_scope", ""), f"[5] node {node} source Gauss projection provenance missing")
+        require(errors, provenance.get("identity_with_historical_branch_sum") == "not established", f"[5] node {node} historical identity limitation missing")
+        require(errors, len(provenance.get("source_module_sha256", {})) == 5, f"[5] node {node} source module hash list missing")
+    c41 = sector_evidence.get("[4,1]", {})
+    require(errors, c41.get("status") == "UNVERIFIED_LEDGER_CLAIM", "[4,1] unsupported CLOSED claim must remain unverified")
+    require(errors, c41.get("ledger_claim", {}).get("rank") == 104146, "[4,1] original rank claim missing")
+    require(errors, c41.get("evidence") is None, "[4,1] must not imply a missing certificate exists")
+
+    c2111 = sector_evidence.get("[2,1,1,1]", {})
     require(errors, c2111.get("status") == "CLOSED_FINITE_NUMERICAL", "[2,1,1,1] must be CLOSED_FINITE_NUMERICAL")
     require(errors, c2111.get("rank") == 103318, "[2,1,1,1] rank mismatch")
     require(errors, c2111.get("dimension") == 103318, "[2,1,1,1] dimension mismatch")
@@ -162,7 +215,9 @@ def main() -> int:
         "status": data.get("status"),
         "structural_depth6_status": data.get("structural_depth6_status"),
         "finite_depth6_theorem_status": data.get("finite_depth6_theorem_status"),
-        "closed_irreps": sorted(closed),
+        "sector_kernel_evidence": {
+            key: value.get("status") for key, value in sorted(sector_evidence.items())
+        },
         "s4_sign_status": s4.get("sector_status"),
         "s4_sign_master_kernel_dimension": s4.get("master_kernel_dimension"),
         "current_numerical_witness": data.get("current_numerical_witness"),
