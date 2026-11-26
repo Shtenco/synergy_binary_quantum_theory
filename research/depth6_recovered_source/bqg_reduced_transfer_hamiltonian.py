@@ -186,4 +186,3 @@ def apply_oriented_spec_gauss_state(state,sign,spec,Jmax2):
             rr=apply_primitive_gauss(state,seq,Jmax2)
             add_state(out,rr,0.5*sign*coef,tol=1e-11)
     return {k:z for k,z in out.items() if abs(z)>1e-10}
-
