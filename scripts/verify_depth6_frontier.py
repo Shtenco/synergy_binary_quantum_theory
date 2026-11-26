@@ -313,6 +313,11 @@ def main() -> int:
     require(errors, "[5] nonvacuum rank" in hist5.get("verifier_does_not_check", []), "[5] historical verifier rank gap missing")
     require(errors, "[5] certificate or numerical witness" in hist5.get("verifier_does_not_check", []), "[5] historical verifier witness gap missing")
     require(errors, "not a disproof" in hist5.get("interpretation", ""), "[5] historical audit must not overstate the result")
+    log_scan = hist5.get("opencode_history_literal_scan", {})
+    require(errors, log_scan.get("status") == "READ_ONLY_LITERAL_SCAN_COMPLETE", "[5] OpenCode log scan status mismatch")
+    require(errors, log_scan.get("script") == "scripts/audit_opencode_depth6_5_history.py", "[5] OpenCode log scan script pointer mismatch")
+    require(errors, log_scan.get("match_counts") == {"nonvacuum_rank": 1, "A_[5]": 0, "B_[5]": 0}, "[5] OpenCode literal scan counts mismatch")
+    require(errors, "does not rule out differently named" in log_scan.get("scope_note", ""), "[5] OpenCode literal scan scope limitation missing")
     require(errors, cert.get("finite_depth6_full_theorem_status") == "NOT_YET_PROVED", "2111 certificate must not promote full depth-6 theorem")
 
     result = {
