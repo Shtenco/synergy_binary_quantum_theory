@@ -114,3 +114,13 @@ A targeted search found explicit local intertwiner coefficient vectors with full
 and normalize each node before contraction. The current floating implementation returned quotient dimensions 21 and 24, ranks 21 and 24, and smallest singular values 0.212005 and 0.0584274 respectively (rank threshold (10^{-9})). Thus the earlier absence-of-extra-null result is no longer supported only by random sampling: these are reproducible full-rank finite witnesses with explicit coefficients.
 
 This is not yet the requested exact generic theorem. The reported rank and singular values are floating-point outputs, and the quotient basis is formed numerically by QR. To promote this to an analytic generic-rank result, one must produce a certified nonzero exact minor (or an interval lower bound), show the Jacobian entries are rational/algebraic functions on the nonzero-support domain, and combine that witness with the exact symmetry upper bound. No uniform lower bound under graph refinement follows from a finite witness. The result remains a finite T75 tangent-map certificate, not a continuum metric theorem.
+
+
+For reproducibility, pivoted QR on the realified full tangent selected the following row/column indices (zero-based); these are candidate minors, not exact certificates:
+
+| Fixture | Rows | Columns | Numerical minor |
+|---|---|---|---|
+| `path_3` | 307,85,52,45,203,476,492,75,459,311,362,59,277,55,179,396,54,42,213,317,314 | 0,1,2,30,31,32,18,19,20,4,3,5,33,34,35,6,13,8,23,22,15 | sign +; log10(abs(det)) = −19.28954; condition ≈ 15.73 |
+| `cycle_4` | 102,331,347,43,294,23,103,152,356,411,286,70,145,401,326,480,283,155,11,26,357,281,282,89 | 3,4,5,13,12,14,34,33,35,9,10,11,45,47,46,24,25,26,37,21,23,15,16,17 | sign −; log10(abs(det)) = −23.74258; condition ≈ 64.63 |
+
+The row convention is first all real boundary-amplitude coordinates, then all imaginary coordinates; tangent columns follow node, leg, and Pauli-axis order in `projective_tangent_jacobian`. QR pivot selection itself is floating-point and may vary by BLAS implementation, so a future exact certificate should freeze and verify the resulting minor independently.
