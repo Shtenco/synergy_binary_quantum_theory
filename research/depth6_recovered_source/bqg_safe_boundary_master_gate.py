@@ -293,4 +293,3 @@ def main():
     if a.output: a.output.write_text(text+'\n')
 
 if __name__=='__main__': main()
-
