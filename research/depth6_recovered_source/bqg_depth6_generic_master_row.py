@@ -102,4 +102,3 @@ def gram(mp):
     m=next(iter(mp.values())).shape[1];G=np.zeros((m,m),complex)
     for M in mp.values():G+=M.conj().T@M
     return (G+G.conj().T)/2
-
