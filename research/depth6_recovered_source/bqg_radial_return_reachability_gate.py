@@ -73,4 +73,3 @@ def run():
             'safe_wall_claim':'For d successive H actions from all s=1, Jmax_safe=(1+d)/2 suffices for both final triangle support and the one-step radial intermediate. Thus HH requires Jmax=3/2, not 5/2.',
             'scope':'Representation-selection after exact CG radial-return. Amplitude cancellations can reduce support further.'}
 if __name__=='__main__':print(json.dumps(run(),indent=2))
-
