@@ -55,6 +55,8 @@ The reduced TT lattice transfer separately has (c_{\rm red}=1/\sqrt3) in its own
 
 With one emergent Lorentz metric and a physical Maxwell sector using the same metric/Hodge structure, both massless inverse kernels depend at leading order on the same invariant (s=-\omega^2+c_{\rm metric}^2k^2). Their leading cones therefore coincide under those assumptions. The physical common metric and Maxwell sector remain open inputs in the current BQG ledgers.
 
+The physical-pole branch also derives a compact phase link from q=2 rays, \(U_{vw}=\langle\psi_v|\psi_w\rangle/|\langle\psi_v|\psi_w\rangle|\in U(1)\), for nonorthogonal neighboring rays, and a gauge-invariant plaquette holonomy. A small-holonomy Wilson action expands to a quadratic curvature term, but only conditional on a positive blocked stiffness and geometric Hodge weights. Its finite cochain calculation establishes the kernel of gauge transformations and the seed's transverse sector; it does not establish a dynamical Coulomb phase, positive \(Z_A\), or a photon pole. The branch cites Polyakov's compact electrodynamics result in 2+1 dimensions and Guth's weak-coupling nonconfining result for four-dimensional Villain U(1) as dimensional compatibility evidence; neither selects the Coulomb basin in BQG.
+
 An infoton candidate requires a gauge-invariant physical operator and positive physical spectral pole. If it exists in the same history as the graviton, a common retarded inverse kernel has the block form
 
 \[
