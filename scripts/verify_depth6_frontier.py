@@ -295,6 +295,18 @@ def main() -> int:
     require(errors, data.get("finite_depth6_theorem_status") == "NOT_YET_PROVED", "full finite depth-6 theorem must remain NOT_YET_PROVED")
     require(errors, "5 A_[5],[4]" in data.get("branch_sum", {}).get("[5]", ""), "[5] unique-branch conditional formula missing")
     require(errors, "operator identity with recovered generic row remains unproved" in data.get("branch_sum", {}).get("[5]", ""), "[5] historical operator identity limitation missing")
+    hist5 = data.get("historical_5_claim_audit", {})
+    require(errors, hist5.get("status") == "HISTORICAL_LABEL_FOUND_NO_RANK_WITNESS_VALIDATED", "[5] historical audit status mismatch")
+    require(errors, hist5.get("source_branch") == "archive/w5-v09-immutable-6ae145a", "[5] historical audit branch mismatch")
+    require(errors, hist5.get("source_frontier_blob_sha") == "e9ca9dc8ffa69df908f7ae1348701a5f738e1202", "[5] archived frontier blob pin mismatch")
+    require(errors, hist5.get("source_verifier_blob_sha") == "7f9cf62b8386bb464ecdf62efac9d28a58a16375", "[5] archived verifier blob pin mismatch")
+    old5 = hist5.get("archived_claim", {})
+    require(errors, old5.get("global_status") == "NUMERICAL_WITNESSES_PENDING", "[5] historical global pending status mismatch")
+    require(errors, old5.get("sector_status") == "CLOSED" and old5.get("dimension") == 27227, "[5] historical closed sector claim mismatch")
+    require(errors, old5.get("nonvacuum_rank") == 27226 and old5.get("certificate_pointer") is None, "[5] historical rank/certificate provenance mismatch")
+    require(errors, "[5] nonvacuum rank" in hist5.get("verifier_does_not_check", []), "[5] historical verifier rank gap missing")
+    require(errors, "[5] certificate or numerical witness" in hist5.get("verifier_does_not_check", []), "[5] historical verifier witness gap missing")
+    require(errors, "not a disproof" in hist5.get("interpretation", ""), "[5] historical audit must not overstate the result")
     require(errors, cert.get("finite_depth6_full_theorem_status") == "NOT_YET_PROVED", "2111 certificate must not promote full depth-6 theorem")
 
     result = {
