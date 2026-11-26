@@ -210,6 +210,16 @@
       "[5] certificate or numerical witness",
       "operator identity for A_[5],[4]"
     ],
+    "opencode_history_literal_scan": {
+      "status": "READ_ONLY_LITERAL_SCAN_COMPLETE",
+      "script": "scripts/audit_opencode_depth6_5_history.py",
+      "match_counts": {
+        "nonvacuum_rank": 1,
+        "A_[5]": 0,
+        "B_[5]": 0
+      },
+      "scope_note": "Exact literal search across JSON string values in the local OpenCode database; absence does not rule out differently named or external evidence."
+    },
     "interpretation": "The archived snapshot proves that the CLOSED label and rank claim were recorded, but the archived verifier does not validate the rank claim. This is a provenance gap, not a disproof of the historical numerical result."
   },
   "s4_sign_frontier": {
