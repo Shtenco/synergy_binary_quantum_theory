@@ -153,4 +153,25 @@ The exact local reconstruction gate gives the background edge metric \\(g_0\\) a
 \\qquad A,B\\in\\{X,Z\\}.
 \\]
 
-Therefore, at the isotropic tetrahedron and with these stated normalizations, the pullback of the spatial shape tangent inner product is exactly \\(6g_{FS}\\). This supplies a local, analytic identification between distinguishability of logical quantum rays and intrinsic tetrahedral metric-shape response. The factor is convention-dependent, and the identity is a tangent-space result at the regular shape. It does not construct a graph-to-continuum metric field, physical time evolution, an Einstein kinetic operator, a graviton pole, or a photon/infoton sector. The missing T75-to-shape map remains explicit: the T75 quotient coordinates are half-link frame variations, while \\(X,Z\\) parameterize node intertwiner rays, and no physical history map between them has yet been derived.
+Therefore, at the isotropic tetrahedron and with these stated normalizations, the pullback of the spatial shape tangent inner product is exactly \\(6g_{FS}\\). This supplies a local, analytic identification between distinguishability of logical quantum rays and intrinsic tetrahedral metric-shape response. The factor is convention-dependent, and the identity is a tangent-space result at the regular shape. It does not construct a graph-to-continuum metric field, physical time evolution, an Einstein kinetic operator, a graviton pole, or a photon/infoton sector. The missing T75-to-shape map remains explicit: the T75 frame coordinates and node-shape coordinates remain distinct input sectors. Section 9 tests them together through the same finite boundary contraction, but this does not identify a physical projection from frame quotient to shape or derive a continuum history map.
+
+
+## 9. Combined finite frame-and-shape response
+
+Extend the same graph boundary map by allowing both half-link frame variations and two real projective variations of each node intertwiner ray:
+
+\\[
+(\\delta\\omega_{frame},\\delta X_1,\\delta Z_1,\\ldots,\\delta X_V,\\delta Z_V)
+\\longmapsto\\delta[\\mathcal C_\\Gamma(\\otimes_v|\\iota_v\\rangle)].
+\\]
+
+For each logical ray \\(c=(a,b)\\), the orthogonal tangent vector \\(u=(-\\bar b,\\bar a)\\) and \\(iu\\) span its two real ray directions. The shape derivative is computed by replacing the corresponding node tensor in the multilinear contraction, then projecting off the boundary ray. For the path_3 exact T75 witness and the cycle_4 nondegenerate witness recorded in scripts/q2_relational_frame_shape_response_gate.py, every node has nonzero oriented-volume Bloch coordinate \\(Y\\), so \\(X,Z\\) are valid local shape coordinates. The finite floating SVD reports:
+
+| Fixture | Frame quotient | Node-shape directions | Combined rank / dimension | Minimum combined singular value |
+|---|---:|---:|---:|---:|
+| \\(path_3\\) | 21 | 6 | 27 / 27 | 0.212005 |
+| \\(cycle_4\\) | 24 | 8 | 32 / 32 | 0.292778 |
+
+Thus, at these witnesses in this finite contraction model, the boundary ray responds independently to quotient frame directions and all node-shape directions. The local exact map in Section 8 then carries each node's \\(X,Z\\) tangent into a rank-two tetrahedral metric-shape tangent. This is a tighter finite composition than treating the T75 and local shape gates as unrelated controls.
+
+The combined ranks and singular values are floating-point diagnostics (threshold \\(10^{-8}\\)); no exact combined-minor certificate or graph-refinement lower bound has been established. This constructs no physical Hamiltonian history, time metric, or continuum spacetime field, and does not produce graviton, photon, or infoton poles. The frame and shape input sectors are jointly observable in the tested boundary state, but are not thereby physically identified with each other.
