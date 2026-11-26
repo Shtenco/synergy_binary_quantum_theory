@@ -135,7 +135,7 @@ For reproducibility, pivoted QR on the realified full tangent first selected the
 | `path_3` | 307,85,52,45,203,476,492,75,459,311,362,59,277,55,179,396,54,42,213,317,314 | 0,1,2,30,31,32,18,19,20,4,3,5,33,34,35,6,13,8,23,22,15 | sign +; log10(abs(det)) = −19.28954; condition ≈ 15.73 |
 | `cycle_4` | 102,331,347,43,294,23,103,152,356,411,286,70,145,401,326,480,283,155,11,26,357,281,282,89 | 3,4,5,13,12,14,34,33,35,9,10,11,45,47,46,24,25,26,37,21,23,15,16,17 | sign −; log10(abs(det)) = −23.74258; condition ≈ 64.63 |
 
-The row convention is first all real boundary-amplitude coordinates, then all imaginary coordinates; tangent columns follow node, leg, and Pauli-axis order in `projective_tangent_jacobian`. QR pivot selection itself is floating-point and may vary by BLAS implementation, so a future exact certificate should freeze and verify the resulting minor independently.
+The row convention is first all real boundary-amplitude coordinates, then all imaginary coordinates; tangent columns follow node, leg, and Pauli-axis order in `projective_tangent_jacobian`. QR originally selected the indices in floating point, but the exact script now freezes and verifies the listed minor determinants independently; a different BLAS implementation may select other indices without affecting this existing certificate.
 
 
 ## 8. Exact local quantum-ray to spatial-shape metric
