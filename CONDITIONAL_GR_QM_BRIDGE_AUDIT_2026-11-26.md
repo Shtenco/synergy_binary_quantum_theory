@@ -111,7 +111,7 @@ A targeted search found explicit local intertwiner coefficient vectors with full
 \end{array}
 \]
 
-and normalize each node before contraction. The current floating implementation returned quotient dimensions 21 and 24, ranks 21 and 24, and smallest singular values 0.212005 and 0.0584274 respectively (rank threshold (10^{-9})). Thus the earlier absence-of-extra-null result is no longer supported only by random sampling: these are reproducible full-rank finite witnesses with explicit coefficients.
+The numerical gate normalized each node before contraction; the exact minor uses the listed vectors as unnormalized ray representatives, which changes a common scale but not rank. The floating implementation returned quotient dimensions 21 and 24, ranks 21 and 24, and smallest singular values 0.212005 and 0.0584274 respectively (rank threshold (10^{-9})). Thus the earlier absence-of-extra-null result is no longer supported only by random sampling: these are reproducible full-rank finite witnesses with explicit coefficients.
 
 The exact certificate is reproducible with `python scripts/q2_relational_exact_tangent_minor_certificate.py`; it reconstructs the stated coefficients, logical singlets, normalized edge epsilon, and projective tangent formula. The resulting determinants in \\(\\mathbb Q(\\sqrt2,\\sqrt3,i)\\) are
 
