@@ -133,12 +133,15 @@ def main() -> int:
     require(errors, selector.get("verifier") == "scripts/verify_s5_trivial_projector.py", "[5] exact selector verifier pointer mismatch")
     require(errors, "no master-map rank" in selector.get("scope_limit", ""), "[5] selector must not overstate master-map rank")
     vacuum = c5.get("reconstructed_operator_vacuum_inclusion", {})
-    require(errors, vacuum.get("status") == "EXACT_FINITE_FOR_RECOVERED_GENERIC_MASTER_MAP", "[5] reconstructed exact vacuum result missing or overstated")
-    require(errors, vacuum.get("node_constraint") == "H_v |0> = 0 for each v in {0,1,2,3,4}", "[5] exact node-vacuum scope mismatch")
-    require(errors, vacuum.get("master_consequence") == "<0|sum_v H_v^dagger H_v|0> = 0", "[5] exact vacuum master consequence mismatch")
+    require(errors, vacuum.get("status") == "EXACT_FINITE_FOR_RECONSTRUCTED_NODE_FORMULA", "[5] reconstructed exact vacuum result missing or overstated")
+    require(errors, vacuum.get("node_constraint") == "H_v |0> = 0 for each v in {0,1,2,3,4} in the exact reduced-basis reconstruction", "[5] exact node-vacuum scope mismatch")
+    require(errors, vacuum.get("master_consequence") == "<0|sum_v H_v^dagger H_v|0> = 0 for the positive master assembled from the reconstructed node maps", "[5] exact vacuum master consequence mismatch")
     require(errors, len(vacuum.get("artifacts", [])) == 5, "[5] exact vacuum artifact list incomplete")
-    require(errors, "historical branch-sum ledger not established" in vacuum.get("limitation", ""), "[5] historical-operator limitation missing")
-    require(errors, "exact zero of each node map implies exact zero" in vacuum.get("master_map_assembly", ""), "[5] generic master-map assembly implication missing")
+    require(errors, "does not call source H_node_apply_ultrafast in exact arithmetic" in vacuum.get("limitation", ""), "[5] node implementation identity limitation missing")
+    require(errors, "source selector CFG has no [5] entry" in vacuum.get("limitation", ""), "[5] source selector limitation missing")
+    require(errors, "historical branch-sum identities remain unproved" in vacuum.get("limitation", ""), "[5] historical-operator limitation missing")
+    require(errors, vacuum.get("node_map_identity_to_source") == "not established convention-by-convention", "[5] source node-map identity must remain open")
+    require(errors, "Conditional only" in vacuum.get("master_map_assembly", ""), "[5] source generic-row implication must remain conditional")
     for node in range(5):
         artifact_path = ROOT / "verification_results" / f"DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE{node}_20261126.json"
         try:
@@ -264,4 +267,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
