@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "depth6_frontier.json"
 CERT_2111 = ROOT / "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json"
 C5_CENSUS = ROOT / "verification_results" / "DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json"
+C5_SOURCE_BRIDGE = ROOT / "verification_results" / "DEPTH6_5_VACUUM_SOURCE_BRIDGE_20261126.json"
 
 EXPECTED_MULT = {
     "[5]": 27227,
@@ -58,6 +59,7 @@ def main() -> int:
     data = json.loads(LEDGER.read_text(encoding="utf-8"))
     cert = json.loads(CERT_2111.read_text(encoding="utf-8"))
     census = json.loads(C5_CENSUS.read_text(encoding="utf-8"))
+    source_bridge = json.loads(C5_SOURCE_BRIDGE.read_text(encoding="utf-8"))
 
     require(errors, data.get("schema_version") == 2, "ledger schema_version must be 2")
     require(errors, cert.get("schema_version") == 1, "2111 certificate schema_version must be 1")
@@ -142,6 +144,18 @@ def main() -> int:
     require(errors, "historical branch-sum identities remain unproved" in vacuum.get("limitation", ""), "[5] historical-operator limitation missing")
     require(errors, vacuum.get("node_map_identity_to_source") == "not established convention-by-convention", "[5] source node-map identity must remain open")
     require(errors, "Conditional only" in vacuum.get("master_map_assembly", ""), "[5] source generic-row implication must remain conditional")
+    bridge_ref = vacuum.get("source_bridge_crosscheck", {})
+    require(errors, bridge_ref.get("status") == "NUMERICAL_SOURCE_BRIDGE_CROSSCHECK", "[5] source bridge scope mismatch")
+    require(errors, bridge_ref.get("artifact") == "verification_results/DEPTH6_5_VACUUM_SOURCE_BRIDGE_20261126.json", "[5] source bridge artifact pointer mismatch")
+    require(errors, bridge_ref.get("state_resolved_channel_matrices") == 60, "[5] source bridge matrix coverage mismatch")
+    require(errors, bridge_ref.get("channel_entries_compared") == 320, "[5] source bridge entry coverage mismatch")
+    require(errors, source_bridge.get("status") == "NUMERICAL_SOURCE_BRIDGE_CROSSCHECK", "[5] numerical source bridge artifact missing or overstated")
+    require(errors, source_bridge.get("state_resolved_channel_matrices") == 60, "[5] numerical source bridge matrix count mismatch")
+    require(errors, source_bridge.get("channel_entries_compared") == 320, "[5] numerical source bridge entry count mismatch")
+    require(errors, source_bridge.get("max_absolute_error", 1.0) <= 7e-16, "[5] numerical source bridge absolute error exceeds recorded bound")
+    require(errors, source_bridge.get("max_relative_error_on_nonzero_exact_entries", 1.0) <= 2e-15, "[5] numerical source bridge relative error exceeds recorded bound")
+    require(errors, source_bridge.get("max_source_leakage_at_exact_zero_entries", 1.0) <= 8e-17, "[5] numerical source zero-entry leakage exceeds recorded bound")
+    require(errors, "not an exact-arithmetic proof" in source_bridge.get("claim_limit", ""), "[5] numerical source bridge limitation missing")
     for node in range(5):
         artifact_path = ROOT / "verification_results" / f"DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE{node}_20261126.json"
         try:
@@ -267,3 +281,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
