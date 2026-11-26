@@ -389,4 +389,3 @@ def H_node_apply_ultrafast(spins,v,B,tol=1e-10,Jmax2=None):
         vv,a,b,c=spec;rr=oriented_T_ultrafast(init,vv,a,b,c,Jmax2,1e-12);apply_scaled_merge(acc,rr,sign,1e-11)
     return project_gauss_block(acc,tol)
 H_node_apply = H_node_apply_ultrafast
-
