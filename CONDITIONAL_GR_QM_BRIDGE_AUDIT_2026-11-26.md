@@ -69,6 +69,8 @@ F_{\theta\phi}=2\operatorname{Im}Q_{\theta\phi}=\tfrac12\sin\theta,
 \]
 This is an exact common ray-space origin for distinguishability geometry and compact Berry phase. It does not provide a derived map from \(g_{FS}\) to the spacetime metric, nor does it make the Berry connection a propagating photon.
 
+The current T75 source/artifact was also rechecked by rerunning the joint-quotient generator with seed 20261118 and four samples per fixture. The path\(_3\) fixture has \(12V=36\), \(3V+3E=15\), and quotient dimension 21; cycle\(_4\) has \(12V=48\), \(3V+3E=24\), and quotient dimension 24. Independence of the stated Gauss and edge-singlet generators is proved by the fixture's unpaired boundary half-links. The rerun found no additional QFI nulls in eight samples; minimum sampled eigenvalues were 0.04557 and 0.01617, with maximum joint annihilation residual \(1.25\times10^{-15}\). The no-additional-null claim remains tolerance-based and sample-specific, with no interval gap certificate or uniform refinement lower bound. This QFI quotient is not yet the spacetime metric: a physical geometric map and a certified lower singular bound are still needed.
+
 An infoton candidate requires a gauge-invariant physical operator and positive physical spectral pole. If it exists in the same history as the graviton, a common retarded inverse kernel has the block form
 
 \[
