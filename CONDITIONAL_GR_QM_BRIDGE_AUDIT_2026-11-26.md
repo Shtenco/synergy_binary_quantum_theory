@@ -165,7 +165,7 @@ Extend the same graph boundary map by allowing both half-link frame variations a
 \\longmapsto\\delta[\\mathcal C_\\Gamma(\\otimes_v|\\iota_v\\rangle)].
 \\]
 
-For each logical ray \\(c=(a,b)\\), the orthogonal tangent vector \\(u=(-\\bar b,\\bar a)\\) and \\(iu\\) span its two real ray directions. The shape derivative is computed by replacing the corresponding node tensor in the multilinear contraction, then projecting off the boundary ray. For the path_3 exact T75 witness and the cycle_4 nondegenerate witness recorded in scripts/q2_relational_frame_shape_response_gate.py, every node has nonzero oriented-volume Bloch coordinate \\(Y\\), so \\(X,Z\\) are valid local shape coordinates. The finite floating SVD reports:
+For each logical ray \\(c=(a,b)\\), the orthogonal tangent vector \\(u=(-\\bar b,\\bar a)\\) and \\(iu\\) span its two real ray directions. The shape derivative is computed by replacing the corresponding node tensor in the multilinear contraction, then projecting off the boundary ray. For the path_3 exact T75 witness and the cycle_4 nondegenerate witness recorded in scripts/q2_relational_frame_shape_response_gate.py, every node has nonzero oriented-volume Bloch coordinate \\(Y\\), so \\(X,Z\\) are valid local shape coordinates. The response gate first found full rank numerically; an exact residue certificate now upgrades the path case, while the cycle case remains numerical:
 
 | Fixture | Frame quotient | Node-shape directions | Combined rank / dimension | Certificate |
 |---|---:|---:|---:|---|
