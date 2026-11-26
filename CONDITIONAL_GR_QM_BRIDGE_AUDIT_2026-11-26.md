@@ -57,6 +57,18 @@ With one emergent Lorentz metric and a physical Maxwell sector using the same me
 
 The branch's Pancharatnam gate was executed from its fetched source. Link-covariance error was \(2.48\times10^{-16}\), holonomy-invariance error zero, Bargmann-holonomy error \(2.22\times10^{-16}\), and the numerical Hopf Chern number was \(1.0000000000000013\). The link/holonomy checks use the sampled spinors; the Chern integration directly integrates the analytic \(F=\tfrac12\sin\theta\,d\theta\wedge d\phi\), rather than estimating curvature from plaquette data. This verifies the finite ray/phase identities and checks the known analytic Chern integral, but those are separate controls. Its canonical-Maxwell gate also passed: on the finite 16-cell, \(d_1d_0=0\), \(\mathrm{rank}\,d_0=7\), \(\mathrm{rank}\,d_1=17\), \(b_1=0\), and the unit-Hodge curl spectrum was \(0^{\times7},4^{\times6},6^{\times8},8^{\times3}\). However, the gate's reported \(Z_A\) cancellation is implemented by simplifying \((1/Z_A)Z_A=1\) after assuming the canonical equations; it does not derive those equations from BQG or compute a physical stiffness. The source explicitly leaves deconfinement, final Hodge weights, continuum photon poles, and \(Z_A\) open. A small-holonomy Wilson action expands to a quadratic curvature term only conditional on a positive blocked stiffness and geometric Hodge weights. The branch cites Polyakov's compact electrodynamics result in 2+1 dimensions and Guth's weak-coupling nonconfining result for four-dimensional Villain U(1) as dimensional compatibility evidence; neither selects the Coulomb basin in BQG.
 
+The branch's symbolic QGT gate was also executed and passed. For the stated Bloch spinor it returns
+\[
+Q_{ab}=\begin{pmatrix}\tfrac14&i\sin\theta/4\\-i\sin\theta/4&\sin^2\theta/4\end{pmatrix},
+\quad
+\operatorname{Re}Q=g_{FS},
+\quad
+F_{\theta\phi}=2\operatorname{Im}Q_{\theta\phi}=\tfrac12\sin\theta,
+\quad
+\frac1{2\pi}\int_{S^2}F=1.
+\]
+This is an exact common ray-space origin for distinguishability geometry and compact Berry phase. It does not provide a derived map from \(g_{FS}\) to the spacetime metric, nor does it make the Berry connection a propagating photon.
+
 An infoton candidate requires a gauge-invariant physical operator and positive physical spectral pole. If it exists in the same history as the graviton, a common retarded inverse kernel has the block form
 
 \[
