@@ -1,0 +1,30 @@
+name: BQG v1.2 true Lorentzian CK1 rank and complex checkpoint
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v11_lorentzian_aux_trace_probe.py'
+      - '.github/workflows/bqg-v12-ck1-checkpoint.yml'
+  workflow_dispatch:
+jobs:
+  rank-checkpoint:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {term: 18, i: 0, j: 0, k: 0}
+          - {term: 23, i: 0, j: 0, k: 0}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy scipy sympy
+      - name: Measure exact J of CK1 and export complex checkpoint in log
+        run: |
+          timeout 650s python -u scripts/bqg_v11_lorentzian_aux_trace_probe.py \
+            --term ${{ matrix.term }} --i ${{ matrix.i }} --j ${{ matrix.j }} --k ${{ matrix.k }} \
+            --stop-after CK1 --emit-checkpoint \
+            --output CK1_${{ matrix.term }}.json

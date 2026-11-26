@@ -1,0 +1,40 @@
+name: BQG v1.1 exact Lorentzian auxiliary-path probe
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v11_lorentzian_aux_trace_probe.py'
+      - '.github/workflows/bqg-v11-aux-probe.yml'
+  workflow_dispatch:
+jobs:
+  path:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {term: 18, i: 0, j: 0, k: 0}
+          - {term: 18, i: 1, j: 1, k: 1}
+          - {term: 23, i: 0, j: 0, k: 0}
+          - {term: 23, i: 1, j: 1, k: 1}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy scipy sympy
+      - name: Genuine single auxiliary path through C(V), C(K)
+        run: |
+          mkdir -p verification_results
+          timeout 480s python -u scripts/bqg_v11_lorentzian_aux_trace_probe.py \
+            --term ${{ matrix.term }} --i ${{ matrix.i }} --j ${{ matrix.j }} --k ${{ matrix.k }} \
+            --stop-after CK1 --output verification_results/BQG_V11_${{ matrix.term }}_${{ matrix.i }}${{ matrix.j }}${{ matrix.k }}.json
+      - name: Clarify timeouts, never treat them as zeros
+        if: always()
+        run: |
+          if test -f verification_results/BQG_V11_${{ matrix.term }}_${{ matrix.i }}${{ matrix.j }}${{ matrix.k }}.json; then
+            echo "COMPLETED: report above contains real coefficients"
+          else
+            echo "UNRESOLVED: no complete path amplitude output"
+          fi

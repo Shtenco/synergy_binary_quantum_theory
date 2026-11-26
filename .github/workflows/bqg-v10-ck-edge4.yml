@@ -1,0 +1,38 @@
+name: BQG v1.0 C(K) edge-four triage
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/bqg-v10-ck-edge4.yml'
+  workflow_dispatch:
+
+jobs:
+  edge-four:
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [3, 7, 9, 13, 15]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies
+        run: python -m pip install numpy scipy sympy
+      - name: Test true C(K) on nonzero C(V) with b=4
+        run: |
+          mkdir -p verification_results
+          timeout 480s python -u scripts/bqg_v08_lorentzian_24term_raw_column.py \
+            --v 0 --input 0 --Jmax2 7 --start ${{ matrix.index }} --count 1 \
+            --output verification_results/BQG_V10_CK4_${{ matrix.index }}.json
+      - name: Exact step report, no false zeros on timeout
+        if: always()
+        run: |
+          if test -f verification_results/BQG_V10_CK4_${{ matrix.index }}.json; then
+            python -c "import json;d=json.load(open('verification_results/BQG_V10_CK4_${{ matrix.index }}.json'));print('ACTUAL_STEP_RESULT',d['terms'])"
+          else
+            echo "UNRESOLVED: missing amplitude; no physical conclusion"
+          fi

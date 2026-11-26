@@ -1,0 +1,22 @@
+name: BQG v1.0 independent C(V) consistency diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_v10_cv_consistency_gate.py'
+      - '.github/workflows/bqg-v10-cv-consistency.yml'
+  workflow_dispatch:
+
+jobs:
+  independent-cv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy scipy sympy
+      - name: Compare genuine C(V) implementations at both cutoffs
+        run: python -u scripts/bqg_v10_cv_consistency_gate.py --v 0 --input 0
