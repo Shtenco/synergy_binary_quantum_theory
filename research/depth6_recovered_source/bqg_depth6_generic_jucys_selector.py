@@ -129,4 +129,3 @@ def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-8):
     if max(e4,e5,ep,oo)>tol:
         raise RuntimeError(('selector residual',key,rep,d,m,e4,e5,ep,oo))
     return Q
-
