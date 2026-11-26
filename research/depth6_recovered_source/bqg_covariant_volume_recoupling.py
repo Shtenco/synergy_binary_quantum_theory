@@ -121,4 +121,3 @@ def apply_volume_batch(T,spins):
             d=c@V.T
             Y += d@Bs
     return Y.reshape((Bn,)+dims)
-
