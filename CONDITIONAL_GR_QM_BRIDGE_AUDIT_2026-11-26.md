@@ -167,11 +167,11 @@ Extend the same graph boundary map by allowing both half-link frame variations a
 
 For each logical ray \\(c=(a,b)\\), the orthogonal tangent vector \\(u=(-\\bar b,\\bar a)\\) and \\(iu\\) span its two real ray directions. The shape derivative is computed by replacing the corresponding node tensor in the multilinear contraction, then projecting off the boundary ray. For the path_3 exact T75 witness and the cycle_4 nondegenerate witness recorded in scripts/q2_relational_frame_shape_response_gate.py, every node has nonzero oriented-volume Bloch coordinate \\(Y\\), so \\(X,Z\\) are valid local shape coordinates. The finite floating SVD reports:
 
-| Fixture | Frame quotient | Node-shape directions | Combined rank / dimension | Minimum combined singular value |
-|---|---:|---:|---:|---:|
-| \\(path_3\\) | 21 | 6 | 27 / 27 | 0.212005 |
-| \\(cycle_4\\) | 24 | 8 | 32 / 32 | 0.292778 |
+| Fixture | Frame quotient | Node-shape directions | Combined rank / dimension | Certificate |
+|---|---:|---:|---:|---|
+| \\(path_3\\) | 21 | 6 | 27 / 27 | Exact modular minor: determinant residue 53 mod 97 |
+| \\(cycle_4\\) | 24 | 8 | 32 / 32 | Floating SVD; minimum singular value 0.292778 |
 
-Thus, at these witnesses in this finite contraction model, the boundary ray responds independently to quotient frame directions and all node-shape directions. The local exact map in Section 8 then carries each node's \\(X,Z\\) tangent into a rank-two tetrahedral metric-shape tangent. This is a tighter finite composition than treating the T75 and local shape gates as unrelated controls.
+For \\(path_3\\), the exact modular certificate proves that the combined boundary-ray differential has rank 27 at the listed witness. The exact frame kernel has dimension 15, so this is the maximal possible rank of its 42 frame-plus-shape input coordinates. The determinant is a real-analytic minor after clearing the postselection-norm denominator; being nonzero at one point, it proves maximal rank on an open dense subset of this fixed path graph's node-ray space. Since all three node volume coordinates are nonzero, \\(X,Z\\) are valid shape coordinates there, and Section 8 maps each such tangent with rank two to the local tetrahedral metric shape.
 
-The combined ranks and singular values are floating-point diagnostics (threshold \\(10^{-8}\\)); no exact combined-minor certificate or graph-refinement lower bound has been established. This constructs no physical Hamiltonian history, time metric, or continuum spacetime field, and does not produce graviton, photon, or infoton poles. The frame and shape input sectors are jointly observable in the tested boundary state, but are not thereby physically identified with each other.
+For \\(cycle_4\\), the same exact multilinear shape derivative and quotient frame calculation give full floating rank at the displayed nondegenerate witness. Its 32×32 exact modular determinant has not yet been certified. These are finite graph results and give no graph-refinement lower bound. Neither result constructs a physical Hamiltonian history, time metric, continuum spacetime field, or graviton, photon, or infoton pole. Frame and shape remain distinct input sectors even where their boundary responses are jointly injective.
