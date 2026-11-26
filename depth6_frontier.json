@@ -179,6 +179,32 @@
     "[2,1,1,1]": "(5/4)(3 A211 + A1111)",
     "[5]": "5 A_[5],[4] by the unique S5-to-S4 trivial branch, conditional on the historical ledger using its stated branch-sum definition; operator identity with recovered generic row remains unproved"
   },
+  "historical_5_claim_audit": {
+    "status": "HISTORICAL_LABEL_FOUND_NO_RANK_WITNESS_VALIDATED",
+    "source_branch": "archive/w5-v09-immutable-6ae145a",
+    "source_frontier_path": "depth6_frontier.json",
+    "source_frontier_blob_sha": "e9ca9dc8ffa69df908f7ae1348701a5f738e1202",
+    "source_verifier_path": "scripts/verify_depth6_frontier.py",
+    "source_verifier_blob_sha": "7f9cf62b8386bb464ecdf62efac9d28a58a16375",
+    "archived_claim": {
+      "global_status": "NUMERICAL_WITNESSES_PENDING",
+      "sector_status": "CLOSED",
+      "dimension": 27227,
+      "nonvacuum_rank": 27226,
+      "kernel": "zero-spin vacuum line only",
+      "certificate_pointer": null
+    },
+    "verifier_checks": [
+      "[5] is present in closed_irreps",
+      "[5].status equals CLOSED"
+    ],
+    "verifier_does_not_check": [
+      "[5] nonvacuum rank",
+      "[5] certificate or numerical witness",
+      "operator identity for A_[5],[4]"
+    ],
+    "interpretation": "The archived snapshot proves that the CLOSED label and rank claim were recorded, but the archived verifier does not validate the rank claim. This is a provenance gap, not a disproof of the historical numerical result."
+  },
   "s4_sign_frontier": {
     "decomposition": "[1^5] direct-sum [2,1,1,1]",
     "total_dimension": 130112,
