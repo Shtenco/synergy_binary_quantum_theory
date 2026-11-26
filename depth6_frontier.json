@@ -184,6 +184,13 @@
     "source_branch": "archive/w5-v09-immutable-6ae145a",
     "source_frontier_path": "depth6_frontier.json",
     "source_frontier_blob_sha": "e9ca9dc8ffa69df908f7ae1348701a5f738e1202",
+    "retained_branch_archive_corpus": {
+      "archive_count": 179,
+      "copies_containing_this_claim": 42,
+      "distinct_frontier_content_count": 1,
+      "frontier_content_sha256": "ed33ad07523803ec3b979cbae1f1755f5b3d67e12491dc127b4d9eb29e81286c",
+      "interpretation": "The 42 matches are byte-identical copies of one frontier snapshot, not 42 independent rank checks."
+    },
     "source_verifier_path": "scripts/verify_depth6_frontier.py",
     "source_verifier_blob_sha": "7f9cf62b8386bb464ecdf62efac9d28a58a16375",
     "archived_claim": {
