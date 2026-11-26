@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "status_date": "2026-11-26",
-  "ledger_revision_note": "Kernel evidence reconciled with preserved certificates and the exact recovered-generic-master vacuum-inclusion witness; unsupported [5] nonvacuum-rank and [4,1] rank/kernel assertions remain unverified historical claims.",
+  "ledger_revision_note": "Kernel evidence reconciled with the exact recovered-generic-master vacuum-inclusion witness and exact [5] coset-projector identity; unsupported [5] nonvacuum-rank and [4,1] rank/kernel assertions remain unverified historical claims.",
   "scope": "corrected finite K5 depth-6 master-kernel frontier",
   "status": "NUMERICAL_WITNESSES_PENDING",
   "shell": {
@@ -50,6 +50,16 @@
         "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
         "limitation": "historical branch-sum ledger not established; no rank claim on the vacuum complement",
         "master_map_assembly": "The recovered generic master_map is assembled from node maps v=0,1 plus the S3-related v=2 representative with weight sqrt(3), followed by linear S3/S2 coordinate maps; exact zero of each node map implies exact zero output on the all-zero [5] coordinate."
+      },
+      "trivial_sector_selector": {
+        "status": "EXACT_ALGEBRAIC_GROUP_ALGEBRA_IDENTITY",
+        "projector": "((I+J5)/5)((I+J4)/4)e3 = e5",
+        "J4": "(1 2)+(1 3)+(1 4)",
+        "J5": "(0 1)+(0 2)+(0 3)+(0 4)",
+        "group_chain": "S3 permutes {2,3,4}; S4 permutes {1,2,3,4}; S5 permutes {0,1,2,3,4}",
+        "proof": "disjoint left-coset decompositions S4=S3 union (1 k)S3 and S5=S4 union (0 k)S4",
+        "verifier": "scripts/verify_s5_trivial_projector.py",
+        "scope_limit": "exact sector selector only; no master-map rank or historical branch-sum identity claim"
       }
     },
     "[4,1]": {
