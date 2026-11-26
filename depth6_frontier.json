@@ -74,6 +74,17 @@
         ],
         "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
         "limitation": "exact-CG script reimplements the reduced-basis node formula and does not call source H_node_apply_ultrafast in exact arithmetic; source selector CFG has no [5] entry; the earlier source master_map call used key=32 with an explicitly supplied W=I1 and is only floating-point; source/node and historical branch-sum identities remain unproved; no rank claim on the vacuum complement",
+        "source_bridge_crosscheck": {
+          "status": "NUMERICAL_SOURCE_BRIDGE_CROSSCHECK",
+          "script": "scripts/audit_depth6_vacuum_source_bridge.py",
+          "artifact": "verification_results/DEPTH6_5_VACUUM_SOURCE_BRIDGE_20261126.json",
+          "state_resolved_channel_matrices": 60,
+          "channel_entries_compared": 320,
+          "max_absolute_error": 6.661338147750939e-16,
+          "max_relative_error_on_nonzero_exact_entries": 1.898070914570042e-15,
+          "max_source_leakage_at_exact_zero_entries": 7.305678356453425e-17,
+          "claim_limit": "floating source-stage agreement on the vacuum input only; not exact source/reconstruction identity and not historical B_[5] identity"
+        },
         "source_selector_path": "not implemented for [5] in recovered CFG; the vacuum vector was supplied explicitly as W=I1 in the floating source fixture",
         "node_map_identity_to_source": "not established convention-by-convention",
         "master_map_assembly": "Conditional only: if the exact reconstructed node maps equal the source node maps on the vacuum input, then linear source S3/S2 assembly from v=0,1 and the v=2 representative with weight sqrt(3) also annihilates it."
