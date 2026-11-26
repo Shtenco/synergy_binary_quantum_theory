@@ -91,4 +91,3 @@ def run():
             'orthogonality':character_orthogonality(),'decomposition':boundary_decomposition()}
 
 if __name__=='__main__': print(json.dumps(run(),indent=2))
-
