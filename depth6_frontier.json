@@ -36,6 +36,31 @@
         "kernel": "zero-spin vacuum line only"
       },
       "evidence": null,
+      "orbit_block_census": {
+        "status": "STRUCTURAL_BLOCK_CENSUS_ONLY",
+        "artifact": "verification_results/DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json",
+        "script": "scripts/depth6_5_orbit_block_census.py",
+        "verifier": "scripts/verify_depth6_5_orbit_block_census.py",
+        "active_s5_orbit_blocks": 2757,
+        "summed_trivial_selector_multiplicity": 27227,
+        "vacuum_block_multiplicity": 1,
+        "nonvacuum_active_s5_orbit_blocks": 2756,
+        "nonvacuum_selector_multiplicity": 27226,
+        "max_block_multiplicity": 180,
+        "max_selector_coordinate_dimension": 3240,
+        "method_limit": "source exact_mult rounds floating representation traces; census is not an exact rank certificate",
+        "rank_claim": null
+      },
+      "trivial_sector_selector": {
+        "status": "EXACT_ALGEBRAIC_GROUP_ALGEBRA_IDENTITY",
+        "projector": "((I+J5)/5)((I+J4)/4)e3 = e5",
+        "J4": "(1 2)+(1 3)+(1 4)",
+        "J5": "(0 1)+(0 2)+(0 3)+(0 4)",
+        "group_chain": "S3 permutes {2,3,4}; S4 permutes {1,2,3,4}; S5 permutes {0,1,2,3,4}",
+        "proof": "disjoint left-coset decompositions S4=S3 union (1 k)S3 and S5=S4 union (0 k)S4",
+        "verifier": "scripts/verify_s5_trivial_projector.py",
+        "scope_limit": "exact sector selector only; no master-map rank or historical branch-sum identity claim"
+      },
       "reconstructed_operator_vacuum_inclusion": {
         "status": "EXACT_FINITE_FOR_RECOVERED_GENERIC_MASTER_MAP",
         "node_constraint": "H_v |0> = 0 for each v in {0,1,2,3,4}",
@@ -50,16 +75,6 @@
         "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
         "limitation": "historical branch-sum ledger not established; no rank claim on the vacuum complement",
         "master_map_assembly": "The recovered generic master_map is assembled from node maps v=0,1 plus the S3-related v=2 representative with weight sqrt(3), followed by linear S3/S2 coordinate maps; exact zero of each node map implies exact zero output on the all-zero [5] coordinate."
-      },
-      "trivial_sector_selector": {
-        "status": "EXACT_ALGEBRAIC_GROUP_ALGEBRA_IDENTITY",
-        "projector": "((I+J5)/5)((I+J4)/4)e3 = e5",
-        "J4": "(1 2)+(1 3)+(1 4)",
-        "J5": "(0 1)+(0 2)+(0 3)+(0 4)",
-        "group_chain": "S3 permutes {2,3,4}; S4 permutes {1,2,3,4}; S5 permutes {0,1,2,3,4}",
-        "proof": "disjoint left-coset decompositions S4=S3 union (1 k)S3 and S5=S4 union (0 k)S4",
-        "verifier": "scripts/verify_s5_trivial_projector.py",
-        "scope_limit": "exact sector selector only; no master-map rank or historical branch-sum identity claim"
       }
     },
     "[4,1]": {
@@ -205,3 +220,4 @@
     "no experimentally established prediction is claimed"
   ]
 }
+
