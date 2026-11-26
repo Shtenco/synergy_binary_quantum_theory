@@ -92,4 +92,3 @@ def main():
     (a.out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     if summary['failed_blocks']:raise SystemExit('failed blocks')
 if __name__=='__main__':main()
-
