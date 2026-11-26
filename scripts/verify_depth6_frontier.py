@@ -20,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "depth6_frontier.json"
 CERT_2111 = ROOT / "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json"
+C5_CENSUS = ROOT / "verification_results" / "DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json"
 
 EXPECTED_MULT = {
     "[5]": 27227,
@@ -56,6 +57,7 @@ def main() -> int:
     errors: list[str] = []
     data = json.loads(LEDGER.read_text(encoding="utf-8"))
     cert = json.loads(CERT_2111.read_text(encoding="utf-8"))
+    census = json.loads(C5_CENSUS.read_text(encoding="utf-8"))
 
     require(errors, data.get("schema_version") == 2, "ledger schema_version must be 2")
     require(errors, cert.get("schema_version") == 1, "2111 certificate schema_version must be 1")
@@ -110,6 +112,21 @@ def main() -> int:
     require(errors, c5.get("ledger_claim", {}).get("dimension") == 27227, "[5] original dimension claim missing")
     require(errors, c5.get("ledger_claim", {}).get("nonvacuum_rank") == 27226, "[5] original rank claim missing")
     require(errors, c5.get("evidence") is None, "[5] must not imply a missing certificate exists")
+    census_ref = c5.get("orbit_block_census", {})
+    require(errors, census_ref.get("status") == "STRUCTURAL_BLOCK_CENSUS_ONLY", "[5] orbit census scope missing")
+    require(errors, census_ref.get("artifact") == "verification_results/DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json", "[5] orbit census artifact pointer mismatch")
+    require(errors, census_ref.get("active_s5_orbit_blocks") == 2757, "[5] orbit census block count mismatch")
+    require(errors, census_ref.get("summed_trivial_selector_multiplicity") == 27227, "[5] orbit census multiplicity mismatch")
+    require(errors, census_ref.get("vacuum_block_multiplicity") == 1, "[5] vacuum block dimension mismatch")
+    require(errors, census_ref.get("nonvacuum_active_s5_orbit_blocks") == 2756, "[5] nonvacuum block count mismatch")
+    require(errors, census_ref.get("nonvacuum_selector_multiplicity") == 27226, "[5] nonvacuum multiplicity mismatch")
+    require(errors, census_ref.get("rank_claim") is None, "[5] orbit census must not claim rank")
+    require(errors, census.get("status") == "STRUCTURAL_BLOCK_CENSUS_ONLY", "[5] census artifact missing or overstated")
+    require(errors, census.get("active_trivial_s5_blocks") == 2757, "[5] census artifact block count mismatch")
+    require(errors, census.get("summed_trivial_selector_multiplicity") == 27227, "[5] census artifact multiplicity mismatch")
+    require(errors, census.get("nonvacuum_active_blocks") == 2756, "[5] nonvacuum census block count mismatch")
+    require(errors, census.get("nonvacuum_selector_multiplicity") == 27226, "[5] nonvacuum census dimension mismatch")
+    require(errors, census.get("rank_claim") is None, "[5] census artifact must not claim rank")
     selector = c5.get("trivial_sector_selector", {})
     require(errors, selector.get("status") == "EXACT_ALGEBRAIC_GROUP_ALGEBRA_IDENTITY", "[5] exact sector selector identity missing")
     require(errors, selector.get("projector") == "((I+J5)/5)((I+J4)/4)e3 = e5", "[5] exact coset-projector formula mismatch")
@@ -247,3 +264,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
