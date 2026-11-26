@@ -99,3 +99,18 @@ The defensible one-pass statement is:
 \]
 
 The first lines are conditional kinematic/classical theorems and finite controls. The decisive microscopic antecedents in the final lines—physical history, TT pole, Maxwell kernel, and infoton operator/pole—are not established by the current evidence. Thus this is a valid conditional bridge map, not a completed proof of quantum binary gravity.
+
+## 7. Constructive finite T75 rank witnesses
+
+A targeted search found explicit local intertwiner coefficient vectors with full numerical rank in the two audited fixtures. In the local logical basis \((L_0,L_1)\), choose the unnormalized node coefficients
+
+\[
+\begin{array}{c|c}
+\text{path}_3 &(1,-1+2i),\;(-1+2i,2-2i),\;(-1,1-i)\\
+\text{cycle}_4 &(i,-2i),\;(1,2i),\;(2,-1-i),\;(1,1+i)
+\end{array}
+\]
+
+and normalize each node before contraction. The current floating implementation returned quotient dimensions 21 and 24, ranks 21 and 24, and smallest singular values 0.212005 and 0.0584274 respectively (rank threshold (10^{-9})). Thus the earlier absence-of-extra-null result is no longer supported only by random sampling: these are reproducible full-rank finite witnesses with explicit coefficients.
+
+This is not yet the requested exact generic theorem. The reported rank and singular values are floating-point outputs, and the quotient basis is formed numerically by QR. To promote this to an analytic generic-rank result, one must produce a certified nonzero exact minor (or an interval lower bound), show the Jacobian entries are rational/algebraic functions on the nonzero-support domain, and combine that witness with the exact symmetry upper bound. No uniform lower bound under graph refinement follows from a finite witness. The result remains a finite T75 tangent-map certificate, not a continuum metric theorem.
