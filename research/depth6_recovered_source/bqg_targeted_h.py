@@ -85,4 +85,3 @@ def H_node_apply_targets(spins,v,B,targets,tol=1e-10,Jmax2=None):
         rr=oriented_T_targets(init,vv,a,b,c,Jmax2,ts,1e-12)
         A.apply_scaled_merge(acc,rr,sign,1e-11)
     return A.project_gauss_block(acc,tol)
-
