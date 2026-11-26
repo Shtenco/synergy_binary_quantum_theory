@@ -1,5 +1,3 @@
-Warning: fs was declared with const; use let for reassignable variables.
-Warning: s was declared with const; use let for reassignable variables.
 # Как два маленьких ответа начали строить Вселенную
 
 ### Большая научная сказка о бинарной квантовой гравитации
