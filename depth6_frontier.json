@@ -1,1 +1,272 @@
-fsAudit is not defined
+{
+  "schema_version": 2,
+  "status_date": "2026-11-26",
+  "ledger_revision_note": "Exact vacuum inclusion is now established for the recovered generic master-row formula through exact collapsed-stage equivalence and a vacuum-only trivial [5] selector probe; the historical branch-sum operator identity, nonvacuum [5] rank, and unsupported [4,1] rank/kernel claims remain open.",
+  "scope": "corrected finite K5 depth-6 master-kernel frontier",
+  "status": "NUMERICAL_WITNESSES_PENDING",
+  "shell": {
+    "gauss_admissible_spin_assignments": 264962,
+    "hilbert_dimension": 3111637,
+    "s5_spin_orbits": 2757,
+    "max_doubled_spin": 7
+  },
+  "multiplicities": {
+    "[5]": 27227,
+    "[4,1]": 104146,
+    "[3,2]": 130903,
+    "[3,1,1]": 153455,
+    "[2,2,1]": 130503,
+    "[2,1,1,1]": 103318,
+    "[1^5]": 26794
+  },
+  "sector_kernel_evidence": {
+    "[1^5]": {
+      "status": "CLOSED_FINITE_NUMERICAL",
+      "rank": 26794,
+      "dimension": 26794,
+      "kernel": "empty",
+      "certificate": "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json",
+      "derivation": "numerical consequence of the zero whole S4-sign master kernel and the [1^5] direct-sum [2,1,1,1] decomposition"
+    },
+    "[5]": {
+      "status": "UNVERIFIED_LEDGER_CLAIM",
+      "ledger_claim": {
+        "dimension": 27227,
+        "nonvacuum_rank": 27226,
+        "kernel": "zero-spin vacuum line only"
+      },
+      "evidence": null,
+      "orbit_block_census": {
+        "status": "STRUCTURAL_BLOCK_CENSUS_ONLY",
+        "artifact": "verification_results/DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json",
+        "script": "scripts/depth6_5_orbit_block_census.py",
+        "verifier": "scripts/verify_depth6_5_orbit_block_census.py",
+        "active_s5_orbit_blocks": 2757,
+        "summed_trivial_selector_multiplicity": 27227,
+        "vacuum_block_multiplicity": 1,
+        "nonvacuum_active_s5_orbit_blocks": 2756,
+        "nonvacuum_selector_multiplicity": 27226,
+        "max_block_multiplicity": 180,
+        "max_selector_coordinate_dimension": 3240,
+        "method_limit": "source exact_mult rounds floating representation traces; census is not an exact rank certificate",
+        "rank_claim": null
+      },
+      "trivial_sector_selector": {
+        "status": "EXACT_ALGEBRAIC_GROUP_ALGEBRA_IDENTITY",
+        "projector": "((I+J5)/5)((I+J4)/4)e3 = e5",
+        "J4": "(1 2)+(1 3)+(1 4)",
+        "J5": "(0 1)+(0 2)+(0 3)+(0 4)",
+        "group_chain": "S3 permutes {2,3,4}; S4 permutes {1,2,3,4}; S5 permutes {0,1,2,3,4}",
+        "proof": "disjoint left-coset decompositions S4=S3 union (1 k)S3 and S5=S4 union (0 k)S4",
+        "verifier": "scripts/verify_s5_trivial_projector.py",
+        "scope_limit": "exact sector selector only; no master-map rank or historical branch-sum identity claim"
+      },
+      "reconstructed_operator_vacuum_inclusion": {
+        "status": "EXACT_FINITE_FOR_RECONSTRUCTED_NODE_FORMULA",
+        "node_constraint": "H_v |0> = 0 for each v in {0,1,2,3,4} in the exact reduced-basis reconstruction",
+        "master_consequence": "<0|sum_v H_v^dagger H_v|0> = 0 for the positive master assembled from the reconstructed node maps",
+        "artifacts": [
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE0_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE1_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE2_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE3_20261126.json",
+          "DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE4_20261126.json"
+        ],
+        "script": "scripts/depth6_vacuum_loop_reduced_exact_cg.py",
+        "limitation": "Exact arithmetic proves equality of the source-collapsed triangle/radial formulas, ported from the pinned source modules, with the expanded reduced-basis evaluator on the vacuum input for all five nodes, all 12 oriented terms, and all four index pairs. The source Python execution itself remains floating-point; source selector CFG has no [5] entry; historical branch-sum identities remain unproved; all nonvacuum rank claims remain unproved.",
+        "source_bridge_crosscheck": {
+          "status": "NUMERICAL_SOURCE_BRIDGE_CROSSCHECK",
+          "script": "scripts/audit_depth6_vacuum_source_bridge.py",
+          "artifact": "verification_results/DEPTH6_5_VACUUM_SOURCE_BRIDGE_20261126.json",
+          "state_resolved_channel_matrices": 60,
+          "channel_entries_compared": 320,
+          "max_absolute_error": 6.661338147750939e-16,
+          "max_relative_error_on_nonzero_exact_entries": 1.898070914570042e-15,
+          "max_source_leakage_at_exact_zero_entries": 7.305678356453425e-17,
+          "claim_limit": "floating source-stage agreement on vacuum only; now supplemented by exact symbolic equality of the ported collapsed source formulas and expanded reduced-basis formula on vacuum; not historical B_[5] identity"
+        },
+        "source_selector_path": "The pinned source CFG still has no [5] key. For the vacuum-only path, the exact trivial S5 projector is encoded in memory by CFG=(triv, J4 target 3 spectrum {-1,3}, J5 target 4 spectrum {-1,4}); the one-dimensional selector W=I1 is passed explicitly to recovered master_map. This does not install a selector for nonvacuum blocks.",
+        "node_map_identity_to_source": "Exact finite equality on the vacuum column for all five recovered collapsed node stages, under pinned source formulas and exact-CG/exact-volume port; no claim for other inputs or historical B_[5].",
+        "master_map_assembly": "Vacuum-only inclusion is now established for the recovered generic master row: exact collapsed-stage equivalence proves each source node image zero, exact S5 coset averaging fixes the vacuum selector, and scripts/audit_depth6_5_selector_vacuum.py exercises master_map with W=I1 and returns empty output. Historical B_[5] identity and nonvacuum rank remain open.",
+        "exact_collapsed_equivalence": {
+          "status": "EXACT_FINITE_COLLAPSED_EQUIVALENCE_ON_VACUUM",
+          "script": "scripts/verify_depth6_vacuum_collapsed_exact_equivalence.py",
+          "artifact": "verification_results/DEPTH6_5_VACUUM_COLLAPSED_EXACT_EQUIVALENCE_20261126.json",
+          "nodes": 5,
+          "oriented_terms_per_node": 12,
+          "index_pairs_per_term": 4,
+          "expanded_vs_collapsed_triangle_state_keys_per_node": 48,
+          "expanded_vs_collapsed_radial_state_keys_per_node": 48,
+          "channel_state_entries_compared": 240,
+          "exact_endpoint_far_radial_weights_checked": 80,
+          "claim_limit": "Exact symbolic equality on the zero-spin vacuum input, with the recovered source bundle hash pinned and the volume block evaluated exactly; source runtime remains floating-point; does not prove source [5] selector integration, historical B_[5] identity, or nonvacuum rank."
+        },
+        "selector_vacuum_probe": {
+          "status": "EXACT_TRIVIAL_SELECTOR_VACUUM_ROW_ZERO",
+          "script": "scripts/audit_depth6_5_selector_vacuum.py",
+          "artifact": "verification_results/DEPTH6_5_SELECTOR_VACUUM_GENERIC_ROW_20261126.json",
+          "temporary_cfg": [
+            "triv",
+            3,
+            [
+              -1,
+              3
+            ],
+            4,
+            [
+              -1,
+              4
+            ]
+          ],
+          "selector_dimension": 1,
+          "selector_max_deviation_from_identity": 0.0,
+          "generic_master_row_output_support": 0,
+          "generic_master_row_output_norm": 0.0,
+          "limitation": "vacuum only; CFG extension is in-memory; master_map runtime is floating-point; no historical B_[5] identity and no nonvacuum rank."
+        }
+      }
+    },
+    "[4,1]": {
+      "status": "UNVERIFIED_LEDGER_CLAIM",
+      "ledger_claim": {
+        "rank": 104146,
+        "dimension": 104146,
+        "kernel": "empty"
+      },
+      "evidence": null
+    },
+    "[2,1,1,1]": {
+      "status": "CLOSED_FINITE_NUMERICAL",
+      "rank": 103318,
+      "dimension": 103318,
+      "kernel": "empty",
+      "certificate": "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json"
+    }
+  },
+  "structural_depth6_status": "CLOSED_FOR_ALL_7_S5_IRREPS",
+  "structural_support": {
+    "[3,2]": {
+      "status": "CLOSED",
+      "blocks": "2755/2755",
+      "columns": "130903/130903",
+      "remainder": 0
+    },
+    "[3,1,1]": {
+      "status": "CLOSED",
+      "blocks": "2719/2719",
+      "columns": "153455/153455",
+      "remainder": 0
+    },
+    "[2,2,1]": {
+      "status": "CLOSED",
+      "blocks": "2749/2749",
+      "columns": "130503/130503",
+      "remainder": 0
+    },
+    "[2,1,1,1]": {
+      "status": "CLOSED",
+      "blocks": "2712/2712",
+      "columns": "103318/103318",
+      "remainder": 0
+    }
+  },
+  "branch_sum": {
+    "formula": "B_lambda=(5/d_lambda) sum_{mu->lambda} d_mu A_{lambda,mu}, A=H0^dagger H0",
+    "kernels": "ker B_lambda = intersection_{mu->lambda} ker A_{lambda,mu}",
+    "[3,2]": "3 A31 + 2 A22",
+    "[3,1,1]": "(5/2)(A31 + A211)",
+    "[2,2,1]": "2 A22 + 3 A211",
+    "[2,1,1,1]": "(5/4)(3 A211 + A1111)",
+    "[5]": "5 A_[5],[4] by the unique S5-to-S4 trivial branch, conditional on the historical ledger using its stated branch-sum definition; operator identity with recovered generic row remains unproved"
+  },
+  "s4_sign_frontier": {
+    "decomposition": "[1^5] direct-sum [2,1,1,1]",
+    "total_dimension": 130112,
+    "exact_h0_null_directions": 16,
+    "h0_complement_dimension": 130096,
+    "h0_complement_rank": 130096,
+    "h0_main_unique_q": {
+      "blocks": 10929,
+      "columns": 123744,
+      "unique_q_channels": 10929,
+      "selected_sigma_min": 0.010065847991579507
+    },
+    "h0_residual_sparse": {
+      "blocks": 1011,
+      "columns": 6352,
+      "q_channels": 4588,
+      "rows": 61657,
+      "nnz": 3377269,
+      "sigma_min": 0.37777531708248774,
+      "smallest_gram_eigenvalue": 0.14271419019677417
+    },
+    "h1_lift": {
+      "rank": 16,
+      "dimension": 16,
+      "sigma_min": 1.1304521906426825,
+      "sigma_max": 3.3042579629412856,
+      "condition_number_approx": 2.9229524169993915
+    },
+    "master_kernel_dimension": 0,
+    "sector_status": "CLOSED_FINITE_NUMERICAL",
+    "certificate": "BQG_DEPTH6_2111_MASTER_CLOSED_2026-10-01.json",
+    "obsolete_gate": {
+      "description": "The previously planned 130007 x 130007 H0-only sparse minor is superseded by the preserved main+residual H0 complement certificate plus the fresh 16D H1 lift.",
+      "status": "SUPERSEDED_DO_NOT_USE_AS_BLOCKER"
+    }
+  },
+  "numerical_master_witnesses": {
+    "[3,2]": {
+      "structural_status": "CLOSED",
+      "dimension": 130903,
+      "blocks": 2755,
+      "status": "RECOVER_OR_FINISH",
+      "next_action": "recover surviving mixed Stage-A numerical evidence and compute only genuinely missing master-map witness pieces"
+    },
+    "[3,1,1]": {
+      "structural_status": "CLOSED",
+      "dimension": 153455,
+      "blocks": 2719,
+      "status": "PENDING_INDEPENDENT_NUMERICAL_WITNESS"
+    },
+    "[2,2,1]": {
+      "structural_status": "CLOSED",
+      "dimension": 130503,
+      "blocks": 2749,
+      "status": "PENDING_INDEPENDENT_NUMERICAL_WITNESS"
+    }
+  },
+  "current_numerical_witness": "[3,2]",
+  "remaining_numerical_irreps": [
+    "[3,2]",
+    "[3,1,1]",
+    "[2,2,1]"
+  ],
+  "do_not_recompute_for_32": [
+    "depth-6 shell enumeration",
+    "[3,2] multiplicity 130903",
+    "2755 active [3,2] S5 orbit blocks",
+    "S3/J4/J5 Jucys selectors",
+    "S5->S4 branch identity",
+    "structural support graph",
+    "structural capacity/matching/peeling proving 130903/130903"
+  ],
+  "finite_depth6_target": "ker M^(d=6) = span{|0>} ?",
+  "finite_depth6_theorem_status": "NOT_YET_PROVED",
+  "continuum_boundary": {
+    "refinement_stability": "OPEN",
+    "continuum_physical_projector": "OPEN",
+    "rigging_map_physical_inner_product": "OPEN",
+    "connected_interblock_history": "OPEN",
+    "physical_tt_kernel": "OPEN",
+    "ir_six_wilson_vector": "OPEN",
+    "common_physical_scale": "OPEN"
+  },
+  "claim_discipline": [
+    "structural support closure is not numeric kernel closure",
+    "H0 nullity is not master-kernel nullity",
+    "matching failure is not an operator kernel",
+    "finite depth-6 closure, even if achieved, is not a continuum quantum-gravity proof",
+    "no experimentally established prediction is claimed"
+  ]
+}
