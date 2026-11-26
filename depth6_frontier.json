@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "status_date": "2026-11-26",
-  "ledger_revision_note": "Kernel evidence reconciled with the exact recovered-generic-master vacuum-inclusion witness and exact [5] coset-projector identity; unsupported [5] nonvacuum-rank and [4,1] rank/kernel assertions remain unverified historical claims.",
+  "ledger_revision_note": "Kernel evidence records the exact reduced-basis node-formula vacuum witness and exact [5] coset-projector identity; source [5] selector integration and historical branch-sum identity remain unproved, as do unsupported [5] nonvacuum-rank and [4,1] rank/kernel claims.",
   "scope": "corrected finite K5 depth-6 master-kernel frontier",
   "status": "NUMERICAL_WITNESSES_PENDING",
   "shell": {
@@ -222,3 +222,4 @@
     "no experimentally established prediction is claimed"
   ]
 }
+
