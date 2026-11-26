@@ -113,7 +113,7 @@ A targeted search found explicit local intertwiner coefficient vectors with full
 
 and normalize each node before contraction. The current floating implementation returned quotient dimensions 21 and 24, ranks 21 and 24, and smallest singular values 0.212005 and 0.0584274 respectively (rank threshold (10^{-9})). Thus the earlier absence-of-extra-null result is no longer supported only by random sampling: these are reproducible full-rank finite witnesses with explicit coefficients.
 
-The candidate minors were then recomputed exactly from the stated coefficient vectors, exact logical singlets, exact normalized edge epsilon, and the projective tangent formula. The resulting determinants in \\(\\mathbb Q(\\sqrt2,\\sqrt3,i)\\) are
+The exact certificate is reproducible with `python scripts/q2_relational_exact_tangent_minor_certificate.py`; it reconstructs the stated coefficients, logical singlets, normalized edge epsilon, and projective tangent formula. The resulting determinants in \\(\\mathbb Q(\\sqrt2,\\sqrt3,i)\\) are
 
 \\[
 \\det M_{path_3}=\\frac{10187584608944228345425+5881804716378939721075\\sqrt3}{231812806445087701493115518976}>0,
@@ -123,12 +123,12 @@ The candidate minors were then recomputed exactly from the stated coefficient ve
 \\det M_{cycle_4}=-\\frac{688337770980009774477524933597}{832230283493566508763382283981944794232021271445504}-\\frac{33117666447391300525114547657\\sqrt3}{69352523624463875730281856998495399519335105953792}<0.
 \\]
 
-These are exact algebraic nonzero-minor certificates. The tangent used for the exact determinant is \\(d\\phi-\\phi\\langle\\phi,d\\phi\\rangle/\\langle\\phi,\\phi\\rangle\\), which differs from the normalized-ray tangent only by a nonzero common scale; the node vectors in the table may likewise be normalized without changing rank. Together with the exact independent Gauss and edge-singlet kernel directions (15 for \\(path_3\\), 24 for \\(cycle_4\\)), they prove quotient ranks 21 and 24 at these witnesses. The projective tangent entries are real-analytic on the nonzero-support state domain. Each displayed nonzero minor therefore remains nonzero on an open dense subset of the connected product of node intertwiner rays, proving generic full rank for each of these two fixed graph fixtures. Exceptional states can still have extra stabilizers.
+These are exact algebraic nonzero-minor certificates. The tangent used for the exact determinant is \\(d\\phi-\\phi\\langle\\phi,d\\phi\\rangle/\\langle\\phi,\\phi\\rangle\\), which differs from the normalized-ray tangent only by a nonzero common scale; the node vectors in the table may likewise be normalized without changing rank. Together with the exact independent Gauss and edge-singlet kernel directions (15 for \\(path_3\\), 24 for \\(cycle_4\\)), they prove quotient ranks 21 and 24 at these witnesses. The projective tangent entries are rational real-analytic functions of the node-ray coordinates wherever the postselection norm is nonzero. Clearing powers of that norm from each minor gives a real-analytic numerator on the connected product of node intertwiner rays. Since that numerator is nonzero at the exact witness, its zero set has empty interior; its nonzero set is open dense. The exact symmetry kernel count supplies the matching rank upper bound, so quotient rank is generically 21 and 24 on the two fixed graph fixtures. Exceptional states can still have extra stabilizers.
 
 This exact finite generic-rank result is not a uniform lower singular-value bound under graph refinement, a proof for other graphs, or a derivation of a spacetime metric. The T75 result remains a finite two-graph theorem/control and does not by itself establish the continuum BQG metric.
 
 
-For reproducibility, pivoted QR on the realified full tangent selected the following row/column indices (zero-based); these are candidate minors, not exact certificates:
+For reproducibility, pivoted QR on the realified full tangent first selected these zero-based row/column indices. The exact script freezes the indices and verifies the corresponding determinants:
 
 | Fixture | Rows | Columns | Numerical minor |
 |---|---|---|---|
