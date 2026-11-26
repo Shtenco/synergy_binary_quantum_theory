@@ -446,4 +446,3 @@ def H0_41_dual_s3_selected(rep,selected,tol=1e-11):
         Y=np.vstack([a,w])
         if np.linalg.norm(Y)>tol:out[q]=Y
     return out
-
