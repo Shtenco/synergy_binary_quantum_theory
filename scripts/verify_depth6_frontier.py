@@ -132,6 +132,17 @@ def main() -> int:
         terms = artifact.get("terms", [])
         require(errors, len(terms) == 12, f"[5] node {node} oriented-term coverage mismatch")
         require(errors, all(term.get("term_annihilates_vacuum") is True for term in terms), f"[5] node {node} has a nonzero term output")
+        allowed_channel_forms = {
+            "Matrix([[3**(1/4)/6,3**(1/4)/3],[-3**(1/4)/3,-3**(1/4)/6]])",
+            "Matrix([[-3**(1/4)/6,-3**(1/4)/3],[3**(1/4)/3,3**(1/4)/6]])",
+        }
+        channel_matrices = [
+            "".join(matrix.split())
+            for term in terms
+            for matrix in term.get("adjoint_channel_matrices_by_output_state", {}).values()
+        ]
+        require(errors, len(channel_matrices) == 12, f"[5] node {node} state-resolved channel matrix count mismatch")
+        require(errors, all(matrix in allowed_channel_forms for matrix in channel_matrices), f"[5] node {node} exact channel matrix form mismatch")
         provenance = artifact.get("source_provenance", {})
         require(errors, provenance.get("commit") == "f6bfcd775b8c3cd33c6c235d48293e40657baf9d", f"[5] node {node} source commit mismatch")
         require(errors, provenance.get("bundle_sha256") == "2a42c6cdbf82b3b65a2ada02116e31cc9dd30c514589bb2885992050d1d16d32", f"[5] node {node} bundle hash mismatch")

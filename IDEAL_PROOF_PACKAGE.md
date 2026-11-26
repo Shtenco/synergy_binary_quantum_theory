@@ -1795,6 +1795,20 @@ V=sqrt(|Q_source|)=(3^(1/4)/2) I.
 
 **Точная reduced-basis проверка adjoint vacuum column (26 ноября 2026).** Проверка выполнена exact arithmetic скриптом `scripts/depth6_vacuum_loop_reduced_exact_cg.py`, сверенным с bundle commit `f6bfcd775b8c3cd33c6c235d48293e40657baf9d` (encoded bundle SHA-256 `2a42c6cdbf82b3b65a2ada02116e31cc9dd30c514589bb2885992050d1d16d32`). Источниковые функции `local_hit_outputs`, reversed-edge `apply_hit`, path midpoint contraction, `radial_adjoint_block`, `triangle_adjoint_collapsed`, `oriented_T_ultrafast`, `oriented_specs` и финальная `project_gauss_block` сверены по структуре и индексному порядку; exact evaluator снимает все float thresholds, а локальный volume block заменяет source float recoupling точным Паули/Clebsch–Gordan результат. Она сохраняет заряженные промежуточные строки до radial/volume composition и группирует амплитуды по отдельным конечным состояниям. Теперь узлы `v=0,1,2,3,4` проверены напрямую; для каждого сохранён JSON-артефакт `verification_results/DEPTH6_5_VACUUM_ADJOINT_EXACT_NODE{v}_20261126.json`. Во всех пяти запусках exact CG arithmetic=true, каждая из 12 ориентированных компонент имеет пустой `hermitian_half_sum_output`, сырой pre-Gauss output пуст, и `node_constraint_annihilates_vacuum=true`; применение source final Gauss projection сохраняет ноль. Ненулевые промежуточные 2×2 channel matrices вида `(3^(1/4)/6)[[1,2],[-2,-1]]` сохраняются отдельно по конечным состояниям; зануляется именно сопряжённый color-channel результат каждой компоненты, а не искусственная сумма ортогональных строк. Exact локальный объёмный блок указан выше; forward radial часть зануляется selection rule до символьного суммирования.
 
+**Алгебраическая форма cancellation certificate.** Во всех пяти node artifacts каждая state-resolved adjoint color-channel matrix (60 матриц суммарно) в точности равна одной из форм
+
+```text
+± (3^(1/4)/6) [[1, 2], [-2, -1]],
+```
+
+и цветовая свёртка даёт ноль *для каждого фиксированного конечного состояния отдельно*:
+
+```text
+Σ_{i,j=0}^1 A_{ij} = (3^(1/4)/6)(1 + 2 − 2 − 1) = 0.
+```
+
+Это exact CG identity после convention-matched reduced transfer, не floating small-residual аргумент. Скрипт `verify_depth6_frontier.py` сверяет все 60 матриц с этими двумя нормальными формами, а затем проверяет нулевой raw output, source Gauss projection и provenance hash.
+
 Следовательно, для реконструированного узлового оператора `H_v` доказано `H_v|0⟩=0` для всех пяти узлов и потому для положительного оператора `M=Σ_v H_v†H_v` точно `⟨0|M|0⟩=0`. Остаётся отдельный provenance/identity gate: не установлен convention-by-convention операторный изоморфизм между этой восстановленной реализацией и historical branch-sum оператором `B_[5]` ledger. Также результат не исключает дополнительные нулевые моды на вакуумном дополнении и не доказывает rank в `[5]` или остальных шести irreps; полная C1 depth-6 kernel theorem остаётся открытой.
 
 Восстановленный `bqg_depth6_generic_master_row.master_map` вызывает source `H_node_apply_ultrafast` для `v=0,1` и representative `v=2` с точным орбитальным весом `√3`, затем применяет только линейные S₃/S₂ координатные отображения. Поэтому доказанное `H_v|0⟩=0` для всех узлов влечёт точный нулевой выход generic master-map на all-zero `[5]` координате, независимо от внутренних порогов, которые уже не участвуют в точном нуле. Это source-level identification с восстановленным generic row implementation; неизвестная provenance исторического ledger claim остаётся отдельной и не выводится из его status field.
