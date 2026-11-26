@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "status_date": "2026-11-25",
-  "ledger_revision_note": "Kernel-evidence statuses reconciled with preserved certificates; unsupported [5] and [4,1] rank/kernel assertions are retained only as unverified historical ledger claims.",
+  "status_date": "2026-11-26",
+  "ledger_revision_note": "Kernel evidence reconciled with preserved certificates and the exact recovered-generic-master vacuum-inclusion witness; unsupported [5] nonvacuum-rank and [4,1] rank/kernel assertions remain unverified historical claims.",
   "scope": "corrected finite K5 depth-6 master-kernel frontier",
   "status": "NUMERICAL_WITNESSES_PENDING",
   "shell": {
