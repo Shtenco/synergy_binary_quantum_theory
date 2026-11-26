@@ -136,3 +136,21 @@ For reproducibility, pivoted QR on the realified full tangent first selected the
 | `cycle_4` | 102,331,347,43,294,23,103,152,356,411,286,70,145,401,326,480,283,155,11,26,357,281,282,89 | 3,4,5,13,12,14,34,33,35,9,10,11,45,47,46,24,25,26,37,21,23,15,16,17 | sign −; log10(abs(det)) = −23.74258; condition ≈ 64.63 |
 
 The row convention is first all real boundary-amplitude coordinates, then all imaginary coordinates; tangent columns follow node, leg, and Pauli-axis order in `projective_tangent_jacobian`. QR pivot selection itself is floating-point and may vary by BLAS implementation, so a future exact certificate should freeze and verify the resulting minor independently.
+
+
+## 8. Exact local quantum-ray to spatial-shape metric
+
+The four-spin singlet logical qubit has intrinsic shape Bloch coordinates \\(X,Z\\); its oriented-volume coordinate is \\(Y=\\pm\\sqrt{1-X^2-Z^2}\\). The pure-qubit Fubini–Study line element is one quarter of the unit Bloch-sphere line element. At either regular tetrahedral branch \\(X=Z=0, Y=\\pm1\\),
+
+\\[
+ ds^2_{FS}=\\frac14(dX^2+dZ^2).
+\\]
+
+The exact local reconstruction gate gives the background edge metric \\(g_0\\) and trace-free metric derivatives \\(M_X=\\partial_Xg|_0\\), \\(M_Z=\\partial_Zg|_0\\). Its exact DeWitt-type tangent inner product is
+
+\\[
+\\operatorname{Tr}(g_0^{-1}M_Ag_0^{-1}M_B)=\\frac32\\delta_{AB},
+\\qquad A,B\\in\\{X,Z\\}.
+\\]
+
+Therefore, at the isotropic tetrahedron and with these stated normalizations, the pullback of the spatial shape tangent inner product is exactly \\(6g_{FS}\\). This supplies a local, analytic identification between distinguishability of logical quantum rays and intrinsic tetrahedral metric-shape response. The factor is convention-dependent, and the identity is a tangent-space result at the regular shape. It does not construct a graph-to-continuum metric field, physical time evolution, an Einstein kinetic operator, a graviton pole, or a photon/infoton sector. The missing T75-to-shape map remains explicit: the T75 quotient coordinates are half-link frame variations, while \\(X,Z\\) parameterize node intertwiner rays, and no physical history map between them has yet been derived.
