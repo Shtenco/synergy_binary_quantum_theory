@@ -58,4 +58,3 @@ def transform_coeff_fast(spins,p,V):
     return tsp,X.reshape((int(np.prod(new_dims)),V.shape[1]))
 
 transform_coeff=transform_coeff_fast
-
