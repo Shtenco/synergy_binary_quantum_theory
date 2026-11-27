@@ -18,7 +18,7 @@ def test_initial_reduced_block_keeps_subthreshold_nonzero_rows_in_no_prune_mode(
     spins = (1,) * 10
     labels = A.gauss_basis_labels(spins)
     block = np.zeros((len(labels), 1), dtype=complex)
-    block[0, 0] = 1.0e-13
+    block[0, 0] = 1.0e-200
 
     legacy = A.initial_reduced_block(spins, block)
     no_prune = A.initial_reduced_block(spins, block, tol=0.0)
@@ -49,7 +49,7 @@ def test_gauss_projection_zero_tolerance_retains_subthreshold_matrix_entries():
     basis_label = A.gauss_basis_labels(spins)[0]
     locs = tuple((K, K, 0, 0) for K in basis_label)
     key = (spins, locs)
-    vector = np.array([1.0e-13], dtype=complex)
+    vector = np.array([1.0e-200], dtype=complex)
     reduced = {key: vector}
 
     legacy = A.project_gauss_block(reduced)
@@ -168,3 +168,12 @@ def test_no_prune_selector_expansion_retains_subthreshold_coordinate_segments(mo
 
     assert tuple(expanded) == ("q",)
     assert expanded["q"][0, 0] == tiny
+
+
+
+def test_zero_tolerance_retains_values_whose_squared_norm_underflows():
+    tiny = np.array([1.0e-200 + 0.0j])
+    assert np.linalg.norm(tiny) == 0.0
+    assert A._keep_nonzero_or_above(tiny, 0.0)
+    assert M._keep_nonzero_or_above(tiny, 0.0)
+    assert not A._keep_nonzero_or_above(tiny, 1.0e-12)
