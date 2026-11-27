@@ -81,7 +81,8 @@ With branch-distinguishing interaction enabled, the exact success probability is
 - Source files and tests have been committed to the default branch.
 - A dedicated CI workflow has been added to compile and run the QAG tests on relevant pushes and pull requests.
 - An independent numerical smoke calculation of the same periodic-grid equations was run in the analysis environment: with epsilon=0.1 and a right-branch kick of -0.001 (dimensionless units), the coherent postselected shift was +0.0094739473 versus weak-value prediction +0.0094749372 (relative deviation 1.0448e-4); the fully dephased control shifted -0.00045. The source-only overlap probability was 0.00250628144669, matching its analytic expression.
-- This smoke calculation is not execution of the committed Python module or its unittest suite. A completed Actions run has **not** been independently observed; therefore the committed tests are **authored but not yet reported as passing**.
+- GitHub Actions QAG regression run **passed**: run ID 46027910833, commit 0d53d8eb51ba1e5b0ec7983e02dab92485a0a04d. The job completed both "Compile QAG module and tests" and "Run QAG regression suite" successfully. Run URL: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46027910833.
+- The CI result verifies the committed module/test syntax and all 11 QAG unit tests at that commit. It does not validate a gravity-specific Hamiltonian or establish physical antigravity.
 - No gravity-specific Hamiltonian, Newtonian force calibration, source-position observable, measurement-apparatus model, or BQG physical projector is implemented here.
 - The toy probe rotation is a generic unitary benchmark. It is not a gravitational interaction model.
 - This module cannot establish antigravity, a propulsion effect, a violation of conservation laws, or physicalization of BQG.
