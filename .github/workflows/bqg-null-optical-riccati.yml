@@ -1,0 +1,45 @@
+name: BQG null-optical Riccati and IR-cone gates
+
+on:
+  push:
+    branches:
+      - research/null-cone-optical-riccati-gate-20261127
+    paths:
+      - 'scripts/bqg_discrete_optical_riccati_gate.py'
+      - 'scripts/bqg_existing_lightcone_ir_null_bridge_gate.py'
+      - 'BQG_EXISTING_LIGHTCONE_IR_NULL_GEOMETRY_BRIDGE_20261127.md'
+      - '.github/workflows/bqg-null-optical-riccati.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_discrete_optical_riccati_gate.py'
+      - 'scripts/bqg_existing_lightcone_ir_null_bridge_gate.py'
+      - '.github/workflows/bqg-null-optical-riccati.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bqg-null-optical-riccati-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  optical-riccati:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependency
+        run: python -m pip install numpy
+      - name: Compile gates
+        run: |
+          python -m py_compile scripts/bqg_discrete_optical_riccati_gate.py
+          python -m py_compile scripts/bqg_existing_lightcone_ir_null_bridge_gate.py
+      - name: Run discrete optical and Raychaudhuri regression
+        run: python scripts/bqg_discrete_optical_riccati_gate.py
+      - name: Run existing light-cone to IR null-geometry regression
+        run: python scripts/bqg_existing_lightcone_ir_null_bridge_gate.py
