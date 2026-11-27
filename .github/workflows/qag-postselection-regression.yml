@@ -16,8 +16,10 @@ on:
     paths:
       - "qag_postselection.py"
       - "qag_periodic_probe.py"
+      - "qag_hamiltonian.py"
       - "tests/test_qag_postselection.py"
       - "tests/test_qag_periodic_probe.py"
+      - "tests/test_qag_hamiltonian.py"
       - ".github/workflows/qag-postselection-regression.yml"
 
 permissions:
