@@ -1,7 +1,7 @@
 import unittest
 
 from bqg_w5_su2_structural_basis import (
-    allowed_pair2, all_total_J2, charged_labels, covariant_basis_size,
+    allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
     w5_gauss_seed, w5_seed_as_covariant,
 )
@@ -18,6 +18,8 @@ class StructuralBasisTests(unittest.TestCase):
         js = all_total_J2((4, 4, 4, 4))
         self.assertEqual(js, tuple(range(0, 17, 2)))
         self.assertEqual(len(gauss_labels((4, 4, 4, 4))), 5)
+        self.assertEqual(len(charged_node_basis((4, 4, 4, 4))), 625)
+        self.assertEqual(covariant_basis_size((4,) * 10, 0), 390625)
 
     def test_w5_seed_embedding(self):
         for K in (0, 2, 4, 6, 8):
