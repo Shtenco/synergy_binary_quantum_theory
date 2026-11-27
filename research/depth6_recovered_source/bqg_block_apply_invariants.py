@@ -17,14 +17,14 @@ def gauss_basis_labels(spins):
     opts=[R.allowed_k2_t(*R.local_spins(spins,v)) for v in R.VERT]
     return list(itertools.product(*opts))
 
-def initial_reduced_block(spins,B):
+def initial_reduced_block(spins,B,tol=TOL):
     spins=tuple(spins); B=np.asarray(B,complex)
     ks=gauss_basis_labels(spins)
     assert B.shape[0]==len(ks)
     out={}
     for i,Ks in enumerate(ks):
         row=B[i]
-        if np.linalg.norm(row)<=TOL: continue
+        if np.linalg.norm(row)<=tol: continue
         locs=tuple((K,K,0,0) for K in Ks)
         out[(spins,locs)]=row.copy()
     return out
@@ -43,8 +43,8 @@ def apply_hit_block(state,x,y,i,j,Jmax2,tol=TOL):
                 norm=np.sqrt((so+1)/(s+1))
             lsu=R.local_spins(spins,u); lsw=R.local_spins(spins,w)
             legu=R.LEGIDX[(u,w)]; legw=R.LEGIDX[(w,u)]
-            ou=H.local_hit_outputs(u,lsu,legu,so,kind_u,col_u,locs[u])
-            ow=H.local_hit_outputs(w,lsw,legw,so,kind_w,col_w,locs[w])
+            ou=H.local_hit_outputs(u,lsu,legu,so,kind_u,col_u,locs[u],tol)
+            ow=H.local_hit_outputs(w,lsw,legw,so,kind_w,col_w,locs[w],tol)
             if not ou or not ow: continue
             spn=list(spins); spn[ei]=so; spn=tuple(spn)
             for lu,au in ou:
@@ -213,40 +213,40 @@ def far_radial_weight(s,so,v,c):
     if err>1e-10: raise RuntimeError(('far radial not scalar',s,so,v,c,err))
     return complex(scalar)
 
-def _volume_local_outputs(spins_local,label):
+def _volume_local_outputs(spins_local,label,tol=1e-12):
     K,L,J,M=label; labels=Rec.multiplicity_labels(tuple(spins_local),J)
     try: idx=labels.index((K,L))
     except ValueError:return ()
     V=Rec.reduced_volume_block(tuple(spins_local),J);out=[]
     for a,(Ko,Lo) in enumerate(labels):
         z=V[a,idx]
-        if abs(z)>1e-12:out.append(((Ko,Lo,J,M),complex(z)))
+        if abs(z)>tol:out.append(((Ko,Lo,J,M),complex(z)))
     return tuple(out)
 
 @functools.lru_cache(None)
-def radial_local_matrix(v,c,spins_local,i,j):
+def radial_local_matrix(v,c,spins_local,i,j,tol=1e-13):
     sp=tuple(spins_local); leg=R.LEGIDX[(v,c)]; s=sp[leg]; labels=all_local_labels(sp); idx={x:n for n,x in enumerate(labels)}
     M=np.zeros((len(labels),len(labels)),complex)
     kind1='cg' if c<v else 'adj'  # c->v, central endpoint v
     kind2='cg' if v<c else 'adj'  # v->c, central endpoint v
     for col,lab in enumerate(labels):
         # V then pair
-        for lv,cv in _volume_local_outputs(sp,lab):
+        for lv,cv in _volume_local_outputs(sp,lab,tol):
             for so in (s-1,s+1):
                 if so<0:continue
                 sp1=list(sp);sp1[leg]=so;sp1=tuple(sp1);w=far_radial_weight(s,so,v,c)
-                for l1,a1 in H.local_hit_outputs(v,sp,leg,so,kind1,i,lv):
-                    for l2,a2 in H.local_hit_outputs(v,sp1,leg,s,kind2,j,l1):
+                for l1,a1 in H.local_hit_outputs(v,sp,leg,so,kind1,i,lv,tol):
+                    for l2,a2 in H.local_hit_outputs(v,sp1,leg,s,kind2,j,l1,tol):
                         M[idx[l2],col]+=w*cv*a1*a2
         # pair with V in the middle
         for so in (s-1,s+1):
             if so<0:continue
             sp1=list(sp);sp1[leg]=so;sp1=tuple(sp1);w=far_radial_weight(s,so,v,c)
-            for l1,a1 in H.local_hit_outputs(v,sp,leg,so,kind1,i,lab):
-                for lv,cv in _volume_local_outputs(sp1,l1):
-                    for l2,a2 in H.local_hit_outputs(v,sp1,leg,s,kind2,j,lv):
+            for l1,a1 in H.local_hit_outputs(v,sp,leg,so,kind1,i,lab,tol):
+                for lv,cv in _volume_local_outputs(sp1,l1,tol):
+                    for l2,a2 in H.local_hit_outputs(v,sp1,leg,s,kind2,j,lv,tol):
                         M[idx[l2],col]-=w*a1*cv*a2
-    M[np.abs(M)<1e-13]=0
+    M[np.abs(M)<tol]=0
     return M
 
 def apply_local_matrix_block(state,v,matfun,tol=1e-12):
@@ -256,15 +256,15 @@ def apply_local_matrix_block(state,v,matfun,tol=1e-12):
         lab=locs[v]
         try: col=li[lab]
         except KeyError:continue
-        M=matfun(tuple(ls)); vec=M[:,col]
+        M=matfun(tuple(ls),tol); vec=M[:,col]
         for r,z in enumerate(vec):
             if abs(z)>tol:
                 ll=list(locs);ll[v]=labels[r];add_vec(out,(spins,tuple(ll)),amp*z,tol)
     return out
 
 def apply_radial_collapsed_block(state,v,c,i,j,adj=False,tol=1e-12):
-    def mf(ls):
-        A=radial_local_matrix(v,c,ls,i,j)
+    def mf(ls,tol):
+        A=radial_local_matrix(v,c,ls,i,j,tol)
         return A.conj().T if adj else A
     return apply_local_matrix_block(state,v,mf,tol)
 
@@ -298,23 +298,23 @@ def endpoint_kind_color(x,y,ci,cj,endpoint):
         return ('adj', ci if endpoint==x else cj)
 
 @functools.lru_cache(None)
-def local_two_hit_outputs(v,spins_local,leg1,so1,kind1,color1,leg2,so2,kind2,color2,label):
+def local_two_hit_outputs(v,spins_local,leg1,so1,kind1,color1,leg2,so2,kind2,color2,label,tol=1e-13):
     sp=tuple(spins_local); out={}
-    for l1,a1 in H.local_hit_outputs(v,sp,leg1,so1,kind1,color1,label):
+    for l1,a1 in H.local_hit_outputs(v,sp,leg1,so1,kind1,color1,label,tol):
         sp1=list(sp); sp1[leg1]=so1; sp1=tuple(sp1)
-        for l2,a2 in H.local_hit_outputs(v,sp1,leg2,so2,kind2,color2,l1):
+        for l2,a2 in H.local_hit_outputs(v,sp1,leg2,so2,kind2,color2,l1,tol):
             z=out.get(l2,0j)+a1*a2
-            if abs(z)>1e-13:out[l2]=z
+            if abs(z)>tol:out[l2]=z
             elif l2 in out:del out[l2]
     return tuple(out.items())
 
 @functools.lru_cache(None)
-def local_two_hit_shared_outputs(v,spins_local,leg1,so1,kind1,leg2,so2,kind2,label):
+def local_two_hit_shared_outputs(v,spins_local,leg1,so1,kind1,leg2,so2,kind2,label,tol=1e-13):
     out={}
     for m in range(2):
-        for l,z in local_two_hit_outputs(v,spins_local,leg1,so1,kind1,m,leg2,so2,kind2,m,label):
+        for l,z in local_two_hit_outputs(v,spins_local,leg1,so1,kind1,m,leg2,so2,kind2,m,label,tol):
             out[l]=out.get(l,0j)+z
-    return tuple((l,z) for l,z in out.items() if abs(z)>1e-13)
+    return tuple((l,z) for l,z in out.items() if abs(z)>tol)
 
 def edge_norm(s,so,x,y):
     return R.hit_mats(s,so,x,y,0,0)[2]
@@ -336,17 +336,17 @@ def apply_triangle_path_collapsed(state,path,iout,iin,Jmax2,tol=1e-12):
                     # local v: edge v-a first (color iout), edge b-v last (color iin)
                     lsv=R.local_spins(spins,v); lv1=R.LEGIDX[(v,a)]; lv3=R.LEGIDX[(v,b)]
                     k1,c1=endpoint_kind_color(v,a,iout,0,v); k3,c3=endpoint_kind_color(b,v,0,iin,v)
-                    ov=local_two_hit_outputs(v,lsv,lv1,o1,k1,c1,lv3,o3,k3,c3,locs[v])
+                    ov=local_two_hit_outputs(v,lsv,lv1,o1,k1,c1,lv3,o3,k3,c3,locs[v],tol)
                     if not ov:continue
                     # local a: shared m1 on v-a and a-b
                     lsa=R.local_spins(spins,a); la1=R.LEGIDX[(a,v)]; la2=R.LEGIDX[(a,b)]
                     ka1,_=endpoint_kind_color(v,a,0,0,a); ka2,_=endpoint_kind_color(a,b,0,0,a)
-                    oa=local_two_hit_shared_outputs(a,lsa,la1,o1,ka1,la2,o2,ka2,locs[a])
+                    oa=local_two_hit_shared_outputs(a,lsa,la1,o1,ka1,la2,o2,ka2,locs[a],tol)
                     if not oa:continue
                     # local b: shared m2 on a-b and b-v
                     lsb=R.local_spins(spins,b); lb2=R.LEGIDX[(b,a)]; lb3=R.LEGIDX[(b,v)]
                     kb2,_=endpoint_kind_color(a,b,0,0,b); kb3,_=endpoint_kind_color(b,v,0,0,b)
-                    ob=local_two_hit_shared_outputs(b,lsb,lb2,o2,kb2,lb3,o3,kb3,locs[b])
+                    ob=local_two_hit_shared_outputs(b,lsb,lb2,o2,kb2,lb3,o3,kb3,locs[b],tol)
                     if not ob:continue
                     spn=list(spins);spn[e1]=o1;spn[e2]=o2;spn[e3]=o3;spn=tuple(spn)
                     for lvo,av in ov:
@@ -381,11 +381,14 @@ def oriented_T_ultrafast(init,v,a,b,c,Jmax2,tol=1e-12):
             apply_scaled_merge(out,rd,+0.5,tol)
     return out
 
-def H_node_apply_ultrafast(spins,v,B,tol=1e-10,Jmax2=None):
+def H_node_apply_ultrafast(spins,v,B,tol=1e-10,Jmax2=None,no_prune=None):
     spins=tuple(spins);B=np.asarray(B,complex)
     if Jmax2 is None:Jmax2=max(spins)+1
-    init=initial_reduced_block(spins,B);acc={}
+    if no_prune is None:no_prune=(tol==0)
+    prune_tol=0.0 if no_prune else 1e-12
+    merge_tol=0.0 if no_prune else 1e-11
+    init=initial_reduced_block(spins,B,prune_tol);acc={}
     for sign,spec in R.oriented_specs(v):
-        vv,a,b,c=spec;rr=oriented_T_ultrafast(init,vv,a,b,c,Jmax2,1e-12);apply_scaled_merge(acc,rr,sign,1e-11)
-    return project_gauss_block(acc,tol)
+        vv,a,b,c=spec;rr=oriented_T_ultrafast(init,vv,a,b,c,Jmax2,prune_tol);apply_scaled_merge(acc,rr,sign,merge_tol)
+    return project_gauss_block(acc,0.0 if no_prune else tol)
 H_node_apply = H_node_apply_ultrafast
