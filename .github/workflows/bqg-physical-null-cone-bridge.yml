@@ -1,0 +1,27 @@
+name: BQG physical null-cone bridge
+
+on:
+  push:
+    branches:
+      - research/null-cone-physical-bridge-v2-20261127
+    paths:
+      - 'scripts/bqg_physical_null_cone_bridge_gate.py'
+      - '.github/workflows/bqg-physical-null-cone-bridge.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/bqg_physical_null_cone_bridge_gate.py'
+      - '.github/workflows/bqg-physical-null-cone-bridge.yml'
+  workflow_dispatch:
+
+jobs:
+  bridge-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check numpy
+      - run: python -m py_compile scripts/bqg_physical_null_cone_bridge_gate.py
+      - run: python scripts/bqg_physical_null_cone_bridge_gate.py
