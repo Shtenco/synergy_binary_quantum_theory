@@ -7,10 +7,16 @@ import bqg_covariant_volume_recoupling as Rec
 
 TOL=1e-12
 
+def _keep_nonzero_or_above(value,tol):
+    array=np.asarray(value)
+    if tol>0:
+        return np.linalg.norm(array)>tol
+    return bool(np.any(array!=0))
+
 def add_vec(dst,key,val,tol=TOL):
     if key in dst: z=dst[key]+val
     else: z=np.array(val,complex,copy=True)
-    if np.linalg.norm(z)>tol: dst[key]=z
+    if _keep_nonzero_or_above(z,tol): dst[key]=z
     elif key in dst: del dst[key]
 
 def gauss_basis_labels(spins):
@@ -24,7 +30,7 @@ def initial_reduced_block(spins,B,tol=TOL):
     out={}
     for i,Ks in enumerate(ks):
         row=B[i]
-        if np.linalg.norm(row)<=tol: continue
+        if not _keep_nonzero_or_above(row,tol): continue
         locs=tuple((K,K,0,0) for K in Ks)
         out[(spins,locs)]=row.copy()
     return out
@@ -103,8 +109,8 @@ def project_gauss_block(red,tol=1e-10):
         ncol=len(next(iter(d.values()))) if d else 0
         M=np.zeros((len(labels),ncol),complex)
         for k,v in d.items(): M[idx[k]]+=v
-        M[np.abs(M)<tol]=0
-        if np.linalg.norm(M)>tol: out[so]=M
+        if tol>0: M[np.abs(M)<tol]=0
+        if _keep_nonzero_or_above(M,tol): out[so]=M
     return out
 
 def apply_scaled_merge(dst,src,scale=1.0,tol=1e-12):
@@ -166,7 +172,7 @@ def oriented_T_factorized(init,v,a,b,c,Jmax2,tol=1e-12):
             rd=radial_adjoint_block(ld,v,c,i,j,Jmax2,tol)
             apply_scaled_merge(out,rd,+1,tol)
     # Hermitian completion 1/2(T+Tdag)
-    return {k:0.5*a for k,a in out.items() if np.linalg.norm(a)>tol}
+    return {k:0.5*a for k,a in out.items() if _keep_nonzero_or_above(a,tol)}
 
 def H_node_apply(spins,v,B,tol=1e-10,Jmax2=None):
     spins=tuple(spins); B=np.asarray(B,complex)
