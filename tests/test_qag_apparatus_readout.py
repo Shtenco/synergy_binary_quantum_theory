@@ -14,6 +14,13 @@ class QAGApparatusReadoutTests(unittest.TestCase):
         unitary = apparatus_readout_unitary(7)
         np.testing.assert_allclose(unitary.conj().T @ unitary, np.eye(49), atol=1e-12)
 
+    def test_readout_unitary_preserves_joint_apparatus_meter_translation(self):
+        n = 6
+        unitary = apparatus_readout_unitary(n)
+        shift = np.roll(np.eye(n, dtype=complex), 1, axis=0)
+        joint_shift = np.kron(shift, shift)
+        self.assertLess(np.linalg.norm(unitary @ joint_shift - joint_shift @ unitary), 1e-12)
+
     def test_meter_records_apparatus_position(self):
         state = np.zeros((5, 5), dtype=complex)
         state[1, 3] = 1.0
