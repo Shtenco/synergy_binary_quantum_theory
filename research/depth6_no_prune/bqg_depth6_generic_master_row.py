@@ -11,6 +11,12 @@ import bqg_s5_intertwiner_action_gate as S
 S2=tuple(p for p in Z.S3 if p[2]==2)
 G2=len(S2)
 
+def _keep_nonzero_or_above(value,tol):
+    array=np.asarray(value)
+    if tol>0:
+        return np.linalg.norm(array)>tol
+    return bool(np.any(array!=0))
+
 def char(p,seed): return 1 if seed=='triv' else Z.perm_sign(p)
 def flip(seed): return 'sign' if seed=='triv' else 'triv'
 def basis3(q,seed): return Z.s3_triv(q) if seed=='triv' else Z.s3_sign(q)
@@ -45,7 +51,7 @@ def reduced_s3_node(qin,Xcoord,v,seed,tol=0.0):
         V=basis3(q,outseed)
         if V.shape[1]==0:continue
         gout=len(Z.s3_stabilizer(q));Y=math.sqrt(gout/gin)*(V.conj().T@M)
-        if np.linalg.norm(Y)>tol:out[q]=Y
+        if _keep_nonzero_or_above(Y,tol):out[q]=Y
     return out
 
 def raw_to_s2_coords(raw,seed,tol=0.0):
@@ -54,7 +60,7 @@ def raw_to_s2_coords(raw,seed,tol=0.0):
         B=raw.get(q)
         if B is None:continue
         V=basis2(q,seed);n2=G2/len(s2_stabilizer(q));Y=math.sqrt(n2)*(V.conj().T@B)
-        if np.linalg.norm(Y)>tol:out[q]=Y
+        if _keep_nonzero_or_above(Y,tol):out[q]=Y
     return out
 
 def reduced_s2_node(qin,Xcoord,v,seed,tol=0.0):
@@ -71,7 +77,7 @@ def reduced_s2_node(qin,Xcoord,v,seed,tol=0.0):
         V=basis2(q,outseed)
         if V.shape[1]==0:continue
         gout=len(s2_stabilizer(q));Y=math.sqrt(gout/gin)*(V.conj().T@M)
-        if np.linalg.norm(Y)>tol:out[q]=Y
+        if _keep_nonzero_or_above(Y,tol):out[q]=Y
     return out
 
 def merge(acc,part,prefix,scale=1.0):
@@ -95,7 +101,7 @@ def master_map(rep,key,W=None,tol=0.0):
     raw=J.expand(rep,seed,W);c2=raw_to_s2_coords(raw,seed,tol)
     for b,seg in c2.items():
         merge(acc,reduced_s2_node(b,seg,2,seed,tol),'v2',math.sqrt(3.0))
-    return {q:M for q,M in acc.items() if np.linalg.norm(M)>tol},W
+    return {q:M for q,M in acc.items() if _keep_nonzero_or_above(M,tol)},W
 
 def gram(mp):
     if not mp:return np.zeros((0,0),complex)
