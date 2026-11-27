@@ -13,7 +13,9 @@ on:
     branches: [main]
     paths:
       - "qag_postselection.py"
+      - "qag_periodic_probe.py"
       - "tests/test_qag_postselection.py"
+      - "tests/test_qag_periodic_probe.py"
       - ".github/workflows/qag-postselection-regression.yml"
 
 permissions:
@@ -31,6 +33,6 @@ jobs:
       - name: Install minimal dependency
         run: python -m pip install "numpy>=1.24"
       - name: Compile QAG module and tests
-        run: python -m py_compile qag_postselection.py tests/test_qag_postselection.py
+        run: python -m py_compile qag_postselection.py qag_periodic_probe.py tests/test_qag_postselection.py tests/test_qag_periodic_probe.py
       - name: Run QAG regression suite
-        run: python -m unittest discover -s tests -p "test_qag_postselection.py" -v
+        run: python -m unittest discover -s tests -p "test_qag_*.py" -v
