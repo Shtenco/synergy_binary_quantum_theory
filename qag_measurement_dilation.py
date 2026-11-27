@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 ComplexArray = NDArray[np.complex128]
-__all__ = ["apply_source_measurement_dilation", "measurement_outcome_probabilities", "source_measurement_dilation_unitary"]
+__all__ = ["apply_source_measurement_dilation", "conditional_measurement_outcome", "measurement_outcome_probabilities", "source_measurement_dilation_unitary"]
 
 def _validated_basis(basis: np.ndarray) -> ComplexArray:
     value = np.asarray(basis, dtype=np.complex128)
@@ -56,3 +56,23 @@ def measurement_outcome_probabilities(dilated_state: np.ndarray) -> tuple[float,
     if value.ndim < 2 or value.shape[-1] != 2:
         raise ValueError("dilated state must have a final two-level meter axis")
     return tuple(float(np.sum(np.abs(value[..., k]) ** 2).real) for k in range(2))
+
+
+def conditional_measurement_outcome(
+    dilated_state: np.ndarray, outcome: int
+) -> tuple[float, ComplexArray]:
+    """Return (probability, normalized source+environment state) for one meter result.
+
+    The meter axis is removed only after selecting its outcome. A zero-probability
+    outcome raises ZeroDivisionError rather than returning an undefined state.
+    """
+    value = np.asarray(dilated_state, dtype=np.complex128)
+    if value.ndim < 2 or value.shape[-1] != 2:
+        raise ValueError("dilated state must have a final two-level meter axis")
+    if outcome not in (0, 1):
+        raise ValueError("outcome must be 0 or 1")
+    branch = value[..., outcome]
+    probability = float(np.sum(np.abs(branch) ** 2).real)
+    if not np.isfinite(probability) or probability <= 1e-14:
+        raise ZeroDivisionError("measurement outcome has zero or unresolved probability")
+    return probability, branch / np.sqrt(probability)
