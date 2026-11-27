@@ -118,6 +118,72 @@ def w5_seed_as_covariant(K: int, source_v: int = 0):
     return spins, labels
 
 
+def advance_spin_path(spins: tuple[int, ...], path: tuple[int, ...],
+                      Jmax2: int) -> tuple[tuple[int, ...], ...]:
+    """Conservative link-spin support of one fundamental hit along a path.
+
+    Each traversed edge undergoes s -> s-1 or s+1 in doubled-spin units.
+    Magnetic-index and intertwiner zeros are intentionally not used, so the
+    result is an upper support bound, not a claim of nonzero operator action.
+    """
+    if Jmax2 < 0:
+        raise ValueError("Jmax2 must be nonnegative")
+    states = {tuple(spins)}
+    for x, y in zip(path[:-1], path[1:]):
+        edge_index = EDGE_INDEX[tuple(sorted((x, y)))]
+        next_states = set()
+        for state in states:
+            s = state[edge_index]
+            for so in (s - 1, s + 1):
+                if 0 <= so <= Jmax2:
+                    updated = list(state)
+                    updated[edge_index] = so
+                    next_states.add(tuple(updated))
+        states = next_states
+    return tuple(sorted(states))
+
+
+def spin_support_for_sequence(spins: tuple[int, ...], sequence,
+                              Jmax2: int) -> tuple[tuple[int, ...], ...]:
+    """Propagate only exact edge-spin selection rules through a PW word."""
+    states = {tuple(spins)}
+    for op in sequence:
+        if op[0] == "V":
+            continue
+        if op[0] != "P":
+            raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
+        path = tuple(op[1])
+        updated = set()
+        for state in states:
+            updated.update(advance_spin_path(state, path, Jmax2))
+        states = updated
+    return tuple(sorted(states))
+
+
+def t_sequence_spin_support(spins: tuple[int, ...], v: int,
+                            a: int, b: int, c: int, Jmax2: int,
+                            include_adjoint: bool = True):
+    """Spin-sector superset for the repository's actual T_sequences words.
+
+    The word templates and adjoint reversal are imported from the existing
+    Peter-Weyl engine to avoid maintaining a second copy of their definition.
+    """
+    import sys
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import k5_peter_weyl_safe_hda_column as PW
+
+    support = set()
+    for _coefficient, sequence in PW.T_sequences(v, a, b, c):
+        support.update(spin_support_for_sequence(spins, sequence, Jmax2))
+        if include_adjoint:
+            reverse = PW.adjoint_sequence(sequence)
+            support.update(spin_support_for_sequence(spins, reverse, Jmax2))
+    return tuple(sorted(support))
+
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
