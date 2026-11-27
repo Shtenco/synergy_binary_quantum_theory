@@ -47,9 +47,10 @@ The recovered source directory remains byte-for-byte unchanged. The no-prune run
 8. retention of tiny selector coordinates while omitting an exactly-zero segment;
 9. retention of `1e-200` amplitudes even when their squared Euclidean norm underflows to zero;
 10. resolution of the S5 action module to the isolated derived copy;
-11. retention of a `1e-15` S5 recoupling product through both `act_on_key` and the actual depth-4 `_transform_matrix` caller that omits an explicit tolerance; the recovered `1e-12` default would have deleted it.
+11. retention of a `1e-15` S5 recoupling product through both `act_on_key` and the actual depth-4 `_transform_matrix` caller that omits an explicit tolerance; the recovered `1e-12` default would have deleted it;
+12. end-to-end superposition linearity of the non-vacuum `master_map` output on a seeded two-input test.
 
-On commit `38756a19da67c091c7a0248e4c4d0d3098e04ebf`, the canonical-core job reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation, finite-frontier validation, public status surface, LaTeX normalization, README local links and multiple mathematical control steps as successful. The full workflow was still in progress, with HDA and higher-shell jobs outstanding. The S5 no-prune action module and its new regression test were added after that run; a fresh CI run is required to validate them.
+On commit `38756a19da67c091c7a0248e4c4d0d3098e04ebf`, the canonical-core job reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation, finite-frontier validation, public status surface, LaTeX normalization, README local links and multiple mathematical control steps as successful. The full workflow was still in progress, with HDA and higher-shell jobs outstanding. The S5 no-prune action module and its regression were validated in the next core run. The end-to-end superposition-linearity regression was added after that run and still requires a fresh CI result.
 
 ## What this does not establish
 
@@ -63,6 +64,6 @@ On commit `38756a19da67c091c7a0248e4c4d0d3098e04ebf`, the canonical-core job rep
 
 `NO_MAGNITUDE_PRUNING_PATH_IMPLEMENTED_FOR_THE_SELECTED_ULTRAFAST_PRODUCER`
 
-`FINITE_FLOAT64_REGRESSION_TESTS_PASS_PRIOR_HEAD; S5_NO_PRUNE_ACTION_ADDED_AFTER_THAT_RUN`
+`FINITE_FLOAT64_REGRESSION_TESTS_PASS_PRIOR_HEAD; MASTER_MAP_SUPERPOSITION_REGRESSION_PENDING_CURRENT_HEAD_CI`
 
 `C1=OPEN`
