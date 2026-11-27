@@ -81,8 +81,8 @@ def apply_v_state(state, node):
 def apply_k_column(key, node, jmax2):
     seed = {key: 1.0 + 0.0j}
     h_seed, hv1, hb1 = apply_h_sine_state(seed, node, jmax2)
-    vh, _ = apply_v_state(h_seed, node)
-    v_seed, _ = apply_v_state(seed, node)
+    vh = apply_v_state(h_seed, node)
+    v_seed = apply_v_state(seed, node)
     hv, hv2, hb2 = apply_h_sine_state(v_seed, node, jmax2)
     out = {}
     add(out, vh, +1.0)
