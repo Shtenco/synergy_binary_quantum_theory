@@ -85,7 +85,8 @@ def integrate_jacobi_midpoint(B0: np.ndarray, R: np.ndarray, T: float, h: float)
         sv = np.linalg.svd(S, compute_uv=False)
         if sv[-1] < 1e-12 * max(1.0, sv[0]):
             raise FloatingPointError("midpoint Jacobi chart is singular")
-        B_mid = (2.0 / h) * (J_cur - J_prev) @ np.linalg.inv(S)
+        delta = J_cur - J_prev
+        B_mid = (2.0 / h) * np.linalg.solve(S.T, delta.T).T
         _assert_symmetric("midpoint B", B_mid, tol=5e-9)
         logdet_cur = np.linalg.slogdet(J_cur)
         logdet_prev = np.linalg.slogdet(J_prev)
