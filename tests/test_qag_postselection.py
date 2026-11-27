@@ -23,15 +23,23 @@ class QAGPostselectionTests(unittest.TestCase):
         self.rho_p = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=complex)
 
     def test_weak_value_and_success_probability_reference(self):
+        expected_weak = -(
+            np.sqrt(1 - self.eps**2) + 1 - self.eps
+        ) / (2 * self.eps)
         self.assertAlmostEqual(weak_value_right(self.a, self.phi).real,
-                               -(1 - self.eps) / (2 * self.eps), places=12)
-        # The weak value is -(1-eps)/(2 eps), not -1/eps exactly.
-        # The success probability is eps^2/4 for this convention.
+                               expected_weak, places=12)
+        # The paper's 1/eps and eps^2/4 relations are leading-order
+        # asymptotics for this parameterisation, not exact identities.
         result = conditional_probe_state(
             source_density_from_amplitudes(self.a), self.phi,
             [self.ul, self.ur], self.rho_p
         )
-        self.assertAlmostEqual(result.probability, self.eps**2 / 4, places=12)
+        exact_probability = (
+            np.sqrt(1 + self.eps) - np.sqrt(1 - self.eps)
+        )**2 / 4
+        self.assertAlmostEqual(result.probability, exact_probability, places=12)
+        self.assertAlmostEqual(result.probability / (self.eps**2 / 4),
+                               1.0, delta=0.06)
 
     def test_pure_source_kraus_matches_density_matrix_channel(self):
         rho_s = source_density_from_amplitudes(self.a, coherence=1.0)
