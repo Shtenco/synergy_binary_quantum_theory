@@ -52,6 +52,30 @@ class QAGPeriodicProbeTests(unittest.TestCase):
             places=12,
         )
 
+    def test_grid_refinement_is_stable(self):
+        coarse = run_weak_value_kick_benchmark(
+            epsilon=0.1, delta_p_right=-1e-3, n=64, length=40.0
+        )
+        fine = run_weak_value_kick_benchmark(
+            epsilon=0.1, delta_p_right=-1e-3, n=128, length=40.0
+        )
+        self.assertAlmostEqual(
+            coarse.conditional_shift, fine.conditional_shift, places=11
+        )
+        self.assertAlmostEqual(
+            coarse.success_probability, fine.success_probability, places=13
+        )
+
+    def test_weak_limit_error_decreases_with_kick_strength(self):
+        smaller = run_weak_value_kick_benchmark(
+            epsilon=0.1, delta_p_right=-5e-4
+        )
+        larger = run_weak_value_kick_benchmark(
+            epsilon=0.1, delta_p_right=-1e-3
+        )
+        self.assertLess(smaller.relative_weak_error,
+                        larger.relative_weak_error)
+
     def test_decohered_source_gives_convex_branch_average(self):
         eps, delta = 0.1, -1e-3
         x, momentum = periodic_position_momentum_operators(256, 40.0)
