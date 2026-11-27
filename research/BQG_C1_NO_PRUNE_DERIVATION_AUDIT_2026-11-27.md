@@ -47,7 +47,7 @@ The recovered source directory remains byte-for-byte unchanged. The no-prune run
 8. retention of tiny selector coordinates while omitting an exactly-zero segment;
 9. retention of `1e-200` amplitudes even when their squared Euclidean norm underflows to zero;
 10. resolution of the S5 action module to the isolated derived copy;
-11. retention of a `1e-15` S5 recoupling product that the recovered `1e-12` default would have deleted.
+11. retention of a `1e-15` S5 recoupling product through both `act_on_key` and the actual depth-4 `_transform_matrix` caller that omits an explicit tolerance; the recovered `1e-12` default would have deleted it.
 
 On commit `38756a19da67c091c7a0248e4c4d0d3098e04ebf`, the canonical-core job reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation, finite-frontier validation, public status surface, LaTeX normalization, README local links and multiple mathematical control steps as successful. The full workflow was still in progress, with HDA and higher-shell jobs outstanding. The S5 no-prune action module and its new regression test were added after that run; a fresh CI run is required to validate them.
 
