@@ -17,6 +17,14 @@ from numpy.typing import NDArray
 
 ComplexArray = NDArray[np.complex128]
 
+__all__ = [
+    "StinespringResult",
+    "complete_stinespring_probabilities",
+    "gaussian_momentum_state",
+    "run_stinespring_recoil_model",
+    "ry",
+]
+
 
 def _normalised_vector(value: np.ndarray, dimension: int, name: str) -> ComplexArray:
     vector = np.asarray(value, dtype=np.complex128)
