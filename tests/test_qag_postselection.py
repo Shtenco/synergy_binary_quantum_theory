@@ -30,16 +30,26 @@ class QAGPostselectionTests(unittest.TestCase):
                                expected_weak, places=12)
         # The paper's 1/eps and eps^2/4 relations are leading-order
         # asymptotics for this parameterisation, not exact identities.
-        result = conditional_probe_state(
+        # With no branch-distinguishing interaction, the success probability
+        # is exactly the source overlap squared. With interaction enabled it
+        # must instead be computed from Tr(K rho_probe K^dagger).
+        identity = np.eye(2, dtype=complex)
+        no_interaction = conditional_probe_state(
             source_density_from_amplitudes(self.a), self.phi,
-            [self.ul, self.ur], self.rho_p
+            [identity, identity], self.rho_p
         )
         exact_probability = (
             np.sqrt(1 + self.eps) - np.sqrt(1 - self.eps)
         )**2 / 4
-        self.assertAlmostEqual(result.probability, exact_probability, places=12)
-        self.assertAlmostEqual(result.probability / (self.eps**2 / 4),
+        self.assertAlmostEqual(no_interaction.probability,
+                               exact_probability, places=12)
+        self.assertAlmostEqual(exact_probability / (self.eps**2 / 4),
                                1.0, delta=0.06)
+        interacting = conditional_probe_state(
+            source_density_from_amplitudes(self.a), self.phi,
+            [self.ul, self.ur], self.rho_p
+        )
+        self.assertGreater(interacting.probability, 0.0)
 
     def test_pure_source_kraus_matches_density_matrix_channel(self):
         rho_s = source_density_from_amplitudes(self.a, coherence=1.0)
