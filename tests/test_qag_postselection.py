@@ -81,6 +81,14 @@ class QAGPostselectionTests(unittest.TestCase):
         )
         self.assertAlmostEqual(p0 + p1, 1.0, places=12)
 
+    def test_complete_measurement_allows_zero_probability_outcome(self):
+        source = source_density_from_amplitudes([1.0, 0.0])
+        p_left, p_right = complete_two_outcome_probabilities(
+            source, self.rho_p, [self.ul, self.ur]
+        )
+        self.assertAlmostEqual(p_left, 1.0, places=12)
+        self.assertAlmostEqual(p_right, 0.0, places=12)
+
     def test_normalisation_and_positivity(self):
         rho_s = source_density_from_amplitudes(self.a, coherence=0.7)
         result = conditional_probe_state(rho_s, self.phi,
