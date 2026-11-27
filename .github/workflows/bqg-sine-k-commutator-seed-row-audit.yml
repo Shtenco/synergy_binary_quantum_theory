@@ -1,0 +1,36 @@
+name: BQG sine K commutator seed-row audit
+
+on:
+  push:
+    branches: [research/null-cone-physical-bridge-v2-20261127]
+    paths:
+      - "scripts/bqg_sine_k_commutator_seed_row_audit.py"
+      - ".github/workflows/bqg-sine-k-commutator-seed-row-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sine-k-seed-row:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical dependencies
+        run: python -m pip install --upgrade numpy sympy
+      - name: Run sine-ordered K commutator seed-row audit
+        run: |
+          python scripts/bqg_sine_k_commutator_seed_row_audit.py \
+            --node 0 --input-K 0 --Jmax2 10 \
+            --output verification_results/BQG_SINE_K_SEED_ROW_AUDIT.json
+      - name: Upload audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-sine-k-seed-row-audit
+          path: verification_results/BQG_SINE_K_SEED_ROW_AUDIT.json
+          if-no-files-found: warn
+          retention-days: 30
