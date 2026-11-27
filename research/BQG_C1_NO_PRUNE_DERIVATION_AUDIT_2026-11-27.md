@@ -18,9 +18,9 @@ The shard runner at `research/depth6_no_prune/github_mixed_master_shard.py` impo
 → `local_two_hit_outputs`
 → `bqg_reduced_transfer_hamiltonian_no_prune.local_hit_outputs(..., tol=0.0)`.
 
-The selector side is isolated at `bqg_depth6_generic_jucys_selector.py`; its `expand(..., tol=0.0)` now drops only exactly-zero coordinate segments. The Clebsch–Gordan recoupling module is isolated at `bqg_covariant_volume_recoupling.py` and retains every coefficient except exact structural zeros.
+The selector side is isolated at `bqg_depth6_generic_jucys_selector.py`; its `expand(..., tol=0.0)` drops only exactly-zero coordinate segments. The Clebsch–Gordan recoupling module is isolated at `bqg_covariant_volume_recoupling.py`. A second hidden threshold was found in the S5 intertwiner action used by the symmetry-basis projector: the recovered `act_on_key` defaulted to `tol=1e-12`, and the recovered depth-4 transform builder calls it without an explicit tolerance. The derived `bqg_s5_intertwiner_action_gate.py` now defaults both `act_on_key` and `act_on_state` to zero, so `bqg_depth4_symmetric_master_builder._transform_matrix` resolves the no-prune action through normal module import resolution.
 
-The recovered source directory is kept unchanged and is not imported as the no-prune operator implementation. Shared imports from the recovered tree are limited to helpers used on this path that do not perform magnitude pruning: spin/permutation structure, allowed labels, exact CG evaluation, and the oriented-spec enumeration. The no-prune regression test asserts the resolved module paths for the master, block operator, transfer kernel, recoupling module and selector.
+The recovered source directory remains byte-for-byte unchanged. The no-prune runner imports the isolated derived master, block operator, transfer, recoupling, selector and S5 action modules; it reuses recovered structural helpers such as spin/permutation layout, allowed labels, exact CG evaluation and oriented-spec enumeration. The derived S5 action is used by the recovered depth-6 basis module and depth-4 transform builder. Regression tests assert all these module paths.
 
 ## Threshold policy
 
@@ -29,6 +29,7 @@ The recovered source directory is kept unchanged and is not imported as the no-p
 - Gauss projection receives `tol=0.0`; no entrywise positive cutoff is applied, and retained-support detection is elementwise.
 - The zero-tolerance branch avoids `np.linalg.norm(x) > 0` as a support test: squaring a value such as `1e-200` can underflow the norm to zero even though the amplitude is nonzero. A dedicated regression now checks this case in both block and master-row helpers.
 - Selector expansion removes exact-zero coordinate segments only.
+- S5 intertwiner action used by the selector's symmetry-basis projectors defaults to `tol=0.0`; a regression checks a five-vertex product of local recoupling coefficients that yields a nonzero `1e-15` global coefficient.
 - The selector's QR/SVD rank decision still uses a machine-precision-scaled rank tolerance and validates the expected multiplicity. This is a numerical rank diagnostic, not an operator-amplitude pruning threshold. The recovered `exact_mult` still validates floating character traces against `1e-8`/`1e-7` rounding tolerances; this is a discrete multiplicity-estimation dependency and remains a numerical risk, not an amplitude filter.
 - Floating-point underflow, roundoff, conditioning and finite-precision rank decisions remain. This is not exact rational/algebraic arithmetic.
 - The copied block module also retains legacy factorized/fast entry points with their historical thresholds. The shard runner does not call those entry points; it calls only `H_node_apply_ultrafast`. Do not describe the whole module as globally threshold-free.
@@ -44,9 +45,11 @@ The recovered source directory is kept unchanged and is not imported as the no-p
 6. shard-runner wiring and explicit `master_map(..., tol=0.0)`;
 7. retention of sub-threshold CG products;
 8. retention of tiny selector coordinates while omitting an exactly-zero segment;
-9. retention of `1e-200` amplitudes even when their squared Euclidean norm underflows to zero.
+9. retention of `1e-200` amplitudes even when their squared Euclidean norm underflows to zero;
+10. resolution of the S5 action module to the isolated derived copy;
+11. retention of a `1e-15` S5 recoupling product that the recovered `1e-12` default would have deleted.
 
-The prior CI run on commit `e7e22fc7088df017f6b526dc3f869fa08a91b011` reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation and finite-frontier validation as successful. That run failed later at the public README LaTeX gate; the README delimiter issue was corrected in a subsequent commit. A new CI run is required to certify the current head.
+On commit `38756a19da67c091c7a0248e4c4d0d3098e04ebf`, the canonical-core job reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation, finite-frontier validation, public status surface, LaTeX normalization, README local links and multiple mathematical control steps as successful. The full workflow was still in progress, with HDA and higher-shell jobs outstanding. The S5 no-prune action module and its new regression test were added after that run; a fresh CI run is required to validate them.
 
 ## What this does not establish
 
@@ -60,6 +63,6 @@ The prior CI run on commit `e7e22fc7088df017f6b526dc3f869fa08a91b011` reported t
 
 `NO_MAGNITUDE_PRUNING_PATH_IMPLEMENTED_FOR_THE_SELECTED_ULTRAFAST_PRODUCER`
 
-`FINITE_FLOAT64_REGRESSION_TESTS_PENDING_CURRENT_HEAD_CI`
+`FINITE_FLOAT64_REGRESSION_TESTS_PASS_PRIOR_HEAD; S5_NO_PRUNE_ACTION_ADDED_AFTER_THAT_RUN`
 
 `C1=OPEN`
