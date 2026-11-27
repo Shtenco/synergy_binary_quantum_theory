@@ -132,11 +132,13 @@ def run(seed: int = 20261128, n_aux: int = 2, n_graph: int = 5) -> dict:
         "w5_ledger_definition": "Herm(B_H) with B_H=-hbar^-2*B_comm",
         "phase_restored_definition": "Herm(i*B_H)=i/2*(B_H-B_H^dagger)",
         "interpretation": (
-            "The exact 12-word identity reproduces the v1.3 minus-completion. "
-            "The W5 plus-completion is also Hermitian but is a different "
-            "operator on this generic noncommuting witness. This guard does "
-            "not choose the physical convention and does not test W5 "
-            "Peter-Weyl component matrices or continuum physics."
+            "The exact 12-word identity reproduces the v1.3 phase-completion. "
+            "The no-extra-phase W5 plus-completion is also Hermitian but is a "
+            "different operator on this generic noncommuting witness. Restoring "
+            "an explicit i in the five-bracket prefactor makes Herm(i*B_H) "
+            "coincide with v1.3. This guard does not choose the physical "
+            "convention and does not test W5 Peter-Weyl component matrices "
+            "or continuum physics."
         ),
     }
 
