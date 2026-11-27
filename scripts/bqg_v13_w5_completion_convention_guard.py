@@ -75,7 +75,11 @@ def run(seed: int = 20261128, n_aux: int = 2, n_graph: int = 5) -> dict:
     # W5 ledger: convert each of the two K_comm legs to K_H=(i hbar)^-1 K_comm,
     # giving B_H=-hbar^-2 B_comm, then take the symmetric part.
     hbar = 1.0
-    s_w5_plus = -(raw + raw_dagger) / (2.0 * hbar**2)
+    b_h = -raw / hbar**2
+    s_w5_plus = 0.5 * (b_h + b_h.conj().T)
+    # If the frozen five-bracket/Lorentzian prefactor contributes an explicit
+    # i, the Hermitian projection of i*B_H reproduces the v1.3 phase choice.
+    s_w5_with_i_phase = 0.5 * (1j * b_h + (1j * b_h).conj().T)
 
     scale = max(float(np.linalg.norm(s_v13)), 1e-30)
     direct_rel = float(np.linalg.norm(direct12 - s_v13) / scale)
@@ -102,6 +106,9 @@ def run(seed: int = 20261128, n_aux: int = 2, n_graph: int = 5) -> dict:
         "direct_12_word_equals_v13_24_plus_24": direct_rel < 1e-12,
         "v13_completion_is_hermitian": v13_herm < 1e-12,
         "w5_plus_completion_is_hermitian": w5_herm < 1e-12,
+        "explicit_i_phase_projection_matches_v13": (
+            np.linalg.norm(s_w5_with_i_phase - s_v13) / scale < 1e-12
+        ),
         "two_prescriptions_are_distinct_on_witness": split_rel > 1e-6,
     }
     return {
@@ -116,12 +123,14 @@ def run(seed: int = 20261128, n_aux: int = 2, n_graph: int = 5) -> dict:
         "raw_operator_frobenius_norm": float(np.linalg.norm(raw)),
         "v13_minus_completion_frobenius_norm": float(np.linalg.norm(s_v13)),
         "w5_plus_completion_frobenius_norm": float(np.linalg.norm(s_w5_plus)),
+        "w5_i_phase_completion_frobenius_norm": float(np.linalg.norm(s_w5_with_i_phase)),
         "direct12_vs_v13_relative_error": direct_rel,
         "v13_hermiticity_defect": v13_herm,
         "w5_plus_hermiticity_defect": w5_herm,
         "plus_vs_minus_relative_difference": split_rel,
         "v13_definition": "-i/2 * (B_comm - B_comm^dagger)",
-        "w5_ledger_definition": "-1/(2*hbar^2) * (B_comm + B_comm^dagger)",
+        "w5_ledger_definition": "Herm(B_H) with B_H=-hbar^-2*B_comm",
+        "phase_restored_definition": "Herm(i*B_H)=i/2*(B_H-B_H^dagger)",
         "interpretation": (
             "The exact 12-word identity reproduces the v1.3 minus-completion. "
             "The W5 plus-completion is also Hermitian but is a different "
