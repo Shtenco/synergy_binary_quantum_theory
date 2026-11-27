@@ -15,10 +15,13 @@ import bqg_safe_boundary_master_gate as R
 import bqg_covariant_volume_recoupling as Rec
 
 TARGET={
+ '5':(27227,2757),
+ '41':(104146,2755),
  '32':(130903,2755),
  '311':(153455,2719),
  '221':(130503,2749),
  '2111':(103318,2712),
+ '11111':(26794,2656),
 }
 
 def shell(depth=6):
