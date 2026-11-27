@@ -97,3 +97,25 @@ The W5 scalar-covariance gate remains **OPEN** until:
 5. the complete five-seed W5 calculation and adjoint-closure checks are rerun on the same declared basis.
 
 Even passing these finite-regulator numerical checks would establish only the declared finite Peter–Weyl operator's covariance/adjoint properties. It would not establish the physical Lorentzian Hamiltonian, continuum HDA, physical kernel, or a BQG spacetime null cone.
+
+
+## Exact cutoff-path clarification (2026-11-27 follow-up)
+
+The one-pass ablation's `CK.project_branch_complete_charges(..., tol=0.0)` does not disable the coefficient cutoff inside its charged/Gauss basis reconstruction. The inspected implementation in `scripts/peter_weyl_covariant_K_leg_gate.py` has this concrete chain:
+
+- charged/Gauss basis overlap coefficients are retained only when `abs(c) > 1e-13` (lines 107 and 115);
+- the final Cartesian product of node labels is filtered by the caller's `tol` (line 131), and the returned state is filtered again by the same `tol` (line 134);
+- the called `apply_sequence_to_branch` delegates path actions to `PW.apply_path_branch`, whose downstream output filtering must be audited separately; the current Peter–Weyl primitive map also has its own (10^{-12}), (10^{-11}), and (10^{-10}) filters;
+- `CK.add_state` defaults to (10^{-11}), though the one-pass runner explicitly supplies production (10^{-11}) or zero for its four accumulator variants;
+- `CK.apply_volume_complete_state` retains volume-block coefficients above (10^{-13}) and its output above (10^{-11}).
+
+Thus the previous shorthand “the one-pass runner retains only the internal (10^{-13}) cutoff” is incomplete: it identifies the projection basis cutoff but not every nested path/volume filter. The acceptance gate remains blocked until the complete call graph is instrumented with a per-layer discarded-amplitude ledger. The current report intentionally does not claim to have completed that instrumentation.
+
+## New sine-K commutator audit runner
+
+An audit-only script was added:
+`scripts/bqg_sine_k_commutator_seed_row_audit.py`.
+
+It explicitly builds (H_E^{sine}=(T-T^\dagger)/(2i)) on the complete-charge basis, then computes (K_{comm}^{sine}=[V,H_E^{sine}]). For one fixed seed it calculates the entire reverse row over every state in the support of (K|seed\rangle), including the diagonal seed entry. It does not test all pairs in the full reachable-space matrix, and its nested primitive/volume cutoffs remain active. This is a stronger single-column/reverse-row check than the previous eight-element plus-order spot test, but it is not a full operator-domain anti-Hermiticity proof.
+
+The CI workflow is `.github/workflows/bqg-sine-k-commutator-seed-row-audit.yml`. The first two workflow attempts failed during runner setup due to two implementation errors in the new audit script (incorrect handling of the volume helper return and incorrect Gauss-key encoding); both were corrected. The third attempt is running on commit `8932377f9068387084e1af8def5358b77f548712` as run `46050985436`. No numerical pass/fail result is claimed until that run finishes.
