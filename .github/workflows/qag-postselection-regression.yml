@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - "qag_postselection.py"
+      - "qag_periodic_probe.py"
       - "tests/test_qag_postselection.py"
+      - "tests/test_qag_periodic_probe.py"
       - ".github/workflows/qag-postselection-regression.yml"
   pull_request:
     branches: [main]
