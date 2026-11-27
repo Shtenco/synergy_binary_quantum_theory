@@ -8,10 +8,12 @@ on:
       - "qag_periodic_probe.py"
       - "qag_hamiltonian.py"
       - "qag_stinespring.py"
+      - "qag_measurement_dilation.py"
       - "tests/test_qag_postselection.py"
       - "tests/test_qag_periodic_probe.py"
       - "tests/test_qag_hamiltonian.py"
       - "tests/test_qag_stinespring.py"
+      - "tests/test_qag_measurement_dilation.py"
       - ".github/workflows/qag-postselection-regression.yml"
   pull_request:
     branches: [main]
@@ -41,6 +43,6 @@ jobs:
       - name: Install minimal dependency
         run: python -m pip install "numpy>=1.24"
       - name: Compile QAG module and tests
-        run: python -m py_compile qag_postselection.py qag_periodic_probe.py qag_hamiltonian.py qag_stinespring.py tests/test_qag_postselection.py tests/test_qag_periodic_probe.py tests/test_qag_hamiltonian.py tests/test_qag_stinespring.py
+        run: python -m py_compile qag_postselection.py qag_periodic_probe.py qag_hamiltonian.py qag_stinespring.py qag_measurement_dilation.py tests/test_qag_postselection.py tests/test_qag_periodic_probe.py tests/test_qag_hamiltonian.py tests/test_qag_stinespring.py tests/test_qag_measurement_dilation.py
       - name: Run QAG regression suite
         run: python -m unittest discover -s tests -p "test_qag_*.py" -v
