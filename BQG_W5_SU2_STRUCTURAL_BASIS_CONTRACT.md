@@ -72,3 +72,28 @@ tolerance. Therefore using the fixed-basis matrix assembler at the final stage
 does not by itself make the current W5 computation threshold-free. A genuinely
 threshold-free coefficient pipeline requires exact structural projection
 support plus unpruned coefficient propagation at every intermediate stage.
+
+
+## Word-aware link-spin support
+
+The generator now also contains a conservative propagator for the repository's
+Peter-Weyl word format. A `P` path applies one fundamental hit to each
+successive edge; in doubled-spin labels each hit allows only
+`s -> s-1` or `s -> s+1`, subject to the declared link cutoff. A `V`
+operation leaves link spins unchanged. The adapter
+`t_sequence_spin_support` imports the actual `T_sequences` and
+`adjoint_sequence` definitions from the existing Peter-Weyl engine, avoiding
+a duplicated operator-word template.
+
+For a representative frozen triple with `(v,a,b,c)=(0,1,2,3)), initial
+`spins=(4,)*10`, and `Jmax2=10`, the edge-hit multiset is:
+`(0,3)` twice and `(0,1),(1,2),(0,2)` once each. The edge-spin-only
+superset therefore contains `3 * 2^3 = 24` link-spin assignments before
+local intertwiner constraints. This count is a combinatorial consequence of
+the word's hit pattern, not a computed KKV amplitude.
+
+This propagator still does not impose magnetic-index CG non-vanishing,
+four-valent tensor overlap support, volume-block matrix zeros, or coherent
+epsilon cancellation. It is deliberately an upper bound. The next layer must
+propagate admissible node labels over these spin sectors and then compare the
+resulting conservative support with actual unthresholded coefficient columns.
