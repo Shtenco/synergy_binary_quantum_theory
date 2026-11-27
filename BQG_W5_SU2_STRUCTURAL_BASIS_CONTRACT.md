@@ -84,10 +84,10 @@ operation leaves link spins unchanged. The adapter
 `t_sequence_spin_support` imports the actual `T_sequences` and
 `adjoint_sequence` definitions from the existing Peter-Weyl engine, avoiding
 a duplicated operator-word template. In the current call graph these words
-are the `H_E) primitive templates consumed by the K-block construction; they
+are the `H_E` primitive templates consumed by the K-block construction; they
 are not the complete outer `C(K)C(K)C(V)` word of the W5 Lorentzian operator.
 
-For a representative frozen `H_E) primitive with `(v,a,b,c)=(0,1,2,3)), initial
+For a representative frozen `H_E` primitive with `(v,a,b,c)=(0,1,2,3)`, initial
 `spins=(4,)*10`, and `Jmax2=10`, the edge-hit multiset is:
 `(0,3)` twice and `(0,1),(1,2),(0,2)` once each. The edge-spin-only
 superset therefore contains `3 * 2^3 = 24` link-spin assignments before
