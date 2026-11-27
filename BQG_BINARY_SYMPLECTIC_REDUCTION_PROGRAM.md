@@ -360,3 +360,24 @@ V^\dagger V=I_2,\quad P=VV^\dagger,\quad \operatorname{rank}P=2,
 \]
 
 The gate checks exact agreement with \(\{f_A,f_B\}_{FS}=\langle[\hat A,\hat B]\rangle/(i\hbar)\) for embedded Pauli observables. This is an exact finite positive control, not physical-gravity closure.
+
+
+## 13. Explicit local Darboux chart on the q=2 relational carrier
+
+On the chart excluding the Bloch poles, define
+
+\[
+q=\phi,\qquad p=\frac{\hbar}{2}\cos\theta.
+\]
+
+Then
+
+\[
+dq\wedge dp=d\phi\wedge\left(-\frac{\hbar}{2}\sin\theta\,d\theta\right)
+=\frac{\hbar}{2}\sin\theta\,d\theta\wedge d\phi
+=\Omega_{FS}.
+\]
+
+Therefore \(\{q,p\}=1\) on this local chart. The conjugate pair is the relative phase and the population imbalance. The momentum coordinate is bounded, \(-\hbar/2\le p\le\hbar/2\), and q is periodic. This is a local Darboux chart on the sphere \(\mathbb{CP}^1\), not a global canonical plane; the poles require another chart. The compact topology is an important finite-carrier obstruction to treating this qubit as an unconstrained oscillator.
+
+This gives the q=2 positive control a fully explicit symplectic interpretation: the binary amplitudes supply a phase and a conjugate occupation imbalance. The physical BQG task is to identify analogous collective variables from the actual graph-changing amplitudes and prove that their induced two-form survives the full constraint reduction.
