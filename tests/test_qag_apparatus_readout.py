@@ -23,6 +23,20 @@ class QAGApparatusReadoutTests(unittest.TestCase):
         # apparatus position is not covariant under a joint shift.
         self.assertGreater(np.linalg.norm(unitary @ joint_shift - joint_shift @ unitary), 1e-3)
 
+    def test_dilation_matches_controlled_addition_unitary(self):
+        n = 4
+        rng = np.random.default_rng(7)
+        state = rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n))
+        state /= np.linalg.norm(state)
+        actual = apply_apparatus_readout_dilation(state)
+        unitary = apparatus_readout_unitary(n)
+        expected = np.zeros((n, n, n), dtype=complex)
+        for source_position in range(n):
+            initial = np.zeros((n, n), dtype=complex)
+            initial[:, 0] = state[source_position, :]
+            expected[source_position] = (unitary @ initial.reshape(-1)).reshape(n, n)
+        np.testing.assert_allclose(actual, expected, atol=1e-12)
+
     def test_meter_records_apparatus_position(self):
         state = np.zeros((5, 5), dtype=complex)
         state[1, 3] = 1.0
