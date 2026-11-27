@@ -177,3 +177,25 @@ def test_zero_tolerance_retains_values_whose_squared_norm_underflows():
     assert A._keep_nonzero_or_above(tiny, 0.0)
     assert M._keep_nonzero_or_above(tiny, 0.0)
     assert not A._keep_nonzero_or_above(tiny, 1.0e-12)
+
+
+
+def test_small_real_nonvacuum_master_block_runs_end_to_end_without_pruning():
+    # A recovered depth-6 orbit representative with a small selector coordinate
+    # dimension. This executes the actual selector and master map, not a mock.
+    rep = (1, 1, 1, 1, 1, 1, 3, 3, 1, 5)
+    key = "32"
+    expected_multiplicity = J.exact_mult(rep, key)
+    assert expected_multiplicity > 0
+
+    W = J.fast_selector(rep, key)
+    assert W.shape == (J.layout(rep, J.CFG[key][0])[2], expected_multiplicity)
+
+    master_rows, returned_W = M.master_map(rep, key, W, tol=0.0)
+
+    assert returned_W.shape == W.shape
+    assert master_rows
+    for matrix in master_rows.values():
+        assert matrix.ndim == 2
+        assert matrix.shape[1] == expected_multiplicity
+        assert np.isfinite(matrix).all()
