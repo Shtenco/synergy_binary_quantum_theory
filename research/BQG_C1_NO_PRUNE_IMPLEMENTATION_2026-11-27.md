@@ -12,6 +12,8 @@ The byte-for-byte recovered source snapshot under `research/depth6_recovered_sou
 github_mixed_master_shard.py
   -> bqg_depth6_generic_jucys_selector.py
        -> expand(..., tol=0)
+       -> bqg_s5_intertwiner_action_gate.py (tol=0 for symmetry projector recoupling)
+       -> bqg_depth4_symmetric_master_builder._transform_matrix
   -> bqg_depth6_generic_master_row.py
        -> master_map(..., tol=0)
        -> reduced_s3_node / reduced_s2_node / raw_to_s2_coords (tol=0)
@@ -36,8 +38,9 @@ The shard runner explicitly calls `master_map(..., tol=0.0)` and records `operat
 - Two-hit and shared-color local outputs: filters receive zero.
 - Jucys expansion: the recovered `1e-13` segment cutoff is parameterized and defaults to zero in the derived selector.
 - Coupled-tensor reconstruction: the recovered `1e-15` CG-factor cutoffs are replaced by exact-zero checks in the derived recoupling module.
+- S5 symmetry action used while building S3/S5 projector bases: the recovered `act_on_key` default `1e-12` cutoff is replaced by a derived `tol=0.0` default; `act_on_state` is likewise zero-tolerance. The depth-4 transform builder resolves this derived action module through the isolated import path.
 
-The recovered `bqg_safe_boundary_master_gate.py` is not modified. The active path uses its CG matrix, epsilon, axis-application, edge-weight, spin-layout and oriented-spec helpers; the legacy thresholded factorized-map functions in that module are not called by `H_node_apply_ultrafast`.
+The recovered `bqg_safe_boundary_master_gate.py` is not modified. The active path uses its CG matrix, epsilon, axis-application, edge-weight, spin-layout and oriented-spec helpers; the legacy thresholded factorized-map functions in that module are not called by `H_node_apply_ultrafast`. The recovered `bqg_depth6_41.py` and `bqg_depth4_symmetric_master_builder.py` are reused structurally, but their S5 action dependency resolves to the derived no-prune S5 module; the regression suite asserts this module resolution.
 
 ## Numerical limits that remain
 
@@ -58,7 +61,8 @@ The recovered `bqg_safe_boundary_master_gate.py` is not modified. The active pat
 - isolation of derived operator, transfer, recoupling and selector modules;
 - explicit zero-tolerance routing through the shard worker;
 - retention of sub-threshold Clebsch-Gordan reconstruction coefficients;
-- retention of sub-threshold Jucys expansion coordinates.
+- retention of sub-threshold Jucys expansion coordinates;
+- derived S5 action import resolution and retention of a nonzero `1e-15` five-vertex recoupling product.
 
 These are primitive and wiring tests. A complete depth-6 shard run, all-sector block rank analysis, and independent rank verification remain outstanding.
 
