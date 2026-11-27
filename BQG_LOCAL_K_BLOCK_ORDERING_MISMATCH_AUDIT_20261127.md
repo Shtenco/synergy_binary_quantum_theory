@@ -51,3 +51,20 @@ Thus the label “exact” in the script title/status should be read as “built
 - Full (K_{ab}), physical Lorentzian normal generator, common-domain HDA and BQG null cone: **OPEN**.
 
 This audit does not modify the production operator or claim a physical result.
+
+
+## Precision correction to the normalization interpretation (same-day amendment)
+
+The ordering mismatch above must be stated precisely:
+
+- The sine-specific normalization document defines (K_{comm}^{sine}=[V,H_E^{sine}]).
+- The existing local gate computes a different candidate (K_{comm}^{plus}=[V,H_E^{plus}]).
+- **The algebraic conversion itself is not sine-specific.** For either choice, if (V) and the selected (H_E) are Hermitian on the same domain, then the exact commutator is anti-Hermitian and
+  [
+  K_H=(i\hbar)^{-1}K_{comm}
+  ]
+  is Hermitian. Consequently, the two-leg factor (-\hbar^{-2}) also applies to two such converted legs, whether their common Hermitian Euclidean input is (H_E^{sine}) or (H_E^{plus}).
+
+The actual defect is therefore **operator-definition mismatch**, not invalidity of the universal anti-Hermitian-to-Hermitian conversion. The existing plus-ordered block may be normalized by the same algebraic identity after its full finite-matrix anti-Hermiticity is established. It must, however, be labelled (K^{plus}), and it cannot be reported as the sine-defined block in the sine normalization document.
+
+Because the current gate prunes intermediate states and checks only eight reverse matrix elements, its numerical output has not yet established the exact finite-matrix premise. This amendment supersedes the overly strong sentence above that said the conversion “cannot be attached” to the local output. It can be attached conditionally as a plus-ordered conversion, with that explicit label and the same-domain adjoint check still required.
