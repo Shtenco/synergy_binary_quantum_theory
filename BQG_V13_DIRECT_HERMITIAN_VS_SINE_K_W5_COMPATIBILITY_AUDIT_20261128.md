@@ -116,14 +116,32 @@ S_{v1.3}=-\frac{i}{2}
 	ag{v1.3-minus}
 ]
 
-These are **not the same operator** in general. They select orthogonal real components of the complex operator B_comm:
+These are **not the same operator if the extra five-bracket phase is omitted**. They select different Hermitian components of the same complex structural map.
 
-- ((B+B^\dagger)/2) is its Hermitian part;
-- ((B-B^\dagger)/(2i)) is its Hermitian phase/anti-Hermitian-part conversion.
+The exact conversion bookkeeping is:
 
-Multiplication by the real factor (-\hbar^{-2}) does not turn the plus prescription into the minus prescription. Therefore the two operations “convert each K_comm to K_H, then take the symmetric part” and “apply the v1.3 phase completion to the anti-Hermitian-K raw word” cannot be interchanged.
+\[
+B_H=-\hbar^{-2}B_{comm},
+\]
 
-This is the principal integration blocker. Do not silently replace the v1.3 formula by the W5-plus formula, or vice versa. The physical choice must be fixed from the exact regulated classical-to-quantum convention (including the placement of the phase, Poisson-bracket factors, beta, kappa, hbar, orientation and trace normalization). A finite Hermiticity identity alone does not choose between distinct quantizations.
+and hence
+
+\[
+\operatorname{Herm}(B_H)
+=-\frac{1}{2\hbar^2}(B_{comm}+B_{comm}^\dagger),
+\]
+
+whereas restoring an explicit (i) in the five-bracket/Lorentzian prefactor gives
+
+\[
+\operatorname{Herm}(iB_H)
+=\frac{i}{2}(B_H-B_H^\dagger)
+=\hbar^{-2}S_{v1.3}.
+\]
+
+Thus the v1.3 direct-Hermitian theorem and the W5 Hermitian-K conversion **are compatible if and only if the full physical prefactor carries the corresponding explicit phase (i)** (with the remaining real normalization handled separately). If the W5 structural map is instead declared to enter with no such phase, the plus-completion is a different operator. The current W5 normalization note separates the additional Lorentzian prefactor from (B_H), but does not yet freeze its phase in the same ledger. That is the concrete bookkeeping gap.
+
+Do not silently replace one formula by the other. Freeze the full regulated classical-to-quantum convention—including the placement of (i), Poisson-bracket factors, beta, kappa, hbar, orientation and trace normalization—before choosing the physical W5 completion. A finite Hermiticity identity alone does not determine that prefactor.
 
 Required decision record:
 1. state whether the v1.3 K symbol denotes the anti-Hermitian commutator K_comm or the Hermitian canonical K_H;
