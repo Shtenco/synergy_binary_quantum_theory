@@ -283,3 +283,50 @@ It would not by itself establish the full Lorentzian constraint algebra/HDA, a n
 | Full HDA, TT graviton, Einstein IR, entropy | Open |
 
 **Decision:** the Fubini--Study construction is the cleanest immediate bridge from binary quantum amplitudes to a symplectic manifold. The next result must come from the actual BQG state map and actual constraint matrices. Until those are computed, this note is a rigorous implementation specification and a set of exact mathematical identities—not a claim that BQG symplectic reduction has already been completed.
+
+
+## 11. Worked q=2 relational positive control
+
+The repository already contains a finite q=2 relational positive control whose projected physical subspace has dimension two and is isometric to the geometry-qubit carrier. Therefore its pure-state space is exactly \(\mathbb{CP}^1\). This permits an immediate analytic symplectic calculation without inventing a new state family.
+
+Use the normalized state
+
+\[
+|\psi(\theta,\phi)\rangle
+=\cos\frac\theta2|0\rangle
++e^{i\phi}\sin\frac\theta2|1\rangle.
+\]
+
+Its exact Fubini--Study form is
+
+\[
+\Omega_{\rm FS}
+=\frac{\hbar}{2}\sin\theta\,d\theta\wedge d\phi.
+\]
+
+The Pauli expectation values are the Bloch coordinates
+
+\[
+x=\sin\theta\cos\phi,\quad
+y=\sin\theta\sin\phi,\quad
+z=\cos\theta.
+\]
+
+With the convention for \(\Omega_{\rm FS}\) above, the induced Poisson bracket is
+
+\[
+\{n_a,n_b\}_{\rm FS}
+=-\frac{2}{\hbar}\epsilon_{abc}n_c.
+\]
+
+Equivalently, reversing the Poisson-bracket convention gives the familiar positive sign. The operator identity is exact:
+
+\[
+[\sigma_a,\sigma_b]=2i\epsilon_{abc}\sigma_c.
+\]
+
+Thus the expectation-value Poisson algebra and Pauli commutator algebra agree, including the convention-dependent overall sign. In particular, the q=2 positive-control carrier has a genuine two-dimensional symplectic state manifold, not merely four discrete Walsh labels.
+
+**Scope:** this is an exact result for the repository's finite q=2 relational projector/geometry-qubit positive control. Its rank-two projector uses the declared C8 system step \(R=J\); it is not yet the common kernel of the full graph-changing Lorentzian gravitational constraint family. It therefore validates the method and the q=2 kinematics, but does not close the BQG physical symplectic gate.
+
+The next implementation must replace this positive-control projector with the actual regulated BQG master-constraint kernel and repeat the same rank-two-or-higher projective calculation. If the true physical kernel is one-dimensional, the symplectic form collapses and that regulator/carrier cannot support local physical canonical pairs.
