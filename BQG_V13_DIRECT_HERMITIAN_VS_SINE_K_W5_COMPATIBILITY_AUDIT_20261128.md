@@ -2,7 +2,7 @@
 
 Date: 2026-11-28
 
-Status: **operator-level compatibility is partial; production promotion is blocked by a real convention mismatch and unclosed finite-domain adjoint tests.** This audit does not alter the production operator, thresholds, normalization, or main branch.
+Status: **operator-level compatibility is partial; production promotion is blocked by unresolved phase bookkeeping and unclosed finite-domain adjoint tests.** This audit does not alter the production operator, thresholds, normalization, or main branch.
 
 ## 1. Executive finding
 
@@ -92,7 +92,7 @@ Sources:
 - `BQG_W5_LORENTZIAN_ADJOINT_CLOSURE.md`
 - `BQG_LORENTZIAN_EPSILON_KKV_ADJOINT_AUDIT.md`
 
-## 4. Critical normalization / Hermitianization mismatch
+## 4. Critical normalization / five-bracket phase accounting
 
 The current W5 normalization note gives, after converting both K_comm legs to Hermitian K_H,
 
@@ -266,8 +266,17 @@ Numerical diagnostics:
 - W5 plus-completion Hermiticity defect: (0);
 - relative difference between plus and minus prescriptions: (1.5436847137229295).
 
-This is a successful **generic algebraic discriminator**. It confirms that the 12-word expression reproduces the v1.3 minus-completion and that the W5 plus-completion, although also Hermitian, is a different operator for a generic noncommuting witness. It does not test actual W5 Peter–Weyl component matrices and does not select the physical prescription.
+The first run exposed a JSON serialization bug in the added guard; it was corrected. The final run `46060714237` completed successfully and uploaded artifact `15228516706`.
 
-Run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46060510466
+The final **generic algebraic discriminator** confirms:
+- direct 12-word vs v1.3 24-forward + 24-adjoint relative error: (3.6377005628978436\\times10^{-16});
+- v1.3 completion Hermiticity defect: (0);
+- no-extra-phase W5 plus-completion Hermiticity defect: (0);
+- \\(\\operatorname{Herm}(iB_H)\\) equals the v1.3 result;
+- no-extra-phase plus vs phase-completed minus relative difference: (1.5436847137229295).
+
+This resolves the *algebraic bookkeeping question*: the v1.3 theorem is compatible with the W5 K_comm-to-K_H conversion when the explicit five-bracket phase (i) is retained. It is not compatible with silently omitting that phase. The guard still does not test actual W5 Peter–Weyl component matrices and does not select the physical prefactor from the classical constraint.
+
+Final run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46060714237
 
 The audit-only script and this document are on `research/null-cone-physical-bridge-v2-20261127`; `main` was not modified.
