@@ -20,7 +20,7 @@ class FixedBasisOperatorTests(unittest.TestCase):
         _, cols, leakage = assemble_columns(
             ("a",), lambda _: {"a": tiny, "outside": 0j}
         )
-        self.assertEqual(leakage, (("0", "outside", 0j),) if False else ())
+        self.assertEqual(leakage, ())
         self.assertEqual(cols[0][0], tiny)
 
     def test_fixed_basis_leakage_is_explicit(self):
