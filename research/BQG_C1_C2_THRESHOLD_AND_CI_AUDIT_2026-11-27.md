@@ -97,16 +97,25 @@ Coefficient thresholds in basis reconstruction are also not automatically safe: 
 
 `scripts/bqg_neumaier_sparse_accumulator.py` is a primitive-level candidate. It is not yet integrated into the functions listed above. Its tests establish useful finite arithmetic behavior, but do not certify the composed W5 operator. A safe integration requires each accumulation boundary to retain the compensation state until the complete mathematical sum for that boundary has been formed.
 
-## 3. CI result and correction
+## 3. Current implementation and CI update (2026-11-27 10:00 UTC)
 
-The PR head's `numerical-continuation` run 647 completed successfully.
+The initial recovered producer audit above identified nested thresholds. The isolated derived path is now documented separately in `research/BQG_C1_NO_PRUNE_DERIVATION_AUDIT_2026-11-27.md` and `research/BQG_C1_NO_PRUNE_IMPLEMENTATION_2026-11-27.md`.
 
-The PR head's `core-regression` run 1430 reached:
-- Neumaier primitive tests: **4 passed**;
-- Python compileall: **passed**;
-- `scripts/audit_core_scope.py`: **failed** because existing historical/audit documents and an evidence script contain retired terms in explanatory contexts.
+The derived C1 path:
+- propagates zero magnitude tolerance through the selected ultrafast node/master-map call path;
+- uses a derived S5 intertwiner action with zero magnitude tolerance, including the depth-4 transform-builder dependency;
+- preserves exact-zero-only support removal and explicitly records remaining float64/rank-tolerance limitations;
+- has tests for small-amplitude retention, nested tolerance propagation, transform-module resolution, a real small non-vacuum master block and S5 recoupling through the actual transform builder;
+- now also has an end-to-end master-map superposition-linearity regression, added after the previous canonical-core run.
 
-The failure was not an accumulator test failure. The scope scanner has now been amended to permit those terms only in the specifically named audit/evidence files; all other files remain scanned, and retired-module import checks remain active. A fresh workflow run is required to validate that correction.
+Current branch head at this audit update: `ecf02911ad25e34be66dcc33ddd3ff023f535794`.
+
+CI:
+- Numerical-continuation #701: finite-evidence job **success**.
+- Core-regression #1484: **queued/running**; canonical-core was installing dependencies when last inspected, so the new end-to-end superposition test is not yet certified.
+- On prior head `f204d0fda2ea69bc6decacf236d2c8030cc9f60c`, canonical-core steps 1–27 completed successfully, including no-prune/Neumaier tests, Python compilation, scope/truth/frontier checks, README validation, q=2 geometry controls, full 32D Peter–Weyl master normalization, Lorentzian parity, S4 coarse carrier and route-normal HDA. Step 28 (two-node route Euclidean regression) was cancelled when a newer commit superseded that run; downstream steps were skipped.
+
+The previous run's cancellation is not a mathematical failure, but neither does it constitute a pass for the skipped downstream gates. The current head still requires a fresh complete core workflow.
 
 ## 4. Required next gates
 
