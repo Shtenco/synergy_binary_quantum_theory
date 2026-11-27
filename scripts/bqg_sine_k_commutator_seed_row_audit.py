@@ -165,7 +165,8 @@ def run(node, input_k, jmax2, max_reverse_columns):
             "charged/Gauss recoupling coefficient_cutoff": 1e-13,
             "complete-volume matrix coefficient cutoff": 1e-13,
             "complete-volume output cutoff": 1e-11,
-            "path-branch internal cutoff": 1e-10,
+            "path-branch amplitude cutoff": 0.0,
+            "path-branch regulator": "finite doubled-spin ceiling Jmax2; no amplitude pruning in apply_path_branch/apply_hit_branch",
             "floating_dtype": "complex128 / float64 numerical backend",
         },
         "scope": (
