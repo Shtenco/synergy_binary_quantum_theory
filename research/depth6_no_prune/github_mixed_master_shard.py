@@ -50,7 +50,7 @@ def work(pos):
         if W.shape!=(d,m):
             # d here is coordinate dimension
             if W.shape[1]!=m:raise RuntimeError(('selector shape',oid,W.shape,d,m))
-        mp0,_=M.master_map(tuple(rep),_KEY,W)
+        mp0,_=M.master_map(tuple(rep),_KEY,W,tol=0.0)
         p=_OUT/f'b{oid:05d}.pkl';pickle.dump(mp0,open(p,'wb'),protocol=5)
         return {'orbit_index':oid,'rep':list(rep),'m':m,'coord_dim':int(W.shape[0]),'row_blocks':len(mp0),
                 'rows':int(sum(A.shape[0] for A in mp0.values())),'sec':time.time()-t,'ok':True}
@@ -92,7 +92,7 @@ def main():
             records.append(z)
             if n%5==0 or n==len(mine):print('DONE',n,'/',len(mine),'ok',sum(x['ok'] for x in records),'sec',round(time.time()-t0,1),flush=True)
     records.sort(key=lambda x:x['orbit_index'])
-    summary={'irrep':a.irrep,'shard':a.shard,'shards':a.shards,'shell_states':len(sp),'s5_orbits':len(reps),'active_blocks':len(active),'target_columns':total,'assigned_blocks':len(mine),'assigned_columns':sum(z[2] for z in mine),'ok_blocks':sum(x['ok'] for x in records),'failed_blocks':sum(not x['ok'] for x in records),'elapsed_sec':time.time()-t0,'records':records}
+    summary={'operator_mode':'FLOAT64_NO_MAGNITUDE_PRUNING','master_map_tol':0.0,'irrep':a.irrep,'shard':a.shard,'shards':a.shards,'shell_states':len(sp),'s5_orbits':len(reps),'active_blocks':len(active),'target_columns':total,'assigned_blocks':len(mine),'assigned_columns':sum(z[2] for z in mine),'ok_blocks':sum(x['ok'] for x in records),'failed_blocks':sum(not x['ok'] for x in records),'elapsed_sec':time.time()-t0,'records':records}
     (a.out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     if summary['failed_blocks']:raise SystemExit('failed blocks')
 if __name__=='__main__':main()
