@@ -150,7 +150,7 @@ def test_no_prune_selector_expansion_retains_subthreshold_coordinate_segments(mo
     monkeypatch.setattr(
         selector,
         "layout",
-        lambda rep, seed: (("q",), {"q": slice(0, 1)}, 1),
+        lambda rep, seed: (("q", "zero"), {"q": slice(0, 1), "zero": slice(1, 2)}, 2),
     )
     monkeypatch.setattr(selector, "seed_basis", lambda q, seed: np.ones((1, 1)))
     monkeypatch.setattr(selector, "S3", ((0, 1, 2, 3, 4),))
@@ -162,7 +162,9 @@ def test_no_prune_selector_expansion_retains_subthreshold_coordinate_segments(mo
     )
 
     tiny = 1.0e-14
-    expanded = selector.expand((1,) * 10, "triv", np.array([[tiny]]))
+    expanded = selector.expand(
+        (1,) * 10, "triv", np.array([[tiny], [0.0]], dtype=complex)
+    )
 
     assert tuple(expanded) == ("q",)
     assert expanded["q"][0, 0] == tiny
