@@ -116,10 +116,13 @@ def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10):
     Y=apply_selector_projector(rep,key,C)
     Q,R=np.linalg.qr(Y,mode='reduced')
     s=np.linalg.svd(R,compute_uv=False)
-    rank_tol=max(Y.shape)*np.finfo(float).eps*max(float(s[0]) if len(s) else 1.,1.)*100
-    rank=int((s>rank_tol).sum())
-    if rank<m:
-        raise RuntimeError(('selector rank',key,rep,d,m,k,rank,rank_tol))
+    if not np.all(np.isfinite(s)):
+        raise RuntimeError(('selector nonfinite singular values',key,rep,d,m,k,s.tolist()))
+    scale=float(s[0]) if len(s) else 0.0
+    rank_tol=max(Y.shape)*np.finfo(float).eps*scale*100
+    rank=int((s>rank_tol).sum()) if scale>0.0 else 0
+    if rank!=m:
+        raise RuntimeError(('selector rank mismatch',key,rep,d,m,k,rank,rank_tol,s.tolist()))
     Q=Q[:,:m]
     seed,j4,s4,j5,s5=CFG[key]
     e4=np.linalg.norm(apply_sum(rep,seed,Q,J4_TERMS)-j4*Q)/max(np.linalg.norm(Q),1e-30)

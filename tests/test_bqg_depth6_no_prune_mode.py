@@ -280,3 +280,54 @@ def test_no_prune_master_map_preserves_superposition_linearity():
 
     relative_error = np.sqrt(error_sq / max(scale_sq, 1.0e-300))
     assert relative_error < 5.0e-10
+
+
+def _selector_with_mocked_spectrum(monkeypatch, singular_values):
+    selector = M.J
+    rep = (1, 1, 1, 1, 1, 1, 3, 3, 1, 5)
+    dimension = 4
+    multiplicity = 2
+    first = np.zeros((dimension, len(singular_values)), dtype=complex)
+    for index, value in enumerate(singular_values):
+        first[index, index] = value
+    monkeypatch.setattr(selector, "layout", lambda rep, seed: ((), {}, dimension))
+    monkeypatch.setattr(selector, "exact_mult", lambda rep, key: multiplicity)
+
+    def projector(rep_arg, key, values):
+        values = np.asarray(values)
+        if values.shape[1] == len(singular_values):
+            return first.copy()
+        return values.copy()
+
+    monkeypatch.setattr(selector, "apply_selector_projector", projector)
+
+    def apply_sum(rep_arg, seed, values, terms):
+        target = selector.CFG["32"][1] if terms == selector.J4_TERMS else selector.CFG["32"][3]
+        return target * values
+
+    monkeypatch.setattr(selector, "apply_sum", apply_sum)
+    return selector, rep
+
+
+def test_fast_selector_requires_exact_rank_not_at_least_m(monkeypatch):
+    selector, rep = _selector_with_mocked_spectrum(monkeypatch, [1.0, 0.5, 0.0])
+    result = selector.fast_selector(rep, "32", extra=1)
+    assert result.shape == (4, 2)
+    np.testing.assert_allclose(result.conj().T @ result, np.eye(2), atol=1e-14)
+
+    selector, rep = _selector_with_mocked_spectrum(monkeypatch, [1.0, 0.0, 0.0])
+    with np.testing.assert_raises_regex(RuntimeError, "selector rank mismatch"):
+        selector.fast_selector(rep, "32", extra=1)
+
+    selector, rep = _selector_with_mocked_spectrum(monkeypatch, [1.0, 0.5, 0.25])
+    with np.testing.assert_raises_regex(RuntimeError, "selector rank mismatch"):
+        selector.fast_selector(rep, "32", extra=1)
+
+
+def test_fast_selector_rank_threshold_is_scale_relative(monkeypatch):
+    selector, rep = _selector_with_mocked_spectrum(
+        monkeypatch, [1.0e-200, 0.5e-200, 0.0]
+    )
+    result = selector.fast_selector(rep, "32", extra=1)
+    assert result.shape == (4, 2)
+    assert np.isfinite(result).all()
