@@ -121,7 +121,18 @@ def test_no_prune_shard_runner_uses_the_isolated_master_and_explicit_zero_tolera
     monkeypatch.setattr(Runner, "_RECS", [(7, (1,) * 10, 1, 1, 1.0)])
     monkeypatch.setattr(Runner, "_KEY", "32")
     monkeypatch.setattr(Runner, "_OUT", tmp_path)
-    monkeypatch.setattr(Runner.J, "fast_selector", lambda rep, key: np.ones((1, 1)))
+    certificate = {
+        "status": "passed",
+        "rank": 1,
+        "expected_rank": 1,
+        "rank_tolerance": 1.0e-14,
+        "sigma_min_nonzero": 1.0,
+    }
+    def selector_with_certificate(rep, key, extra=0, return_diagnostics=False):
+        observed["selector_extra"] = extra
+        return np.ones((1, 1)), certificate
+
+    monkeypatch.setattr(Runner.J, "fast_selector", selector_with_certificate)
 
     def master_map(rep, key, selector, tol):
         observed["tol"] = tol
@@ -131,6 +142,7 @@ def test_no_prune_shard_runner_uses_the_isolated_master_and_explicit_zero_tolera
     result = Runner.work(0)
 
     assert result["ok"] is True
+    assert observed["selector_extra"] == 2
     assert observed["tol"] == 0.0
     assert (tmp_path / "b00007.pkl").is_file()
 
@@ -331,3 +343,41 @@ def test_fast_selector_rank_threshold_is_scale_relative(monkeypatch):
     result = selector.fast_selector(rep, "32", extra=1)
     assert result.shape == (4, 2)
     assert np.isfinite(result).all()
+
+
+def test_no_prune_shard_runner_rejects_coordinate_shape_mismatch(monkeypatch, tmp_path):
+    monkeypatch.setattr(Runner, "_RECS", [(7, (1,) * 10, 1, 1, 1.0)])
+    monkeypatch.setattr(Runner, "_KEY", "32")
+    monkeypatch.setattr(Runner, "_OUT", tmp_path)
+    certificate = {
+        "status": "passed",
+        "rank": 1,
+        "expected_rank": 1,
+        "rank_tolerance": 1.0e-14,
+        "sigma_min_nonzero": 1.0,
+    }
+    monkeypatch.setattr(
+        Runner.J, "fast_selector",
+        lambda rep, key, extra=0, return_diagnostics=False: (np.ones((2, 1)), certificate)
+    )
+    result = Runner.work(0)
+    assert result["ok"] is False
+    assert "selector shape mismatch" in result["error"]
+    assert not (tmp_path / "b00007.pkl").exists()
+
+
+def test_fast_selector_can_return_auditable_per_block_certificate(monkeypatch):
+    selector, rep = _selector_with_mocked_spectrum(monkeypatch, [1.0, 0.5, 0.0])
+    result, certificate = selector.fast_selector(
+        rep, "32", extra=1, seednum=77, return_diagnostics=True
+    )
+    assert result.shape == (4, 2)
+    assert certificate["status"] == "passed"
+    assert certificate["rank"] == certificate["expected_rank"] == 2
+    assert certificate["sigma_min_nonzero"] > certificate["rank_tolerance"]
+    assert certificate["seednum"] == 77
+    assert certificate["oversampling"] == 1
+    assert certificate["j4_relative_residual"] <= certificate["residual_tolerance"]
+    assert certificate["j5_relative_residual"] <= certificate["residual_tolerance"]
+    assert certificate["projector_relative_residual"] <= certificate["residual_tolerance"]
+    assert certificate["orthonormality_residual"] <= certificate["residual_tolerance"]

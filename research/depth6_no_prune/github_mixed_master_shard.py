@@ -49,14 +49,16 @@ def init_worker(recs,key,outdir):
 def work(pos):
     oid,rep,m,d,proxy=_RECS[pos];t=time.time()
     try:
-        W=J.fast_selector(tuple(rep),_KEY)
+        W,selector_certificate=J.fast_selector(tuple(rep),_KEY,extra=2,return_diagnostics=True)
         if W.shape!=(d,m):
-            # d here is coordinate dimension
-            if W.shape[1]!=m:raise RuntimeError(('selector shape',oid,W.shape,d,m))
+            raise RuntimeError(('selector shape mismatch',oid,W.shape,(d,m)))
+        if selector_certificate.get('status')!='passed' or selector_certificate.get('rank')!=m or selector_certificate.get('expected_rank')!=m:
+            raise RuntimeError(('selector certificate rejected',oid,selector_certificate))
         mp0,_=M.master_map(tuple(rep),_KEY,W,tol=0.0)
         p=_OUT/f'b{oid:05d}.pkl';pickle.dump(mp0,open(p,'wb'),protocol=5)
-        return {'orbit_index':oid,'rep':list(rep),'m':m,'coord_dim':int(W.shape[0]),'row_blocks':len(mp0),
-                'rows':int(sum(A.shape[0] for A in mp0.values())),'sec':time.time()-t,'ok':True}
+        return {'orbit_index':oid,'rep':list(rep),'m':m,'coord_dim':int(W.shape[0]),
+                'row_blocks':len(mp0),'rows':int(sum(A.shape[0] for A in mp0.values())),
+                'selector_certificate':selector_certificate,'sec':time.time()-t,'ok':True}
     except Exception as e:
         return {'orbit_index':oid,'rep':list(rep),'m':m,'coord_dim':d,'sec':time.time()-t,'ok':False,'error':repr(e)}
 
@@ -95,7 +97,7 @@ def main():
             records.append(z)
             if n%5==0 or n==len(mine):print('DONE',n,'/',len(mine),'ok',sum(x['ok'] for x in records),'sec',round(time.time()-t0,1),flush=True)
     records.sort(key=lambda x:x['orbit_index'])
-    summary={'operator_mode':'FLOAT64_NO_MAGNITUDE_PRUNING','master_map_tol':0.0,'irrep':a.irrep,'shard':a.shard,'shards':a.shards,'shell_states':len(sp),'s5_orbits':len(reps),'active_blocks':len(active),'target_columns':total,'assigned_blocks':len(mine),'assigned_columns':sum(z[2] for z in mine),'ok_blocks':sum(x['ok'] for x in records),'failed_blocks':sum(not x['ok'] for x in records),'elapsed_sec':time.time()-t0,'records':records}
+    summary={'operator_mode':'FLOAT64_NO_MAGNITUDE_PRUNING','master_map_tol':0.0,'selector_certificate_schema':'jucys-svd-v1','selector_extra':2,'selector_method':'complex SVD range basis with exact rank=m and scale-relative rank threshold','source_commit':os.environ.get('GITHUB_SHA'),'source_ref':os.environ.get('GITHUB_REF'),'irrep':a.irrep,'shard':a.shard,'shards':a.shards,'shell_states':len(sp),'s5_orbits':len(reps),'active_blocks':len(active),'target_columns':total,'assigned_blocks':len(mine),'assigned_columns':sum(z[2] for z in mine),'ok_blocks':sum(x['ok'] for x in records),'failed_blocks':sum(not x['ok'] for x in records),'selector_certified_blocks':sum(x['ok'] and x.get('selector_certificate',{}).get('status')=='passed' for x in records),'selector_certified_columns':sum(x['m'] for x in records if x['ok'] and x.get('selector_certificate',{}).get('status')=='passed'),'elapsed_sec':time.time()-t0,'records':records}
     (a.out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     if summary['failed_blocks']:raise SystemExit('failed blocks')
 if __name__=='__main__':main()

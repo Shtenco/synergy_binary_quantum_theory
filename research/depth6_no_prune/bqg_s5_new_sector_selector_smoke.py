@@ -31,7 +31,8 @@ def main() -> int:
         "shell_states": len(states),
         "s5_orbits": len(reps),
         "seeds": list(SEEDS),
-        "sample_blocks_per_sector": SAMPLE_BLOCKS,
+        "evenly_spaced_samples_per_sector": SAMPLE_BLOCKS,
+        "additional_high_multiplicity_samples_per_sector": 4,
         "sectors": {},
     }
     for key, (expected_blocks, expected_columns) in EXPECTED.items():
@@ -46,22 +47,40 @@ def main() -> int:
                 f"{key} census mismatch: blocks={len(active)} columns={columns}; "
                 f"expected {expected_blocks}/{expected_columns}"
             )
+        # Cover the full orbit ordering and deliberately include the
+        # largest-multiplicity blocks, which are the hardest selector cases.
+        even_positions = {
+            round(i * (len(active) - 1) / max(SAMPLE_BLOCKS - 1, 1))
+            for i in range(SAMPLE_BLOCKS)
+        }
+        hardest_positions = sorted(
+            range(len(active)),
+            key=lambda i: (active[i][2], active[i][0]),
+            reverse=True,
+        )[:4]
+        selected_positions = sorted(even_positions | set(hardest_positions))
         tested = []
-        for orbit_index, rep, multiplicity in active[:SAMPLE_BLOCKS]:
+        for position in selected_positions:
+            orbit_index, rep, multiplicity = active[position]
             dim = J.layout(rep, J.CFG[key][0])[2]
+            certificates = []
             for seednum in SEEDS:
-                Q = J.fast_selector(rep, key, extra=2, seednum=seednum)
+                Q, certificate = J.fast_selector(
+                    rep, key, extra=2, seednum=seednum, return_diagnostics=True
+                )
                 if Q.shape != (dim, multiplicity):
                     raise RuntimeError(
                         f"{key} shape mismatch at orbit {orbit_index}: {Q.shape}, "
                         f"expected {(dim, multiplicity)}"
                     )
+                certificates.append(certificate)
             tested.append({
                 "orbit_index": orbit_index,
                 "representative": list(rep),
                 "multiplicity": multiplicity,
                 "coordinate_dimension": dim,
                 "seeds_passed": list(SEEDS),
+                "selector_certificates": certificates,
             })
         result["sectors"][key] = {
             "active_blocks": len(active),

@@ -110,16 +110,26 @@ def apply_selector_projector(rep,key,C):
     Y=apply_poly(rep,seed,C,j4,s4,J4_TERMS)
     return apply_poly(rep,seed,Y,j5,s5,J5_TERMS)
 
-def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10):
+def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10,return_diagnostics=False):
     rep=tuple(rep); seed=CFG[key][0]; _,_,d=layout(rep,seed); m=exact_mult(rep,key)
-    if m==0: return np.zeros((d,0),complex)
+    if m==0:
+        empty=np.zeros((d,0),complex)
+        certificate={
+            "status":"passed","expected_rank":0,"rank":0,
+            "rank_tolerance":0.0,"sigma_max":0.0,"sigma_min_nonzero":0.0,
+            "condition_number":None,"j4_relative_residual":0.0,
+            "j5_relative_residual":0.0,"projector_relative_residual":0.0,
+            "orthonormality_residual":0.0,"residual_tolerance":tol,
+            "seednum":int(seednum),"oversampling":0,
+        }
+        return (empty,certificate) if return_diagnostics else empty
     k=min(d,m+extra)
     salt={'5':5,'41':6,'32':1,'311':2,'221':3,'2111':4,'11111':7}[key]
-    rng=np.random.default_rng(seednum + 17*sum((i+1)*x for i,x in enumerate(rep)) + 1000003*salt)
+    effective_seed=int(seednum + 17*sum((i+1)*x for i,x in enumerate(rep)) + 1000003*salt)
+    rng=np.random.default_rng(effective_seed)
     C=rng.standard_normal((d,k))+1j*rng.standard_normal((d,k))
     Y=apply_selector_projector(rep,key,C)
-    Q,R=np.linalg.qr(Y,mode='reduced')
-    s=np.linalg.svd(R,compute_uv=False)
+    U,s,_=np.linalg.svd(Y,full_matrices=False)
     if not np.all(np.isfinite(s)):
         raise RuntimeError(('selector nonfinite singular values',key,rep,d,m,k,s.tolist()))
     scale=float(s[0]) if len(s) else 0.0
@@ -127,7 +137,7 @@ def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10):
     rank=int((s>rank_tol).sum()) if scale>0.0 else 0
     if rank!=m:
         raise RuntimeError(('selector rank mismatch',key,rep,d,m,k,rank,rank_tol,s.tolist()))
-    Q=Q[:,:m]
+    Q=U[:,:m]
     seed,j4,s4,j5,s5=CFG[key]
     e4=np.linalg.norm(apply_sum(rep,seed,Q,J4_TERMS)-j4*Q)/max(np.linalg.norm(Q),1e-30)
     e5=np.linalg.norm(apply_sum(rep,seed,Q,J5_TERMS)-j5*Q)/max(np.linalg.norm(Q),1e-30)
@@ -135,4 +145,22 @@ def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10):
     oo=np.linalg.norm(Q.conj().T@Q-np.eye(m))
     if max(e4,e5,ep,oo)>tol:
         raise RuntimeError(('selector residual',key,rep,d,m,e4,e5,ep,oo))
-    return Q
+    sigma_min=float(s[m-1])
+    certificate={
+        "status":"passed",
+        "expected_rank":int(m),
+        "rank":int(rank),
+        "rank_tolerance":float(rank_tol),
+        "sigma_max":float(scale),
+        "sigma_min_nonzero":sigma_min,
+        "condition_number":float(scale/sigma_min) if sigma_min>0.0 else None,
+        "j4_relative_residual":float(e4),
+        "j5_relative_residual":float(e5),
+        "projector_relative_residual":float(ep),
+        "orthonormality_residual":float(oo),
+        "residual_tolerance":float(tol),
+        "seednum":int(seednum),
+        "effective_seed":effective_seed,
+        "oversampling":int(k-m),
+    }
+    return (Q,certificate) if return_diagnostics else Q

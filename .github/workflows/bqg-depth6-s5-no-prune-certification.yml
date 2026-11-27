@@ -1,0 +1,116 @@
+name: BQG depth6 seven-sector no-prune certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      irrep:
+        description: S5 irrep sector to certify
+        required: true
+        type: choice
+        default: '5'
+        options:
+          - '5'
+          - '41'
+          - '32'
+          - '311'
+          - '221'
+          - '2111'
+          - '11111'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shard:
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      NUMEXPR_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install finite-gate dependencies
+        run: python -m pip install -r requirements-finite-gates.txt
+      - name: Recompute no-prune selector and master blocks
+        run: |
+          python -u research/depth6_no_prune/github_mixed_master_shard.py \
+            --irrep "${{ inputs.irrep }}" \
+            --shard ${{ matrix.shard }} \
+            --shards 112 --workers 4 --out artifact
+      - name: Pack shard output
+        if: success()
+        run: tar czf "c1-s5-${{ inputs.irrep }}-shard-${{ matrix.shard }}.tar.gz" -C . artifact
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: c1-s5-${{ inputs.irrep }}-shard-${{ matrix.shard }}
+          path: c1-s5-${{ inputs.irrep }}-shard-${{ matrix.shard }}.tar.gz
+          retention-days: 2
+          compression-level: 0
+
+  aggregate:
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install aggregation dependencies
+        run: python -m pip install -r requirements-finite-gates.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: c1-s5-${{ inputs.irrep }}-shard-*
+          path: c1_downloaded
+          merge-multiple: true
+      - name: Validate selector certificates and certify full master image
+        env:
+          PYTHONPATH: ${{ github.workspace }}/research/depth6_no_prune:${{ github.workspace }}/research/depth6_recovered_source
+          IRREP: ${{ inputs.irrep }}
+        run: |
+          python -u proof_tools/bqg_mixed_master_aggregate_streaming.py \
+            --irrep "${{ inputs.irrep }}" \
+            --artifacts c1_downloaded \
+            --expected-shards 112 \
+            --prefix "c1-s5-${{ inputs.irrep }}-shard-" \
+            --work "c1_aggregate_work_${{ inputs.irrep }}" \
+            --out "C1_S5_${{ inputs.irrep }}_CERTIFICATE.json"
+          python - <<'PY'
+          import json, os
+          p = f"C1_S5_{os.environ['IRREP']}_CERTIFICATE.json"
+          x = json.load(open(p, encoding="utf-8"))
+          assert x["source_commit"] == os.environ["GITHUB_SHA"], x
+          assert x["status"] == "PASS", x
+          assert x["selector_certified_blocks"] == x["target_blocks"], x
+          assert x["selector_certified_columns"] == x["target_columns"], x
+          assert x["certified_blocks"] == x["target_blocks"], x
+          assert x["certified_columns"] == x["target_columns"], x
+          assert x["remaining_blocks"] == 0 and x["remaining_columns"] == 0, x
+          assert max(x["selector_max_residuals"].values(), default=0.0) <= 1.0e-10, x
+          print("C1_SEVEN_SECTOR_NO_PRUNE_PASS", x["irrep"], x["certified_blocks"], x["certified_columns"])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c1-s5-${{ inputs.irrep }}-certificate
+          path: C1_S5_${{ inputs.irrep }}_CERTIFICATE.json
+          if-no-files-found: warn
+          retention-days: 30

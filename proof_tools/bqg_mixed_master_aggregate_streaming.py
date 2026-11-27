@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse,json,tarfile,itertools
+import argparse,json,tarfile,itertools,math,os
 from pathlib import Path
 import numpy as np
 try:
@@ -17,7 +17,7 @@ import bqg_depth6_generic_master_row as M
 import bqg_safe_boundary_master_gate as R
 import bqg_s5_intertwiner_action_gate as S
 
-TARGET={'32':(130903,2755),'311':(153455,2719),'221':(130503,2749),'2111':(103318,2712)}
+TARGET={'5':(27227,2757),'41':(104146,2755),'32':(130903,2755),'311':(153455,2719),'221':(130503,2749),'2111':(103318,2712),'11111':(26794,2656)}
 
 def gauss_ok(sp):
     return all(R.allowed_k2_t(*R.local_spins(sp,v)) for v in R.VERT)
@@ -64,21 +64,55 @@ def extract(root,work,expected,prefix):
     return ds
 
 def load_index(ds,key,expected):
-    rec={};paths={};summ=[]
+    rec={};paths={};summ=[];source_commits=set()
     for d in ds:
         ss=list(d.rglob('summary.json'))
         if len(ss)!=1:raise SystemExit(('summary',d,len(ss)))
         s=json.load(open(ss[0]));summ.append(s)
-        if s['irrep']!=key or s['shell_states']!=264962 or s['s5_orbits']!=2757 or s['failed_blocks']!=0 or s['ok_blocks']!=s['assigned_blocks']:raise SystemExit(('bad summary',s))
+        if (s['irrep']!=key or s['shell_states']!=264962 or s['s5_orbits']!=2757
+            or s['failed_blocks']!=0 or s['ok_blocks']!=s['assigned_blocks']
+            or s.get('selector_certificate_schema')!='jucys-svd-v1' or s.get('selector_extra')!=2
+            or s.get('selector_certified_blocks')!=s.get('assigned_blocks')
+            or s.get('selector_certified_columns')!=s.get('assigned_columns')):
+            raise SystemExit(('bad summary or incomplete selector certificates',s))
+        source_commits.add(s.get('source_commit'))
         for r in s['records']:
             i=validate_index_value(r.get('orbit_index'), f"mixed-master {key} record index")
             validate_positive_integer(r.get('m'), f"mixed-master {key} orbit {i} dimension")
             if i in rec:raise SystemExit(('dup record',i))
+            cert=r.get('selector_certificate')
+            if not isinstance(cert,dict) or cert.get('status')!='passed':
+                raise SystemExit(('missing or failed selector certificate',key,i,cert))
+            m=int(r['m'])
+            if cert.get('rank')!=m or cert.get('expected_rank')!=m:
+                raise SystemExit(('selector rank certificate mismatch',key,i,m,cert))
+            rank_tol=cert.get('rank_tolerance')
+            sigma_min=cert.get('sigma_min_nonzero')
+            residual_tol=cert.get('residual_tolerance')
+            if not all(isinstance(v,(int,float)) and math.isfinite(float(v)) for v in (rank_tol,sigma_min,residual_tol)):
+                raise SystemExit(('nonfinite selector certificate scalar',key,i,cert))
+            if sigma_min<=rank_tol or residual_tol<=0:
+                raise SystemExit(('selector singular-value certificate failed',key,i,cert))
+            for metric in ('j4_relative_residual','j5_relative_residual','projector_relative_residual','orthonormality_residual'):
+                value=cert.get(metric)
+                if not isinstance(value,(int,float)) or not math.isfinite(float(value)) or value>residual_tol:
+                    raise SystemExit(('selector residual certificate failed',key,i,metric,value,residual_tol))
+            coord_dim=validate_positive_integer(r.get('coord_dim'), f"mixed-master {key} orbit {i} coordinate dimension")
+            expected_extra=min(2,max(0,coord_dim-m))
+            if (not isinstance(cert.get('seednum'),int) or not isinstance(cert.get('effective_seed'),int)
+                or not isinstance(cert.get('oversampling'),int) or cert['oversampling']!=expected_extra):
+                raise SystemExit(('selector oversampling or reproducibility metadata mismatch',key,i,expected_extra,cert))
             rec[i]=r
         for p in d.rglob('b*.pkl'):
             i=parse_indexed_map_filename(p.stem, f"mixed-master {key} map filename")
             if i in paths:raise SystemExit(('dup map',i))
             paths[i]=p
+    if len(source_commits)!=1 or None in source_commits:
+        raise SystemExit(('mixed source commits across shards',sorted(str(x) for x in source_commits)))
+    source_commit=next(iter(source_commits))
+    expected_commit=os.environ.get('GITHUB_SHA')
+    if expected_commit and source_commit!=expected_commit:
+        raise SystemExit(('shard source commit mismatch',source_commit,expected_commit))
     validate_shard_coverage(
         [s.get('shard') for s in summ], expected, f"mixed-master {key}"
     )
@@ -86,9 +120,9 @@ def load_index(ds,key,expected):
     target,active=TARGET[key]
     if len(summ)!=expected or len(rec)!=active or len(paths)!=active or sum(int(r['m']) for r in rec.values())!=target:
         raise SystemExit(('coverage',len(summ),len(rec),len(paths),sum(int(r['m']) for r in rec.values()),target,active))
-    return rec,paths
+    return rec,paths,source_commit
 
-def certify(rec,paths,key,outfile):
+def certify(rec,paths,key,source_commit,outfile):
     remaining=set(rec);sup={};occ={}
     for i,r in rec.items():
         ss=support(tuple(r['rep']),key);sup[i]=ss
@@ -117,11 +151,16 @@ def certify(rec,paths,key,outfile):
             for q in sup[i]:occ[q].discard(i)
         print('ROUND',rounds[-1],'remain',len(remaining),flush=True)
     target,active=TARGET[key]
-    res={'status':'PASS' if not remaining else 'RESIDUAL_CORE','irrep':key,'target_blocks':active,'target_columns':target,'certified_blocks':len(cert),'certified_columns':sum(v['m'] for v in cert.values()),'remaining_blocks':len(remaining),'remaining_columns':sum(int(rec[i]['m']) for i in remaining),'rounds':rounds,'global_sigma_min':min((v['sigma_min'] for v in cert.values()),default=None),'remaining_ids':sorted(remaining),'proof_logic':'Exact one-row master identity B=A0+A1+3A2; conservative subgroup-geometric occupancy; each removed S5 orbit block has full-column-rank numeric master image on rows unique at removal.'}
+    selector_rows=[r['selector_certificate'] for r in rec.values()]
+    selector_residual_max={
+        name:max((float(c[name]) for c in selector_rows),default=0.0)
+        for name in ('j4_relative_residual','j5_relative_residual','projector_relative_residual','orthonormality_residual')
+    }
+    res={'status':'PASS' if not remaining else 'RESIDUAL_CORE','source_commit':source_commit,'irrep':key,'target_blocks':active,'target_columns':target,'selector_certified_blocks':len(selector_rows),'selector_certified_columns':sum(int(r['m']) for r in rec.values()),'selector_min_sigma_min_nonzero':min((float(c['sigma_min_nonzero']) for c in selector_rows),default=None),'selector_max_residuals':selector_residual_max,'certified_blocks':len(cert),'certified_columns':sum(v['m'] for v in cert.values()),'remaining_blocks':len(remaining),'remaining_columns':sum(int(rec[i]['m']) for i in remaining),'rounds':rounds,'global_sigma_min':min((v['sigma_min'] for v in cert.values()),default=None),'remaining_ids':sorted(remaining),'proof_logic':'Exact one-row master identity B=A0+A1+3A2; conservative subgroup-geometric occupancy; every input orbit carries an independently validated exact-rank Jucys selector certificate; each removed S5 orbit block has full-column-rank numeric master image on rows unique at removal.'}
     Path(outfile).write_text(json.dumps(res,indent=2)+'\n')
     print(json.dumps({k:res[k] for k in ['status','certified_blocks','certified_columns','remaining_blocks','remaining_columns','global_sigma_min']},indent=2),flush=True)
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--irrep',choices=TARGET,required=True);ap.add_argument('--artifacts',required=True);ap.add_argument('--expected-shards',type=int,required=True);ap.add_argument('--prefix',required=True);ap.add_argument('--work',required=True);ap.add_argument('--out',required=True);a=ap.parse_args()
-    ds=extract(a.artifacts,a.work,a.expected_shards,a.prefix);rec,paths=load_index(ds,a.irrep,a.expected_shards);certify(rec,paths,a.irrep,a.out)
+    ds=extract(a.artifacts,a.work,a.expected_shards,a.prefix);rec,paths,source_commit=load_index(ds,a.irrep,a.expected_shards);certify(rec,paths,a.irrep,source_commit,a.out)
 if __name__=='__main__':main()
