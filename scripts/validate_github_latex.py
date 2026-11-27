@@ -82,7 +82,7 @@ def validate_markdown(path: Path) -> tuple[int, list[Problem]]:
         # incorrectly scanned as plain Markdown prose. Bracket display
         # delimiters must normalize to a double-dollar pair so multiline
         # expressions are handled by the display-math state machine.
-        line = line.replace(r"\[", "$").replace(r"\]", "$")
+        line = line.replace(r"\[", "$$").replace(r"\]", "$$")
         # Inline delimiters are normalized to a single-dollar pair.
         line = line.replace(r"\(", "$").replace(r"\)", "$")
         if re.match(r"^\s*(```|~~~)", line):
