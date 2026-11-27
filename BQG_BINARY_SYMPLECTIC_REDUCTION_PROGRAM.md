@@ -312,14 +312,14 @@ y=\sin\theta\sin\phi,\quad
 z=\cos\theta.
 \]
 
-With the convention for \(\Omega_{\rm FS}\) above, the induced Poisson bracket is
+With the convention \(\{f,g\}_{\rm FS}=-\Omega_{\rm FS}^{-1}(df,dg)\), which gives \(\{q,p\}=+1\) for \(\Omega=dq\wedge dp\), the induced bracket is
 
 \[
 \{n_a,n_b\}_{\rm FS}
-=-\frac{2}{\hbar}\epsilon_{abc}n_c.
+=+\frac{2}{\hbar}\epsilon_{abc}n_c.
 \]
 
-Equivalently, reversing the Poisson-bracket convention gives the familiar positive sign. The operator identity is exact:
+The sign is fixed here explicitly; it agrees with the operator correspondence below. The operator identity is exact:
 
 \[
 [\sigma_a,\sigma_b]=2i\epsilon_{abc}\sigma_c.
@@ -330,3 +330,33 @@ Thus the expectation-value Poisson algebra and Pauli commutator algebra agree, i
 **Scope:** this is an exact result for the repository's finite q=2 relational projector/geometry-qubit positive control. Its rank-two projector uses the declared C8 system step \(R=J\); it is not yet the common kernel of the full graph-changing Lorentzian gravitational constraint family. It therefore validates the method and the q=2 kinematics, but does not close the BQG physical symplectic gate.
 
 The next implementation must replace this positive-control projector with the actual regulated BQG master-constraint kernel and repeat the same rank-two-or-higher projective calculation. If the true physical kernel is one-dimensional, the symplectic form collapses and that regulator/carrier cannot support local physical canonical pairs.
+
+
+## 12. Executable exact q=2 symplectic gate
+
+Added `scripts/q2_relational_fs_symplectic_gate.py`. It constructs the rank-two invariant subspace in the 16-dimensional C8 clock tensor q=2 system carrier, embeds a generic CP1 state, and checks the pullback two-form and all three independent Pauli brackets symbolically.
+
+Run:
+
+```bash
+python scripts/q2_relational_fs_symplectic_gate.py --output verification_results/Q2_RELATIONAL_FS_SYMPLECTIC.json
+```
+
+Exact expected outputs:
+
+\[
+V^\dagger V=I_2,\quad P=VV^\dagger,\quad \operatorname{rank}P=2,
+\]
+\[
+\Omega_{\theta\phi}=\frac{\hbar}{2}\sin\theta,
+\]
+\[
+(n_x,n_y,n_z)=(\sin\theta\cos\phi,\sin\theta\sin\phi,\cos\theta),
+\]
+\[
+\{n_x,n_y\}=\frac{2}{\hbar}n_z,\quad
+\{n_y,n_z\}=\frac{2}{\hbar}n_x,\quad
+\{n_z,n_x\}=\frac{2}{\hbar}n_y.
+\]
+
+The gate checks exact agreement with \(\{f_A,f_B\}_{FS}=\langle[\hat A,\hat B]\rangle/(i\hbar)\) for embedded Pauli observables. This is an exact finite positive control, not physical-gravity closure.
