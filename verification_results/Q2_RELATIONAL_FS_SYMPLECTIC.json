@@ -1,0 +1,34 @@
+{
+  "status": "exact q2 relational Fubini-Study positive-control calculation",
+  "passed": true,
+  "method": "independent symbolic SymPy evaluation of the same matrices and equations as scripts/q2_relational_fs_symplectic_gate.py",
+  "hilbert_dimension": 16,
+  "invariant_subspace_dimension": 2,
+  "checks": {
+    "V_dagger_V_equals_I2": true,
+    "P_hermitian": true,
+    "P_idempotent": true,
+    "P_rank": 2,
+    "P_commutes_with_S_tensor_J": true,
+    "FS_pullback_equals_hbar_over_2_sin_theta": true,
+    "three_Bloch_brackets_match_Pauli_commutators": true
+  },
+  "omega_theta_phi": "hbar*sin(theta)/2",
+  "bloch_coordinates": [
+    "sin(theta)*cos(phi)",
+    "sin(theta)*sin(phi)",
+    "cos(theta)"
+  ],
+  "poisson_brackets": {
+    "{nx,ny}": "2*nz/hbar",
+    "{ny,nz}": "2*nx/hbar",
+    "{nz,nx}": "2*ny/hbar"
+  },
+  "local_Darboux_coordinates": {
+    "q": "phi",
+    "p": "hbar*cos(theta)/2",
+    "omega": "dq wedge dp",
+    "domain": "local chart excluding Bloch poles; p is bounded and q is periodic"
+  },
+  "claim_boundary": "Exact finite q2 relational positive control only. Does not verify the full graph-changing Lorentzian constraint family or physical continuum limit."
+}
