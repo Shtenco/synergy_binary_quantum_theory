@@ -7,6 +7,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "research" / "depth6_recovered_source"))
+sys.path.insert(0, str(ROOT / "research" / "depth6_no_prune"))
 
 import bqg_block_apply_invariants as A  # noqa: E402
 
