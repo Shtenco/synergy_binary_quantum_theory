@@ -94,6 +94,7 @@ def test_no_prune_master_row_resolves_only_isolated_derived_operator_modules():
     no_prune_root = ROOT / "research" / "depth6_no_prune"
     assert Path(M.A.__file__).resolve().parent == no_prune_root
     assert Path(M.A.H.__file__).resolve().parent == no_prune_root
+    assert Path(M.A.Rec.__file__).resolve().parent == no_prune_root
     assert M.master_map.__defaults__[-1] == 0.0
     assert M.reduced_s3_node.__defaults__[-1] == 0.0
     assert M.raw_to_s2_coords.__defaults__[-1] == 0.0
@@ -122,3 +123,18 @@ def test_no_prune_shard_runner_uses_the_isolated_master_and_explicit_zero_tolera
     assert result["ok"] is True
     assert observed["tol"] == 0.0
     assert (tmp_path / "b00007.pkl").is_file()
+
+
+
+def test_no_prune_clebsch_gordan_reconstruction_keeps_subthreshold_coefficients(
+    monkeypatch,
+):
+    recoupling = A.Rec
+    recoupling.coupled_tensor.cache_clear()
+    monkeypatch.setattr(recoupling.R, "cg2", lambda *args: 1.0e-16)
+
+    tensor = recoupling.coupled_tensor((1, 1, 1, 1), 0, 0, 0, 0)
+
+    assert np.count_nonzero(tensor) > 0
+    assert np.max(np.abs(tensor)) < 1.0e-40
+    recoupling.coupled_tensor.cache_clear()
