@@ -3,6 +3,7 @@ import numpy as np
 
 from qag_postselection import (
     conditional_probe_state,
+    conditional_state_via_kraus,
     expectation,
     source_density_from_amplitudes,
 )
@@ -34,8 +35,19 @@ class QAGPeriodicProbeTests(unittest.TestCase):
         self.assertGreater(result.conditional_shift, 0.0)
         self.assertGreater(result.weak_value_prediction, 0.0)
         self.assertLess(result.relative_weak_error, 2e-4)
+        # The source-only overlap formula is exact only when the two
+        # branches do not distinguish the probe (here: zero branch kick).
+        source = np.array([np.sqrt(1.1), np.sqrt(0.9)], dtype=complex) / np.sqrt(2)
+        phi = np.array([1, -1], dtype=complex) / np.sqrt(2)
+        identity = np.eye(256, dtype=complex)
+        no_interaction = conditional_state_via_kraus(
+            source, phi, [identity, identity],
+            gaussian_probe_density(
+                periodic_position_momentum_operators(256, 40.0)[0], sigma=1.0
+            )
+        )
         self.assertAlmostEqual(
-            result.success_probability,
+            no_interaction.probability,
             (np.sqrt(1.1) - np.sqrt(0.9))**2 / 4,
             places=12,
         )
