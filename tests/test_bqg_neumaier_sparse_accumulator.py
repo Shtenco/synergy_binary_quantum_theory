@@ -7,6 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from bqg_neumaier_sparse_accumulator import NeumaierSparseAccumulator
 
+EPS = 2.220446049250313e-16
+
 
 def _fsum_map(items):
     parts = {}
@@ -18,9 +20,19 @@ def _fsum_map(items):
     }
 
 
-def _assert_maps_close(actual, expected, atol=1e-25):
+def _scale_map(items):
+    parts = {}
+    for key, value in items:
+        parts[key] = parts.get(key, 0.0) + abs(value)
+    return parts
+
+
+def _assert_maps_roundoff_bounded(actual, expected, items, factor=32.0):
+    scale = _scale_map(items)
     for key in set(actual) | set(expected):
-        assert abs(actual.get(key, 0j) - expected.get(key, 0j)) <= atol
+        error = abs(actual.get(key, 0j) - expected.get(key, 0j))
+        bound = factor * EPS * scale.get(key, 0.0) + 1e-300
+        assert error <= bound, (key, error, bound, actual.get(key), expected.get(key))
 
 
 def test_seeded_single_pass_and_partition_merge_match_fsum():
@@ -35,15 +47,15 @@ def test_seeded_single_pass_and_partition_merge_match_fsum():
             items.append((key, mag * complex(math.cos(phase), math.sin(phase))))
         expected = _fsum_map(items)
         one = NeumaierSparseAccumulator()
-        left = NeumaierSparseAccumulator()
-        right = NeumaierSparseAccumulator()
-        cut = rng.randrange(1, n)
+        parts = [NeumaierSparseAccumulator() for _ in range(4)]
         for i, (key, value) in enumerate(items):
             one.add(key, value)
-            (left if i < cut else right).add(key, value)
-        left.merge(right)
-        _assert_maps_close(one.finalize(), expected, atol=1e-10)
-        _assert_maps_close(left.finalize(), expected, atol=1e-10)
+            parts[i % len(parts)].add(key, value)
+        merged = NeumaierSparseAccumulator()
+        for part in reversed(parts):
+            merged.merge(part)
+        _assert_maps_roundoff_bounded(one.finalize(), expected, items)
+        _assert_maps_roundoff_bounded(merged.finalize(), expected, items)
 
 
 def test_permutation_invariance_on_seeded_cancellation_sets():
@@ -54,10 +66,13 @@ def test_permutation_invariance_on_seeded_cancellation_sets():
         b = NeumaierSparseAccumulator()
         for key, value in items:
             a.add(key, value)
-        rng.shuffle(items)
-        for key, value in items:
+        shuffled = list(items)
+        rng.shuffle(shuffled)
+        for key, value in shuffled:
             b.add(key, value)
-        _assert_maps_close(a.finalize(), b.finalize(), atol=1e-13)
+        expected = _fsum_map(items)
+        _assert_maps_roundoff_bounded(a.finalize(), expected, items)
+        _assert_maps_roundoff_bounded(b.finalize(), expected, items)
 
 
 def test_no_intermediate_magnitude_pruning_under_adversarial_cancellation():
@@ -71,15 +86,45 @@ def test_no_intermediate_magnitude_pruning_under_adversarial_cancellation():
             acc.add(key, 0.7 * tau)
         result = acc.finalize()
         assert key in result
-        assert abs(result[key].real - expected) < 1e-20
+        assert abs(result[key].real - expected) <= 8 * EPS * 384000 * tau
 
 
 def test_complex_scaling_and_add_state():
     x = {"a": 1.25 - 2.5j, "b": -0.75 + 0.125j}
     y = {"a": -0.5 + 0.25j, "c": 2.0j}
     scale = -0.3 + 0.7j
+    items = [(k, scale * v) for k, v in list(x.items()) + list(y.items())]
     acc = NeumaierSparseAccumulator()
     acc.add_state(x, scale)
     acc.add_state(y, scale)
-    expected = _fsum_map([(k, scale * v) for k, v in list(x.items()) + list(y.items())])
-    _assert_maps_close(acc.finalize(), expected, atol=1e-14)
+    _assert_maps_roundoff_bounded(acc.finalize(), _fsum_map(items), items)
+
+
+def test_extreme_exponent_range_and_self_merge():
+    rng = random.Random(2026112701)
+    for _ in range(5000):
+        items = []
+        acc = NeumaierSparseAccumulator()
+        for _ in range(rng.randint(4, 24)):
+            exponent = rng.uniform(-300, 250)
+            magnitude = 10.0 ** exponent
+            phase = rng.uniform(-math.pi, math.pi)
+            value = magnitude * complex(math.cos(phase), math.sin(phase))
+            key = rng.randrange(4)
+            items.append((key, value))
+            acc.add(key, value)
+        expected = _fsum_map(items)
+        _assert_maps_roundoff_bounded(acc.finalize(), expected, items, factor=64.0)
+
+    single = NeumaierSparseAccumulator()
+    single.add("x", 1.0 + 2.0j)
+    single.merge(single)
+    assert single.finalize()["x"] == 2.0 + 4.0j
+
+
+def test_exact_zero_policy_is_finalization_only():
+    acc = NeumaierSparseAccumulator()
+    acc.add("z", 1.0 + 2.0j)
+    acc.add("z", -1.0 - 2.0j)
+    assert "z" not in acc.finalize()
+    assert acc.finalize(keep_exact_zeros=True)["z"] == 0j
