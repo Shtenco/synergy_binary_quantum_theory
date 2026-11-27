@@ -3,7 +3,7 @@ import unittest
 from bqg_w5_su2_structural_basis import (
     allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
-    w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence,
+    w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence, t_sequence_spin_support,
 )
 
 
@@ -47,6 +47,12 @@ class StructuralBasisTests(unittest.TestCase):
         edge_index = 0  # K5 edge ordering starts with (0,1).
         self.assertEqual({state[edge_index] for state in got}, {2, 4, 6})
         self.assertTrue(all(sum(s != 4 for s in state) <= 1 for state in got))
+
+    def test_repository_t_sequence_support(self):
+        support = t_sequence_spin_support((4,) * 10, 0, 1, 2, 3, 10)
+        # The frozen T word hits edge (0,3) twice and three other edges once.
+        self.assertEqual(len(support), 3 * (2 ** 3))
+        self.assertEqual({sum(s != 4 for s in state) for state in support}, {3, 4})
 
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
