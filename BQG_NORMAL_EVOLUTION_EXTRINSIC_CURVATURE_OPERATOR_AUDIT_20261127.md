@@ -153,3 +153,16 @@ A candidate closure is not accepted unless all of these pass in one common regul
 The exact dual-K5 lapse cochain is a real piece of the discrete HDA structure, and the classical ADM/HDA chain fixes a sharp target. But the inspected microscopic chain still stops before a physical Lorentzian normal generator. The next valid milestone is **not** to draw or fit another cone. It is to derive the Lorentzian constraint plus its relational generator, then construct (K_{ab}) from the same (q_{ab}), lapse, and shift.
 
 Until that milestone is met, the optical Jacobi/Riccati layer remains a valid downstream mathematical gate, but its input null congruence is not yet established as a physical BQG null congruence.
+
+
+## Correction (2026-11-27, subsequent source audit)
+
+The statement above that no microscopic extrinsic-curvature operator was found was too broad. The repository contains the finite commutator-derived K-leg
+\[
+K_{v,comm}=[V_v,H^{sine}_{E,v}],\qquad K_{v,comm}^\dagger=-K_{v,comm},
+\]
+and the exact Hermitian conversion
+\[
+K_{v,H}=(i\hbar)^{-1}K_{v,comm}.
+\]
+It is used by the W5 KKV adapter. This is an actual regulated prerequisite block, not yet a reconstructed spatial tensor \(K_{ab}\), and its W5 scalar-covariance gate has a small nonzero rejected-sector residual that remains unresolved. See `BQG_OPERATOR_CHAIN_CORRECTION_K_FLUX_PATH_HDA_20261127.md` for the complete correction, exact \(-\hbar^{-2}\) two-K-leg bookkeeping, flux/RT0 sharp-map status, path-normal HDA route, and integration requirements.
