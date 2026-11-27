@@ -55,7 +55,7 @@ For the parameterisation
 |\phi\rangle=\frac{|L\rangle-|R\rangle}{\sqrt2},
 \]
 
-the exact overlap probability is
+in the zero-coupling limit (when the two branches do not distinguish the probe), the exact source-overlap probability is
 
 \[
 P_\phi=\frac{(\sqrt{1+\epsilon}-\sqrt{1-\epsilon})^2}{4},
@@ -68,7 +68,7 @@ while \(P_\phi\sim\epsilon^2/4\) is only the leading small-\(\epsilon\) asymptot
 \sim-\frac1\epsilon.
 \]
 
-The audit note was corrected to preserve this distinction. This avoids treating a leading-order expression as an exact identity.
+With branch-distinguishing interaction enabled, the exact success probability is instead computed from Tr(K rho_probe K^dagger) and depends on the probe state and branch unitaries. The audit note and tests preserve this distinction. This avoids treating a source-only overlap or a leading-order expression as an exact interacting probability.
 
 ## Validation status and limitations
 
