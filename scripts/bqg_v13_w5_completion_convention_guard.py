@@ -107,7 +107,7 @@ def run(seed: int = 20261128, n_aux: int = 2, n_graph: int = 5) -> dict:
         "v13_completion_is_hermitian": v13_herm < 1e-12,
         "w5_plus_completion_is_hermitian": w5_herm < 1e-12,
         "explicit_i_phase_projection_matches_v13": (
-            np.linalg.norm(s_w5_with_i_phase - s_v13) / scale < 1e-12
+            bool(np.linalg.norm(s_w5_with_i_phase - s_v13) / scale < 1e-12)
         ),
         "two_prescriptions_are_distinct_on_witness": split_rel > 1e-6,
     }
