@@ -31,7 +31,7 @@ After source postselection, the code retains the recoil and pointer registers, t
 
 `tests/test_qag_stinespring.py` covers:
 - normalized positive conditional probe state;
-- exact conservation of the modular total-momentum phase in the full conditional state;
+- exact conservation of the modular total-momentum phase after averaging over the complete outcome ensemble;
 - pointer branch overlap;
 - completeness of both source measurement outcomes;
 - zero-impulse control;
@@ -65,3 +65,8 @@ A first CI run exposed a subtle but important finite-lattice issue: the centered
 \left\langle e^{2\pi i(P_R+P_P)/N}\right\rangle,
 \]
 which is conserved by the paired cyclic shifts by construction. The ordinary label sum remains exposed under explicitly seam-sensitive names for diagnostics only.
+
+
+## Selective versus nonselective measurement
+
+A second CI check exposed a conceptual distinction: the modular momentum phase need not have the same expectation in each individually postselected outcome. Postselection changes the conditional ensemble and can bias observables. The conservation statement is therefore tested nonselectively: compute both orthogonal source outcomes, weight each conditional phase expectation by its outcome probability, and compare the sum with the initial phase expectation. This is the appropriate conservation regression for the complete measurement. It avoids the false claim that every selected subensemble separately conserves the same expectation value.
