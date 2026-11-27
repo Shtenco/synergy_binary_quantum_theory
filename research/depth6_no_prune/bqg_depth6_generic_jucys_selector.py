@@ -49,7 +49,7 @@ def expand(rep,seed,C,tol=0.0):
     raw={}
     for q in bs:
         seg=C[sl[q],:]
-        if not seg.size or np.linalg.norm(seg)<tol: continue
+        if not seg.size or not np.any(seg): continue  # exact-zero support removal only
         V=seed_basis(q,seed); B=V@seg
         n3=G3/len(Z.s3_stabilizer(q)); scale=1/math.sqrt(n3)
         seen={}
