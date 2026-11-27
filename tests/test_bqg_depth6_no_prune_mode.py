@@ -242,3 +242,41 @@ def test_no_prune_s5_action_retains_tiny_full_recoupling_product(monkeypatch):
     assert np.isclose(matrix[0, 0], tiny_local**5, rtol=5.0e-16, atol=0.0)
     assert np.count_nonzero(matrix) == 1
     transform.cache_clear()
+
+
+
+def test_no_prune_master_map_preserves_superposition_linearity():
+    # Exercise the complete selector-coordinate -> node master map on a
+    # non-vacuum orbit. A shared sparse support must not depend on whether two
+    # inputs are evaluated together or as a superposition.
+    rep = (1, 1, 1, 1, 1, 1, 3, 3, 1, 5)
+    key = "32"
+    seed = M.J.CFG[key][0]
+    dimension = M.J.layout(rep, seed)[2]
+    rng = np.random.default_rng(20261127)
+    left = rng.standard_normal((dimension, 1)) + 1j * rng.standard_normal((dimension, 1))
+    right = rng.standard_normal((dimension, 1)) + 1j * rng.standard_normal((dimension, 1))
+
+    mapped_left, _ = M.master_map(rep, key, left, tol=0.0)
+    mapped_right, _ = M.master_map(rep, key, right, tol=0.0)
+    mapped_sum, _ = M.master_map(rep, key, left + right, tol=0.0)
+
+    keys = set(mapped_left) | set(mapped_right) | set(mapped_sum)
+    error_sq = 0.0
+    scale_sq = 0.0
+    for output_key in keys:
+        template = next(
+            mapping[output_key]
+            for mapping in (mapped_left, mapped_right, mapped_sum)
+            if output_key in mapping
+        )
+        lhs = mapped_sum.get(output_key, np.zeros_like(template))
+        rhs = (
+            mapped_left.get(output_key, np.zeros_like(template))
+            + mapped_right.get(output_key, np.zeros_like(template))
+        )
+        error_sq += float(np.linalg.norm(lhs - rhs) ** 2)
+        scale_sq += float(np.linalg.norm(lhs) ** 2 + np.linalg.norm(rhs) ** 2)
+
+    relative_error = np.sqrt(error_sq / max(scale_sq, 1.0e-300))
+    assert relative_error < 5.0e-10
