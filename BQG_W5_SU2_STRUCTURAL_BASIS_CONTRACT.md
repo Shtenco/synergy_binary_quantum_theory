@@ -99,3 +99,18 @@ four-valent tensor overlap support, volume-block matrix zeros, or coherent
 epsilon cancellation. It is deliberately an upper bound. The next layer must
 propagate admissible node labels over these spin sectors and then compare the
 resulting conservative support with actual unthresholded coefficient columns.
+
+
+## Ambient-basis cost for one H_E primitive word family
+
+For the 24 spin assignments in the representative `T_sequences` family above,
+the complete one-source covariant ambient basis sizes (four Gauss nodes and
+one complete charged source) range from **57,600** to **630,000** keys.
+The sum of the 24 per-sector dimensions is **5,759,800**.
+
+These are exact counts from the triangle/parity label enumeration. They show
+why a full Cartesian materialization is wasteful: the operator-reachable
+subspace should be stored sparsely, but its candidate labels must be defined
+structurally. The counts are only for the spin sectors of this one `H_E)
+primitive family. They do not include the further nested outer holonomy
+operations in `C_e(K)`, nor the complete W5 epsilon sum.
