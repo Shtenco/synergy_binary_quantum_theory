@@ -1,0 +1,30 @@
+name: BQG v1.3 vs W5 completion convention guard
+
+on:
+  push:
+    branches:
+      - research/null-cone-physical-bridge-v2-20261127
+    paths:
+      - "scripts/bqg_v13_w5_completion_convention_guard.py"
+      - ".github/workflows/bqg-v13-w5-completion-convention-guard.yml"
+  workflow_dispatch:
+
+jobs:
+  convention-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade numpy
+      - name: Run operator-valued convention discriminator
+        run: |
+          python scripts/bqg_v13_w5_completion_convention_guard.py \
+            --output verification_results/BQG_V13_W5_COMPLETION_CONVENTION_GUARD.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bqg-v13-w5-completion-convention-guard
+          path: verification_results/BQG_V13_W5_COMPLETION_CONVENTION_GUARD.json
+          if-no-files-found: error
+          retention-days: 30
