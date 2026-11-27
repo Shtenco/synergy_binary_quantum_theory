@@ -96,6 +96,12 @@ def test_no_prune_master_row_resolves_only_isolated_derived_operator_modules():
     assert Path(M.A.H.__file__).resolve().parent == no_prune_root
     assert Path(M.A.Rec.__file__).resolve().parent == no_prune_root
     assert Path(M.J.__file__).resolve().parent == no_prune_root
+    assert Path(M.S.__file__).resolve().parent == no_prune_root
+    assert Path(M.J.S.__file__).resolve().parent == no_prune_root
+    assert Path(M.J.Z.S.__file__).resolve().parent == no_prune_root
+    assert Path(M.X.S.__file__).resolve().parent == no_prune_root
+    assert M.S.act_on_key.__defaults__[-1] == 0.0
+    assert M.S.act_on_state.__defaults__[-1] == 0.0
     assert M.J.expand.__defaults__[-1] == 0.0
     assert M.J.fast_selector.__defaults__[-1] == 1e-10
     assert M.master_map.__defaults__[-1] == 0.0
@@ -199,3 +205,26 @@ def test_small_real_nonvacuum_master_block_runs_end_to_end_without_pruning():
         assert matrix.ndim == 2
         assert matrix.shape[1] == expected_multiplicity
         assert np.isfinite(matrix).all()
+
+
+
+def test_no_prune_s5_action_retains_tiny_full_recoupling_product(monkeypatch):
+    action = M.S
+    tiny_local = 1.0e-3
+    monkeypatch.setattr(
+        action,
+        "_local_recoupling_cached",
+        lambda spins, vertex, permutation: (
+            np.array([[tiny_local]], dtype=complex),
+            (0,),
+            (0,),
+        ),
+    )
+
+    key = ((1,) * 10, (0,) * 5)
+    result = action.act_on_key(key, action.identity_perm())
+
+    assert len(result) == 1
+    coefficient = next(iter(result.values()))
+    assert coefficient == tiny_local**5
+    assert 0.0 < abs(coefficient) < 1.0e-12
