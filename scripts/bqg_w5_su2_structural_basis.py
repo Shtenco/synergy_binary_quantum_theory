@@ -184,6 +184,13 @@ def t_sequence_spin_support(spins: tuple[int, ...], v: int,
     return tuple(sorted(support))
 
 
+
+def spin_sector_basis_profile(spin_sectors, source_v: int):
+    """Return exact ambient covariant-basis sizes for a finite spin-sector set."""
+    unique = sorted({tuple(spins) for spins in spin_sectors})
+    return tuple((spins, covariant_basis_size(spins, source_v))
+                 for spins in unique)
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
