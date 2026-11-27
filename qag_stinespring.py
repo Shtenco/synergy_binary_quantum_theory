@@ -52,8 +52,10 @@ class StinespringResult:
     probability: float
     probe_state: ComplexArray
     joint_recoil_probe_pointer: ComplexArray
-    total_momentum_initial: float
-    total_momentum_conditional: float
+    total_momentum_label_sum_initial: float
+    total_momentum_label_sum_conditional: float
+    total_momentum_phase_initial: complex
+    total_momentum_phase_conditional: complex
     source_recoil_shift: float
     probe_shift: float
     pointer_branch_overlap: complex
@@ -66,6 +68,17 @@ def _momentum_expectation(state: ComplexArray, axis: int) -> float:
         i for i in range(state.ndim) if i != axis
     ))
     return float(np.dot(labels, probabilities).real)
+
+
+def _total_momentum_phase(state: ComplexArray) -> complex:
+    """Expectation of the conserved modular-momentum unitary on two lattices."""
+    nr, np_ = state.shape[:2]
+    if nr != np_:
+        raise ValueError("recoil and probe lattices must have equal size")
+    labels = np.arange(nr, dtype=float) - nr // 2
+    clock = np.exp(2j * np.pi * labels / nr)
+    probabilities = np.sum(np.abs(state) ** 2, axis=2)
+    return complex(np.sum(probabilities * clock[:, None] * clock[None, :]))
 
 
 def run_stinespring_recoil_model(
@@ -111,7 +124,13 @@ def run_stinespring_recoil_model(
                          np.roll(probe_state, q), pointer_r)
     joint = a[0] * branch_l + a[1] * branch_r
 
-    initial_total = _momentum_expectation(recoil, 0) + _momentum_expectation(probe_state, 0)
+    initial_label_sum = _momentum_expectation(recoil, 0) + _momentum_expectation(probe_state, 0)
+    labels = np.arange(n, dtype=float) - n // 2
+    clock = np.exp(2j * np.pi * labels / n)
+    initial_phase = complex(
+        np.sum(np.abs(recoil) ** 2 * clock)
+        * np.sum(np.abs(probe_state) ** 2 * clock)
+    )
     # Postselection contracts the source-branch index. Keep all physical ancillas.
     selected = np.conjugate(phi[0]) * a[0] * branch_l + np.conjugate(phi[1]) * a[1] * branch_r
     probability = float(np.vdot(selected, selected).real)
@@ -134,8 +153,10 @@ def run_stinespring_recoil_model(
         probability=probability,
         probe_state=reduced,
         joint_recoil_probe_pointer=selected,
-        total_momentum_initial=initial_total,
-        total_momentum_conditional=recoil_after + probe_after,
+        total_momentum_label_sum_initial=initial_label_sum,
+        total_momentum_label_sum_conditional=recoil_after + probe_after,
+        total_momentum_phase_initial=initial_phase,
+        total_momentum_phase_conditional=_total_momentum_phase(selected_norm),
         source_recoil_shift=recoil_after - recoil_before,
         probe_shift=probe_after - probe_before,
         pointer_branch_overlap=pointer_overlap,
