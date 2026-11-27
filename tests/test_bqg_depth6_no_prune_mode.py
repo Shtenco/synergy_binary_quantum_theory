@@ -95,6 +95,9 @@ def test_no_prune_master_row_resolves_only_isolated_derived_operator_modules():
     assert Path(M.A.__file__).resolve().parent == no_prune_root
     assert Path(M.A.H.__file__).resolve().parent == no_prune_root
     assert Path(M.A.Rec.__file__).resolve().parent == no_prune_root
+    assert Path(M.J.__file__).resolve().parent == no_prune_root
+    assert M.J.expand.__defaults__[-1] == 0.0
+    assert M.J.fast_selector.__defaults__[-1] == 1e-10
     assert M.master_map.__defaults__[-1] == 0.0
     assert M.reduced_s3_node.__defaults__[-1] == 0.0
     assert M.raw_to_s2_coords.__defaults__[-1] == 0.0
@@ -107,6 +110,7 @@ def test_no_prune_shard_runner_uses_the_isolated_master_and_explicit_zero_tolera
 ):
     observed = {}
     assert Runner.M is M
+    assert Runner.J is M.J
 
     monkeypatch.setattr(Runner, "_RECS", [(7, (1,) * 10, 1, 1, 1.0)])
     monkeypatch.setattr(Runner, "_KEY", "32")
