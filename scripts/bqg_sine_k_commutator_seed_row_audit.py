@@ -96,7 +96,7 @@ def apply_k_column(key, node, jmax2):
 def make_seed(node, input_k):
     gauss_key = (
         (4,) * 10,
-        tuple(CK.label_gauss(input_k if v == node else 0) for v in range(5)),
+        tuple(input_k if v == node else 0 for v in range(5)),
     )
     covariant = CV.gauss_to_covariant({gauss_key: 1.0 + 0.0j}, node)
     complete = COMP.covariant_to_complete(covariant, node)
