@@ -173,12 +173,24 @@ def complete_two_outcome_probabilities(source_density: np.ndarray,
     if basis.shape != (2, 2) or not np.allclose(
             basis.conj().T @ basis, np.eye(2), atol=1e-10):
         raise ValueError("measurement basis must be a 2x2 unitary matrix")
+    rho_s = _validate_density(source_density, "source density")
+    rho_p = _validate_density(probe_density, "probe density")
+    dim = rho_p.shape[0]
+    unitaries = [
+        _validate_unitary(branch_unitaries[i], dim, f"U_{i}")
+        for i in range(2)
+    ]
     probs = []
     for column in range(2):
-        result = conditional_probe_state(
-            source_density, basis[:, column], branch_unitaries, probe_density
-        )
-        probs.append(result.probability)
+        phi = basis[:, column]
+        unnormalised = np.zeros_like(rho_p)
+        for i in range(2):
+            for j in range(2):
+                unnormalised += (
+                    rho_s[i, j] * np.conjugate(phi[i]) * phi[j]
+                    * unitaries[i] @ rho_p @ unitaries[j].conj().T
+                )
+        probs.append(float(np.trace(unnormalised).real))
     if not np.isclose(sum(probs), 1.0, atol=1e-9):
         raise ArithmeticError("complete measurement probabilities do not sum to one")
     return float(probs[0]), float(probs[1])
