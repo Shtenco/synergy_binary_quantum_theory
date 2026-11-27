@@ -20,14 +20,14 @@ Reading the meter in the computational basis realizes the projective measurement
 ## Implementation
 
 - qag_measurement_dilation.py constructs the 4x4 unitary and applies it to a source register entangled with any existing environment tensor.
-- The meter remains an explicit final tensor axis. Outcome slices are unnormalized conditional states; their squared norms are outcome probabilities.
+- The meter remains an explicit final tensor axis. Outcome slices are unnormalized conditional states; their squared norms are outcome probabilities. The conditional-readout helper returns the selected outcome probability and normalized source-plus-environment state, and explicitly rejects zero-probability outcomes.
 - The implementation validates basis unitarity, source-axis dimension, and finite amplitudes.
 
 The module does not assume that the apparatus is energetically free. Its meter is an abstract degenerate qubit with no calibrated Hamiltonian, spatial coordinate, or momentum. This is an explicit dilation of the measurement channel, not yet a mechanical detector model.
 
 ## Regression coverage
 
-tests/test_qag_measurement_dilation.py verifies exact unitarity, Born-rule probabilities, retention of an environment entangled with the source, orthogonal meter outcome sectors, and rejection of malformed inputs.
+tests/test_qag_measurement_dilation.py verifies exact unitarity, Born-rule probabilities, retention of an environment entangled with the source, equivalence of conditional meter readout to projective collapse, zero-probability handling, orthogonal meter outcome sectors, and rejection of malformed inputs.
 
 ## Remaining physical closure
 
