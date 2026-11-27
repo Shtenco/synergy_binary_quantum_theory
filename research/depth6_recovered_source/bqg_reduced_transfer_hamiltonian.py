@@ -22,7 +22,7 @@ def oriented_coupled_tensor(v,spins_local,K,L,J,M):
     return T
 
 @functools.lru_cache(None)
-def local_hit_outputs(v,spins_local,leg,s_out,kind,color,label):
+def local_hit_outputs(v,spins_local,leg,s_out,kind,color,label,tol=1e-12):
     """Exact one-leg reduced transfer in the oriented coupled basis.
 
     kind='cg'  : A = <s_in,1/2|s_out> component color
@@ -49,7 +49,7 @@ def local_hit_outputs(v,spins_local,leg,s_out,kind,color,label):
             for Ko,Lo in Rec.multiplicity_labels(spo,Jo):
                 Bout=oriented_coupled_tensor(v,spo,Ko,Lo,Jo,Mo)
                 a=np.vdot(Bout,Y)
-                if abs(a)>1e-12: outs.append(((Ko,Lo,Jo,Mo),complex(a)))
+                if abs(a)>tol: outs.append(((Ko,Lo,Jo,Mo),complex(a)))
     return tuple(outs)
 
 
