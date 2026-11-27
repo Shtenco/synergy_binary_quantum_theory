@@ -17,10 +17,14 @@ J5_TERMS=tuple(trans(0,k) for k in (1,2,3,4))
 
 # seed, J4 target/spectrum, J5 target/spectrum
 CFG={
-    '32':   ('triv',-1,(-1,3), 0,(-2,0,3)),
-    '311':  ('triv',-1,(-1,3),-2,(-2,0,3)),
-    '221':  ('sign', 1,(-3,1), 0,(-3,0,2)),
-    '2111': ('sign',-3,(-3,1), 1,(-4,1)),
+    # S5 irreps, with Jucys--Murphy selectors fixed by the S3 seed type.
+    '5':     ('triv', 3,(-1,3), 4,(-1,4)),
+    '41':    ('triv',-1,(-1,3), 3,(-2,0,3)),
+    '32':    ('triv',-1,(-1,3), 0,(-2,0,3)),
+    '311':   ('triv',-1,(-1,3),-2,(-2,0,3)),
+    '221':   ('sign', 1,(-3,1), 0,(-3,0,2)),
+    '2111':  ('sign',-3,(-3,1), 1,(-4,1)),
+    '11111': ('sign',-3,(-3,1),-4,(-4,1)),
 }
 
 @functools.lru_cache(None)
@@ -110,7 +114,7 @@ def fast_selector(rep,key,extra=0,seednum=12345,tol=1e-10):
     rep=tuple(rep); seed=CFG[key][0]; _,_,d=layout(rep,seed); m=exact_mult(rep,key)
     if m==0: return np.zeros((d,0),complex)
     k=min(d,m+extra)
-    salt={'32':1,'311':2,'221':3,'2111':4}[key]
+    salt={'5':5,'41':6,'32':1,'311':2,'221':3,'2111':4,'11111':7}[key]
     rng=np.random.default_rng(seednum + 17*sum((i+1)*x for i,x in enumerate(rep)) + 1000003*salt)
     C=rng.standard_normal((d,k))+1j*rng.standard_normal((d,k))
     Y=apply_selector_projector(rep,key,C)
