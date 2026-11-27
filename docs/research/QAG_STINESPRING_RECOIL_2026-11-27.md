@@ -1,0 +1,58 @@
+# QAG Stinespring and recoil checkpoint
+
+**Date:** 2026-11-27  
+**Scope:** finite-dimensional quantum-information model. This is not a gravity simulation.
+
+## Model
+
+Added `qag_stinespring.py`. The Hilbert space is
+[
+mathcal H_Sotimesmathcal H_{R}otimesmathcal H_{P}otimesmathcal H_A,
+]
+where (S) is the two-branch source register, (R) is a source recoil momentum lattice, (P) is the probe momentum lattice, and (A) is a neutral two-level pointer.
+
+In branch L, the recoil and probe momenta are unchanged. In branch R, the model applies the paired shifts
+[
+T_R(-q)otimes T_P(+q),
+]
+so total lattice momentum is conserved modulo the finite cyclic lattice. The pointer receives a controlled (y)-rotation
+[
+|0angle_Amapsto R_y(	heta)|0angle_A.
+]
+Its branch-state overlap is
+[
+langle 0|R_y(	heta)|0angle=cos(	heta/2),
+]
+which controls how much which-branch information leaks into the apparatus and therefore suppresses interference in the reduced probe state.
+
+After source postselection, the code retains the recoil and pointer registers, then traces them out to obtain the conditional probe density matrix. A second function evaluates both outcomes of a complete orthonormal source measurement.
+
+## Tests
+
+`tests/test_qag_stinespring.py` covers:
+- normalized positive conditional probe state;
+- cancellation of source recoil and probe momentum shifts in the full conditional state;
+- pointer branch overlap;
+- completeness of both source measurement outcomes;
+- zero-impulse control;
+- invalid impulse rejection.
+
+The QAG CI workflow now compiles and executes the new module and test file.
+
+## Interpretation limits
+
+1. The momentum lattice is cyclic. Conservation is exact for the cyclic translation operator; interpreting the labels as ordinary unbounded momentum requires negligible probability near the wrap seam. The tests use localized Gaussian momentum states to suppress boundary tails.
+2. The pointer is an abstract neutral two-level register. It is a Stinespring dilation of partial which-branch information, not a spatial detector with a calibrated energy/momentum budget.
+3. The branch impulse is an explicit toy translation, not derived from a dynamical gravitational source field. The recoil register is a bookkeeping degree of freedom, not yet a relativistic source model.
+4. Conditional postselection can change the probe's conditional mean. The compensating recoil is included in the same conditional state; no net momentum creation is implied.
+5. The current code uses pure initial register states. Mixed-state apparatus preparation and general POVMs remain future extensions.
+
+## Next closure gates
+
+- quantify wrap-seam probability and replace cyclic momentum shifts with a boundary-safe unitary scattering construction;
+- include a physical pointer coordinate and conjugate pointer momentum, then account for its impulse/energy;
+- test the exact global unitary and commutators with the total momentum operator;
+- add mixed initial states and general POVM outcomes;
+- only then substitute a gravity-specific source–probe Hamiltonian.
+
+No claim of physical antigravity, net propulsion, or violation of momentum conservation follows from this model.
