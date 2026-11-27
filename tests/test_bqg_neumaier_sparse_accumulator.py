@@ -128,3 +128,32 @@ def test_exact_zero_policy_is_finalization_only():
     acc.add("z", -1.0 - 2.0j)
     assert "z" not in acc.finalize()
     assert acc.finalize(keep_exact_zeros=True)["z"] == 0j
+
+
+def test_legacy_intermediate_threshold_is_order_dependent_and_non_additive():
+    tau = 1e-11
+
+    def legacy_add(dst, key, value):
+        z = dst.get(key, 0j) + value
+        if abs(z) > tau:
+            dst[key] = z
+        elif key in dst:
+            del dst[key]
+
+    terms = [1.2 * tau, -0.7 * tau, 0.7 * tau]
+    forward = {}
+    reverse = {}
+    for value in terms:
+        legacy_add(forward, "k", value)
+    for value in reversed(terms):
+        legacy_add(reverse, "k", value)
+
+    strict = math.fsum(terms)
+    assert forward.get("k", 0j) == 0j
+    assert reverse.get("k", 0j) == 1.2 * tau
+    assert strict == 1.2 * tau
+
+    compensated = NeumaierSparseAccumulator()
+    for value in terms:
+        compensated.add("k", value)
+    assert abs(compensated.finalize()["k"].real - strict) <= 8 * EPS * sum(map(abs, terms))
