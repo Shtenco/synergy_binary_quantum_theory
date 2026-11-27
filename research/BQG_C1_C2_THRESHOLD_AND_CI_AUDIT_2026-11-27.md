@@ -24,6 +24,22 @@ mp0, _ = M.master_map(tuple(rep), _KEY, W)
 
 The recovered shard script records assignment/column counts and per-shard outputs. It does not itself establish global coverage or rank; those require complete, validated shard inventory and a deterministic aggregation step.
 
+### 1.2 Nested operator cutoffs (important)
+
+The generic master-row tolerance is not the only cutoff. Its dependency `bqg_block_apply_invariants.py` (blob `6f5ded2f4af075adba46bdb0d8a4fbf512fa07c3`) contains additional fixed thresholds:
+- `initial_reduced_block` discards input rows with norm at or below the module constant `TOL=1e-12`;
+- `add_vec` uses a default norm cutoff of `1e-12`;
+- `project_gauss_block` defaults to `1e-10` and zeroes individual matrix entries below that value before a block-norm test;
+- `H_node_apply_ultrafast` calls `oriented_T_ultrafast` with a hard-coded `1e-12`, merges oriented terms with hard-coded `1e-11`, and then applies the Gauss projection.
+
+Its dependency `bqg_reduced_transfer_hamiltonian.py` (blob `5ec3a8b96189da2d2e2ddd095c09cf1a6371edc7`) contains further cutoffs:
+- sparse state addition default `1e-13`;
+- local coefficient acceptance at `1e-12`;
+- local output filtering at `1e-12`;
+- Hamiltonian branch accumulation at `1e-11`.
+
+Therefore setting `tol=0` only at `master_map` is insufficient: some lower-level cutoffs are fixed internally and do not inherit the top-level argument. The producer requires a coordinated no-prune mode across the full call graph before column chunking or a tolerance-free rank experiment can be trusted.
+
 ### 1.2 Master-map numerical cutoffs
 
 File: `research/depth6_recovered_source/bqg_depth6_generic_master_row.py`
