@@ -13,7 +13,7 @@ class QAGStinespringTests(unittest.TestCase):
         eps = 0.1
         self.source = np.array([np.sqrt(1 + eps), np.sqrt(1 - eps)]) / np.sqrt(2)
         self.post = np.array([1.0, -1.0]) / np.sqrt(2)
-        self.recoil = gaussian_momentum_state(32, center=0.0, width=2.0)
+        self.recoil = gaussian_momentum_state(32, center=0.0, width=1.5)
         self.probe = gaussian_momentum_state(32, center=0.0, width=4.0)
 
     def test_pre_postselection_unitary_model_normalizes(self):
