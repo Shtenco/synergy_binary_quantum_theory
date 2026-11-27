@@ -7,6 +7,8 @@
 ## Implemented files
 
 - `qag_postselection.py` — NumPy implementation of a two-branch controlled source–probe interaction.
+- `qag_periodic_probe.py` — periodic-grid position/momentum operators, Gaussian probe state, exact branch-dependent momentum-kick unitary, and weak-value comparison benchmark.
+- `tests/test_qag_periodic_probe.py` — tests for Hermiticity, kick sign convention, weak-value sign reversal, and dephased convex-branch response.
 - `tests/test_qag_postselection.py` — unit tests for pure/mixed source equivalence, coherence suppression, normalization, positivity, complete measurement probabilities, and zero-probability outcomes.
 - `.github/workflows/qag-postselection-regression.yml` — isolated GitHub Actions workflow that compiles the module and runs the QAG-specific unittest suite.
 - `docs/research/QAG_POSTSELECTION_ANTIGRAVITY_AUDIT_2026-11-27.md` — theoretical model and physical interpretation boundaries.
@@ -43,6 +45,10 @@ The source helper uses an off-diagonal coherence parameter \(\nu\), with \(|\nu|
 | Complete measurement | Two orthogonal outcomes sum to probability one |
 | Zero-probability branch | Complete measurement handles a valid zero-probability outcome |
 | State validity | Conditional state is normalized and positive semidefinite |
+| Periodic-grid momentum | Spectral momentum matrix is Hermitian |
+| Kick convention | (U=\exp(i\Delta p X/\hbar)) shifts probe momentum by (+\Delta p) |
+| Weak-value kick | Exact finite-grid conditional shift approaches (\operatorname{Re}(A_w)\Delta p_R) |
+| Dephased kick control | Conditional shift has the ordinary convex-branch sign |
 
 ## Exact-versus-asymptotic correction
 
@@ -74,15 +80,15 @@ With branch-distinguishing interaction enabled, the exact success probability is
 
 - Source files and tests have been committed to the default branch.
 - A dedicated CI workflow has been added to compile and run the QAG tests on relevant pushes and pull requests.
-- At the time of this checkpoint, a completed Actions run has **not** been independently observed; therefore the tests are **authored but not yet reported as passing**.
+- An independent numerical smoke calculation of the same periodic-grid equations was run in the analysis environment: with epsilon=0.1 and a right-branch kick of -0.001 (dimensionless units), the coherent postselected shift was +0.0094739473 versus weak-value prediction +0.0094749372 (relative deviation 1.0448e-4); the fully dephased control shifted -0.00045. The source-only overlap probability was 0.00250628144669, matching its analytic expression.
+- This smoke calculation is not execution of the committed Python module or its unittest suite. A completed Actions run has **not** been independently observed; therefore the committed tests are **authored but not yet reported as passing**.
 - No gravity-specific Hamiltonian, Newtonian force calibration, source-position observable, measurement-apparatus model, or BQG physical projector is implemented here.
 - The toy probe rotation is a generic unitary benchmark. It is not a gravitational interaction model.
 - This module cannot establish antigravity, a propulsion effect, a violation of conservation laws, or physicalization of BQG.
 
 ## Next implementation gate
 
-1. Add a probe momentum operator and explicit translation-generator convention.
-2. Construct branch unitaries from a declared toy interaction Hamiltonian and compare exact finite evolution with the weak expansion.
-3. Add a Stinespring measurement-apparatus register so all outcomes and momentum exchange are represented in one unitary model.
-4. Add parameter sweeps over \(\epsilon,\tau,\nu\) and convergence checks.
-5. Keep the BQG embedding blocked until physical relational position operators and a physical projector are constructed.
+1. Construct branch unitaries from a declared toy interaction Hamiltonian and compare exact finite evolution with the weak expansion.
+2. Add a Stinespring measurement-apparatus register so all outcomes and momentum exchange are represented in one unitary model.
+3. Add parameter sweeps over \(\epsilon,\Delta p,\nu\), grid size and packet width, with convergence checks.
+4. Keep the BQG embedding blocked until physical relational position operators and a physical projector are constructed.
