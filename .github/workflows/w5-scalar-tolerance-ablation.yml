@@ -2,7 +2,7 @@ name: W5 scalar tolerance ablation
 
 on:
   push:
-    branches: [main]
+    branches: [main, research/null-cone-physical-bridge-v2-20261127]
     paths:
       - "scripts/w5_scalar_tolerance_ablation.py"
       - "scripts/w5_scalar_tolerance_ablation_onepass.py"
