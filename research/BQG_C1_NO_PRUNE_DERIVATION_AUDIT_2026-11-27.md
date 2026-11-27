@@ -25,10 +25,11 @@ The recovered source directory is kept unchanged and is not imported as the no-p
 ## Threshold policy
 
 - Operator amplitudes and sparse map entries are not removed by a positive magnitude threshold on the selected ultrafast path.
-- Intermediate sparse accumulation receives `tol=0.0`; exact-zero results may be removed.
-- Gauss projection receives `tol=0.0`; no entrywise positive cutoff is applied.
+- Intermediate sparse accumulation receives `tol=0.0`; exact-zero results may be removed using elementwise nonzero checks, not a norm test.
+- Gauss projection receives `tol=0.0`; no entrywise positive cutoff is applied, and retained-support detection is elementwise.
+- The zero-tolerance branch avoids `np.linalg.norm(x) > 0` as a support test: squaring a value such as `1e-200` can underflow the norm to zero even though the amplitude is nonzero. A dedicated regression now checks this case in both block and master-row helpers.
 - Selector expansion removes exact-zero coordinate segments only.
-- The selector's QR/SVD rank decision still uses a machine-precision-scaled rank tolerance and validates the expected multiplicity. This is a numerical rank diagnostic, not an operator-amplitude pruning threshold.
+- The selector's QR/SVD rank decision still uses a machine-precision-scaled rank tolerance and validates the expected multiplicity. This is a numerical rank diagnostic, not an operator-amplitude pruning threshold. The recovered `exact_mult` still validates floating character traces against `1e-8`/`1e-7` rounding tolerances; this is a discrete multiplicity-estimation dependency and remains a numerical risk, not an amplitude filter.
 - Floating-point underflow, roundoff, conditioning and finite-precision rank decisions remain. This is not exact rational/algebraic arithmetic.
 - The copied block module also retains legacy factorized/fast entry points with their historical thresholds. The shard runner does not call those entry points; it calls only `H_node_apply_ultrafast`. Do not describe the whole module as globally threshold-free.
 
@@ -42,7 +43,8 @@ The recovered source directory is kept unchanged and is not imported as the no-p
 5. import resolution to the isolated derived modules;
 6. shard-runner wiring and explicit `master_map(..., tol=0.0)`;
 7. retention of sub-threshold CG products;
-8. retention of tiny selector coordinates while omitting an exactly-zero segment.
+8. retention of tiny selector coordinates while omitting an exactly-zero segment;
+9. retention of `1e-200` amplitudes even when their squared Euclidean norm underflows to zero.
 
 The prior CI run on commit `e7e22fc7088df017f6b526dc3f869fa08a91b011` reported the Neumaier/no-prune tests, Python compilation, core-scope audit, truth-ledger validation and finite-frontier validation as successful. That run failed later at the public README LaTeX gate; the README delimiter issue was corrected in a subsequent commit. A new CI run is required to certify the current head.
 
