@@ -112,7 +112,9 @@ def run(node, input_k, jmax2, max_reverse_columns):
     ZVM.patch_and_clear()
     seed_key = make_seed(node, input_k)
     k_seed, leakage = apply_k_column(seed_key, node, jmax2)
-    ranked = sorted(k_seed.items(), key=lambda item: abs(item[1]), reverse=True)
+    reverse_basis = dict(k_seed)
+    reverse_basis.setdefault(seed_key, 0.0j)  # include the diagonal matrix element
+    ranked = sorted(reverse_basis.items(), key=lambda item: abs(item[1]), reverse=True)
     selected = ranked if max_reverse_columns <= 0 else ranked[:max_reverse_columns]
 
     rows = []
@@ -148,6 +150,7 @@ def run(node, input_k, jmax2, max_reverse_columns):
         "Jmax2": jmax2,
         "seed_support": 1,
         "K_seed_support": len(k_seed),
+        "reverse_basis_support_including_seed": len(reverse_basis),
         "K_seed_norm": norm(k_seed),
         "reverse_columns_requested": len(ranked),
         "reverse_columns_evaluated": len(rows),
