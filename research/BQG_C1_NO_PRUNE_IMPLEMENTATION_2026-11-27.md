@@ -62,7 +62,7 @@ The recovered `bqg_safe_boundary_master_gate.py` is not modified. The active pat
 - explicit zero-tolerance routing through the shard worker;
 - retention of sub-threshold Clebsch-Gordan reconstruction coefficients;
 - retention of sub-threshold Jucys expansion coordinates;
-- derived S5 action import resolution and retention of a nonzero `1e-15` five-vertex recoupling product.
+- derived S5 action import resolution and retention of a nonzero `1e-15` five-vertex recoupling product through the actual `_transform_matrix` caller.
 
 These are primitive and wiring tests. A complete depth-6 shard run, all-sector block rank analysis, and independent rank verification remain outstanding.
 
