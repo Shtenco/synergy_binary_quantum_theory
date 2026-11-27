@@ -142,3 +142,27 @@ def test_no_prune_clebsch_gordan_reconstruction_keeps_subthreshold_coefficients(
     assert np.count_nonzero(tensor) > 0
     assert np.max(np.abs(tensor)) < 1.0e-40
     recoupling.coupled_tensor.cache_clear()
+
+
+
+def test_no_prune_selector_expansion_retains_subthreshold_coordinate_segments(monkeypatch):
+    selector = M.J
+    monkeypatch.setattr(
+        selector,
+        "layout",
+        lambda rep, seed: (("q",), {"q": slice(0, 1)}, 1),
+    )
+    monkeypatch.setattr(selector, "seed_basis", lambda q, seed: np.ones((1, 1)))
+    monkeypatch.setattr(selector, "S3", ((0, 1, 2, 3, 4),))
+    monkeypatch.setattr(selector.Z, "s3_stabilizer", lambda q: tuple(range(6)))
+    monkeypatch.setattr(
+        selector.X,
+        "transform_coeff",
+        lambda q, permutation, block: (q, block),
+    )
+
+    tiny = 1.0e-14
+    expanded = selector.expand((1,) * 10, "triv", np.array([[tiny]]))
+
+    assert tuple(expanded) == ("q",)
+    assert expanded["q"][0, 0] == tiny
