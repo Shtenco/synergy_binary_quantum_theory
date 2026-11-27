@@ -44,3 +44,19 @@ The next closure should model the meter's free Hamiltonian, measurement
 switching, environmental decoherence, and the conserved generator of the
 complete source-apparatus-meter-support system. It must then compare the
 full unconditional ensemble with the postselected weak-value description.
+
+## Symmetry audit: the readout imports an origin
+
+The controlled-addition meter starts in \(|0\rangle_M\) and records the
+absolute apparatus site label. This is not invariant under a simultaneous
+translation of apparatus and meter:
+\[
+[U_{AM},T_A\otimes T_M]\ne0.
+\]
+The meter's initialized zero state therefore supplies an implicit spatial
+reference frame. This is not a numerical defect; it is a physical resource
+hidden in the ideal readout convention. A translation-covariant readout would
+need an explicit reference-frame/support register and a relational record,
+rather than silently treating the label zero as an absolute origin. The
+regression suite now tests and preserves this non-covariance as an explicit
+limitation.
