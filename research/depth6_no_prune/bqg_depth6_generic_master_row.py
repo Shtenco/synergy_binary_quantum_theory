@@ -88,7 +88,7 @@ def master_map(rep,key,W=None,tol=0.0):
     # v=0,1: S3 fixes both vertices; output type flips by Hamiltonian sign cocycle.
     for b in bs:
         seg=W[sl[b],:]
-        if not seg.size or np.linalg.norm(seg)<tol:continue
+        if not seg.size or not np.any(seg):continue  # exact-zero support removal only
         merge(acc,reduced_s3_node(b,seg,0,seed,tol),'v0')
         merge(acc,reduced_s3_node(b,seg,1,seed,tol),'v1')
     # v=2 represents the S3-related orbit {2,3,4}; Gram weight is exactly 3.
