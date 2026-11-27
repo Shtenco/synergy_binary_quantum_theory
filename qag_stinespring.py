@@ -5,7 +5,7 @@ lattice, and a neutral two-level pointer. Branch R transfers +q momentum units
 to the probe and -q to the source recoil register. The pointer weakly records
 the branch through a controlled rotation. Momentum conservation is exact
 modulo the finite cyclic lattice; physical (non-wrapped) interpretation
-requires negligible boundary probability.
+requires negligible boundary-crossing probability.
 
 This is a finite-dimensional quantum-information model, not gravity.
 """
@@ -32,8 +32,9 @@ def gaussian_momentum_state(
     n: int, center: float = 0.0, width: float = 2.0
 ) -> ComplexArray:
     """Normalized Gaussian on centered integer momentum labels."""
-    if n < 8 or n % 2 or width <= 0.0 or not np.isfinite(width):
-        raise ValueError("n must be even >= 8 and width must be positive")
+    if (n < 8 or n % 2 or width <= 0.0 or not np.isfinite(width)
+            or not np.isfinite(center)):
+        raise ValueError("n must be even >= 8; center finite; width positive")
     labels = np.arange(n, dtype=float) - n // 2
     state = np.exp(-0.5 * ((labels - center) / width) ** 2).astype(complex)
     return _normalised_vector(state, n, "Gaussian momentum state")
@@ -59,19 +60,22 @@ class StinespringResult:
     source_recoil_shift: float
     probe_shift: float
     pointer_branch_overlap: complex
+    recoil_wrap_probability: float
+    probe_wrap_probability: float
 
 
 def _momentum_expectation(state: ComplexArray, axis: int) -> float:
     n = state.shape[axis]
     labels = np.arange(n, dtype=float) - n // 2
-    probabilities = np.sum(np.abs(state) ** 2, axis=tuple(
-        i for i in range(state.ndim) if i != axis
-    ))
+    probabilities = np.sum(
+        np.abs(state) ** 2,
+        axis=tuple(i for i in range(state.ndim) if i != axis),
+    )
     return float(np.dot(labels, probabilities).real)
 
 
 def _total_momentum_phase(state: ComplexArray) -> complex:
-    """Expectation of the conserved modular-momentum unitary on two lattices."""
+    """Expectation of exp(2 pi i (P_R+P_P)/N) on two equal cyclic lattices."""
     nr, np_ = state.shape[:2]
     if nr != np_:
         raise ValueError("recoil and probe lattices must have equal size")
@@ -79,6 +83,18 @@ def _total_momentum_phase(state: ComplexArray) -> complex:
     clock = np.exp(2j * np.pi * labels / nr)
     probabilities = np.sum(np.abs(state) ** 2, axis=2)
     return complex(np.sum(probabilities * clock[:, None] * clock[None, :]))
+
+
+def _shift_wrap_probability(state: ComplexArray, shift: int) -> float:
+    """Probability mass whose index crosses the cyclic seam under np.roll."""
+    n = state.size
+    if shift == 0:
+        return 0.0
+    if shift > 0:
+        mask = np.arange(n) >= n - shift
+    else:
+        mask = np.arange(n) < -shift
+    return float(np.sum(np.abs(state[mask]) ** 2).real)
 
 
 def run_stinespring_recoil_model(
@@ -95,6 +111,10 @@ def run_stinespring_recoil_model(
     recoil/probe shifts (-q,+q) and rotates the pointer by pointer_angle.
     The initial pointer is |0>. The returned probe state is normalized after
     conditioning. All operations are unitary before postselection.
+
+    Wrap probabilities are unconditional probabilities for the branch-R
+    translation to cross the cyclic seam in each momentum register. They are
+    diagnostics, not probabilities conditioned on source postselection.
     """
     a = np.asarray(source_amplitudes, dtype=np.complex128)
     phi = np.asarray(postselection, dtype=np.complex128)
@@ -116,33 +136,33 @@ def run_stinespring_recoil_model(
     q = int(impulse_units)
     if abs(q) >= n // 2:
         raise ValueError("impulse magnitude must be smaller than half the lattice")
+    if not np.isfinite(pointer_angle):
+        raise ValueError("pointer_angle must be finite")
 
     pointer_initial = np.array([1.0, 0.0], dtype=np.complex128)
     pointer_r = ry(pointer_angle) @ pointer_initial
     branch_l = np.einsum("r,p,a->rpa", recoil, probe_state, pointer_initial)
-    branch_r = np.einsum("r,p,a->rpa", np.roll(recoil, -q), 
-                         np.roll(probe_state, q), pointer_r)
-    joint = a[0] * branch_l + a[1] * branch_r
-
-    initial_label_sum = _momentum_expectation(recoil, 0) + _momentum_expectation(probe_state, 0)
-    labels = np.arange(n, dtype=float) - n // 2
-    clock = np.exp(2j * np.pi * labels / n)
-    initial_phase = complex(
-        np.sum(np.abs(recoil) ** 2 * clock)
-        * np.sum(np.abs(probe_state) ** 2 * clock)
+    branch_r = np.einsum(
+        "r,p,a->rpa", np.roll(recoil, -q), np.roll(probe_state, q), pointer_r
     )
-    # Postselection contracts the source-branch index. Keep all physical ancillas.
-    selected = np.conjugate(phi[0]) * a[0] * branch_l + np.conjugate(phi[1]) * a[1] * branch_r
+
+    # Contract the source branch with the selected measurement ket, retaining
+    # recoil and pointer as physical environment registers until the trace.
+    selected = (
+        np.conjugate(phi[0]) * a[0] * branch_l
+        + np.conjugate(phi[1]) * a[1] * branch_r
+    )
     probability = float(np.vdot(selected, selected).real)
     if probability <= 1e-14:
         raise ZeroDivisionError("postselection probability is zero or unresolved")
     reduced = np.einsum("rpa,rqa->pq", selected, selected.conj()) / probability
     reduced = (reduced + reduced.conj().T) / 2.0
     eig = np.linalg.eigvalsh(reduced)
-    if eig.min(initial=0.0) < -1e-9 or not np.isclose(np.trace(reduced), 1.0, atol=1e-9):
+    if eig.min(initial=0.0) < -1e-9 or not np.isclose(
+        np.trace(reduced), 1.0, atol=1e-9
+    ):
         raise ArithmeticError("reduced probe state is not a density matrix")
 
-    # Conditional recoil/probe means from the unnormalised selected pure state.
     selected_norm = selected / np.sqrt(probability)
     recoil_after = _momentum_expectation(selected_norm, 0)
     probe_after = _momentum_expectation(selected_norm, 1)
@@ -153,13 +173,26 @@ def run_stinespring_recoil_model(
         probability=probability,
         probe_state=reduced,
         joint_recoil_probe_pointer=selected,
-        total_momentum_label_sum_initial=initial_label_sum,
+        total_momentum_label_sum_initial=recoil_before + probe_before,
         total_momentum_label_sum_conditional=recoil_after + probe_after,
-        total_momentum_phase_initial=initial_phase,
+        total_momentum_phase_initial=(
+            np.sum(np.abs(recoil) ** 2 * np.exp(
+                2j * np.pi * (np.arange(n) - n // 2) / n
+            ))
+            * np.sum(np.abs(probe_state) ** 2 * np.exp(
+                2j * np.pi * (np.arange(n) - n // 2) / n
+            ))
+        ),
         total_momentum_phase_conditional=_total_momentum_phase(selected_norm),
         source_recoil_shift=recoil_after - recoil_before,
         probe_shift=probe_after - probe_before,
         pointer_branch_overlap=pointer_overlap,
+        recoil_wrap_probability=float(
+            abs(a[1]) ** 2 * _shift_wrap_probability(recoil, -q)
+        ),
+        probe_wrap_probability=float(
+            abs(a[1]) ** 2 * _shift_wrap_probability(probe_state, q)
+        ),
     )
 
 
