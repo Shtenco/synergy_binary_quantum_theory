@@ -20,6 +20,8 @@ The successful jobs did not produce a complete shard set. Several failed/cancell
 
 The earlier Stage-A run ID `36899125190` also failed and has no artifacts. Therefore, the 112-shard source path exists, but no complete distributed rank certificate was recovered. The checked-in `DEPTH6_5_ORBIT_BLOCK_CENSUS_20261126.json` explicitly has `rank_claim: null` and states that certified per-block ranks remain open.
 
+There is a second qualification: the recovered shard producer is a floating-point, tolerance-filtered map. `github_mixed_master_shard.py` calls `master_map(..., tol=1e-11)`; the generic row implementation also prunes intermediate reduced S3/S2 coordinates and final blocks by norm thresholds (with a separate `1e-12` coordinate cutoff). Thus even a future complete shard aggregate would first be a finite numerical rank witness, not an exact-arithmetic proof. A robust certificate must include tolerance sweeps, residual bounds, and a lower singular-value margin that remains separated from the pruning/error budget.
+
 **C1 remains OPEN.** Do not infer a rank result from the structural census, partial shard completions, or the separate 32D logical calculation below.
 
 ## C2 — actual W5 tolerance ablation
