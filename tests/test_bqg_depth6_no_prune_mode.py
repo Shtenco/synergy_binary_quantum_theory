@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "research" / "depth6_no_prune"))
 
 import bqg_block_apply_invariants as A  # noqa: E402
 import bqg_depth6_generic_master_row as M  # noqa: E402
+import github_mixed_master_shard as Runner  # noqa: E402
 
 
 def test_initial_reduced_block_keeps_subthreshold_nonzero_rows_in_no_prune_mode():
@@ -97,3 +98,27 @@ def test_no_prune_master_row_resolves_only_isolated_derived_operator_modules():
     assert M.reduced_s3_node.__defaults__[-1] == 0.0
     assert M.raw_to_s2_coords.__defaults__[-1] == 0.0
     assert M.reduced_s2_node.__defaults__[-1] == 0.0
+
+
+
+def test_no_prune_shard_runner_uses_the_isolated_master_and_explicit_zero_tolerance(
+    monkeypatch, tmp_path
+):
+    observed = {}
+    assert Runner.M is M
+
+    monkeypatch.setattr(Runner, "_RECS", [(7, (1,) * 10, 1, 1, 1.0)])
+    monkeypatch.setattr(Runner, "_KEY", "32")
+    monkeypatch.setattr(Runner, "_OUT", tmp_path)
+    monkeypatch.setattr(Runner.J, "fast_selector", lambda rep, key: np.ones((1, 1)))
+
+    def master_map(rep, key, selector, tol):
+        observed["tol"] = tol
+        return {}, selector
+
+    monkeypatch.setattr(Runner.M, "master_map", master_map)
+    result = Runner.work(0)
+
+    assert result["ok"] is True
+    assert observed["tol"] == 0.0
+    assert (tmp_path / "b00007.pkl").is_file()
