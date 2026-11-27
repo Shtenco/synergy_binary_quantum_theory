@@ -1026,7 +1026,7 @@ $$
 - L1 Euclidean E-worker использует barycentric refinement первого уровня: 384 fine chambers/nodes и 768 dual links, три edge representatives ([0,1,5]) и 24 вторых действия на каждый представитель.
 - Lorentzian V2/V3 использует отдельную 16-cell/global assembly; он не является тем же L1 barycentric state space.
 - Sparse Fourier route использует конечные двумерные Fourier modes и матричные (2\times2) геометрические блоки; это не тот же базис состояний L1.
-- Поэтому объединение уже полученных чисел из этих путей в (H=-\frac23E-\frac{32}{9}S+R) не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
+- Поэтому объединение уже полученных чисел из этих путей в \(H=-\frac23E-\frac{32}{9}S+R\) не является допустимой общей физической амплитудой без повторного построения операторов на одном carrier.
 
 ### Г.3.1. Carrier и leakage
 
@@ -1089,7 +1089,7 @@ $$
 
 ### Г.3.3. Прямой HDA
 
-Для одного и того же production operator и общего (W_l) необходимо построить (H_l[N]^{\rm eff}), (H_l[M]^{\rm eff}), (D_l[\beta]^{\rm eff}) и измерить
+Для одного и того же production operator и общего (W_l) необходимо построить \(H_l[N]^{\rm eff}\), \(H_l[M]^{\rm eff}\), \(D_l[\beta]^{\rm eff}\) и измерить
 
 $$
 \Delta_{HH,l}=
@@ -1130,7 +1130,7 @@ $$
 - L0 Euclidean Krylov precursor: 16 независимых колонок, union support 552, rank 16, Gram condition около 1.5536, whitening defect около (4.83\times10^{-15}), размерность 17 с seed.
 - L1 E-only worker family: 72 shard triplets (3 edge representatives × 24 nodes). Это вычислительное разбиение одного Euclidean E-path, а не 72 независимых физических уровня.
 - Наличие L0 precursor и L1 E-only shard family не означает наличие четырёх сопоставимых физических refinement levels.
-- Общий (c_{\mathrm{DeWitt}}(\epsilon)) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
+- Общий \(c_{\mathrm{DeWitt}}(\epsilon)\) нельзя строить из операторов, carrier и фоновых данных, взятых из разных веток и несовместимых пространств.
 
 ## Г.5. L1 amplitude package v1: что реализовано
 
