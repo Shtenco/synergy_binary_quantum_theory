@@ -220,3 +220,36 @@ The next valid deliverable is not a new claim of Hermiticity. It is:
 4. a same-domain W5 result with no hidden projection or support loss.
 
 Until all four exist, the correct status is **COMPATIBLE K-LEG ALGEBRA / UNRESOLVED PHYSICAL COMPLETION / W5 DOMAIN AUDIT OPEN**.
+
+
+## 9. Executed convention-discriminator CI
+
+An audit-only deterministic matrix guard was added:
+
+- `scripts/bqg_v13_w5_completion_convention_guard.py`
+- `.github/workflows/bqg-v13-w5-completion-convention-guard.yml`
+
+Run `46060510466` completed with `success` and uploaded artifact `15228821370`.
+
+The operator-valued (2\times2) auxiliary / 5-dimensional graph-space witness reported:
+
+| Check | Result |
+|---|---:|
+| K legs anti-Hermitian | PASS |
+| V legs Hermitian | PASS |
+| direct 12-word formula vs v1.3 24-forward + 24-adjoint completion | PASS |
+| v1.3 completion Hermitian | PASS |
+| W5 plus-completion Hermitian | PASS |
+| the two prescriptions are distinct on the witness | PASS |
+
+Numerical diagnostics:
+- direct 12-word vs v1.3 completion relative error: (3.7520864821232615\times10^{-16});
+- v1.3 Hermiticity defect: (0);
+- W5 plus-completion Hermiticity defect: (0);
+- relative difference between plus and minus prescriptions: (1.5436847137229295).
+
+This is a successful **generic algebraic discriminator**. It confirms that the 12-word expression reproduces the v1.3 minus-completion and that the W5 plus-completion, although also Hermitian, is a different operator for a generic noncommuting witness. It does not test actual W5 Peter–Weyl component matrices and does not select the physical prescription.
+
+Run: https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46060510466
+
+The audit-only script and this document are on `research/null-cone-physical-bridge-v2-20261127`; `main` was not modified.
