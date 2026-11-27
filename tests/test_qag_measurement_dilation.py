@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 from qag_measurement_dilation import (
     apply_source_measurement_dilation,
+    conditional_measurement_outcome,
     measurement_outcome_probabilities,
     source_measurement_dilation_unitary,
 )
@@ -32,6 +33,28 @@ class QAGMeasurementDilationTests(unittest.TestCase):
         self.assertAlmostEqual(p1, 0.5, places=12)
         np.testing.assert_allclose(dilated[:, :, 0], np.diag([1, 0]) / np.sqrt(2))
         np.testing.assert_allclose(dilated[:, :, 1], np.diag([0, 1]) / np.sqrt(2))
+
+    def test_conditional_readout_matches_projective_collapse(self):
+        theta = 0.61
+        basis = np.array([
+            [np.cos(theta/2), -np.sin(theta/2)],
+            [np.sin(theta/2), np.cos(theta/2)],
+        ], dtype=complex)
+        source = np.array([0.7, 0.2j], dtype=complex)
+        source /= np.linalg.norm(source)
+        dilated = apply_source_measurement_dilation(source, basis)
+        for k in range(2):
+            probability, collapsed = conditional_measurement_outcome(dilated, k)
+            expected = basis[:, k] * np.vdot(basis[:, k], source)
+            expected /= np.linalg.norm(expected)
+            self.assertAlmostEqual(probability, abs(np.vdot(basis[:, k], source))**2, places=12)
+            np.testing.assert_allclose(collapsed, expected, atol=1e-12)
+
+    def test_zero_probability_readout_is_explicit(self):
+        basis = np.eye(2, dtype=complex)
+        dilated = apply_source_measurement_dilation(np.array([1, 0]), basis)
+        with self.assertRaises(ZeroDivisionError):
+            conditional_measurement_outcome(dilated, 1)
 
     def test_meter_register_is_not_silently_discarded(self):
         source = np.array([1, 1], dtype=complex) / np.sqrt(2)
