@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27  
 **Status:** finite-dimensional numerical/mathematical gate passes; derivation from the full BQG constraints remains OPEN.  
-**Branch:** \`research/null-cone-optical-riccati-gate-20261127\`
+**Branch:** `research/null-cone-optical-riccati-gate-20261127`
 
 ## 1. Purpose and scope
 
@@ -149,7 +149,7 @@ Therefore the implementation **must not** silently invert a nearly singular \(J\
 
 ## 6. Regression results
 
-The script \`scripts/bqg_discrete_optical_riccati_gate.py\` was executed with NumPy. It uses a symmetric, trace-free \(2\times2\) tidal matrix, so the test is in the vacuum optical sector.
+The script `scripts/bqg_discrete_optical_riccati_gate.py` was executed with NumPy. It uses a symmetric, trace-free \(2\times2\) tidal matrix, so the test is in the vacuum optical sector.
 
 Observed results:
 
