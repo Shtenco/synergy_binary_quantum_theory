@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "research" / "depth6_recovered_source"))
 sys.path.insert(0, str(ROOT / "research" / "depth6_no_prune"))
 
 import bqg_block_apply_invariants as A  # noqa: E402
+import bqg_depth6_generic_master_row as M  # noqa: E402
 
 
 def test_initial_reduced_block_keeps_subthreshold_nonzero_rows_in_no_prune_mode():
@@ -85,3 +86,14 @@ def test_zero_outer_tolerance_propagates_through_the_complete_node_wrapper(monke
         "oriented_tol": 0.0,
         "project_tol": 0.0,
     }
+
+
+
+def test_no_prune_master_row_resolves_only_isolated_derived_operator_modules():
+    no_prune_root = ROOT / "research" / "depth6_no_prune"
+    assert Path(M.A.__file__).resolve().parent == no_prune_root
+    assert Path(M.A.H.__file__).resolve().parent == no_prune_root
+    assert M.master_map.__defaults__[-1] == 0.0
+    assert M.reduced_s3_node.__defaults__[-1] == 0.0
+    assert M.raw_to_s2_coords.__defaults__[-1] == 0.0
+    assert M.reduced_s2_node.__defaults__[-1] == 0.0
