@@ -37,6 +37,15 @@ class GithubLatexValidatorTests(unittest.TestCase):
         self.assertEqual(0, count)
         self.assertTrue(any("unclosed '$$' delimiter" in p.message for p in problems))
 
+
+
+    def test_inline_code_dollars_and_braces_are_not_math(self):
+        count, problems = self.validate_text(
+            "Command: `foreach ($node in 0..4) { Write-Output \"$($node)\" }`.\\n"
+        )
+        self.assertEqual(0, count)
+        self.assertEqual([], problems)
+
     def test_tex_command_outside_math_is_rejected(self):
         count, problems = self.validate_text("Unwrapped \\frac{a}{b}.\n")
         self.assertEqual(0, count)
