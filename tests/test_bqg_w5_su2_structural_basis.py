@@ -3,7 +3,7 @@ import unittest
 from bqg_w5_su2_structural_basis import (
     allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
-    w5_gauss_seed, w5_seed_as_covariant,
+    w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence,
 )
 
 
@@ -38,6 +38,15 @@ class StructuralBasisTests(unittest.TestCase):
         self.assertEqual(len(keys), factors_size)
         self.assertEqual(len(set(keys)), factors_size)
         self.assertTrue(all(validate_covariant_key(k, 0) for k in keys))
+
+    def test_word_spin_support_respects_edge_hits(self):
+        spins = (4,) * 10
+        # Two consecutive fundamental hits on edge (0,1).
+        seq = (("P", (0, 1), 0, 0), ("P", (1, 0), 0, 0))
+        got = spin_support_for_sequence(spins, seq, 10)
+        edge_index = 0  # K5 edge ordering starts with (0,1).
+        self.assertEqual({state[edge_index] for state in got}, {2, 4, 6})
+        self.assertTrue(all(sum(s != 4 for s in state) <= 1 for state in got))
 
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
