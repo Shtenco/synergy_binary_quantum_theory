@@ -99,8 +99,14 @@ H_{\rm eff}=H_L+(P_R)_w(H_R-H_L),
 
 \[
 (P_R)_w\approx-1/\epsilon,
-\qquad P_{\rm success}=\epsilon^2/4.
+\qquad P_{\rm success}\approx\epsilon^2/4\quad(\epsilon\ll1).
 \]
+
+Для данной параметризации точная вероятность постселекции равна
+\[
+P_{\rm success}=\frac{(\sqrt{1+\epsilon}-\sqrt{1-\epsilon})^2}{4},
+\]
+а \(\epsilon^2/4\) — только ведущая асимптотика при малом \(\epsilon\).
 
 В первом порядке условный импульс можно записать как
 
