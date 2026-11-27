@@ -68,6 +68,54 @@ def validate_expression(source: str, path: Path, line: int) -> list[Problem]:
     return problems
 
 
+def mask_inline_code(line: str) -> str:
+    """Blank Markdown inline-code spans before scanning math delimiters."""
+    masked = list(line)
+    position = 0
+    while position < len(line):
+        if line[position] != "`":
+            position += 1
+            continue
+        slash_count = 0
+        back = position - 1
+        while back >= 0 and line[back] == "\\":
+            slash_count += 1
+            back -= 1
+        if slash_count % 2:
+            position += 1
+            continue
+        run_end = position
+        while run_end < len(line) and line[run_end] == "`":
+            run_end += 1
+        delimiter_length = run_end - position
+        search = run_end
+        closing_end = None
+        while search < len(line):
+            candidate = line.find("`", search)
+            if candidate < 0:
+                break
+            candidate_end = candidate
+            while candidate_end < len(line) and line[candidate_end] == "`":
+                candidate_end += 1
+            if candidate_end - candidate == delimiter_length:
+                slash_count = 0
+                back = candidate - 1
+                while back >= 0 and line[back] == "\\":
+                    slash_count += 1
+                    back -= 1
+                if slash_count % 2 == 0:
+                    closing_end = candidate_end
+                    break
+            search = candidate_end
+        if closing_end is None:
+            position = run_end
+            continue
+        for index in range(position, closing_end):
+            masked[index] = " "
+        position = closing_end
+    return "".join(masked)
+
+
 def validate_markdown(path: Path) -> tuple[int, list[Problem]]:
     lines = path.read_text(encoding="utf-8").splitlines()
     problems: list[Problem] = []
@@ -77,20 +125,18 @@ def validate_markdown(path: Path) -> tuple[int, list[Problem]]:
     display_line = 0
 
     for number, line in enumerate(lines, 1):
-        # Normalize the standard LaTeX delimiters supported by GitHub.
-        # Without this, valid \\( ... \\) and \\[ ... \\] math is
-        # incorrectly scanned as plain Markdown prose.
-        # Display delimiters must remain double-dollar delimiters so a
-        # multiline \\[ ... \\] block is parsed by the display-math state
-        # machine rather than as two unmatched inline-dollar fragments.
-        line = line.replace(r"\[", "$").replace(r"\]", "$")
-        # Inline delimiters are normalized to a single-dollar pair.
-        line = line.replace(r"\(", "$").replace(r"\)", "$")
         if re.match(r"^\s*(```|~~~)", line):
             in_fence = not in_fence
             continue
         if in_fence:
             continue
+
+        # Inline code is literal Markdown and must not open math delimiters.
+        line = mask_inline_code(line)
+        # Normalize the standard LaTeX delimiters supported by GitHub.
+        line = line.replace(r"\[", "$$").replace(r"\]", "$$")
+        line = line.replace(r"\(", "$").replace(r"\)", "$")
+
 
         outside: list[str] = []
         position = 0

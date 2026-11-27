@@ -48,6 +48,10 @@ def run():
     core = [g for g in gates if g.get("closure_role") == "core"]
     extensions = [g for g in gates if g.get("closure_role") == "extension"]
     experiments = [g for g in gates if g.get("closure_role") == "experiment"]
+    negative_controls = [
+        {"id": g["id"], "status": g.get("status"), "claim": g.get("claim"), "blocking": False}
+        for g in gates if g.get("closure_role") == "negative_control"
+    ]
 
     core_rows = {
         g["id"]: {
@@ -116,6 +120,7 @@ def run():
         "runtime_chain": runtime_chain,
         "core_gate_count": len(core_rows),
         "registered_core_gates": core_rows,
+        "negative_controls": negative_controls,
         "non_blocking_extensions": [
             {"id": g["id"], "status": g["status"], "claim": g["claim"]}
             for g in extensions

@@ -24,7 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "theory_gates.json"
 
 ROLE_STATUSES = {
-    "core": {"proved", "tested_finite", "conditional", "no_go"},
+    "core": {"proved", "tested_finite", "conditional"},
+    "negative_control": {"no_go"},
     "extension": {"external_extension"},
     "experiment": {"experimental_test"},
 }
@@ -74,6 +75,7 @@ def main() -> int:
     counts_by_role = {role: 0 for role in ROLE_STATUSES}
     counts_by_status = {status: 0 for status in sorted(ALL_STATUSES)}
     core_rows: list[dict] = []
+    negative_control_rows: list[dict] = []
 
     for index, gate in enumerate(gates):
         label = f"gate[{index}]"
@@ -133,6 +135,13 @@ def main() -> int:
                 "status": status,
                 "accepted_for_structural_closure": status in {"proved", "tested_finite", "conditional"},
             })
+        elif role == "negative_control":
+            negative_control_rows.append({
+                "id": gate_id,
+                "status": status,
+                "blocking": False,
+                "claim": claim,
+            })
 
     if len(ids) != len(set(ids)):
         duplicates = sorted({x for x in ids if ids.count(x) > 1})
@@ -158,6 +167,8 @@ def main() -> int:
         "counts_by_role": counts_by_role,
         "counts_by_status": counts_by_status,
         "core_gate_count": len(core_rows),
+        "negative_control_count": len(negative_control_rows),
+        "negative_controls": negative_control_rows,
         "structural_candidate_closed": closed_and_valid,
         "complete_structural_package": closed_and_valid,
         # Backward-compatible output for historical consumers.  The scope is
