@@ -79,10 +79,9 @@ def validate_markdown(path: Path) -> tuple[int, list[Problem]]:
     for number, line in enumerate(lines, 1):
         # Normalize the standard LaTeX delimiters supported by GitHub.
         # Without this, valid \\( ... \\) and \\[ ... \\] math is
-        # incorrectly scanned as plain Markdown prose.
-        # Display delimiters must remain double-dollar delimiters so a
-        # multiline \\[ ... \\] block is parsed by the display-math state
-        # machine rather than as two unmatched inline-dollar fragments.
+        # incorrectly scanned as plain Markdown prose. Bracket display
+        # delimiters must normalize to a double-dollar pair so multiline
+        # expressions are handled by the display-math state machine.
         line = line.replace(r"\[", "$").replace(r"\]", "$")
         # Inline delimiters are normalized to a single-dollar pair.
         line = line.replace(r"\(", "$").replace(r"\)", "$")
