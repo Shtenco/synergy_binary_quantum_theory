@@ -223,7 +223,11 @@ def test_no_prune_s5_action_retains_tiny_full_recoupling_product(monkeypatch):
 
     key = ((1,) * 10, (0,) * 5)
     result = action.act_on_key(key, action.identity_perm())
+    legacy_result = action.act_on_key(
+        key, action.identity_perm(), tol=1.0e-12
+    )
 
+    assert legacy_result == {}
     assert len(result) == 1
     coefficient = next(iter(result.values()))
     assert coefficient == tiny_local**5
