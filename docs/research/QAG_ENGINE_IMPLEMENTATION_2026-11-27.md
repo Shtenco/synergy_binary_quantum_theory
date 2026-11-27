@@ -49,6 +49,8 @@ The source helper uses an off-diagonal coherence parameter \(\nu\), with \(|\nu|
 | Kick convention | (U=\exp(i\Delta p X/\hbar)) shifts probe momentum by (+\Delta p) |
 | Weak-value kick | Exact finite-grid conditional shift approaches (\operatorname{Re}(A_w)\Delta p_R) |
 | Dephased kick control | Conditional shift has the ordinary convex-branch sign |
+| Grid refinement | Conditional shift and probability are stable under N=64 to N=128 refinement |
+| Weak-limit scaling | Relative error decreases when the branch kick is reduced |
 
 ## Exact-versus-asymptotic correction
 
