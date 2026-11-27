@@ -228,3 +228,13 @@ def test_no_prune_s5_action_retains_tiny_full_recoupling_product(monkeypatch):
     coefficient = next(iter(result.values()))
     assert coefficient == tiny_local**5
     assert 0.0 < abs(coefficient) < 1.0e-12
+
+    # Exercise the actual basis-projector dependency: the depth-4 transform
+    # builder calls act_on_key without passing an explicit tolerance.
+    transform = M.X._transform_matrix
+    transform.cache_clear()
+    target_spins, matrix = transform(key[0], action.identity_perm())
+    assert target_spins == key[0]
+    assert matrix[0, 0] == tiny_local**5
+    assert np.count_nonzero(matrix) == 1
+    transform.cache_clear()
