@@ -66,6 +66,283 @@ def expand(support):
     return out
 
 
+def _sparse_arc_consistency(state):
+    """Arc/path consistency with omitted pairs interpreted as Cartesian.
+
+    Unlike PG._arc_consistency this never materializes all ten K5 relations.
+    """
+    unary = [set(x) for x in state["unary"]]
+    pairs = {tuple(p): set(rel) for p, rel in state["pairs"].items()}
+
+    def oriented(a, b):
+        p = tuple(sorted((a, b)))
+        if p in pairs:
+            rel = pairs[p]
+            return rel if a < b else {(y, x) for x, y in rel}
+        return {(x, y) for x in unary[a] for y in unary[b]}
+
+    changed = True
+    while changed:
+        changed = False
+        for (a, b), rel in list(pairs.items()):
+            na = {x for x, y in rel if y in unary[b]}
+            nb = {y for x, y in rel if x in unary[a]}
+            if na != unary[a]:
+                unary[a] &= na
+                changed = True
+            if nb != unary[b]:
+                unary[b] &= nb
+                changed = True
+            nr = {(x, y) for x, y in rel
+                  if x in unary[a] and y in unary[b]}
+            if nr != rel:
+                pairs[(a, b)] = nr
+                changed = True
+
+        for i, j in tuple(pairs):
+            rel_ij = pairs[(i, j)]
+            for k in NODES:
+                if k == i or k == j:
+                    continue
+                rik = oriented(i, k)
+                rjk = oriented(j, k)
+                left = {}
+                right = {}
+                for x, y in rik:
+                    left.setdefault(x, set()).add(y)
+                for z, y in rjk:
+                    right.setdefault(z, set()).add(y)
+                kept = {
+                    (x, z) for x, z in rel_ij
+                    if left.get(x, set()).intersection(right.get(z, set()))
+                }
+                if kept != rel_ij:
+                    pairs[(i, j)] = kept
+                    rel_ij = kept
+                    changed = True
+
+    return {"unary": tuple(frozenset(x) for x in unary),
+            "pairs": {p: frozenset(v) for p, v in pairs.items()}}
+
+
+def _sparse_lift(support):
+    """Lift Gauss labels without creating omitted pair factors."""
+    out = {}
+    for spins, state in support.items():
+        maps = []
+        unary = []
+        for labs in state["unary"]:
+            mp = {x: (("C", 0, 0, x[1], x[1]) if x[0] == "G" else x)
+                  for x in labs}
+            maps.append(mp)
+            unary.append(frozenset(mp.values()))
+        pairs = {
+            p: frozenset((maps[p[0]][x], maps[p[1]][y])
+                         for x, y in rel)
+            for p, rel in state["pairs"].items()
+        }
+        out[spins] = {"unary": tuple(unary), "pairs": pairs}
+    return out
+
+
+def _ensure_scope(support, scope, limit):
+    """Add only newly active pair factors, initialized as Cartesian products."""
+    required = tuple(combinations(tuple(sorted(scope)), 2))
+    out = {}
+    for spins, state in support.items():
+        pairs = dict(state["pairs"])
+        for a, b in required:
+            if (a, b) not in pairs:
+                pairs[(a, b)] = frozenset(
+                    (x, y) for x in state["unary"][a]
+                    for y in state["unary"][b]
+                )
+        out[spins] = {"unary": state["unary"], "pairs": pairs}
+    _guard(out, limit, "active-scope materialization")
+    return out
+
+
+def _sparse_volume(support, vertex, limit):
+    out = {}
+    for spins, state in support.items():
+        transitions = {}
+        for old in state["unary"][vertex]:
+            transitions[old] = frozenset(
+                SB.volume_label_targets(SB.local_spins(spins, vertex), old)
+            )
+        unary = list(state["unary"])
+        unary[vertex] = frozenset(
+            new for values in transitions.values() for new in values
+        )
+        pairs = {}
+        for p, rel in state["pairs"].items():
+            if vertex not in p:
+                pairs[p] = rel
+            elif p[0] == vertex:
+                pairs[p] = frozenset(
+                    (new, other) for old, other in rel
+                    for new in transitions.get(old, ())
+                )
+            else:
+                pairs[p] = frozenset(
+                    (other, new) for other, old in rel
+                    for new in transitions.get(old, ())
+                )
+        q = _sparse_arc_consistency({"unary": tuple(unary), "pairs": pairs})
+        if all(q["unary"]):
+            out[spins] = q
+            _guard(out, limit, "sparse volume")
+    return out
+
+
+def _sparse_hit(support, x, y, Jmax2, limit):
+    edge = tuple(sorted((x, y)))
+    if x == y or edge not in SB.EDGE_INDEX:
+        raise ValueError("invalid K5 edge")
+    ei = SB.EDGE_INDEX[edge]
+    out = {}
+    for spins, state in support.items():
+        for so in (spins[ei] - 1, spins[ei] + 1):
+            if so < 0 or so > Jmax2:
+                continue
+            ns = list(spins)
+            ns[ei] = so
+            ns = tuple(ns)
+            transitions = {}
+            for v in (x, y):
+                possible_J = set()
+                for old in state["unary"][v]:
+                    old_j = old[1] if old[0] == "C" else 0
+                    possible_J.update(
+                        j for j in SB.all_total_J2(SB.local_spins(ns, v))
+                        if abs(j - old_j) <= 1 and j + old_j >= 1
+                    )
+                transitions[v] = {
+                    old: frozenset(
+                        lab for lab in SB.charged_node_basis(
+                            SB.local_spins(ns, v))
+                        if lab[1] in possible_J
+                    )
+                    for old in state["unary"][v]
+                }
+            unary = list(state["unary"])
+            for v in (x, y):
+                unary[v] = frozenset(
+                    new for values in transitions[v].values() for new in values
+                )
+            pairs = {}
+            for p, rel in state["pairs"].items():
+                a, b = p
+                if a in transitions and b in transitions:
+                    pairs[p] = frozenset(
+                        (u, v) for old_a, old_b in rel
+                        for u in transitions[a].get(old_a, ())
+                        for v in transitions[b].get(old_b, ())
+                    )
+                elif a in transitions:
+                    pairs[p] = frozenset(
+                        (u, v) for old_a, v in rel
+                        for u in transitions[a].get(old_a, ())
+                    )
+                elif b in transitions:
+                    pairs[p] = frozenset(
+                        (u, v) for u, old_b in rel
+                        for v in transitions[b].get(old_b, ())
+                    )
+                else:
+                    pairs[p] = rel
+            q = _sparse_arc_consistency(
+                {"unary": tuple(unary), "pairs": pairs}
+            )
+            if all(q["unary"]):
+                _merge_sparse(out, ns, q)
+                _guard(out, limit, "sparse holonomy")
+    return out
+
+
+def _merge_sparse(dst, spins, state):
+    if spins not in dst:
+        dst[spins] = {
+            "unary": tuple(frozenset(x) for x in state["unary"]),
+            "pairs": {p: frozenset(x) for p, x in state["pairs"].items()},
+        }
+        return
+    old = dst[spins]
+    unary = tuple(a | b for a, b in zip(old["unary"], state["unary"]))
+    keys = set(old["pairs"]) | set(state["pairs"])
+    pairs = {}
+    for p in keys:
+        if p not in old["pairs"] or p not in state["pairs"]:
+            pairs[p] = frozenset(
+                (x, y) for x in unary[p[0]] for y in unary[p[1]]
+            )
+        else:
+            pairs[p] = old["pairs"][p] | state["pairs"][p]
+    dst[spins] = _sparse_arc_consistency({"unary": unary, "pairs": pairs})
+
+
+def _sparse_project(support, charged_nodes, limit):
+    charged = set(charged_nodes)
+    out = {}
+    for spins, state in support.items():
+        maps = []
+        unary = []
+        for v, labs in enumerate(state["unary"]):
+            mp = {}
+            for lab in labs:
+                if v in charged:
+                    if lab[0] == "C":
+                        mp[lab] = lab
+                elif (lab[0] == "C" and lab[1:3] == (0, 0)
+                      and lab[3] == lab[4]):
+                    mp[lab] = ("G", lab[3])
+            maps.append(mp)
+            unary.append(frozenset(mp.values()))
+        pairs = {
+            p: frozenset(
+                (maps[p[0]][x], maps[p[1]][y])
+                for x, y in rel
+                if x in maps[p[0]] and y in maps[p[1]]
+            )
+            for p, rel in state["pairs"].items()
+        }
+        projected = _sparse_arc_consistency(
+            {"unary": tuple(unary), "pairs": pairs}
+        )
+        if all(projected["unary"]):
+            _merge_sparse(out, spins, projected)
+            _guard(out, limit, "sparse projection")
+    return out
+
+
+def _sparse_scalar_filter(support, source_v, limit):
+    out = {}
+    for spins, state in support.items():
+        allowed = frozenset(
+            x for x in state["unary"][source_v]
+            if x[0] == "C" and x[1] in (0, 2)
+        )
+        if not allowed:
+            continue
+        unary = list(state["unary"])
+        unary[source_v] = allowed
+        pairs = {
+            p: frozenset(
+                (x, y) for x, y in rel
+                if (p[0] != source_v or x in allowed)
+                and (p[1] != source_v or y in allowed)
+            )
+            for p, rel in state["pairs"].items()
+        }
+        q = _sparse_arc_consistency(
+            {"unary": tuple(unary), "pairs": pairs}
+        )
+        if all(q["unary"]):
+            out[spins] = q
+            _guard(out, limit, "sparse scalar filter")
+    return out
+
+
 def _guard(support, limit, stage):
     size = sum(
         sum(map(len, s["unary"])) + sum(map(len, s["pairs"].values()))
