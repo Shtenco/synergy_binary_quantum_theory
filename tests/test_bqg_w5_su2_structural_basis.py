@@ -109,6 +109,14 @@ class StructuralBasisTests(unittest.TestCase):
         self.assertIn(key, support)
         self.assertTrue(all(k[1][0][0] == "C" for k in support))
 
+    def test_fundamental_hit_changes_total_J_by_half_spin(self):
+        key = ((2,) * 10, (("C", 2, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        states = list(advance_hit_label_support(key, 0, 1, 3))
+        self.assertTrue(states)
+        for _, labels in states:
+            self.assertIn(labels[0][1], (1, 3))
+            self.assertEqual(labels[1][1], 1)
+
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
         self.assertEqual(local_spins(spins, 0), (0, 1, 2, 3))
