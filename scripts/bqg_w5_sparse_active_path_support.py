@@ -70,14 +70,24 @@ def compress(support, scope):
 
 
 def _compress_pairs(support, pair_scope):
-    """Retain exactly the explicitly active/inherited pair factors."""
+    """Retain nontrivial factors on explicitly active/inherited edges only."""
     keep = set(pair_scope)
     out = {}
     for spins, state in support.items():
+        pairs = {}
+        for p, rel in state["pairs"].items():
+            if p not in keep:
+                continue
+            relation = frozenset(rel)
+            cartesian = frozenset(
+                (x, y) for x in state["unary"][p[0]]
+                for y in state["unary"][p[1]]
+            )
+            if relation != cartesian:
+                pairs[p] = relation
         out[spins] = {
             "unary": tuple(frozenset(x) for x in state["unary"]),
-            "pairs": {p: frozenset(rel) for p, rel in state["pairs"].items()
-                      if p in keep},
+            "pairs": pairs,
         }
     return out
 
