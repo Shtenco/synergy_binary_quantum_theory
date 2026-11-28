@@ -418,3 +418,28 @@ and `factorized_w5_seed_kkv`, which unions the five source-node envelopes.
 The CI runner has a separate bounded mode for the full 24-term node union;
 a guard hit is reported as an incomplete support envelope, never as a
 zero-column result.
+
+
+### Bounded factorized operator-level W5 pilot (2026-11-28)
+
+GitHub Actions run
+[`46122933407`](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46122933407)
+completed successfully, including the 25-test suite and both factorized
+operator-level pilot modes. The W5 seed used all ten links at j=2, K=0,
+Jmax2=10, source node 0, and ordered triple (1,2,3).
+
+With a hard cap of 10,000 stored marginal labels:
+
+| Pilot | Result |
+|---|---|
+| Forward ordered KKV triple | Guard hit at 10,050 labels during a factorized holonomy expansion |
+| Independently reversed adjoint triple | Guard hit at 10,111 labels during H_E marginal union |
+| Full 24-term node KKV union (both orientations) | Guard hit at 10,184 labels during a factorized holonomy expansion |
+
+All three exits were fail-closed: no marginal labels were truncated. These
+are support-envelope growth diagnostics, not completed support sets. They
+do not establish a zero/nonzero KKV column. The earlier factorized
+T-sequence-only envelope remains complete at 3,672 stored marginal labels
+and a 1,703,658 product-basis upper bound; composing the full K and C(K)
+stages crosses the new 10,000-label budget. This isolates the next bottleneck
+to operator-level composition rather than T-sequence support alone.
