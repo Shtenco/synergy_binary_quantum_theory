@@ -102,7 +102,7 @@ class W5ClosureGramGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad_complete.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "forward-column count"):
+            with self.assertRaisesRegex(ValueError, "forward_B_columns_sparse column count"):
                 load_keys(path)
 
     def test_complete_artifact_rejects_out_of_basis_sparse_index(self):
