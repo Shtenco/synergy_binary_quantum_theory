@@ -94,3 +94,12 @@ A reproducible gate was added:
 The finite-projector CI workflow now runs both the finite master-kernel tests and the exact W5 seed Gram gate. The newly wired GitHub Actions workflow run 46178728858 completed successfully on head 657985b1f41fe1fc3f67c88c637a3c6b20a2efd8; both the combined test suite and standalone Gram certificate passed. This establishes the metric only on the declared five-dimensional seed span. It does not establish the Gram matrix of a larger dynamically generated closure basis, where duplicate/noncanonical states and basis normalization must be checked explicitly.
 
 The metric-aware finite projector can therefore be supplied Q=I_5 for the five seed columns once the corresponding full constraint maps on that same five-dimensional input span and common output fiber are assembled. It still cannot certify the physical kernel until those W5 constraint matrices exist.
+
+
+## Full K5 seed-network Gram factorization — 2026-11-28
+
+The seed Gram gate has been strengthened from a local four-valent intertwiner calculation to an explicit factorized full-network certificate. The five seeds share all ten link labels (j=2); node 0 carries the five normalized K channels; nodes 1–4 carry the same normalized K=0 intertwiner in every seed. Under normalized Haar measure and normalized Peter–Weyl matrix elements, the link integrations identify endpoint magnetic indices by unitary contractions, so the spin-network inner product factorizes into the node intertwiner Gram factors. Node 0 contributes I_5 and each fixed node contributes [1], hence Q_full = I_5 and rank 5.
+
+The implementation now exposes `exact_full_seed_gram()` and reports the factorization assumptions in the JSON certificate. A dedicated test checks the full-network 5×5 Gram result and rank. This is still a seed-span result: it does not calculate the Gram matrix of the dynamically generated adjoint-closure states, where basis collisions, distinct link labels, and sector-dependent normalization must be treated explicitly.
+
+The expanded test suite was committed as `a00b275c4b4a0b647413a05ac5eecedb45a07bef`. GitHub Actions runs `46179668056` (finite-projector + W5 Gram) and `46179667988` (W5 first-column workflow) were queued at the time of this update; do not report the expanded suite as passing until the former completes successfully.
