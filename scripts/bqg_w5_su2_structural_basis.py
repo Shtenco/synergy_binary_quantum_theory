@@ -352,7 +352,8 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
 def t_sequence_structural_support(key, v: int, a: int, b: int, c: int,
                                   Jmax2: int, charged_nodes=(0, 1),
                                   include_adjoint: bool = True,
-                                  max_states: int | None = 100000):
+                                  max_states: int | None = 100000,
+                                  volume_v: int | None = None):
     """Union structural label support over actual T_sequences and adjoints."""
     import sys
     from pathlib import Path
@@ -368,7 +369,8 @@ def t_sequence_structural_support(key, v: int, a: int, b: int, c: int,
             words.append(PW.adjoint_sequence(seq0))
         for word in words:
             out.update(structural_sequence_support(
-                key, word, v, Jmax2, charged_nodes, max_states
+                key, word, v if volume_v is None else volume_v,
+                Jmax2, charged_nodes, max_states
             ))
             if max_states is not None and len(out) > max_states:
                 raise RuntimeError("T-sequence support exceeded max_states; no truncation performed")
@@ -397,7 +399,8 @@ def he_structural_support(key, source_v: int, Jmax2: int,
         v, a, b, c = spec
         part = t_sequence_structural_support(
             key, v, a, b, c, Jmax2, charged_nodes,
-            include_adjoint=True, max_states=max_states
+            include_adjoint=True, max_states=max_states,
+            volume_v=source_v
         )
         out.update(part)
         if max_states is not None and len(out) > max_states:
