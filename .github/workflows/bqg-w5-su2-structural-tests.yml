@@ -37,7 +37,7 @@ jobs:
       - name: Run bounded pairwise factor-graph W5 KKV pilot
         env:
           PYTHONPATH: scripts
-        run: python scripts/bqg_w5_pairwise_kkv_pilot.py --K 0 --Jmax2 10 --limit 10000 --source 0 --triple 1 2 3 --mode both
+        run: python scripts/bqg_w5_pairwise_kkv_pilot.py --K 0 --Jmax2 10 --limit 25000 --source 0 --triple 1 2 3 --mode both
       - name: Run bounded one-triple structural pilot
         env:
           PYTHONPATH: scripts
