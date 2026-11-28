@@ -213,5 +213,60 @@ class StructuralBasisTests(unittest.TestCase):
                 )
 
 
+    def test_factorized_operator_K_contains_exact_tiny_support(self):
+        import bqg_w5_su2_structural_basis as SB
+        import bqg_w5_factorized_operator_support as FO
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
+        with patch.object(PW, "oriented_specs",
+                          return_value=((1, (0, 1, 2, 3)),)), \\
+             patch.object(PW, "T_sequences",
+                          return_value=((1.0, ()),)):
+            exact = SB.k_complete_structural_support(
+                key, 0, 1, charged_nodes=(0,), max_states=100
+            )
+            factored = FO.factorized_k(
+                initial, 0, 1, charged_nodes=(0,), max_factor_labels=1000
+            )
+        self.assertTrue(all(FO.SB.factorized_contains_key(factored, x)
+                            for x in exact))
+
+    def test_factorized_operator_CK_contains_exact_tiny_support(self):
+        import bqg_w5_su2_structural_basis as SB
+        import bqg_w5_factorized_operator_support as FO
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
+        with patch.object(PW, "oriented_specs",
+                          return_value=((1, (0, 1, 2, 3)),)), \\
+             patch.object(PW, "T_sequences",
+                          return_value=((1.0, ()),)):
+            exact = SB.C_K_structural_support(
+                key, 0, 1, 1, 0, 0, max_states=100
+            )
+            factored = FO.factorized_c_k(
+                initial, 0, 1, 1, 0, 0, max_factor_labels=1000
+            )
+        self.assertTrue(all(FO.SB.factorized_contains_key(factored, x)
+                            for x in exact))
+
+    def test_factorized_operator_guard_fails_closed(self):
+        import bqg_w5_factorized_operator_support as FO
+        support = {tuple([0] * 10): tuple(
+            frozenset((("C", 0, 0, 0, 0),)) for _ in range(5)
+        )}
+        with self.assertRaises(RuntimeError):
+            FO._volume(support, 0, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
