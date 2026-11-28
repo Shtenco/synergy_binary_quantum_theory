@@ -289,3 +289,46 @@ def factorized_triple(support, source_v, a, b, c, Jmax2,
 
 def factorized_support_profile(support):
     return SB.factorized_support_profile(support)
+
+
+def factorized_node_kkv(support, source_v, Jmax2,
+                        max_factor_labels=100000):
+    """Union all 24 epsilon triples and both operator orientations at one node."""
+    from itertools import permutations
+
+    neighbors = tuple(PW.NEIG[source_v])
+    out = {}
+    for omitted in neighbors:
+        triple = tuple(v for v in neighbors if v != omitted)
+        for a, b, c in permutations(triple):
+            for adjoint in (False, True):
+                part = factorized_triple(
+                    support, source_v, a, b, c, Jmax2,
+                    adjoint=adjoint,
+                    max_factor_labels=max_factor_labels,
+                )
+                out = _union(
+                    out, part, limit=max_factor_labels,
+                    stage="node epsilon KKV union",
+                )
+    return out
+
+
+def factorized_w5_seed_kkv(K, Jmax2, source_nodes=SB.VERTICES,
+                           max_factor_labels=100000):
+    """Union nodewise factorized KKV envelopes for one W5 seed label K."""
+    out = {}
+    for source_v in source_nodes:
+        key = SB.w5_seed_as_covariant(K, source_v)
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {
+            lifted[0]: tuple(frozenset((lab,)) for lab in lifted[1])
+        }
+        part = factorized_node_kkv(
+            initial, source_v, Jmax2, max_factor_labels
+        )
+        out = _union(
+            out, part, limit=max_factor_labels,
+            stage="W5 seed node union",
+        )
+    return out
