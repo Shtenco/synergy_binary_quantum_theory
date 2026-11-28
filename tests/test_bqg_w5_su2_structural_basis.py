@@ -325,5 +325,29 @@ class StructuralBasisTests(unittest.TestCase):
                             for x in exact))
 
 
+    def test_factorized_node_KKV_contains_exact_24_triple_union(self):
+        import bqg_w5_su2_structural_basis as SB
+        import bqg_w5_factorized_operator_support as FO
+        from unittest.mock import patch
+
+        key = SB.w5_seed_as_covariant(0, 0)
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact = SB.node_kkv_structural_support(
+                key, 0, 2, max_states=5000
+            )
+            factored = FO.factorized_node_kkv(
+                initial, 0, 2, max_factor_labels=10000
+            )
+        self.assertTrue(all(SB.factorized_contains_key(factored, x)
+                            for x in exact))
+
+
 if __name__ == "__main__":
     unittest.main()
