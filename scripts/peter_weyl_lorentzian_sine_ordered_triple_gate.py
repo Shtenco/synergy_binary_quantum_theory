@@ -9,9 +9,9 @@ at the preregistered single-H_L wall Jmax=7/2, but rebuilds K everywhere from
 
     H_E^sine=(T-T^dagger)/(2i),  K_sine=[V,H_E^sine].
 
-No K_plus amplitude is reused. Runtime reduction is exact: scalar H_E reduced
-matrix elements are cached at highest weight M=J and relabelled by the rank-0
-Wigner--Eckart identity. Full sparse states remain exact cache keys.
+No K_plus amplitude is reused. The cache retains the full magnetic labels. No highest-weight reduction is used
+until the scalar covariance identity is independently established for this
+charged, graph-changing operator.
 
 The historical fixed-index primitive charge-basis diagnostic is retained in the
 JSON but is not final physical leakage; the independently enforced C(K_sine)
@@ -46,16 +46,16 @@ def run(v=0,a=None,b=None,c=None):
     old_cv=RAW.COMP.C_volume_component
 
     @functools.lru_cache(maxsize=None)
-    def he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
+    def he_exact(key,source_v,Jmax2,charged_nodes):
+        # Cache the complete magnetic state. Do not identify M sectors until
+        # the scalar covariance identity is independently proved for this
+        # charged, graph-changing operator.
         return SINEK.complete_HE_sine(
-            canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
+            key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
         )
 
-    def he_sine_reduced(key,source_v,Jmax2,charged_nodes=(0,1)):
-        charged_nodes=tuple(charged_nodes)
-        canonical,original=CACHE.canonicalize_scalar_charge_M(key,charged_nodes)
-        state,vleak,bleak=he_reduced(canonical,source_v,Jmax2,charged_nodes)
-        return CACHE.restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
+    def he_sine_exact(key,source_v,Jmax2,charged_nodes=(0,1)):
+        return he_exact(key,source_v,Jmax2,tuple(charged_nodes))
 
     @functools.lru_cache(maxsize=None)
     def k_cached(frozen,source_v,Jmax2,charged_nodes):
@@ -103,7 +103,7 @@ def run(v=0,a=None,b=None,c=None):
         items,leak=cv_cached(freeze(state),source_v,target_v,i,j,Jmax2)
         return dict(items),leak
 
-    KC.CK.apply_HE_complete_key=he_sine_reduced
+    KC.CK.apply_HE_complete_key=he_sine_exact
     KC.KG.apply_HE_local=SINEK.gauss_HE_sine_with_historical_K_cutoff
     KC.apply_K_complete_custom=k_wrap
     KC.COMP.inverse_complete=inv_wrap
@@ -117,7 +117,7 @@ def run(v=0,a=None,b=None,c=None):
     try:
         out=RAW.run(v,a,b,c)
         infos={
-            'HE_reduced':he_reduced.cache_info(),
+            'HE_exact_full_M':he_exact.cache_info(),
             'K_complete':k_cached.cache_info(),
             'inverse':inv_cached.cache_info(),
             'direct_K':direct_cached.cache_info(),
@@ -163,7 +163,8 @@ def run(v=0,a=None,b=None,c=None):
         name:{'hits':x.hits,'misses':x.misses,'currsize':x.currsize}
         for name,x in infos.items()
     }
-    out['runtime_exact_reduction']['rank0_Wigner_Eckart_M_reduction']=True
+    out['runtime_exact_reduction']['rank0_Wigner_Eckart_M_reduction']=False
+    out['runtime_exact_reduction']['full_magnetic_labels_in_cache_key']=True
     out['runtime_exact_reduction']['physics_changed']=False
     return out
 
