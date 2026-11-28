@@ -19,7 +19,6 @@ import hashlib
 import json
 from pathlib import Path
 
-import sympy as sp
 
 VERTICES = tuple(range(5))
 EDGES = tuple((u, v) for u in VERTICES for v in VERTICES if u < v)
@@ -73,15 +72,14 @@ def gram_certificate(keys) -> dict:
         raise ValueError("duplicate canonical spin-network basis keys detected")
 
     n = len(normalized)
-    gram = sp.eye(n)
     payload = json.dumps(normalized, separators=(",", ":")).encode("utf-8")
     return {
         "status": "exact canonical K5 spin-network closure Gram certificate",
         "passed": True,
         "basis_dimension": n,
-        "gram_rank": gram.rank(),
-        "gram_matrix": "identity",
-        "input_metric_Q": [[str(gram[i, j]) for j in range(n)] for i in range(n)],
+        "gram_rank": n,
+        "gram_matrix": {"type": "identity", "dimension": n},
+        "input_metric_Q": {"representation": "implicit_identity", "dimension": n},
         "basis_id_sha256": hashlib.sha256(payload).hexdigest(),
         "graph_convention": "fixed labelled K5 vertices 0..4 and ten labelled edges; no graph-automorphism quotient",
         "normalization": {
