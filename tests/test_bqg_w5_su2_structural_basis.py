@@ -10,6 +10,7 @@ from bqg_w5_su2_structural_basis import (
 
 
 class StructuralBasisTests(unittest.TestCase):
+    # CI exercises the real repository word templates and structural label rules.
     def test_triangle_and_parity(self):
         self.assertEqual(allowed_pair2(4, 4), (0, 2, 4, 6, 8))
         self.assertEqual(allowed_pair2(1, 2), (1, 3))
