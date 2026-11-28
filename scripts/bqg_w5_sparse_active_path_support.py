@@ -347,5 +347,14 @@ def project_final(branches, charged_nodes, limit=100000):
         projected = PG._project(expand(branch), charged_nodes, limit)
         if projected:
             out.append(compress(projected, scope))
-    _guard(out, limit, "final Gauss projection")
+    total = sum(
+        sum(map(len, state["unary"])) +
+        sum(map(len, state["pairs"].values()))
+        for branch in out for state in branch.values()
+    )
+    if limit is not None and total > limit:
+        raise RuntimeError(
+            f"sparse-active-path final Gauss projection entries {total} "
+            f"exceed guard {limit}; no truncation"
+        )
     return out
