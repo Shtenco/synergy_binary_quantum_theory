@@ -241,7 +241,12 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if max_states < len(W5_K) or max_depth < 0 or amp_tol <= 0:
+    seed_K_values = tuple(seed_K_values)
+    if not seed_K_values or len(set(seed_K_values)) != len(seed_K_values):
+        raise ValueError("seed_K_values must be a nonempty sequence without duplicates")
+    if any(K not in W5_K for K in seed_K_values):
+        raise ValueError(f"seed_K_values must be selected from {W5_K}")
+    if max_states < len(seed_K_values) or max_depth < 0 or amp_tol <= 0:
         raise ValueError("invalid closure limits")
 
     HERE = Path(__file__).resolve().parent
@@ -252,13 +257,6 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
 
-    seed_K_values = tuple(seed_K_values)
-    if not seed_K_values or len(set(seed_K_values)) != len(seed_K_values):
-        raise ValueError("seed_K_values must be a nonempty sequence without duplicates")
-    if any(K not in W5_K for K in seed_K_values):
-        raise ValueError(f"seed_K_values must be selected from {W5_K}")
-    if max_states < len(seed_K_values):
-        raise ValueError("max_states must be at least the number of selected W5 seeds")
     seeds = [w5_input_key(K) for K in seed_K_values]
     closure_keys = list(seeds)
     seen = set(closure_keys)
