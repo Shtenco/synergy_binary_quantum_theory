@@ -140,6 +140,19 @@ class StructuralBasisTests(unittest.TestCase):
                     structural = set(advance_hit_label_support(key, x, y, 2, i, j))
                     self.assertEqual(structural, expected)
 
+    def test_path_support_matches_actual_internal_index_sum(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        branch = CK.branch_from_key(key)
+        for path, iout, iin, charged in (((0, 1, 2), 0, 1, (0, 2)), ((2, 1, 0), 1, 0, (0, 2))):
+            expected = set()
+            for hb in PW.apply_path_branch(branch, path, iout, iin, 2):
+                projected, leak = CK.project_branch_complete_charges(hb, charged)
+                self.assertLess(leak, 1e-12)
+                expected.update(projected)
+            seq = (("P", path, iout, iin),)
+            structural = structural_sequence_support(key, seq, 0, 2, charged_nodes=charged)
+            self.assertEqual(structural, expected)
+
     def test_fundamental_hit_changes_total_J_by_half_spin(self):
         key = ((2,) * 10, (("C", 2, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
         states = list(advance_hit_label_support(key, 0, 1, 3))
