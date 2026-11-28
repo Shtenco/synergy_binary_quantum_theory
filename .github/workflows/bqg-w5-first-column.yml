@@ -6,18 +6,22 @@ on:
       - research/bqg-physical-projector-hda-gates-20261128
     paths:
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
       - '.github/workflows/bqg-w5-first-column.yml'
   pull_request:
     branches:
       - research/bqg-fs-symplectic-reduction-20261128
     paths:
       - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
       - '.github/workflows/bqg-w5-first-column.yml'
 
 jobs:
   w5-first-column:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
