@@ -400,6 +400,7 @@ class StructuralBasisTests(unittest.TestCase):
 
     def test_pairwise_factor_graph_forward_and_adjoint_KKV_include_exact_mock(self):
         import bqg_w5_pairwise_factor_graph as FG
+        import bqg_w5_su2_structural_basis as SB
         from unittest.mock import patch
         key = ((0,) * 10,
                (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
