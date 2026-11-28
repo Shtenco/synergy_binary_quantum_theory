@@ -388,10 +388,19 @@ def _guard(support, limit, stage):
         pair_factor_counts = sorted({
             len(state["pairs"]) for state in support.values()
         })
+        pair_entry_counts = {
+            f"{a}-{b}": sum(
+                len(state["pairs"].get((a, b), ()))
+                for state in support.values()
+            )
+            for a, b in combinations(NODES, 2)
+            if any((a, b) in state["pairs"] for state in support.values())
+        }
         raise RuntimeError(
             f"sparse-active-path {stage} entries {size} exceed guard {limit}; "
             f"unary_entries={unary_entries}; pair_entries={pair_entries}; "
-            f"pair_factor_counts={pair_factor_counts}; no truncation"
+            f"pair_factor_counts={pair_factor_counts}; "
+            f"pair_entry_counts={pair_entry_counts}; no truncation"
         )
 
 
@@ -429,7 +438,7 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
                 except RuntimeError as exc:
                     raise RuntimeError(
                         f"{exc}; operator={op!r}; edge={(x, y)!r}; "
-                        f"active_scope={tuple(sorted(scope))!r}"
+                        f"active_pair_scope={tuple(sorted(pair_scope))!r}"
                     ) from exc
         work = _compress_pairs(work, pair_scope)
         _guard(work, limit, f"after {op[0]}")
