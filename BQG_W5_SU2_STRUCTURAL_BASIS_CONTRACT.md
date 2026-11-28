@@ -312,3 +312,35 @@ Two tests compare this envelope with explicit one-hit and multi-edge path
 supports and require every explicit key to be contained. A bounded pilot on
 the physical W5 (K=0) seed is now part of CI. Its output must be interpreted
 as a conservative envelope, not an exact joint reachable-state list.
+
+
+## Bounded W5 factorized pilot result (2026-11-28)
+
+The GitHub Actions run
+`46086779612` completed successfully. The test suite ran **16 tests,
+0 failures**. The explicit W5 (K=0), (J_{max,2}=10) pilot reached the
+configured 5,000-state guard on the first encountered path
+((0,1,2,0)), with frontier size 2,492 before expansion and 5,001 after it.
+
+The factorized run on the same W5 seed, same (J_{max,2}=10), same triple
+((1,2,3)), and both forward and independently reversed-adjoint T words
+completed without reaching its 100,000 local-label guard:
+
+| Metric | Result |
+|---|---:|
+| Distinct link-spin sectors | 24 |
+| Local labels at node 0 | 2,538 |
+| Local labels at node 1 | 912 |
+| Local labels at node 2 | 102 |
+| Local labels at node 3 | 96 |
+| Local labels at node 4 | 24 |
+| Total stored marginal labels | 3,672 |
+| Product-basis dimension upper bound | 1,703,658 |
+| Largest single-sector product dimension | 147,400 |
+| Maximum doubled link spin reached | 6 |
+
+This is a bounded pilot for **one ordered triple** and its adjoint, not the
+full 24-term epsilon sum, not the full node KKV operator, and not the
+physical W5 output. The 1,703,658 figure is a conservative product-dimension
+upper bound from the marginal envelope; it is not a count of jointly
+reachable keys or nonzero matrix elements.
