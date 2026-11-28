@@ -6,15 +6,7 @@ This wrapper changes only repeated evaluation of deterministic sparse-state
 functions. Cache keys contain the complete discrete labels and exact complex
 amplitudes; no rounding, pruning, fitting or representation reduction occurs.
 
-Additional exact acceleration
------------------------------
-H_E is an SU(2) scalar.  In an explicit |J,M,K12,K34> charged basis its reduced
-matrix element is independent of M and H_E preserves J,M at every charged
-endpoint.  Therefore all magnetic copies of the SAME charged reduced state are
-computed once at highest weight M=J and the output labels are relabelled back
-to the original M values.  This is the rank-0 Wigner--Eckart identity, not a
-physical approximation.  Any output that violates the required J,M preservation
-raises immediately instead of being silently projected.
+Exact cache policy\n------------------\nThe full magnetic labels are retained in every cache key. The previous highest-weight\nreduction was disabled because its charged-sector J,M preservation assumption\nwas not verified against the complete graph-changing H_E map.
 
 Acceptance-note
 ---------------
@@ -124,24 +116,16 @@ def run(v=0,w=1):
     original_close=CKCOMP.COMP.close_complete
 
     @functools.lru_cache(maxsize=None)
-    def cached_he_reduced(canonical_key,source_v,Jmax2,charged_nodes):
+    def cached_he_exact(key,source_v,Jmax2,charged_nodes):
+        # Full M labels are part of the cache key. The highest-weight shortcut
+        # is disabled until its charged-sector covariance is independently
+        # certified against the uncompressed operator.
         return original_he(
-            canonical_key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
+            key,source_v,Jmax2,charged_nodes=tuple(charged_nodes)
         )
 
-    he_calls={'magnetic_requests':0,'reduced_requests':0}
-
-    def reduced_he(key,source_v,Jmax2,charged_nodes=(0,1)):
-        charged_nodes=tuple(charged_nodes)
-        he_calls['magnetic_requests'] += 1
-        canonical,original=canonicalize_scalar_charge_M(key,charged_nodes)
-        before=cached_he_reduced.cache_info().misses
-        state,vleak,bleak=cached_he_reduced(
-            canonical,source_v,Jmax2,charged_nodes
-        )
-        after=cached_he_reduced.cache_info().misses
-        he_calls['reduced_requests'] += int(after>before)
-        return restore_scalar_charge_M(state,charged_nodes,original),vleak,bleak
+    def exact_he(key,source_v,Jmax2,charged_nodes=(0,1)):
+        return cached_he_exact(key,source_v,Jmax2,tuple(charged_nodes))
 
     @functools.lru_cache(maxsize=None)
     def cached_k_frozen(frozen,source_v,Jmax2,charged_nodes):
@@ -186,14 +170,14 @@ def run(v=0,w=1):
             freeze_state(state),source_v,target_v,i,k,Jmax2
         ))
 
-    CKCOMP.CK.apply_HE_complete_key=reduced_he
+    CKCOMP.CK.apply_HE_complete_key=exact_he
     CKCOMP.apply_K_complete_custom=cached_k
     CKCOMP.COMP.inverse_complete=cached_inv
     CKCOMP.direct_K_covariant=cached_direct
     CKCOMP.COMP.close_complete=cached_close
     try:
         out=CKCOMP.run(v,w)
-        hi=cached_he_reduced.cache_info(); ki=cached_k_frozen.cache_info()
+        hi=cached_he_exact.cache_info(); ki=cached_k_frozen.cache_info()
         ii=cached_inv_frozen.cache_info(); di=cached_direct_frozen.cache_info()
         ci=cached_close_frozen.cache_info()
     finally:
@@ -223,18 +207,17 @@ def run(v=0,w=1):
         'forbidden_J_gt_2_fraction_tolerance':1e-18,
     }
     out['runtime_memoization']={
-        'scalar_HE_reduced_highest_weight_cache':{
+        'scalar_HE_full_magnetic_cache':{
             'hits':hi.hits,'misses':hi.misses,'currsize':hi.currsize,
-            'magnetic_requests':he_calls['magnetic_requests'],
-            'distinct_reduced_requests':he_calls['reduced_requests'],
-            'rule':'rank-0 Wigner-Eckart: fixed charged J,K labels are M-independent and preserve J,M',
+            'full_M_in_cache_key':True,
+            'highest_weight_reduction_enabled':False,
         },
         'apply_K_complete_state':{'hits':ki.hits,'misses':ki.misses,'currsize':ki.currsize},
         'inverse_complete_state':{'hits':ii.hits,'misses':ii.misses,'currsize':ii.currsize},
         'direct_K_covariant_state':{'hits':di.hits,'misses':di.misses,'currsize':di.currsize},
         'close_complete_state':{'hits':ci.hits,'misses':ci.misses,'currsize':ci.currsize},
         'cache_keys_use_full_exact_sparse_states':True,
-        'magnetic_reduction_is_exact_SU2_scalar_identity':True,
+        'magnetic_reduction_is_exact_SU2_scalar_identity':False,
         'physics_changed':False,
     }
     return out
