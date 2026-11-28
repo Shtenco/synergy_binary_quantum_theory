@@ -27,6 +27,10 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python -m pytest tests/test_bqg_w5_sparse_active_path_support.py -q
+      - name: Run matching disjunctive pairwise baseline
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_disjunctive_pairwise_kkv_pilot.py --K 0 --Jmax2 10 --limit 50000 --source 0 --triple 1 2 3 --mode both
       - name: Run bounded W5 sparse KKV pilot
         env:
           PYTHONPATH: scripts
