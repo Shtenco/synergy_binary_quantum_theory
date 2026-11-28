@@ -251,7 +251,7 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
         part = sequence(branch, (("P", (target_v, source_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            inverse.append(compress(part, (source_v, target_v)))
+            inverse.append(compress(part, _scope_of(part, (source_v, target_v))))
     middle = []
     for branch in inverse:
         part = sequence(branch, (("V", source_v),), source_v,
