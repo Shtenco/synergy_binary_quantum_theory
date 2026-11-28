@@ -278,8 +278,8 @@ class StructuralBasisTests(unittest.TestCase):
         from unittest.mock import patch
 
         key = ((0,) * 10,
-               ((\"C\", 0, 0, 0, 0),) +
-               tuple((\"G\", 0) for _ in range(4)))
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
         lifted = SB.lift_key_to_all_charged(key)
         initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
         with (
@@ -304,8 +304,8 @@ class StructuralBasisTests(unittest.TestCase):
         from unittest.mock import patch
 
         key = ((0,) * 10,
-               ((\"C\", 0, 0, 0, 0),) +
-               tuple((\"G\", 0) for _ in range(4)))
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
         lifted = SB.lift_key_to_all_charged(key)
         initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
         with (
