@@ -51,3 +51,7 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 100000 --source 0 --triple 1 2 3 --mode both
+      - name: Run bounded factorized 24-term node KKV pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 100000 --source 0 --mode node
