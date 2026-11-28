@@ -105,3 +105,17 @@ def test_he_spec_branches_preserve_inherited_nontrivial_pair_scope(monkeypatch):
     state = result[0][(0,) * 10]
     assert (3, 4) in state["pairs"]
     assert state["pairs"][(3, 4)] == relation
+
+
+def test_sparse_sequence_never_materializes_omitted_pair_factors(monkeypatch):
+    def forbidden_expand(_support):
+        raise AssertionError("sparse propagation must not expand all ten pairs")
+
+    monkeypatch.setattr(SAP, "expand", forbidden_expand)
+    result = SAP.sequence(
+        PG._initial(tiny_seed()),
+        (("P", (0, 1, 2, 0)), ("V", 0)),
+        0, 3, charged_nodes=SAP.NODES, limit=200000
+    )
+    assert result
+    assert all(len(state["pairs"]) < 10 for state in result.values())
