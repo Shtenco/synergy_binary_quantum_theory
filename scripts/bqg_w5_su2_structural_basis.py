@@ -491,7 +491,7 @@ def C_K_structural_support(key, source_v: int, target_v: int,
     inverse = _hit_project_support(
         {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
     )
-    kinverse = k_complete = set()
+    k_complete = set()
     for state in inverse:
         k_complete.update(k_complete_structural_support(
             state, source_v, Jmax2, (source_v, target_v), max_states
