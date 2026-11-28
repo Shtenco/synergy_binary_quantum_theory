@@ -48,3 +48,23 @@ def test_active_scope_is_local_to_primitive_paths():
     assert prof["joint_keys_enumerated"] is False
     assert prof["amplitudes_evaluated"] is False
     assert prof["missing_pairs_are_unconstrained_cartesian_products"] is True
+
+
+def test_sparse_sequential_words_keep_intermediate_nodes_charged():
+    key = tiny_seed()
+    first = (("P", (0, 1, 2, 1, 0)),)
+    second = (("V", 0), ("P", (0, 2, 3, 2, 0)))
+    exact = SB.structural_sequence_support(
+        key, first + second, 0, 3, charged_nodes=(0,), max_states=20000
+    )
+    intermediate = SAP.sequence(
+        PG._initial(key), first, 0, 3, charged_nodes=SAP.NODES,
+        limit=200000
+    )
+    sparse = SAP.sequence(
+        intermediate, second, 0, 3, charged_nodes=SAP.NODES,
+        limit=200000
+    )
+    final = SAP.project_final([sparse], (0,), limit=200000)[0]
+    assert exact
+    assert all(SAP.contains_joint(final, state) for state in exact)
