@@ -44,7 +44,13 @@ class W5ClosureGramGateTests(unittest.TestCase):
 
     def test_complete_artifact_key_parser(self):
         keys = [self.seed_key(k2) for k2 in (0, 2, 4, 6, 8)]
-        payload = {"basis_keys_repr": [repr(key) for key in keys]}
+        payload = {
+            "status": "PASS_ADJOINT_CONSISTENCY",
+            "closure_size": len(keys),
+            "basis_keys_repr": [repr(key) for key in keys],
+            "forward_B_columns_sparse": [[] for _ in keys],
+            "direct_Bdag_columns_sparse": [[] for _ in keys],
+        }
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "complete.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
