@@ -8,6 +8,13 @@ on:
       - 'scripts/bqg_finite_master_kernel_gate.py'
       - 'tests/test_bqg_finite_master_kernel_gate.py'
       - '.github/workflows/bqg-finite-projector-tests.yml'
+  pull_request:
+    branches:
+      - research/bqg-fs-symplectic-reduction-20261128
+    paths:
+      - 'scripts/bqg_finite_master_kernel_gate.py'
+      - 'tests/test_bqg_finite_master_kernel_gate.py'
+      - '.github/workflows/bqg-finite-projector-tests.yml'
 
 jobs:
   exact-finite-projector:
