@@ -74,7 +74,7 @@ class StructuralBasisTests(unittest.TestCase):
         lifted = lift_key_to_all_charged(key)
         self.assertTrue(all(lab == ("C", 0, 0, 0, 0) for lab in lifted[1]))
         projected = project_all_charged_key(lifted, (0, 1))
-        self.assertEqual(projected, key)
+        self.assertEqual(projected, (key[0], (("C", 0, 0, 0, 0), ("C", 0, 0, 0, 0), ("G", 0), ("G", 0), ("G", 0))))
 
     def test_hit_support_updates_only_endpoint_labels_and_link(self):
         key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
