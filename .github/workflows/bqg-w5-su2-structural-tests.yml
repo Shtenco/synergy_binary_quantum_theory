@@ -9,6 +9,8 @@ on:
       - 'tests/test_bqg_w5_su2_structural_basis.py'
       - 'scripts/bqg_w5_structural_pilot.py'
       - 'scripts/bqg_w5_kkv_bounded_pilot.py'
+      - 'scripts/bqg_w5_factorized_operator_support.py'
+      - 'scripts/bqg_w5_factorized_kkv_pilot.py'
       - '.github/workflows/bqg-w5-su2-structural-tests.yml'
 
 jobs:
@@ -45,3 +47,7 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_structural_pilot.py --Jmax2 10 --max-states 100000 --source 0 --triple 1 2 3 --w5-K 0 --factorized
+      - name: Run bounded factorized operator-level W5 KKV pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 100000 --source 0 --triple 1 2 3 --mode both
