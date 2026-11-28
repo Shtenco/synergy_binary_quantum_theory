@@ -109,7 +109,7 @@ class StructuralBasisTests(unittest.TestCase):
         key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
         seq = (("P", (0, 1), 0, 0),)
         with self.assertRaises(RuntimeError):
-            structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1), max_states=1)
+            structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1), max_states=0)
 
     def test_CV_structural_support_contains_direct_scalar_volume_branch(self):
         key = ((0,) * 10, (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
