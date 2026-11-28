@@ -30,6 +30,14 @@ def _stored_pairs(scope):
     return tuple(combinations(scope, 2))
 
 
+def _scope_of(support, extra=()):
+    scope = set(extra)
+    for state in support.values():
+        for a, b in state["pairs"]:
+            scope.update((a, b))
+    return tuple(sorted(scope))
+
+
 def compress(support, scope):
     """Drop pair factors outside the active induced subgraph."""
     keep = set(_stored_pairs(scope))
@@ -103,7 +111,8 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
         _guard(work, limit, f"after {op[0]}")
         if not work:
             break
-    return PG._project(expand(work), charged_nodes, limit)
+    projected = PG._project(expand(work), charged_nodes, limit)
+    return compress(projected, tuple(sorted(scope)))
 
 
 def contains_joint(support, key):
@@ -191,14 +200,14 @@ def k_branches(branches, source_v, Jmax2, charged_nodes=(0,),
         vh = sequence(he, (("V", source_v),), source_v, Jmax2,
                       NODES, limit)
         if vh:
-            out.append(compress(vh, (source_v,)))
+            out.append(compress(vh, _scope_of(vh, (source_v,))))
     vin = []
     for branch in branches:
         lifted = PG._lift(expand(branch))
         vol = PG._volume(lifted, source_v, limit)
         projected = PG._project(vol, NODES, limit)
         if projected:
-            vin.append(compress(projected, (source_v,)))
+            vin.append(compress(projected, _scope_of(projected, (source_v,))))
     out.extend(he_spec_branches(vin, source_v, Jmax2,
                                 NODES, limit))
     return out
@@ -216,14 +225,14 @@ def c_k_branches(branches, source_v, target_v, Jmax2, i, j,
         part = sequence(branch, (("P", (target_v, source_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            inverse.append(compress(part, (source_v, target_v)))
+            inverse.append(compress(part, _scope_of(part, (source_v, target_v))))
     middle = k_branches(inverse, source_v, Jmax2,
                         NODES, limit)
     for branch in middle:
         closed = sequence(branch, (("P", (source_v, target_v)),),
                           source_v, Jmax2, NODES, limit)
         if closed:
-            out.append(compress(closed, (source_v, target_v)))
+            out.append(compress(closed, _scope_of(closed, (source_v, target_v))))
     return out
 
 
@@ -236,7 +245,7 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
             part = sequence(branch, (("V", source_v),), source_v,
                             Jmax2, NODES, limit)
             if part:
-                out.append(compress(part, (source_v,)))
+                out.append(compress(part, _scope_of(part, (source_v,))))
     inverse = []
     for branch in branches:
         part = sequence(branch, (("P", (target_v, source_v)),),
@@ -248,12 +257,12 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
         part = sequence(branch, (("V", source_v),), source_v,
                          Jmax2, NODES, limit)
         if part:
-            middle.append(compress(part, (source_v, target_v)))
+            middle.append(compress(part, _scope_of(part, (source_v, target_v))))
     for branch in middle:
         part = sequence(branch, (("P", (source_v, target_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            out.append(compress(part, (source_v, target_v)))
+            out.append(compress(part, _scope_of(part, (source_v, target_v))))
     return out
 
 
@@ -262,7 +271,7 @@ def scalar_filter(branches, source_v, limit=100000):
     for branch in branches:
         full = PG._scalar_filter(expand(branch), source_v)
         if full:
-            out.append(compress(full, tuple(range(5))))
+            out.append(compress(full, _scope_of(branch, (source_v,))))
     _guard(out, limit, "scalar-source filter")
     return out
 
