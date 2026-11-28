@@ -710,3 +710,12 @@ No real W5 KKV pilot, numerical matrix element, amplitude, or compression
 gain is claimed. The operator-level wrappers must pass the complete exact
 inclusion suite and a bounded W5 pilot before being considered for fixed-basis
 integration.
+
+
+A bounded runner is now available at
+`scripts/bqg_w5_sparse_active_path_kkv_pilot.py`. It accepts the same
+`K`, `Jmax2`, source, triple, entry-limit, and forward/adjoint mode controls
+as the preceding pairwise pilot. It has not yet been executed in this work
+session; its presence is not evidence of a completed W5 run. The runner
+reports branch counts and stored sparse entries, not amplitudes or exact
+joint-state counts.
