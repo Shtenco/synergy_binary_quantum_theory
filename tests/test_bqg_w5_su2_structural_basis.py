@@ -6,6 +6,7 @@ from bqg_w5_su2_structural_basis import (
     w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence, t_sequence_spin_support, spin_sector_basis_profile,
     charged_nodes_basis_size, charged_nodes_basis_profile, volume_label_targets, lift_key_to_all_charged,
     project_all_charged_key, advance_hit_label_support, structural_sequence_support,
+    C_volume_structural_support,
 )
 
 
@@ -101,6 +102,12 @@ class StructuralBasisTests(unittest.TestCase):
         seq = (("P", (0, 1), 0, 0),)
         with self.assertRaises(RuntimeError):
             structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1), max_states=1)
+
+    def test_CV_structural_support_contains_direct_scalar_volume_branch(self):
+        key = ((0,) * 10, (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        support = C_volume_structural_support(key, 0, 1, 2, 0, 0, max_states=100)
+        self.assertIn(key, support)
+        self.assertTrue(all(k[1][0][0] == "C" for k in support))
 
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
