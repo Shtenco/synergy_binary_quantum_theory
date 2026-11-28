@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import tempfile
 import unittest
@@ -17,7 +18,7 @@ class W5ClosureGramGateTests(unittest.TestCase):
         return {
             "status": "PASS_ADJOINT_CONSISTENCY",
             "closure_size": len(keys),
-            "basis_id_sha256": hashlib.sha256("\\n".join(raw).encode("utf-8")).hexdigest(),
+            "basis_id_sha256": hashlib.sha256("\n".join(raw).encode("utf-8")).hexdigest(),
             "basis_keys_repr": raw,
             "forward_B_columns_sparse": [[] for _ in keys],
             "direct_Bdag_columns_sparse": [[] for _ in keys],
