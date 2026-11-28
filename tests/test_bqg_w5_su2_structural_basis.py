@@ -84,7 +84,9 @@ class StructuralBasisTests(unittest.TestCase):
     def test_hit_support_updates_only_endpoint_labels_and_link(self):
         key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
         states = list(advance_hit_label_support(key, 0, 1, 2))
-        self.assertEqual(len(states), 4)
+        self.assertEqual(len(states), 1)
+        self.assertEqual(states[0][1][0][2], 1)
+        self.assertEqual(states[0][1][1][2], -1)
         self.assertTrue(all(s[0][0] == 1 for s in states))
         self.assertTrue(all(s[0][1:] == (0,) * 9 for s in states))
         self.assertTrue(all(s[1][2:] == tuple(("C", 0, 0, 0, 0) for _ in range(3)) for s in states))
@@ -93,7 +95,10 @@ class StructuralBasisTests(unittest.TestCase):
         key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
         seq = (("P", (0, 1), 0, 0),)
         support = structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1))
-        self.assertEqual(len(support), 4)
+        self.assertEqual(len(support), 1)
+        only = next(iter(support))
+        self.assertEqual(only[1][0][2], 1)
+        self.assertEqual(only[1][1][2], -1)
         self.assertTrue(all(k[1][0][0] == "C" and k[1][1][0] == "C" for k in support))
         self.assertTrue(all(k[1][2:] == tuple(("G", 0) for _ in range(3)) for k in support))
 
@@ -108,6 +113,15 @@ class StructuralBasisTests(unittest.TestCase):
         support = C_volume_structural_support(key, 0, 1, 2, 0, 0, max_states=100)
         self.assertIn(key, support)
         self.assertTrue(all(k[1][0][0] == "C" for k in support))
+
+    def test_fixed_indices_select_exact_magnetic_shifts(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        for i in range(2):
+            for j in range(2):
+                states = list(advance_hit_label_support(key, 0, 1, 2, i, j))
+                self.assertEqual(len(states), 1)
+                self.assertEqual(states[0][1][0][2], 1 if i == 0 else -1)
+                self.assertEqual(states[0][1][1][2], -1 if j == 0 else 1)
 
     def test_fundamental_hit_changes_total_J_by_half_spin(self):
         key = ((2,) * 10, (("C", 2, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
