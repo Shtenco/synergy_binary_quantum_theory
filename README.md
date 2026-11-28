@@ -280,8 +280,8 @@ $$
 
 **Область применимости принципиальна.** $Q_{\mathrm{seed}}=I_5$ относится к пяти указанным seed-векторам при указанной нормировке. Для более общего конечного adjoint-closure базиса действует более сильное структурное утверждение: если его элементы действительно являются различными допустимыми каноническими K5 spin-network labels $(j_e,K_v)$ на фиксированном помеченном графе с вершинами $0,\ldots,4$ (без факторизации по автоморфизмам графа), то ортонормированность normalized Peter–Weyl link basis и нормированных CG intertwiners даёт $Q_{\mathrm{closure}}=I_N$. Это позволяет избежать попарного вычисления $N^2$ скалярных произведений и хранения плотной $N\times N$ единичной матрицы: validator возвращает $Q=I_N$ в неявном виде с размерностью и рангом. Это допустимо только после проверки десяти меток рёбер, допустимости пяти узловых каналов и отсутствия повторяющихся ключей. Для этой проверки добавлены `scripts/bqg_w5_closure_gram_gate.py` и `tests/test_bqg_w5_closure_gram_gate.py`. Gate принимает полный `basis_keys_repr` из завершённого closure JSON; для partial JSON он явно ограничивает сертификат только реально вычисленными input columns. После получения W5 JSON его можно проверить командой:
 ```bash
-python scripts/bqg_w5_closure_gram_gate.py \\
-  --basis-json verification_results/W5_K0_NODE0_PARTIAL_20261128.json \\
+python scripts/bqg_w5_closure_gram_gate.py \
+  --basis-json verification_results/W5_K0_NODE0_PARTIAL_20261128.json \
   --output verification_results/W5_CLOSURE_GRAM_20261128.json
 ```
 Для partial-артефакта сертификат охватывает только вычисленные входные ключи; полный список закрытого базиса требует завершённого closure-результата.
