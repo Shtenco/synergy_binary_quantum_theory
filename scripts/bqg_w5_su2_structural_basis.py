@@ -326,13 +326,17 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
             for state in states:
                 partial = {state}
                 for x, y in zip(path[:-1], path[1:]):
-                    partial = {nxt for st in partial
-                               for nxt in advance_hit_label_support(st, x, y, Jmax2)}
-                    if max_states is not None and len(partial) > max_states:
+                    expanded = set()
+                    for st in partial:
+                        for nxt in advance_hit_label_support(st, x, y, Jmax2):
+                            expanded.add(nxt)
+                            if max_states is not None and len(expanded) > max_states:
+                                raise RuntimeError("structural support exceeded max_states; no truncation performed")
+                    partial = expanded
+                for item in partial:
+                    next_states.add(item)
+                    if max_states is not None and len(next_states) > max_states:
                         raise RuntimeError("structural support exceeded max_states; no truncation performed")
-                next_states.update(partial)
-                if max_states is not None and len(next_states) > max_states:
-                    raise RuntimeError("structural support exceeded max_states; no truncation performed")
         else:
             raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
         states = next_states
