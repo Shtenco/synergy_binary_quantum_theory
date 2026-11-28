@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import json
+import tempfile
 import unittest
+from pathlib import Path
 from bqg_w5_closure_gram_gate import (
-    allowed_k2, gram_certificate, validate_basis_key,
+    allowed_k2, gram_certificate, load_keys, validate_basis_key,
 )
 
 
@@ -38,6 +41,30 @@ class W5ClosureGramGateTests(unittest.TestCase):
 
     def test_allowed_channels_match_doubled_spin_triangle_rule(self):
         self.assertEqual(allowed_k2((4, 4, 4, 4)), (0, 2, 4, 6, 8))
+
+    def test_complete_artifact_key_parser(self):
+        keys = [self.seed_key(k2) for k2 in (0, 2, 4, 6, 8)]
+        payload = {"basis_keys_repr": [repr(key) for key in keys]}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "complete.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parsed, scope = load_keys(path)
+        self.assertEqual(parsed, keys)
+        self.assertEqual(scope, "complete_basis_list")
+
+    def test_partial_artifact_parser_keeps_partial_scope(self):
+        key = self.seed_key(0)
+        payload = {
+            "partial_forward_columns_top_amplitudes": [
+                {"input_key": repr(key), "support_size": 0}
+            ]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "partial.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parsed, scope = load_keys(path)
+        self.assertEqual(parsed, [key])
+        self.assertEqual(scope, "computed_input_columns_only")
 
 
 if __name__ == "__main__":
