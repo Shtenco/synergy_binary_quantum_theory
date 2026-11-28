@@ -55,6 +55,8 @@ class W5ClosureGramGateTests(unittest.TestCase):
     def test_partial_artifact_parser_keeps_partial_scope(self):
         key = self.seed_key(0)
         payload = {
+            "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
+            "columns_computed": 1,
             "partial_forward_columns_top_amplitudes": [
                 {"input_key": repr(key), "support_size": 0}
             ]
@@ -65,6 +67,51 @@ class W5ClosureGramGateTests(unittest.TestCase):
             parsed, scope = load_keys(path)
         self.assertEqual(parsed, [key])
         self.assertEqual(scope, "computed_input_columns_only")
+
+    def test_partial_status_cannot_masquerade_as_complete_basis(self):
+        key = self.seed_key(0)
+        payload = {
+            "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
+            "basis_keys_repr": [repr(key)],
+            "closure_size": 1,
+            "forward_B_columns_sparse": [[]],
+            "direct_Bdag_columns_sparse": [[]],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "mislabelled.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "completed closure"):
+                load_keys(path)
+
+    def test_complete_artifact_requires_matching_matrix_dimensions(self):
+        key = self.seed_key(0)
+        payload = {
+            "status": "PASS_ADJOINT_CONSISTENCY",
+            "closure_size": 1,
+            "basis_keys_repr": [repr(key)],
+            "forward_B_columns_sparse": [],
+            "direct_Bdag_columns_sparse": [[]],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad_complete.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "forward-column count"):
+                load_keys(path)
+
+    def test_partial_artifact_requires_matching_column_count(self):
+        key = self.seed_key(0)
+        payload = {
+            "status": "INCOMPLETE_CLOSURE_LIMIT_REACHED",
+            "columns_computed": 2,
+            "partial_forward_columns_top_amplitudes": [
+                {"input_key": repr(key), "support_size": 0}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad_partial.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "columns_computed"):
+                load_keys(path)
 
 
 if __name__ == "__main__":
