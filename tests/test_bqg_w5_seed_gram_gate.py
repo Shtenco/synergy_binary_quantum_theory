@@ -4,7 +4,7 @@ import sympy as sp
 
 from bqg_finite_master_kernel_gate import build_master_constraint
 from bqg_w5_seed_gram_gate import (
-    SEED_K2_VALUES, exact_seed_gram, run_gate,
+    SEED_K2_VALUES, exact_seed_gram, exact_full_seed_gram, run_gate,
 )
 
 
@@ -13,6 +13,11 @@ class W5SeedGramGateTests(unittest.TestCase):
         gram = exact_seed_gram()
         self.assertEqual(gram, sp.eye(len(SEED_K2_VALUES)))
         self.assertTrue(all(entry.is_Rational for entry in gram))
+
+    def test_full_k5_seed_network_gram_factorizes_to_identity(self):
+        full = exact_full_seed_gram()
+        self.assertEqual(full, sp.eye(len(SEED_K2_VALUES)))
+        self.assertEqual(full.rank(), 5)
 
     def test_seed_gram_plugs_into_metric_aware_projector_interface(self):
         # Synthetic constraint used only to test Q plumbing, not a W5 constraint.
