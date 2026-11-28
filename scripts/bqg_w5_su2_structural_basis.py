@@ -412,6 +412,198 @@ def he_structural_support(key, source_v: int, Jmax2: int,
     return out
 
 
+
+def _guard_support_size(states, max_states, stage):
+    if max_states is not None and len(states) > max_states:
+        raise RuntimeError(f"{stage} support exceeded max_states; no truncation performed")
+
+
+def _volume_support(states, vertex: int, max_states=None):
+    out = set()
+    for state in states:
+        for target in advance_volume_label_support(state, vertex):
+            out.add(target)
+            _guard_support_size(out, max_states, "volume")
+    return out
+
+
+def _hit_project_support(states, x: int, y: int, Jmax2: int,
+                         charged_nodes, max_states=None):
+    out = set()
+    for state in states:
+        for hit in advance_hit_label_support(state, x, y, Jmax2):
+            projected = project_all_charged_key(hit, charged_nodes)
+            if projected is not None:
+                out.add(projected)
+                _guard_support_size(out, max_states, "hit/projection")
+    return out
+
+
+def k_complete_structural_support(key, source_v: int, Jmax2: int,
+                                  charged_nodes=(0,), max_states=100000):
+    """Upper support of K=[V,H_E] on a complete charged-node key.
+
+    The two commutator branches are V H_E and H_E V. Their possible outputs
+    are unioned; no coefficient cancellation is assumed.
+    """
+    he = he_structural_support(key, source_v, Jmax2, charged_nodes, max_states)
+    vh = _volume_support(he, source_v, max_states)
+    vin = _volume_support({lift_key_to_all_charged(key)}, source_v, max_states)
+    hv = set()
+    for state in vin:
+        hv.update(he_structural_support(
+            state, source_v, Jmax2, charged_nodes, max_states
+        ))
+        _guard_support_size(hv, max_states, "H_E-after-volume")
+    out = vh | hv
+    _guard_support_size(out, max_states, "K=[V,H_E]")
+    return out
+
+
+def C_volume_structural_support(key, source_v: int, target_v: int,
+                                Jmax2: int, i: int, j: int,
+                                max_states=100000):
+    """Upper support of C_e(V)=V-h V h^{-1} on one-source complete keys."""
+    out = set()
+    if i == j:
+        out.update(_volume_support({key}, source_v, max_states))
+    inverse = _hit_project_support(
+        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
+    )
+    vinverse = _volume_support(inverse, source_v, max_states)
+    closed = _hit_project_support(
+        vinverse, source_v, target_v, Jmax2, (source_v,), max_states
+    )
+    out.update(closed)
+    _guard_support_size(out, max_states, "C_e(V)")
+    return out
+
+
+def C_K_structural_support(key, source_v: int, target_v: int,
+                           Jmax2: int, i: int, j: int,
+                           max_states=100000):
+    """Upper support of C_e(K)=K-h K h^{-1} with K=[V,H_E]."""
+    out = set()
+    if i == j:
+        out.update(k_complete_structural_support(
+            key, source_v, Jmax2, (source_v,), max_states
+        ))
+    inverse = _hit_project_support(
+        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
+    )
+    kinverse = k_complete = set()
+    for state in inverse:
+        k_complete.update(k_complete_structural_support(
+            state, source_v, Jmax2, (source_v, target_v), max_states
+        ))
+        _guard_support_size(k_complete, max_states, "outer K")
+    closed = _hit_project_support(
+        k_complete, source_v, target_v, Jmax2, (source_v,), max_states
+    )
+    out.update(closed)
+    _guard_support_size(out, max_states, "C_e(K)")
+    return out
+
+
+def _prune_middle_scalar_support(states, source_v: int):
+    """Mirror the frozen J_source in {0,1} projection after the middle leg."""
+    return {state for state in states
+            if state[1][source_v][0] == "C"
+            and state[1][source_v][1] in (0, 2)}
+
+
+def triple_forward_structural_support(key, source_v: int, a: int, b: int,
+                                       c: int, Jmax2: int,
+                                       max_states=100000):
+    """Upper support of Tr_aux[C_a(K) C_b(K) C_c(V)]."""
+    out = set()
+    for i in range(2):
+        for j in range(2):
+            for k in range(2):
+                q = C_volume_structural_support(
+                    key, source_v, c, Jmax2, k, i, max_states
+                )
+                qk = set()
+                for state in q:
+                    qk.update(C_K_structural_support(
+                        state, source_v, b, Jmax2, j, k, max_states
+                    ))
+                    _guard_support_size(qk, max_states, "middle C(K)")
+                qk = _prune_middle_scalar_support(qk, source_v)
+                for state in qk:
+                    out.update(C_K_structural_support(
+                        state, source_v, a, Jmax2, i, j, max_states
+                    ))
+                    _guard_support_size(out, max_states, "forward triple")
+    return out
+
+
+def triple_adjoint_structural_support(key, source_v: int, a: int, b: int,
+                                      c: int, Jmax2: int,
+                                      max_states=100000):
+    """Upper support of the independently reversed Tr_aux[C_c(V) C_b(K) C_a(K)]."""
+    out = set()
+    for i in range(2):
+        for j in range(2):
+            for k in range(2):
+                q = C_K_structural_support(
+                    key, source_v, a, Jmax2, j, i, max_states
+                )
+                qk = set()
+                for state in q:
+                    qk.update(C_K_structural_support(
+                        state, source_v, b, Jmax2, k, j, max_states
+                    ))
+                    _guard_support_size(qk, max_states, "adjoint middle C(K)")
+                qk = _prune_middle_scalar_support(qk, source_v)
+                for state in qk:
+                    out.update(C_volume_structural_support(
+                        state, source_v, c, Jmax2, i, k, max_states
+                    ))
+                    _guard_support_size(out, max_states, "adjoint triple")
+    return out
+
+
+def node_kkv_structural_support(key, source_v: int, Jmax2: int,
+                                max_states=100000):
+    """Union the 24 epsilon triples, forward words and reversed adjoints."""
+    import sys
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import k5_peter_weyl_safe_hda_column as PW
+
+    neighbors = tuple(PW.NEIG[source_v])
+    from itertools import permutations
+    out = set()
+    for omitted in neighbors:
+        triple = tuple(v for v in neighbors if v != omitted)
+        for a, b, c in permutations(triple):
+            out.update(triple_forward_structural_support(
+                key, source_v, a, b, c, Jmax2, max_states
+            ))
+            _guard_support_size(out, max_states, "node KKV forward union")
+            out.update(triple_adjoint_structural_support(
+                key, source_v, a, b, c, Jmax2, max_states
+            ))
+            _guard_support_size(out, max_states, "node KKV adjoint union")
+    return out
+
+
+def w5_seed_structural_support(K: int, Jmax2: int,
+                               source_nodes=VERTICES,
+                               max_states=100000):
+    """Union nodewise forward/adjoint structural support for one W5 seed."""
+    out = set()
+    for source_v in source_nodes:
+        seed = w5_seed_as_covariant(K, source_v)
+        part = node_kkv_structural_support(seed, source_v, Jmax2, max_states)
+        out.update(part)
+        _guard_support_size(out, max_states, "W5 seed")
+    return out
+
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
