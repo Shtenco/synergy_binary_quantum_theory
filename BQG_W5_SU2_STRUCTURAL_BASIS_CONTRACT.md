@@ -170,9 +170,9 @@ rather than silently truncating the support.
 
 The dedicated GitHub Actions job
 `.github/workflows/bqg-w5-su2-structural-tests.yml` completed successfully
-on 2026-11-28. It ran the 11 tests in
+on 2026-11-28. It ran the 13 tests in
 `tests/test_bqg_w5_su2_structural_basis.py` under Python 3.11 with NumPy and
-SymPy installed: **11 passed, 0 failed**.
+SymPy installed: **13 passed, 0 failed**.
 
 The tests cover triangle/parity fusion, total-J content, W5 seed embedding,
 lazy basis enumeration, single- and two-charged-node dimensions, scalar-volume
