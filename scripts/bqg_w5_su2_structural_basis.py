@@ -214,6 +214,12 @@ def iter_charged_nodes_keys(spins: tuple[int, ...], charged_nodes=(0,)):
         yield tuple(spins), tuple(labels)
 
 
+def charged_nodes_basis_profile(spin_sectors, charged_nodes=(0,)):
+    unique = sorted({tuple(spins) for spins in spin_sectors})
+    return tuple((spins, charged_nodes_basis_size(spins, charged_nodes))
+                 for spins in unique)
+
+
 def volume_label_targets(spins_local: tuple[int, int, int, int], label):
     """Selection-rule superset for the scalar canonical volume block.
 
@@ -322,7 +328,11 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
                 for x, y in zip(path[:-1], path[1:]):
                     partial = {nxt for st in partial
                                for nxt in advance_hit_label_support(st, x, y, Jmax2)}
+                    if max_states is not None and len(partial) > max_states:
+                        raise RuntimeError("structural support exceeded max_states; no truncation performed")
                 next_states.update(partial)
+                if max_states is not None and len(next_states) > max_states:
+                    raise RuntimeError("structural support exceeded max_states; no truncation performed")
         else:
             raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
         states = next_states
