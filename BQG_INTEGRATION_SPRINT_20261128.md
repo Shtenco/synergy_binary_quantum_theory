@@ -81,3 +81,16 @@ The finite projector helper now accepts an optional exact input Gram matrix Q. W
 
 These are audit limitations, not findings of a physical inconsistency. W5, the full physical projector, and microscopic HDA remain OPEN.
 
+
+
+## Exact Gram audit of the five W5 seed intertwiners
+
+The five seed columns use doubled link spin 4 (j=2) on all ten edges and differ only by the source-node recoupling channel K2 in {0,2,4,6,8}. The normalized four-valent intertwiner is constructed by coupling legs (0,1) and (2,3) to the same K and then coupling K⊗K to the singlet, with normalization 1/sqrt(K2+1). Exact SymPy Clebsch–Gordan arithmetic gives the 5×5 intertwiner Gram matrix Q_seed=I_5. Since the remaining four node intertwiners are identical normalized K=0 states and the edge Peter–Weyl basis is assumed Haar-normalized, the full five-seed spin-network Gram matrix is also I_5.
+
+A reproducible gate was added:
+- `scripts/bqg_w5_seed_gram_gate.py`
+- `tests/test_bqg_w5_seed_gram_gate.py`
+
+The finite-projector CI workflow now runs both the finite master-kernel tests and the exact W5 seed Gram gate. The exact Gram computation was independently reproduced during this audit; the newly wired GitHub Actions result is still pending/unconfirmed. This establishes the metric only on the declared five-dimensional seed span. It does not establish the Gram matrix of a larger dynamically generated closure basis, where duplicate/noncanonical states and basis normalization must be checked explicitly.
+
+The metric-aware finite projector can therefore be supplied Q=I_5 for the five seed columns once the corresponding full constraint maps on that same five-dimensional input span and common output fiber are assembled. It still cannot certify the physical kernel until those W5 constraint matrices exist.
