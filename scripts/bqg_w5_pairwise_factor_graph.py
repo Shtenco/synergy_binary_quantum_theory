@@ -148,17 +148,10 @@ def _volume(support, vertex, limit):
             if vertex not in p:
                 pairs[p] = rel
             elif p[0] == vertex:
-                pairs[p] = frozenset((mp[x], y) for x, y in rel if x in mp
-                                     for _ in (0,) for y in (y,))
-            else:
-                pairs[p] = frozenset((x, mp[y]) for x, y in rel if y in mp)
-        # Expand the mapped set-valued relation explicitly.
-        for p, rel in list(pairs.items()):
-            if vertex == p[0]:
-                pairs[p] = frozenset((z, y) for x, y in state["pairs"][p]
+                pairs[p] = frozenset((z, y) for x, y in rel
                                      for z in mp.get(x, ()))
-            elif vertex == p[1]:
-                pairs[p] = frozenset((x, z) for x, y in state["pairs"][p]
+            else:
+                pairs[p] = frozenset((x, z) for x, y in rel
                                      for z in mp.get(y, ()))
         q = _arc_consistency({"unary": tuple(unary), "pairs": pairs})
         if all(q["unary"]):
