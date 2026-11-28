@@ -617,6 +617,184 @@ def w5_seed_structural_support(K: int, Jmax2: int,
     return out
 
 
+
+def _factorized_merge(dst, spins, factors):
+    factors = tuple(frozenset(x) for x in factors)
+    if spins not in dst:
+        dst[spins] = factors
+    else:
+        dst[spins] = tuple(
+            frozenset(a | b) for a, b in zip(dst[spins], factors)
+        )
+
+
+def factorized_support_profile(support):
+    """Compact marginal-support statistics; product dimension is an upper bound."""
+    per_node = [0] * len(VERTICES)
+    product_dimension = 0
+    max_sector_dimension = 0
+    for factors in support.values():
+        counts = [len(x) for x in factors]
+        for v, n in enumerate(counts):
+            per_node[v] += n
+        dim = prod(counts)
+        product_dimension += dim
+        max_sector_dimension = max(max_sector_dimension, dim)
+    return {
+        "spin_sector_count": len(support),
+        "local_label_counts_by_node": per_node,
+        "factorized_storage_labels": sum(per_node),
+        "product_basis_dimension_upper_bound": product_dimension,
+        "max_single_spin_sector_product_dimension": max_sector_dimension,
+    }
+
+
+def factorized_contains_key(support, key):
+    spins, labels = key
+    factors = support.get(tuple(spins))
+    return factors is not None and all(
+        label in factors[v] for v, label in enumerate(labels)
+    )
+
+
+def _factorized_initial(key):
+    spins, labels = lift_key_to_all_charged(key)
+    return {tuple(spins): tuple(frozenset((lab,)) for lab in labels)}
+
+
+def _factorized_volume(support, vertex: int, max_factor_labels=None):
+    out = {}
+    for spins, factors in support.items():
+        updated = list(factors)
+        targets = set()
+        for lab in factors[vertex]:
+            targets.update(volume_label_targets(local_spins(spins, vertex), lab))
+        updated[vertex] = frozenset(targets)
+        _factorized_merge(out, spins, updated)
+    if max_factor_labels is not None:
+        n = sum(len(f) for factors in out.values() for f in factors)
+        if n > max_factor_labels:
+            raise RuntimeError(f"factorized volume labels {n} exceed guard {max_factor_labels}")
+    return out
+
+
+def _factorized_hit(support, x: int, y: int, Jmax2: int,
+                    max_factor_labels=None):
+    edge = tuple(sorted((x, y)))
+    if edge not in EDGE_INDEX or x == y:
+        raise ValueError("hit endpoints must define a K5 edge")
+    ei = EDGE_INDEX[edge]
+    out = {}
+    for spins, factors in support.items():
+        s = spins[ei]
+        for so in (s - 1, s + 1):
+            if so < 0 or so > Jmax2:
+                continue
+            new_spins_list = list(spins)
+            new_spins_list[ei] = so
+            new_spins = tuple(new_spins_list)
+            updated = list(factors)
+            valid = True
+            for v in (x, y):
+                new_local = local_spins(new_spins, v)
+                all_labels = charged_node_basis(new_local)
+                possible = set()
+                for old_lab in factors[v]:
+                    old_J2 = old_lab[1] if old_lab[0] == "C" else 0
+                    possible.update(
+                        lab for lab in all_labels
+                        if abs(lab[1] - old_J2) <= 1
+                        and lab[1] + old_J2 >= 1
+                    )
+                if not possible:
+                    valid = False
+                    break
+                updated[v] = frozenset(possible)
+            if valid:
+                _factorized_merge(out, new_spins, updated)
+    if max_factor_labels is not None:
+        n = sum(len(f) for factors in out.values() for f in factors)
+        if n > max_factor_labels:
+            raise RuntimeError(f"factorized hit labels {n} exceed guard {max_factor_labels}")
+    return out
+
+
+def factorized_sequence_support(key, sequence, source_v: int, Jmax2: int,
+                                charged_nodes=(0,), max_factor_labels=1000000):
+    """Conservative factorized envelope; avoids Cartesian products of node labels.
+
+    For each link-spin sector it stores the allowed marginal label set at each
+    node. Their Cartesian product is an upper bound on the joint support:
+    cross-node correlations are intentionally not asserted.
+    """
+    support = _factorized_initial(key)
+    for op in sequence:
+        if op[0] == "V":
+            support = _factorized_volume(
+                support, op[1], max_factor_labels
+            )
+        elif op[0] == "P":
+            path = tuple(op[1])
+            for x, y in zip(path[:-1], path[1:]):
+                support = _factorized_hit(
+                    support, x, y, Jmax2, max_factor_labels
+                )
+        else:
+            raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
+        if not support:
+            break
+
+    charged = set(charged_nodes)
+    projected = {}
+    for spins, factors in support.items():
+        final = []
+        valid = True
+        for v, labs in enumerate(factors):
+            if v in charged:
+                keep = frozenset(labs)
+            else:
+                keep = frozenset(
+                    ("G", k) for k in gauss_labels(local_spins(spins, v))
+                    if ("C", 0, 0, k, k) in labs
+                )
+                if not keep:
+                    valid = False
+                    break
+            final.append(keep)
+        if valid:
+            _factorized_merge(projected, spins, final)
+    return projected
+
+
+def factorized_t_sequence_support(key, v: int, a: int, b: int, c: int,
+                                  Jmax2: int, charged_nodes=(0, 1),
+                                  include_adjoint=True,
+                                  max_factor_labels=1000000):
+    import sys
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import k5_peter_weyl_safe_hda_column as PW
+
+    out = {}
+    for _coef, seq0 in PW.T_sequences(v, a, b, c):
+        words = [seq0]
+        if include_adjoint:
+            words.append(PW.adjoint_sequence(seq0))
+        for word in words:
+            part = factorized_sequence_support(
+                key, word, v, Jmax2, charged_nodes, max_factor_labels
+            )
+            for spins, factors in part.items():
+                _factorized_merge(out, spins, factors)
+            if max_factor_labels is not None:
+                n = sum(len(f) for factors in out.values() for f in factors)
+                if n > max_factor_labels:
+                    raise RuntimeError(f"factorized T support labels {n} exceed guard {max_factor_labels}")
+    return out
+
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
