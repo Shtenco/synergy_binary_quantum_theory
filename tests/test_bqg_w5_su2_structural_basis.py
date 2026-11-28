@@ -9,7 +9,8 @@ from bqg_w5_su2_structural_basis import (
     w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence, t_sequence_spin_support, spin_sector_basis_profile,
     charged_nodes_basis_size, charged_nodes_basis_profile, volume_label_targets, lift_key_to_all_charged,
     project_all_charged_key, advance_hit_label_support, structural_sequence_support,
-    C_volume_structural_support,
+    C_volume_structural_support, factorized_t_sequence_support,
+    factorized_sequence_support, factorized_contains_key, factorized_support_profile,
 )
 
 
@@ -122,6 +123,23 @@ class StructuralBasisTests(unittest.TestCase):
         for _, labels in states:
             self.assertIn(labels[0][1], (1, 3))
             self.assertEqual(labels[1][1], 1)
+
+    def test_factorized_support_contains_explicit_one_hit_support(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        seq = (("P", (0, 1), 0, 0),)
+        explicit = structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1))
+        factored = factorized_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1))
+        self.assertTrue(all(factorized_contains_key(factored, item) for item in explicit))
+        profile = factorized_support_profile(factored)
+        self.assertEqual(profile["spin_sector_count"], 1)
+        self.assertGreaterEqual(profile["product_basis_dimension_upper_bound"], len(explicit))
+
+    def test_factorized_support_contains_explicit_path_support(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        seq = (("P", (0, 1, 2), 0, 1),)
+        explicit = structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 2))
+        factored = factorized_sequence_support(key, seq, 0, 2, charged_nodes=(0, 2))
+        self.assertTrue(all(factorized_contains_key(factored, item) for item in explicit))
 
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
