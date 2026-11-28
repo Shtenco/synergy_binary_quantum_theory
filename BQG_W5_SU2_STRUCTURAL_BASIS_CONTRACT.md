@@ -460,7 +460,7 @@ reversed-adjoint KKV words. The pilot runner is
 `scripts/bqg_w5_pairwise_kkv_pilot.py`.
 
 Validation:
-- The 30-test CI suite passed, including exact-joint-support inclusion checks
+- The 35-test CI suite passed, including exact-joint-support inclusion checks
   for one-hit and volume controls, K, C_e(K), and both KKV orientations in
   small mocked sectors.
 - The real W5 K=0 pilot used all ten links at j=2, Jmax2=10, source 0, and
@@ -493,9 +493,10 @@ higher-order cluster relaxation; it does not store four- or five-node
 correlations.
 
 Validation:
-- 33 structural tests pass, including exact joint-support inclusion for a
-  fundamental hit and both forward/reversed-adjoint KKV in a small mocked
-  sector.
+- The current 35-test structural suite passes. Triplet inclusion is checked
+  against exact joint-key support for a fundamental hit, a composite
+  hit-volume-hit word, and both forward/reversed-adjoint KKV using a
+  non-empty one-hit mocked H_E word in a small sector.
 - Actual W5 K=0 seed, all ten links j=2, Jmax2=10, source 0, triple (1,2,3):
   with a 100,000-entry cap, forward propagation hit 109,850 entries and
   adjoint propagation hit 133,021 entries during holonomy expansion.
@@ -513,3 +514,43 @@ T-sequence touch the source node and three selected neighbors; the omitted
 neighbor is not touched by that individual primitive. A branch-aware
 representation can exploit this local four-node support without merging
 unrelated oriented-spec branches prematurely.
+
+
+## Retest after nontrivial KKV inclusion controls (2026-11-28)
+
+Commit `d624ca41fa2998e2d75a0493c469bce3ddf0ebf2` passed GitHub Actions:
+[run 46131170279](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46131170279).
+The suite now has 35 passing tests. The added triplet-cluster controls include:
+- exact inclusion for a composite `P(0,1,2,0) -> V(0) -> P(0,3,4)` word;
+- forward and independently reversed-adjoint KKV inclusion with a non-empty
+  one-hit mocked T-word, rather than the earlier empty-word-only mock.
+
+This strengthens the finite combinatorial inclusion check, but remains a
+small-sector structural test. It does not certify the complete physical W5
+word family or numerical matrix elements.
+
+The same CI run reconfirms the real-seed bottleneck:
+- Pairwise factor graph, cap 25,000: forward 27,709 and adjoint 27,980
+  entries at holonomy expansion.
+- All-ten-triplet cluster, cap 100,000: forward 109,850 and adjoint 133,021
+  entries at holonomy expansion.
+- Factorized full-operator KKV, cap 10,000: forward 10,050 at holonomy
+  expansion; adjoint 10,111 during H_E marginal union; 24-term node union
+  10,184 at holonomy expansion.
+- The factorized T-sequence-only envelope remains 3,672 marginal labels,
+  product-basis upper bound 1,703,658, maximum doubled link spin 6.
+
+Every guard stopped before truncation. The all-triplet representation is
+more expensive than pairwise; the factorized full-operator representation
+is the lightest but still crosses its 10,000-label cap. None of these runs
+evaluated amplitudes or established a zero/nonzero KKV column.
+
+Next implementation target: a **disjunctive, branch-aware factorized domain**.
+Keep separate support alternatives for each `oriented_specs` item,
+T-sequence, forward/adjoint word, and commutator branch; canonicalize and
+deduplicate identical alternatives without taking coordinate-wise unions
+across distinct branches. Compose the alternatives through K, C(K), and KKV.
+This should be compared with the current marginal-union baseline on small
+exact sectors before any real-seed claim. A branch-aware abstraction still
+does not retain all within-branch cross-node correlations, so its soundness
+must continue to be checked by exact inclusion tests.
