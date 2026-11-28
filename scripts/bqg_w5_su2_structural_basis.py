@@ -480,17 +480,14 @@ def C_volume_structural_support(key, source_v: int, target_v: int,
     out = set()
     if i == j:
         out.update(_volume_support({key}, source_v, max_states))
-    for aux_k in range(2):
-        inverse = _hit_project_support(
-            {key}, target_v, source_v, Jmax2, (source_v, target_v),
-            max_states
-        )
-        vinverse = _volume_support(inverse, source_v, max_states)
-        closed = _hit_project_support(
-            vinverse, source_v, target_v, Jmax2, (source_v,),
-            max_states
-        )
-        out.update(closed)
+    inverse = _hit_project_support(
+        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
+    )
+    vinverse = _volume_support(inverse, source_v, max_states)
+    closed = _hit_project_support(
+        vinverse, source_v, target_v, Jmax2, (source_v,), max_states
+    )
+    out.update(closed)
     _guard_support_size(out, max_states, "C_e(V)")
     return out
 
@@ -504,22 +501,19 @@ def C_K_structural_support(key, source_v: int, target_v: int,
         out.update(k_complete_structural_support(
             key, source_v, Jmax2, (source_v,), max_states
         ))
-    for aux_k in range(2):
-        inverse = _hit_project_support(
-            {key}, target_v, source_v, Jmax2, (source_v, target_v),
-            aux_k, j, max_states
-        )
-        k_complete = set()
-        for state in inverse:
-            k_complete.update(k_complete_structural_support(
-                state, source_v, Jmax2, (source_v, target_v), max_states
-            ))
-            _guard_support_size(k_complete, max_states, "outer K")
-        closed = _hit_project_support(
-            k_complete, source_v, target_v, Jmax2, (source_v,),
-            max_states
-        )
-        out.update(closed)
+    inverse = _hit_project_support(
+        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
+    )
+    k_complete = set()
+    for state in inverse:
+        k_complete.update(k_complete_structural_support(
+            state, source_v, Jmax2, (source_v, target_v), max_states
+        ))
+        _guard_support_size(k_complete, max_states, "outer K")
+    closed = _hit_project_support(
+        k_complete, source_v, target_v, Jmax2, (source_v,), max_states
+    )
+    out.update(closed)
     _guard_support_size(out, max_states, "C_e(K)")
     return out
 
