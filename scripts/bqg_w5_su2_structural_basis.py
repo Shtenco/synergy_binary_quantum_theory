@@ -284,6 +284,7 @@ def _hit_delta_M2(x: int, y: int, node: int, i: int, j: int) -> int:
     # CG matrix when x > y. The oriented intertwiner convention is therefore
     # accounted for in that branch; applying a second epsilon sign here would
     # double-count the orientation reversal.
+    return raw
 
 
 def advance_hit_label_support(key, x: int, y: int, Jmax2: int,
@@ -293,7 +294,7 @@ def advance_hit_label_support(key, x: int, y: int, Jmax2: int,
     Link spins change by +/-1 in doubled units. At both endpoints, the
     fundamental tensor requires |J-J'| <= 1/2 <= J+J'. The fixed indices
     also determine M' exactly through the CG condition m'=m+m_f; the sign
-    is adjusted for reversed edge orientation and the epsilon_j convention.
+    follows the repository's forward/dual CG branch for the oriented edge.
     """
     spins, labels = lift_key_to_all_charged(key)
     edge = tuple(sorted((x, y)))
