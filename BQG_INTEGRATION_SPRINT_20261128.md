@@ -103,3 +103,16 @@ The seed Gram gate has been strengthened from a local four-valent intertwiner ca
 The implementation now exposes `exact_full_seed_gram()` and reports the factorization assumptions in the JSON certificate. A dedicated test checks the full-network 5×5 Gram result and rank. This is still a seed-span result: it does not calculate the Gram matrix of the dynamically generated adjoint-closure states, where basis collisions, distinct link labels, and sector-dependent normalization must be treated explicitly.
 
 The expanded test suite was committed as `a00b275c4b4a0b647413a05ac5eecedb45a07bef`. GitHub Actions runs `46179668056` (finite-projector + W5 Gram) and `46179667988` (W5 first-column workflow) were queued at the time of this update; do not report the expanded suite as passing until the former completes successfully.
+
+
+## Canonical closure-basis metric theorem and validator — 2026-11-28
+
+Inspection of `k5_peter_weyl_safe_hda_column.py` confirms that closure keys are encoded as ten doubled edge spins plus five doubled four-valent recoupling labels. The local tensor constructor uses the normalized CG singlet coupling with denominator sqrt(K2+1); orientation changes are implemented by unitary epsilon_j maps. Therefore, provided every key is admissible and distinct, the corresponding canonical spin-network basis is orthonormal under normalized Haar/Peter–Weyl conventions, and its exact Gram matrix is I_N.
+
+A fail-closed validator was added:
+- `scripts/bqg_w5_closure_gram_gate.py`
+- `tests/test_bqg_w5_closure_gram_gate.py`
+
+It validates all ten edge-spin labels, all five node-channel triangle/intersection rules, and uniqueness of the full basis keys before returning Q=I_N. It can read a complete `basis_keys_repr` list from a completed closure JSON, or a partial artifact's explicitly computed input columns; the latter is labelled partial and does not certify undiscovered states. This theorem is conditional on the key list being the canonical basis actually used by the operator. It does not certify amplitude completeness, floating-point CG residuals, or the physical constraint maps.
+
+The new closure Gram validator and tests were committed in `03c3e23809a97c10ca1639663676a80b09744af4` and `8a573dbf9c1234d3e967f71c1c1c90ec32b2fb56`. The CI workflow now includes this test module. The associated GitHub Actions runs were queued at last poll; their completion is not yet confirmed.
