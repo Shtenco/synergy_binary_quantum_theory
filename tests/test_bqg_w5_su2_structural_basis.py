@@ -1,5 +1,8 @@
 import unittest
 
+import k5_peter_weyl_safe_hda_column as PW
+import peter_weyl_covariant_K_leg_gate as CK
+
 from bqg_w5_su2_structural_basis import (
     allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
@@ -122,6 +125,20 @@ class StructuralBasisTests(unittest.TestCase):
                 self.assertEqual(len(states), 1)
                 self.assertEqual(states[0][1][0][2], 1 if i == 0 else -1)
                 self.assertEqual(states[0][1][1][2], -1 if j == 0 else 1)
+
+    def test_fixed_index_support_matches_actual_CG_hit_projection(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        branch = CK.branch_from_key(key)
+        for x, y in ((0, 1), (1, 0)):
+            for i in range(2):
+                for j in range(2):
+                    expected = set()
+                    for hb in PW.apply_hit_branch(branch, x, y, i, j, 2):
+                        projected, leak = CK.project_branch_complete_charges(hb, (0, 1))
+                        self.assertLess(leak, 1e-12)
+                        expected.update(projected)
+                    structural = set(advance_hit_label_support(key, x, y, 2, i, j))
+                    self.assertEqual(structural, expected)
 
     def test_fundamental_hit_changes_total_J_by_half_spin(self):
         key = ((2,) * 10, (("C", 2, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
