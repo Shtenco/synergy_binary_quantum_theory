@@ -14,12 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: research/bqg-fs-symplectic-reduction-20261128
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependency for imported Peter-Weyl word definitions
+      - name: Install NumPy and SymPy for imported Peter-Weyl word definitions
         run: python -m pip install numpy sympy
       - name: Run threshold-free structural basis tests
         env:
