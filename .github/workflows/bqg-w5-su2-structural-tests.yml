@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install dependency for imported Peter-Weyl word definitions
+        run: python -m pip install numpy
       - name: Run threshold-free structural basis tests
         env:
           PYTHONPATH: scripts
