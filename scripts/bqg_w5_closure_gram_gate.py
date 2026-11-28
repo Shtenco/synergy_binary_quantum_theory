@@ -17,6 +17,7 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 from pathlib import Path
 
 
@@ -111,7 +112,7 @@ def load_keys(path: Path) -> tuple[list, str]:
             raise ValueError("closure_size does not match basis_keys_repr length")
         if raw_keys != sorted(raw_keys):
             raise ValueError("completed basis keys are not in canonical repr order")
-        basis_payload = "\\n".join(raw_keys).encode("utf-8")
+        basis_payload = "\n".join(raw_keys).encode("utf-8")
         expected_basis_id = hashlib.sha256(basis_payload).hexdigest()
         if data.get("basis_id_sha256") != expected_basis_id:
             raise ValueError("basis_id_sha256 does not match the ordered basis keys")
