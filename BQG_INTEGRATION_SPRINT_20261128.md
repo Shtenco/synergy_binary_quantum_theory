@@ -65,3 +65,6 @@ Until then the integrated result is OPEN. A scientifically valid no-go is record
 - Exact vacuum inclusion has been shown for a recovered generic master-row construction, but its identity with the historical branch-sum operator and non-vacuum rank remain open.
 - The W5 raw 24-term run was previously interrupted after one epsilon term; the full coherent column is unknown.
 - The current ADM HDA calculation is classical and ansatz-conditional; microscopic BQG DD/DH/HH operator brackets remain open.
+- A first staged W5 KKV attempt reached the charged H_E path but aborted because the highest-weight cache wrapper asserted J,M preservation and encountered an output label J2=2 from an input J2=0. This is not yet evidence of a physical anomaly: the assertion belonged to the optimization wrapper, not an independently verified operator identity.
+- The highest-weight magnetic-sector shortcut has been disabled in the sine-ordered W5 path. The exact full magnetic labels now remain in H_E cache keys; the rerun must determine whether the underlying unsimplified operator satisfies the expected charge-sector selection rules.
+- Current W5 run 8 evaluates only seed K=0 at source node 0 with Jmax2=10 and max_states=1. It is a diagnostic column, not the full W5 operator. The finite physical-projector CI passed again on the current tested head; microscopic HDA remains OPEN.
