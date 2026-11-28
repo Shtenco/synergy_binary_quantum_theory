@@ -293,7 +293,7 @@ that an unverified magnetic rule is exact.
 
 The explicit joint-key pilot on the physical W5 (j=2,K=0) seed exceeds
 5,000 states during the first encountered path
-((0,1,2,0)): its preceding frontier has 2,492 states and the next expansion
+((0,1,2,0)): its preceding frontier has 1,840 states and the next expansion
 reaches 5,001, so the guard aborts without truncation. This is a genuine
 combinatorial bottleneck, not a numerical zero.
 
@@ -314,17 +314,26 @@ the physical W5 (K=0) seed is now part of CI. Its output must be interpreted
 as a conservative envelope, not an exact joint reachable-state list.
 
 
-## Bounded W5 factorized pilot result (2026-11-28)
+## Bounded W5 structural pilot results (2026-11-28)
 
-The GitHub Actions run
-`46086779612` completed successfully. The test suite ran **16 tests,
-0 failures**. The explicit W5 (K=0), (J_{max,2}=10) pilot reached the
-configured 5,000-state guard on the first encountered path
-((0,1,2,0)), with frontier size 2,492 before expansion and 5,001 after it.
+GitHub Actions run
+[`46087100107`](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46087100107)
+completed successfully. The structural test suite ran **19 tests, 0 failures**,
+including three new bounded-composition tests for (K=[V,H_E]),
+diagonal/off-diagonal (C_e(K)), and fail-closed state guards.
 
-The factorized run on the same W5 seed, same (J_{max,2}=10), same triple
-((1,2,3)), and both forward and independently reversed-adjoint T words
-completed without reaching its 100,000 local-label guard:
+The minimal diagnostic all-link (j=0) seed completed the explicit
+one-triple T-sequence support pilot with 16 keys, one spin sector, and maximum
+doubled link spin 1. This is only a structural smoke test.
+
+For the physical W5 (all-link (j=2,K=0)) seed, the explicit joint-key
+T-sequence pilot at (J_{max,2}=10) reached the 5,000-state guard during
+path ((0,1,2,0)): the prior frontier contained 1,840 states and the next
+expansion reached 5,001. The guard aborted without truncation.
+
+The factorized envelope for the same W5 seed and ordered triple ((1,2,3)),
+including forward and independently reversed-adjoint T words, completed
+without reaching its 100,000 local-label guard:
 
 | Metric | Result |
 |---|---:|
@@ -339,8 +348,12 @@ completed without reaching its 100,000 local-label guard:
 | Largest single-sector product dimension | 147,400 |
 | Maximum doubled link spin reached | 6 |
 
-This is a bounded pilot for **one ordered triple** and its adjoint, not the
-full 24-term epsilon sum, not the full node KKV operator, and not the
-physical W5 output. The 1,703,658 figure is a conservative product-dimension
-upper bound from the marginal envelope; it is not a count of jointly
-reachable keys or nonzero matrix elements.
+The product-basis dimension is an upper bound from marginal label sets, not
+the number of jointly reachable keys or nonzero matrix elements. This remains
+one ordered triple, not the full 24-term epsilon sum, full node KKV operator,
+or physical W5 output.
+
+A separate end-to-end bounded joint-support runner now exercises one
+(C_e(K)) component and one forward KKV triple on the physical W5 seed under
+the same fail-closed guard. Its outcome is reported by the subsequent CI run;
+no full KKV enumeration or numerical amplitude calculation is claimed here.
