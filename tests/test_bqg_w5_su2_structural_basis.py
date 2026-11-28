@@ -4,7 +4,7 @@ from bqg_w5_su2_structural_basis import (
     allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
     w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence, t_sequence_spin_support, spin_sector_basis_profile,
-    charged_nodes_basis_size, volume_label_targets, lift_key_to_all_charged,
+    charged_nodes_basis_size, charged_nodes_basis_profile, volume_label_targets, lift_key_to_all_charged,
     project_all_charged_key, advance_hit_label_support, structural_sequence_support,
 )
 
@@ -60,6 +60,9 @@ class StructuralBasisTests(unittest.TestCase):
         sizes = [n for _, n in profile]
         self.assertEqual(len(profile), 24)
         self.assertEqual((min(sizes), max(sizes), sum(sizes)), (57600, 630000, 5759800))
+        two_charge = charged_nodes_basis_profile(support, (0, 1))
+        two_sizes = [n for _, n in two_charge]
+        self.assertEqual((min(two_sizes), max(two_sizes), sum(two_sizes)), (5760000, 113400000, 878540000))
 
     def test_volume_selection_preserves_total_J_and_M(self):
         local = (4, 4, 4, 4)
