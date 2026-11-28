@@ -340,8 +340,12 @@ def project_final(branches, charged_nodes, limit=100000):
     """Apply the requested Gauss/charged projection only after the full word."""
     out = []
     for branch in branches:
+        # Projection is terminal, but expanding all omitted factors before
+        # projection must not make the returned representation dense. Keep
+        # the branch's inherited active scope; omitted pairs remain Cartesian.
+        scope = _scope_of(branch)
         projected = PG._project(expand(branch), charged_nodes, limit)
         if projected:
-            out.append(projected)
+            out.append(compress(projected, scope))
     _guard(out, limit, "final Gauss projection")
     return out
