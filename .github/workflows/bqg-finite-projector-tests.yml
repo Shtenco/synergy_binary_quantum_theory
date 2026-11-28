@@ -20,6 +20,8 @@ on:
       - 'tests/test_bqg_finite_master_kernel_gate.py'
       - 'scripts/bqg_w5_seed_gram_gate.py'
       - 'tests/test_bqg_w5_seed_gram_gate.py'
+      - 'scripts/bqg_w5_closure_gram_gate.py'
+      - 'tests/test_bqg_w5_closure_gram_gate.py'
       - '.github/workflows/bqg-finite-projector-tests.yml'
 
 jobs:
