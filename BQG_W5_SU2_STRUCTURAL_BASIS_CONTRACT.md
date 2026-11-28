@@ -111,6 +111,6 @@ The sum of the 24 per-sector dimensions is **5,759,800**.
 These are exact counts from the triangle/parity label enumeration. They show
 why a full Cartesian materialization is wasteful: the operator-reachable
 subspace should be stored sparsely, but its candidate labels must be defined
-structurally. The counts are only for the spin sectors of this one `H_E)
+structurally. The counts are only for the spin sectors of this one `H_E`
 primitive family. They do not include the further nested outer holonomy
 operations in `C_e(K)`, nor the complete W5 epsilon sum.
