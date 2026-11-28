@@ -290,7 +290,21 @@ def advance_hit_label_support(key, x: int, y: int, Jmax2: int):
         new_spins = tuple(new_spins)
         opts = []
         for v in endpoints:
-            opts.append(charged_node_basis(local_spins(new_spins, v)))
+            old_lab = labels[v]
+            old_J2 = old_lab[1] if old_lab[0] == "C" else 0
+            # A fundamental holonomy is a rank-1/2 tensor at each endpoint:
+            # |J-J'| <= 1/2 <= J+J'. In doubled labels this is
+            # |J2-J2'| <= 1 and J2+J2' >= 1. Keep every M2 because the
+            # fixed magnetic-index/orientation convention is handled by the
+            # coefficient engine, not needed for a conservative support bound.
+            allowed_J2 = {
+                J2 for J2 in all_total_J2(local_spins(new_spins, v))
+                if abs(J2 - old_J2) <= 1 and J2 + old_J2 >= 1
+            }
+            opts.append(tuple(
+                lab for lab in charged_node_basis(local_spins(new_spins, v))
+                if lab[1] in allowed_J2
+            ))
         for left, right in product(*opts):
             new_labels = list(labels)
             new_labels[x] = left
