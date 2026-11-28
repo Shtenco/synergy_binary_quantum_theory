@@ -435,5 +435,52 @@ class StructuralBasisTests(unittest.TestCase):
             FG._volume(FG._initial(key), 0, 0)
 
 
+    def test_triplet_cluster_contains_exact_one_hit_support(self):
+        import bqg_w5_triplet_cluster_support as TG
+        import bqg_w5_su2_structural_basis as SB
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        exact = SB.structural_sequence_support(
+            key, (("P", (0, 1)),), 0, 2, charged_nodes=(0, 1)
+        )
+        got = TG._sequence(TG._initial(key), (("P", (0, 1)),),
+                           0, 2, (0, 1), 20000)
+        self.assertTrue(all(TG.contains_joint(got, x) for x in exact))
+
+    def test_triplet_cluster_forward_and_adjoint_KKV_include_exact_mock(self):
+        import bqg_w5_triplet_cluster_support as TG
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        initial = TG._initial(key)
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact_f = SB.triple_forward_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            got_f = TG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=False, limit=100000
+            )
+            self.assertTrue(all(TG.contains_joint(got_f, x) for x in exact_f))
+            exact_a = SB.triple_adjoint_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            got_a = TG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=True, limit=100000
+            )
+            self.assertTrue(all(TG.contains_joint(got_a, x) for x in exact_a))
+
+    def test_triplet_cluster_guard_is_fail_closed(self):
+        import bqg_w5_triplet_cluster_support as TG
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        with self.assertRaises(RuntimeError):
+            TG._volume(TG._initial(key), 0, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
