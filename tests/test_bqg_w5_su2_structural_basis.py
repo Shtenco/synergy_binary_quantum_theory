@@ -500,7 +500,7 @@ class StructuralBasisTests(unittest.TestCase):
         key = ((0,) * 10,
                (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
         initial = TG._initial(key)
-        nontrivial_word = (("P", (0, 1)),)
+        nontrivial_word = (("P", (0, 1), 0, 0),)
         with (
             patch.object(PW, "oriented_specs",
                          return_value=((1, (0, 1, 2, 3)),)),
