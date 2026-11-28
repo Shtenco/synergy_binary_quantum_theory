@@ -100,11 +100,31 @@ def gram_certificate(keys) -> dict:
 def load_keys(path: Path) -> tuple[list, str]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if "basis_keys_repr" in data:
-        return [ast.literal_eval(x) for x in data["basis_keys_repr"]], "complete_basis_list"
+        status = data.get("status")
+        if status not in {"PASS_ADJOINT_CONSISTENCY", "FAIL_ADJOINT_OR_LEAKAGE_GATE"}:
+            raise ValueError("basis_keys_repr requires a completed closure artifact status")
+        raw_keys = data["basis_keys_repr"]
+        if not isinstance(raw_keys, list) or not raw_keys:
+            raise ValueError("basis_keys_repr must be a nonempty list")
+        if data.get("closure_size") != len(raw_keys):
+            raise ValueError("closure_size does not match basis_keys_repr length")
+        forward = data.get("forward_B_columns_sparse")
+        adjoint = data.get("direct_Bdag_columns_sparse")
+        if not isinstance(forward, list) or len(forward) != len(raw_keys):
+            raise ValueError("completed artifact forward-column count does not match basis")
+        if not isinstance(adjoint, list) or len(adjoint) != len(raw_keys):
+            raise ValueError("completed artifact adjoint-column count does not match basis")
+        return [ast.literal_eval(x) for x in raw_keys], "complete_basis_list"
     partial = data.get("partial_forward_columns_top_amplitudes")
     if partial is not None:
+        if data.get("status") != "INCOMPLETE_CLOSURE_LIMIT_REACHED":
+            raise ValueError("partial input columns require an explicit incomplete-closure status")
+        if not isinstance(partial, list) or not partial:
+            raise ValueError("partial input-column list must be nonempty")
+        if data.get("columns_computed") != len(partial):
+            raise ValueError("columns_computed does not match partial input-column count")
         return [ast.literal_eval(row["input_key"]) for row in partial], "computed_input_columns_only"
-    raise ValueError("JSON contains neither basis_keys_repr nor partial input-key list")
+    raise ValueError("JSON contains neither a validated complete basis nor partial input-key list")
 
 
 def main() -> int:
