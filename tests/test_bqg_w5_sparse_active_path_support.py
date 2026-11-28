@@ -43,7 +43,8 @@ def test_active_scope_is_local_to_primitive_paths():
     word = (("P", (0, 1, 2, 0)), ("V", 0))
     assert SAP.active_scope(word, 0) == (0, 1, 2)
     seed = PG._initial(tiny_seed())
-    result = SAP.sequence(seed, word, 0, 3, limit=200000)
+    result = SAP.sequence(seed, word, 0, 3, charged_nodes=SAP.NODES,
+                            limit=200000)
     prof = SAP.profile(result)
     assert prof["joint_keys_enumerated"] is False
     assert prof["amplitudes_evaluated"] is False
