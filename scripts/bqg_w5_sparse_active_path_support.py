@@ -74,7 +74,7 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
              limit=100000):
     """Propagate one primitive word with active-scope pair storage."""
     scope = {source_v}
-    work = compress(PG._lift(support), tuple(sorted(scope)))
+    work = compress(PG._lift(expand(support)), tuple(sorted(scope)))
     _guard(work, limit, "initial active scope")
     for op in word:
         if op[0] == "V":
@@ -185,7 +185,7 @@ def k_branches(branches, source_v, Jmax2, charged_nodes=(0,),
             out.append(compress(vh, (source_v,)))
     vin = []
     for branch in branches:
-        lifted = PG._lift(branch)
+        lifted = PG._lift(expand(branch))
         vol = PG._volume(lifted, source_v, limit)
         projected = PG._project(vol, charged_nodes, limit)
         if projected:
