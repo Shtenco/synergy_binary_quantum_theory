@@ -368,7 +368,7 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
                                   for y in state["unary"][b])
             if relation != cartesian:
                 scope.update((a, b))
-    work = compress(PG._lift(expand(support)), tuple(sorted(scope)))
+    work = compress(_sparse_lift(support), tuple(sorted(scope)))
     _guard(work, limit, "initial active scope")
     for op in word:
         if op[0] == "V":
@@ -377,18 +377,18 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
             scope.update(tuple(op[1]))
         else:
             raise ValueError(f"unknown operator {op[0]}")
-        full = expand(work)
+        work = _ensure_scope(work, scope, limit)
         if op[0] == "V":
-            full = PG._volume(full, source_v, limit)
+            work = _sparse_volume(work, source_v, limit)
         else:
             path = tuple(op[1])
             for x, y in zip(path[:-1], path[1:]):
-                full = PG._hit(full, x, y, Jmax2, limit)
-        work = compress(full, tuple(sorted(scope)))
+                work = _sparse_hit(work, x, y, Jmax2, limit)
+        work = compress(work, tuple(sorted(scope)))
         _guard(work, limit, f"after {op[0]}")
         if not work:
             break
-    projected = PG._project(expand(work), charged_nodes, limit)
+    projected = _sparse_project(work, charged_nodes, limit)
     return compress(projected, tuple(sorted(scope)))
 
 
@@ -484,9 +484,9 @@ def k_branches(branches, source_v, Jmax2, charged_nodes=(0,),
             out.append(compress(vh, _scope_of(vh, (source_v,))))
     vin = []
     for branch in branches:
-        lifted = PG._lift(expand(branch))
-        vol = PG._volume(lifted, source_v, limit)
-        projected = PG._project(vol, NODES, limit)
+        lifted = _sparse_lift(branch)
+        vol = _sparse_volume(lifted, source_v, limit)
+        projected = _sparse_project(vol, NODES, limit)
         if projected:
             vin.append(compress(projected, _scope_of(projected, (source_v,))))
     out.extend(he_spec_branches(vin, source_v, Jmax2,
@@ -550,7 +550,7 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
 def scalar_filter(branches, source_v, limit=100000):
     out = []
     for branch in branches:
-        full = PG._scalar_filter(expand(branch), source_v)
+        full = _sparse_scalar_filter(branch, source_v, limit)
         if full:
             out.append(compress(full, _scope_of(branch, (source_v,))))
     _guard(out, limit, "scalar-source filter")
@@ -621,7 +621,7 @@ def project_final(branches, charged_nodes, limit=100000):
         # projection must not make the returned representation dense. Keep
         # the branch's inherited active scope; omitted pairs remain Cartesian.
         scope = _scope_of(branch)
-        projected = PG._project(expand(branch), charged_nodes, limit)
+        projected = _sparse_project(branch, charged_nodes, limit)
         if projected:
             out.append(compress(projected, scope))
     total = sum(
