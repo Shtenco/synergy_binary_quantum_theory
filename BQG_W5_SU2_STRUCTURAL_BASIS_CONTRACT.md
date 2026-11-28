@@ -114,3 +114,53 @@ subspace should be stored sparsely, but its candidate labels must be defined
 structurally. The counts are only for the spin sectors of this one `H_E`
 primitive family. They do not include the further nested outer holonomy
 operations in `C_e(K)`, nor the complete W5 epsilon sum.
+
+
+## Correction: charged-node multiplicity in the actual K-leg pipeline
+
+The one-charged-node count above is valid for the single-source covariant
+representation, but it is not the default output basis of
+`peter_weyl_covariant_K_leg_gate.apply_HE_complete_key`: that function
+projects onto `charged_nodes=(0,1)` by default. The custom K-composition
+path can also request a single charged source, so the number of charged nodes
+must be an explicit parameter, not an implicit convention.
+
+For the initial `spins=(4,)*10` sector, two charged nodes give
+
+`625^2 * 5^3 = 48,828,125`
+
+ambient keys. This is the appropriate fixed-spin ambient dimension for the
+two-charged-node `H_E` projection with nodes `(0,1)`. The earlier
+`390,625` figure remains the correct one-charged-node dimension only.
+
+For the 24 spin sectors of the representative `H_E) primitive family, the
+two-charged-node ambient dimensions range from **5,760,000** to
+**113,400,000**; their sum is **878,540,000**. These figures are structural
+dimension counts, not matrix allocations or operator-reachable dimensions.
+They make explicit why the full product basis cannot be materialized.
+
+## Node-label propagation and volume selection
+
+The generator now lifts every intermediate node to the complete
+`(J2,M2,K12,K34)` basis. This is necessary because a holonomy hit changes
+the local representation content at both endpoints; imposing Gauss singlets
+at intermediate stages would be an unjustified restriction. Only after the
+whole word is propagated does `project_all_charged_key` impose Gauss
+`J2=M2=0, K12=K34` at nodes outside the requested charged-node set.
+
+For the canonical volume operation, the current implementation constructs
+a reduced block separately for each `J2` and reuses it at each `M2`.
+Consequently the structural transition superset preserves `J2,M2` and
+allows every admissible multiplicity pair `(K12,K34)) within that block.
+This is a selection-rule superset: numerical zeros in the actual volume
+matrix may make the true support smaller. The scalar-operator conservation
+of total angular momentum and its magnetic component is the standard
+Wigner-Eckart selection rule (see the cited angular-momentum references).
+
+New functions include `charged_nodes_basis_size`,
+`iter_charged_nodes_keys`, `volume_label_targets`,
+`advance_hit_label_support`, `advance_volume_label_support`, and
+`structural_sequence_support`. The latter keeps all nodes in complete
+total-J sectors between hits and applies the final Gauss/charged projection
+only at the end. It has an optional state-count guard that raises an error
+rather than silently truncating the support.
