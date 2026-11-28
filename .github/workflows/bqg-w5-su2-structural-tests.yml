@@ -32,3 +32,7 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_structural_pilot.py --Jmax2 10 --max-states 5000 --source 0 --triple 1 2 3 --w5-K 0
+      - name: Run factorized support envelope on actual W5 K=0 seed
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_structural_pilot.py --Jmax2 10 --max-states 100000 --source 0 --triple 1 2 3 --w5-K 0 --factorized
