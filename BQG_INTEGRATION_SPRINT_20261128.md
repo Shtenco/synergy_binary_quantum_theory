@@ -68,3 +68,16 @@ Until then the integrated result is OPEN. A scientifically valid no-go is record
 - A first staged W5 KKV attempt reached the charged H_E path but aborted because the highest-weight cache wrapper asserted J,M preservation and encountered an output label J2=2 from an input J2=0. This is not yet evidence of a physical anomaly: the assertion belonged to the optimization wrapper, not an independently verified operator identity.
 - The highest-weight magnetic-sector shortcut has been disabled in the sine-ordered W5 path. The exact full magnetic labels now remain in H_E cache keys; the rerun must determine whether the underlying unsimplified operator satisfies the expected charge-sector selection rules.
 - Current W5 run 8 evaluates only seed K=0 at source node 0 with Jmax2=10 and max_states=1. It is a diagnostic column, not the full W5 operator. The finite physical-projector CI passed again on the current tested head; microscopic HDA remains OPEN.
+
+## Numerical audit of staged W5 run 8
+
+The workflow label "exact-amplitude" is not a claim of exact arithmetic. The implementation in `k5_peter_weyl_safe_hda_column.py` evaluates Clebsch–Gordan coefficients to Python floats and stores branch tensors/amplitudes in NumPy complex floating-point arrays. The closure runner additionally uses the declared numerical support threshold `amp_tol=1e-12`. Therefore its output, if produced, is a finite-cutoff numerical witness, not an exact symbolic amplitude certificate.
+
+The staged parameters `--K-values 0 --nodes 0 --Jmax2 10 --max-states 1 --max-depth 0` restrict the test to one W5 seed, one source node, and a spin wall J≤5. The state/depth limits do not establish closure of the reachable basis. Any output must be labelled partial unless it explicitly reports a completed adjoint-closed basis; a zero observed leakage at a finite spin wall is not by itself a proof of zero leakage beyond that wall.
+
+The current field `final_nonscalar_J_weight_fraction` is not a fraction: it is hard-coded to 0 when no rejected coefficient was observed and 1 otherwise. It must not be interpreted quantitatively. The underlying `scalar_projection_rejected_norm` is a coefficient-norm diagnostic, but the implementation does not yet report a denominator from the total pre-projection covariant coefficient norm. A subsequent diagnostic patch must add that denominator and separate J, M, and charged-label rejection categories before any quantitative charge-leakage conclusion is drawn.
+
+The finite projector helper uses the ordinary coordinate adjoint and Euclidean inner product on the supplied input basis. This is valid when that basis is declared orthonormal. If the W5 basis has a nontrivial Gram matrix Q, the physical projector and adjoint must instead be constructed with the corresponding Hilbert-space metric; the finite reference helper alone does not establish that the W5 basis is orthonormal.
+
+These are audit limitations, not findings of a physical inconsistency. W5, the full physical projector, and microscopic HDA remain OPEN.
+
