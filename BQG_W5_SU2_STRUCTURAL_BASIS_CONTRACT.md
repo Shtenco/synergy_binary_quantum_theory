@@ -554,3 +554,53 @@ This should be compared with the current marginal-union baseline on small
 exact sectors before any real-seed claim. A branch-aware abstraction still
 does not retain all within-branch cross-node correlations, so its soundness
 must continue to be checked by exact inclusion tests.
+
+
+## Disjunctive factorized propagation (2026-11-28)
+
+Added:
+- `scripts/bqg_w5_disjunctive_factorized_support.py`
+- `scripts/bqg_w5_disjunctive_factorized_kkv_pilot.py`
+
+The representation keeps separate alternatives for operator branches rather
+than immediately taking coordinate-wise unions. Two granularities were
+tested: one disjunct per individual T word/adjoint, and a coarser disjunct per
+oriented spec (T words are unioned only within that spec). Within each
+alternative the five node supports remain marginals; this is not an exact
+joint-key representation.
+
+The 36-test suite passes in
+[CI run 46131784439](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46131784439).
+The added exact-inclusion test compares both forward and independently
+reversed-adjoint disjunctive KKV support with the exact joint-key structural
+routine on a small mocked one-hit T word.
+
+Real W5 seed pilot: K=0, all ten links j=2, Jmax2=10, source 0, triple
+(1,2,3), entry cap 10,000:
+- Individual T-word disjunction: forward stopped at 10,290 labels during
+  holonomy expansion; adjoint stopped at 11,448 during H_E alternative
+  storage.
+- Grouping T words within each oriented spec: both forward and adjoint
+  stopped at 11,448 stored marginal labels during oriented-spec alternative
+  storage.
+- All stops were fail-closed; no truncation, amplitudes, or joint-key
+  enumeration.
+
+This experiment does **not** improve the baseline 10,050/10,111 marginal
+factorized KKV guard results. Keeping disjunctions separate incurs storage
+overhead before the later KKV composition can benefit from the reduced
+cross-branch mixing. Grouping by oriented spec also does not improve the
+bounded W5 envelope. The branch-aware marginal representation is therefore
+validated as a sound finite-sector abstraction but not accepted as the
+next production reduction.
+
+Current bottleneck conclusion: all three global relaxations tested so far
+(marginals, pairwise relations, and all ten triplet relations) either exceed
+their modest real-seed guards or incur more storage without improving the
+envelope. The next research direction should be a **sparse active-path
+junction representation with shared subexpressions**: retain only factors
+for the vertices/edges touched by the current T word, use a separator at the
+source node and path endpoints, and share identical subgraphs across
+repeated words. It must be proven by exact inclusion on small sectors and
+benchmarked against the existing baselines before being used for fixed-basis
+construction.
