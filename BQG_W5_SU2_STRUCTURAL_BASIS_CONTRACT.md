@@ -480,3 +480,36 @@ The next useful experiment is a bounded higher-order cluster/junction
 representation on the active path triples (rather than raising limits again).
 It must be benchmarked against the pairwise baseline and certified by exact
 inclusion on small sectors before being used in the full W5 pilot.
+
+
+## Higher-order triplet-cluster pilot (2026-11-28)
+
+Added `scripts/bqg_w5_triplet_cluster_support.py` and
+`scripts/bqg_w5_triplet_cluster_kkv_pilot.py`. Each spin sector stores five
+unary domains, ten pair relations, and all ten three-node relations. The
+consistency pass removes triplet rows unsupported by unary/pair factors and
+pair rows unsupported by any triplet projection. This is a conservative
+higher-order cluster relaxation; it does not store four- or five-node
+correlations.
+
+Validation:
+- 33 structural tests pass, including exact joint-support inclusion for a
+  fundamental hit and both forward/reversed-adjoint KKV in a small mocked
+  sector.
+- Actual W5 K=0 seed, all ten links j=2, Jmax2=10, source 0, triple (1,2,3):
+  with a 100,000-entry cap, forward propagation hit 109,850 entries and
+  adjoint propagation hit 133,021 entries during holonomy expansion.
+- No truncation occurred; neither branch completed a support envelope.
+- Compared with the pairwise representation (which hit 27,709/27,980 at
+  25,000 entries), the all-ten-triplet representation is substantially
+  more expensive. The additional triplet factors are currently too dense to
+  be a useful global representation at this regulator.
+
+Conclusion: simply adding all triplet relations is not an efficient route.
+The next design should preserve *disjunction/branch identity* across
+`oriented_specs` and T-word families, or use sparse active-path clusters
+rather than globally materializing all ten triplets. The K5 words in one
+T-sequence touch the source node and three selected neighbors; the omitted
+neighbor is not touched by that individual primitive. A branch-aware
+representation can exploit this local four-node support without merging
+unrelated oriented-spec branches prematurely.
