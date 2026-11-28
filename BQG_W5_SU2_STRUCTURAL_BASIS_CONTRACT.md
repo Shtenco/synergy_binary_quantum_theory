@@ -604,3 +604,44 @@ source node and path endpoints, and share identical subgraphs across
 repeated words. It must be proven by exact inclusion on small sectors and
 benchmarked against the existing baselines before being used for fixed-basis
 construction.
+
+
+## Branch-aware pairwise factor graph (2026-11-28)
+
+Added:
+- `scripts/bqg_w5_disjunctive_pairwise_support.py`
+- `scripts/bqg_w5_disjunctive_pairwise_kkv_pilot.py`
+
+Each oriented-spec alternative now carries its own pairwise CSP: five unary
+domains and ten binary relations, with arc consistency after local updates.
+T words and their independently reversed adjoints are unioned only within
+one oriented spec. Distinct oriented specs remain disjuncts through the
+forward or adjoint KKV composition. This preserves pair correlations inside
+each branch, but not three-/four-/five-node correlations.
+
+A new nontrivial mock KKV inclusion test compares both forward and
+independently reversed-adjoint outputs with exact joint-key structural
+support. The complete CI suite now has **37 passing tests**:
+[run 46148641649](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46148641649).
+
+Real W5 seed pilot: K=0, all ten links j=2, Jmax2=10, source 0,
+triple (1,2,3), pairwise entry cap 25,000:
+- forward: guard hit at 27,980 entries during holonomy expansion;
+- adjoint: guard hit at 27,980 entries during holonomy expansion;
+- no truncation, no joint-key enumeration, and no amplitudes.
+
+This is **not** a reduction relative to the global pairwise pilot: the same
+27,980-entry holonomy frontier is reached. Branch identity is retained in
+the new abstraction, but for this seed it does not lower the pairwise
+frontier before the guard. The branch-aware unary factorized pilot likewise
+hits 11,448 stored marginal labels against a 10,000 cap.
+
+Updated conclusion: branch-aware pairwise support is a validated
+conservative representation on the tested mock sector, but it is not yet
+an effective W5 compression. The next step is to avoid carrying all ten
+pair relations for all five nodes uniformly: prototype an **active-path
+junction representation** whose factors are restricted to the vertices and
+separators touched by the current primitive word, with exact inclusion tests
+against joint support on small sectors. Do not use it to build the fixed
+basis until those inclusion tests cover composite paths, volume insertions,
+and both KKV orderings.
