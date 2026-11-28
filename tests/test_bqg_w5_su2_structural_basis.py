@@ -146,5 +146,72 @@ class StructuralBasisTests(unittest.TestCase):
         self.assertEqual(local_spins(spins, 0), (0, 1, 2, 3))
 
 
+    def test_K_complete_structural_support_tiny_sector(self):
+        # Replace the real H_E word family with one empty primitive word.
+        # This isolates the commutator's two support branches without claiming
+        # anything about the full W5 KKV expansion.
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
+        with patch.object(PW, "oriented_specs",
+                          return_value=((1, (0, 1, 2, 3)),)), \
+             patch.object(PW, "T_sequences",
+                          return_value=((1.0, ()),)):
+            support = SB.k_complete_structural_support(
+                key, 0, 1, charged_nodes=(0,), max_states=100
+            )
+        self.assertIn(key, support)
+        self.assertTrue(all(item[1][0][0] == "C" for item in support))
+        self.assertTrue(all(
+            all(lab[0] == "G" for lab in item[1][1:])
+            for item in support
+        ))
+
+    def test_CK_structural_support_tiny_sector_and_offdiagonal(self):
+        # A single empty H_E word lets us test outer inverse/closure ordering
+        # on the smallest nontrivial fundamental edge-spin transition.
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
+        with patch.object(PW, "oriented_specs",
+                          return_value=((1, (0, 1, 2, 3)),)), \
+             patch.object(PW, "T_sequences",
+                          return_value=((1.0, ()),)):
+            diagonal = SB.C_K_structural_support(
+                key, 0, 1, 1, 0, 0, max_states=100
+            )
+            offdiagonal = SB.C_K_structural_support(
+                key, 0, 1, 1, 0, 1, max_states=100
+            )
+        self.assertTrue(diagonal)
+        self.assertTrue(offdiagonal)
+        self.assertTrue(all(item[1][0][0] == "C" for item in diagonal))
+        self.assertTrue(all(item[1][1][0] == "G" for item in diagonal))
+        self.assertTrue(all(item[1][0][0] == "C" for item in offdiagonal))
+        self.assertTrue(all(item[1][1][0] == "G" for item in offdiagonal))
+
+    def test_CK_structural_support_guard_is_fail_closed(self):
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) +
+               tuple(("G", 0) for _ in range(4)))
+        with patch.object(PW, "oriented_specs",
+                          return_value=((1, (0, 1, 2, 3)),)), \
+             patch.object(PW, "T_sequences",
+                          return_value=((1.0, ()),)):
+            with self.assertRaises(RuntimeError):
+                SB.C_K_structural_support(
+                    key, 0, 1, 1, 0, 0, max_states=0
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
