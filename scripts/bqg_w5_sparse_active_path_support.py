@@ -178,20 +178,20 @@ def k_branches(branches, source_v, Jmax2, charged_nodes=(0,),
     """Disjunctive support for K=[V,H_E] = V H_E - H_E V."""
     out = []
     for he in he_spec_branches(branches, source_v, Jmax2,
-                               charged_nodes, limit):
+                               NODES, limit):
         vh = sequence(he, (("V", source_v),), source_v, Jmax2,
-                      charged_nodes, limit)
+                      NODES, limit)
         if vh:
             out.append(compress(vh, (source_v,)))
     vin = []
     for branch in branches:
         lifted = PG._lift(expand(branch))
         vol = PG._volume(lifted, source_v, limit)
-        projected = PG._project(vol, charged_nodes, limit)
+        projected = PG._project(vol, NODES, limit)
         if projected:
             vin.append(compress(projected, (source_v,)))
     out.extend(he_spec_branches(vin, source_v, Jmax2,
-                                charged_nodes, limit))
+                                NODES, limit))
     return out
 
 
@@ -205,14 +205,14 @@ def c_k_branches(branches, source_v, target_v, Jmax2, i, j,
     inverse = []
     for branch in branches:
         part = sequence(branch, (("P", (target_v, source_v)),),
-                        source_v, Jmax2, (source_v, target_v), limit)
+                        source_v, Jmax2, NODES, limit)
         if part:
             inverse.append(compress(part, (source_v, target_v)))
     middle = k_branches(inverse, source_v, Jmax2,
-                        (source_v, target_v), limit)
+                        NODES, limit)
     for branch in middle:
         closed = sequence(branch, (("P", (source_v, target_v)),),
-                          source_v, Jmax2, (source_v,), limit)
+                          source_v, Jmax2, NODES, limit)
         if closed:
             out.append(compress(closed, (source_v, target_v)))
     return out
@@ -225,24 +225,24 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
     if i == j:
         for branch in branches:
             part = sequence(branch, (("V", source_v),), source_v,
-                            Jmax2, (source_v,), limit)
+                            Jmax2, NODES, limit)
             if part:
                 out.append(compress(part, (source_v,)))
     inverse = []
     for branch in branches:
         part = sequence(branch, (("P", (target_v, source_v)),),
-                        source_v, Jmax2, (source_v, target_v), limit)
+                        source_v, Jmax2, NODES, limit)
         if part:
             inverse.append(compress(part, (source_v, target_v)))
     middle = []
     for branch in inverse:
         part = sequence(branch, (("V", source_v),), source_v,
-                         Jmax2, (source_v, target_v), limit)
+                         Jmax2, NODES, limit)
         if part:
             middle.append(compress(part, (source_v, target_v)))
     for branch in middle:
         part = sequence(branch, (("P", (source_v, target_v)),),
-                        source_v, Jmax2, (source_v,), limit)
+                        source_v, Jmax2, NODES, limit)
         if part:
             out.append(compress(part, (source_v, target_v)))
     return out
