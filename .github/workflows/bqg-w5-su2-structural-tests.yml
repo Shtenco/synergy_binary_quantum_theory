@@ -16,6 +16,8 @@ on:
       - 'scripts/bqg_w5_factorized_operator_support.py'
       - 'scripts/bqg_w5_pairwise_factor_graph.py'
       - 'scripts/bqg_w5_pairwise_kkv_pilot.py'
+      - 'scripts/bqg_w5_triplet_cluster_support.py'
+      - 'scripts/bqg_w5_triplet_cluster_kkv_pilot.py'
       - 'scripts/bqg_w5_factorized_kkv_pilot.py'
       - '.github/workflows/bqg-w5-su2-structural-tests.yml'
 
@@ -38,6 +40,10 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_pairwise_kkv_pilot.py --K 0 --Jmax2 10 --limit 25000 --source 0 --triple 1 2 3 --mode both
+      - name: Run bounded triplet-cluster W5 KKV pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_triplet_cluster_kkv_pilot.py --K 0 --Jmax2 10 --limit 100000 --source 0 --triple 1 2 3 --mode both
       - name: Run bounded one-triple structural pilot
         env:
           PYTHONPATH: scripts
