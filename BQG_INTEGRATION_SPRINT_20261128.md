@@ -91,6 +91,6 @@ A reproducible gate was added:
 - `scripts/bqg_w5_seed_gram_gate.py`
 - `tests/test_bqg_w5_seed_gram_gate.py`
 
-The finite-projector CI workflow now runs both the finite master-kernel tests and the exact W5 seed Gram gate. The exact Gram computation was independently reproduced during this audit; the newly wired GitHub Actions result is still pending/unconfirmed. This establishes the metric only on the declared five-dimensional seed span. It does not establish the Gram matrix of a larger dynamically generated closure basis, where duplicate/noncanonical states and basis normalization must be checked explicitly.
+The finite-projector CI workflow now runs both the finite master-kernel tests and the exact W5 seed Gram gate. The newly wired GitHub Actions workflow run 46178728858 completed successfully on head 657985b1f41fe1fc3f67c88c637a3c6b20a2efd8; both the combined test suite and standalone Gram certificate passed. This establishes the metric only on the declared five-dimensional seed span. It does not establish the Gram matrix of a larger dynamically generated closure basis, where duplicate/noncanonical states and basis normalization must be checked explicitly.
 
 The metric-aware finite projector can therefore be supplied Q=I_5 for the five seed columns once the corresponding full constraint maps on that same five-dimensional input span and common output fiber are assembled. It still cannot certify the physical kernel until those W5 constraint matrices exist.
