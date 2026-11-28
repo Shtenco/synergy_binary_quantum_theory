@@ -8,6 +8,7 @@ on:
       - 'scripts/bqg_w5_su2_structural_basis.py'
       - 'tests/test_bqg_w5_su2_structural_basis.py'
       - 'scripts/bqg_w5_structural_pilot.py'
+      - 'scripts/bqg_w5_kkv_bounded_pilot.py'
       - '.github/workflows/bqg-w5-su2-structural-tests.yml'
 
 jobs:
@@ -32,6 +33,14 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_structural_pilot.py --Jmax2 10 --max-states 5000 --source 0 --triple 1 2 3 --w5-K 0
+      - name: Run bounded actual W5 C(K) joint-support pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_kkv_bounded_pilot.py --mode C_K --K 0 --Jmax2 10 --max-states 5000 --source 0 --target 1 --i 0 --j 0
+      - name: Run bounded actual W5 forward KKV triple pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_kkv_bounded_pilot.py --mode forward --K 0 --Jmax2 10 --max-states 5000 --source 0 --triple 1 2 3
       - name: Run factorized support envelope on actual W5 K=0 seed
         env:
           PYTHONPATH: scripts
