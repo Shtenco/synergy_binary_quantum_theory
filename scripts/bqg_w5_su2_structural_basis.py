@@ -272,8 +272,9 @@ def advance_hit_label_support(key, x: int, y: int, Jmax2: int):
     """Conservative all-node label support for one fundamental edge hit.
 
     Only the two endpoint link spins and their local representation labels
-    change. Endpoint labels are allowed to occupy every admissible total-J
-    sector until the final Gauss/charged projection.
+    change. At each endpoint the fundamental holonomy is a rank-1/2 tensor,
+    so only J' = J +/- 1/2 is retained (doubled labels differ by one).
+    All magnetic labels are kept to avoid convention-dependent pruning.
     """
     spins, labels = lift_key_to_all_charged(key)
     edge = tuple(sorted((x, y)))
@@ -326,7 +327,8 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
                                 charged_nodes=(0,), max_states=None):
     """Conservative label support through one actual Peter-Weyl sequence.
 
-    Intermediate nodes are kept in complete total-J sectors; the requested
+    Intermediate nodes are kept in complete magnetic/multiplicity sectors
+    subject to exact rank-1/2 transitions at holonomy hits; the requested
     Gauss/charged projection is imposed only after the whole word.
     """
     states = {lift_key_to_all_charged(key)}
