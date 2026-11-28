@@ -73,20 +73,24 @@ def _guard(support, limit, stage):
 def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
              limit=100000):
     """Propagate one primitive word with active-scope pair storage."""
-    scope = active_scope(word, source_v)
-    work = compress(PG._lift(support), scope)
+    scope = {source_v}
+    work = compress(PG._lift(support), tuple(sorted(scope)))
     _guard(work, limit, "initial active scope")
     for op in word:
+        if op[0] == "V":
+            scope.add(source_v)
+        elif op[0] == "P":
+            scope.update(tuple(op[1]))
+        else:
+            raise ValueError(f"unknown operator {op[0]}")
         full = expand(work)
         if op[0] == "V":
             full = PG._volume(full, source_v, limit)
-        elif op[0] == "P":
+        else:
             path = tuple(op[1])
             for x, y in zip(path[:-1], path[1:]):
                 full = PG._hit(full, x, y, Jmax2, limit)
-        else:
-            raise ValueError(f"unknown operator {op[0]}")
-        work = compress(full, scope)
+        work = compress(full, tuple(sorted(scope)))
         _guard(work, limit, f"after {op[0]}")
         if not work:
             break
