@@ -482,5 +482,46 @@ class StructuralBasisTests(unittest.TestCase):
             TG._volume(TG._initial(key), 0, 0)
 
 
+    def test_triplet_cluster_composite_hit_volume_hit_contains_exact_support(self):
+        import bqg_w5_triplet_cluster_support as TG
+        import bqg_w5_su2_structural_basis as SB
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        word = (("P", (0, 1, 2, 0)), ("V", 0), ("P", (0, 3, 4)))
+        exact = SB.structural_sequence_support(
+            key, word, 0, 2, charged_nodes=(0,)
+        )
+        got = TG._sequence(TG._initial(key), word, 0, 2, (0,), 250000)
+        self.assertTrue(all(TG.contains_joint(got, x) for x in exact))
+
+    def test_triplet_cluster_nontrivial_mock_KKV_includes_exact_forward_and_adjoint(self):
+        import bqg_w5_triplet_cluster_support as TG
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        initial = TG._initial(key)
+        nontrivial_word = (("P", (0, 1)),)
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, nontrivial_word),)),
+        ):
+            exact_f = SB.triple_forward_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=20000
+            )
+            got_f = TG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=False, limit=250000
+            )
+            self.assertTrue(all(TG.contains_joint(got_f, x) for x in exact_f))
+            exact_a = SB.triple_adjoint_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=20000
+            )
+            got_a = TG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=True, limit=250000
+            )
+            self.assertTrue(all(TG.contains_joint(got_a, x) for x in exact_a))
+
+
 if __name__ == "__main__":
     unittest.main()
