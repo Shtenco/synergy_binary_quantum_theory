@@ -443,3 +443,40 @@ T-sequence-only envelope remains complete at 3,672 stored marginal labels
 and a 1,703,658 product-basis upper bound; composing the full K and C(K)
 stages crosses the new 10,000-label budget. This isolates the next bottleneck
 to operator-level composition rather than T-sequence support alone.
+
+
+## Pairwise factor-graph propagation (2026-11-28)
+
+New module: `scripts/bqg_w5_pairwise_factor_graph.py`.
+
+For each ten-link spin sector it stores:
+- five unary local-label domains;
+- ten binary relations, one for each unordered pair of K5 nodes;
+- arc consistency and binary path consistency across all node triples.
+
+Operator propagation is implemented for fundamental holonomy hits, scalar
+volume, complete H_E, K=[V,H_E], C_e(K), and both forward and independently
+reversed-adjoint KKV words. The pilot runner is
+`scripts/bqg_w5_pairwise_kkv_pilot.py`.
+
+Validation:
+- The 30-test CI suite passed, including exact-joint-support inclusion checks
+  for one-hit and volume controls, K, C_e(K), and both KKV orientations in
+  small mocked sectors.
+- The real W5 K=0 pilot used all ten links at j=2, Jmax2=10, source 0, and
+  ordered triple (1,2,3).
+- With a 10,000-entry budget, forward and adjoint propagation stopped at
+  10,520 and 11,622 pairwise entries respectively.
+- Raising the budget to 25,000 did not complete either branch: the guards
+  stopped at 27,709 (forward) and 27,980 (adjoint).
+- Path consistency did not materially reduce the real-seed expansion; it
+  preserves the sound over-approximation but adds relation bookkeeping.
+- All guards are fail-closed. No relation entries were truncated, and no
+  numerical amplitudes or exact joint keys were evaluated.
+
+Interpretation: pairwise relations are a soundly validated richer
+representation, but they do not yet solve the W5 support-growth bottleneck.
+The next useful experiment is a bounded higher-order cluster/junction
+representation on the active path triples (rather than raising limits again).
+It must be benchmarked against the pairwise baseline and certified by exact
+inclusion on small sectors before being used in the full W5 pilot.
