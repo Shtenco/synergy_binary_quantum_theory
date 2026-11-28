@@ -1,0 +1,25 @@
+name: BQG W5 SU2 structural support tests
+
+on:
+  push:
+    branches:
+      - research/bqg-fs-symplectic-reduction-20261128
+    paths:
+      - 'scripts/bqg_w5_su2_structural_basis.py'
+      - 'tests/test_bqg_w5_su2_structural_basis.py'
+      - '.github/workflows/bqg-w5-su2-structural-tests.yml'
+
+jobs:
+  structural-support:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/bqg-fs-symplectic-reduction-20261128
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run threshold-free structural basis tests
+        env:
+          PYTHONPATH: scripts
+        run: python -m unittest discover -s tests -p 'test_bqg_w5_su2_structural_basis.py' -v
