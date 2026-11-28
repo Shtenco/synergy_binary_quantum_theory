@@ -30,12 +30,12 @@ def assert_exact_included(word, source=0, jmax=3):
 
 
 def test_sparse_active_path_includes_composite_hit_volume_hit_support():
-    word = (("P", (0, 1, 2, 0)), ("V", 0), ("P", (0, 2, 3)))
+    word = (("P", (0, 1, 2, 1, 0)), ("V", 0), ("P", (0, 2, 3, 2, 0)))
     assert_exact_included(word)
 
 
 def test_sparse_active_path_includes_volume_inserted_before_hit():
-    word = (("V", 0), ("P", (0, 1, 2)))
+    word = (("V", 0), ("P", (0, 1, 2, 0)))
     assert_exact_included(word)
 
 
