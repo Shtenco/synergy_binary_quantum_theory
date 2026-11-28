@@ -83,6 +83,7 @@ def gram_certificate(keys) -> dict:
         "gram_matrix": "identity",
         "input_metric_Q": [[str(gram[i, j]) for j in range(n)] for i in range(n)],
         "basis_id_sha256": hashlib.sha256(payload).hexdigest(),
+        "graph_convention": "fixed labelled K5 vertices 0..4 and ten labelled edges; no graph-automorphism quotient",
         "normalization": {
             "haar_measure": "normalized",
             "link_functions": "sqrt(2j+1) D^j_mn",
@@ -91,7 +92,8 @@ def gram_certificate(keys) -> dict:
         },
         "claim_scope": (
             "Exact metric of the supplied finite list of distinct admissible "
-            "canonical K5 spin-network labels. Does not prove closure completeness "
+            "canonical K5 spin-network labels on the fixed labelled graph, without "
+            "quotienting graph automorphisms. Does not prove closure completeness "
             "or exactness of floating-point operator amplitudes."
         ),
     }
