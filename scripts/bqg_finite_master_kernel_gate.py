@@ -35,7 +35,8 @@ def _zero(matrix: sp.Matrix) -> bool:
     return all(sp.simplify(sp.expand_complex(x)) == 0 for x in matrix)
 
 
-def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.Matrix) -> dict:
+def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.Matrix,
+                            input_metric: sp.Matrix | None = None) -> dict:
     """Build M=C†(G⊗I_K)C and the exact orthogonal common-kernel projector.
 
     Every C_A must map the same finite input H to the same finite output fiber K.
@@ -46,6 +47,9 @@ def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.M
     Cs = [_exact_matrix(C) for C in constraints]
     G = _exact_matrix(label_metric)
     n, k, m = Cs[0].cols, Cs[0].rows, len(Cs)
+    Q = sp.eye(n) if input_metric is None else _exact_matrix(input_metric)
+    if Q.shape != (n, n) or not _positive_definite_hermitian(Q):
+        raise ValueError("input metric is not provably Hermitian positive definite")
     if n == 0 or k == 0:
         raise ValueError("input and output dimensions must be positive")
     if any(C.cols != n or C.rows != k for C in Cs):
@@ -59,9 +63,12 @@ def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.M
     for a, C in enumerate(Cs):
         stacked[a*k:(a+1)*k, :] = C
     pairing = sp.kronecker_product(G, sp.eye(k))
-    master = sp.simplify(stacked.H * pairing * stacked)
-    if not _zero(master - master.H):
-        raise ArithmeticError("constructed master operator is not Hermitian")
+    quadratic_form = sp.simplify(stacked.H * pairing * stacked)
+    # The coordinate matrix of the self-adjoint operator is Q^{-1} A.
+    # It is Q-Hermitian, not generally Hermitian in the Euclidean metric.
+    master = sp.simplify(Q.inv() * quadratic_form)
+    if not _zero(Q * master - master.H * Q):
+        raise ArithmeticError("constructed master operator is not self-adjoint in input metric")
 
     kernel = stacked.nullspace()
     rank_c, rank_m = stacked.rank(), master.rank()
@@ -69,15 +76,15 @@ def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.M
         raise ArithmeticError("rank(C†(G⊗I)C) != rank(C); common-kernel identity failed")
     if kernel:
         N = sp.Matrix.hstack(*kernel)
-        projector = sp.simplify(N * (N.H * N).inv() * N.H)
+        projector = sp.simplify(N * (N.H * Q * N).inv() * N.H * Q)
     else:
         N = sp.zeros(n, 0)
         projector = sp.zeros(n, n)
 
     checks = {
-        "master_hermitian": _zero(master - master.H),
+        "master_metric_self_adjoint": _zero(Q * master - master.H * Q),
         "master_annihilates_kernel": _zero(master * N),
-        "projector_hermitian": _zero(projector - projector.H),
+        "projector_metric_self_adjoint": _zero(projector.H * Q - Q * projector),
         "projector_idempotent": _zero(projector * projector - projector),
         "constraints_annihilate_projector": _zero(stacked * projector),
         "master_annihilates_projector": _zero(master * projector),
@@ -98,6 +105,7 @@ def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.M
     r = len(kernel)
     return {
         "input_dimension": n, "output_fiber_dimension": k, "constraint_count": m,
+        "input_metric": Q,
         "constraint_rank": rank_c, "master_rank": rank_m,
         "physical_kernel_dimension": r,
         "physical_projective_dimension": r - 1 if r else None,
@@ -106,7 +114,7 @@ def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.M
         "kernel_basis": N, "positive_eigenvalues": tuple(positive_eigenvalues),
         "checks": checks,
         "claim_boundary": (
-            "Exact finite certificate for supplied matrices only. It does not "
+            "Exact finite certificate for supplied matrices and declared input metric only. It does not "
             "establish that they are the full BQG/W5 Lorentzian constraints, nor "
             "a continuum limit, HDA, TT graviton sector, or Einstein IR limit."
         ),
