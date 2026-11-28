@@ -77,7 +77,7 @@ The staged parameters `--K-values 0 --nodes 0 --Jmax2 10 --max-states 1 --max-de
 
 The current field `final_nonscalar_J_weight_fraction` is not a fraction: it is hard-coded to 0 when no rejected coefficient was observed and 1 otherwise. It must not be interpreted quantitatively. The underlying `scalar_projection_rejected_norm` is a coefficient-norm diagnostic, but the implementation does not yet report a denominator from the total pre-projection covariant coefficient norm. A subsequent diagnostic patch must add that denominator and separate J, M, and charged-label rejection categories before any quantitative charge-leakage conclusion is drawn.
 
-The finite projector helper uses the ordinary coordinate adjoint and Euclidean inner product on the supplied input basis. This is valid when that basis is declared orthonormal. If the W5 basis has a nontrivial Gram matrix Q, the physical projector and adjoint must instead be constructed with the corresponding Hilbert-space metric; the finite reference helper alone does not establish that the W5 basis is orthonormal.
+The finite projector helper now accepts an optional exact input Gram matrix Q. With Q supplied, it constructs the Q-self-adjoint master operator Q⁻¹C†(G⊗I)C and the Q-orthogonal projector N(N†QN)⁻¹N†Q; omitting Q retains the Euclidean/orthonormal-coordinate default. The W5 basis Gram matrix still has to be derived and supplied from the actual W5 inner product before this metric-aware path can certify the physical projector.
 
 These are audit limitations, not findings of a physical inconsistency. W5, the full physical projector, and microscopic HDA remain OPEN.
 
