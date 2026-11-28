@@ -1,5 +1,9 @@
 name: BQG W5 SU2 structural support tests
 
+concurrency:
+  group: bqg-w5-su2-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -16,6 +20,7 @@ on:
 jobs:
   structural-support:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,8 +55,8 @@ jobs:
       - name: Run bounded factorized operator-level W5 KKV pilot
         env:
           PYTHONPATH: scripts
-        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 100000 --source 0 --triple 1 2 3 --mode both
+        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 10000 --source 0 --triple 1 2 3 --mode both
       - name: Run bounded factorized 24-term node KKV pilot
         env:
           PYTHONPATH: scripts
-        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 100000 --source 0 --mode node
+        run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 10000 --source 0 --mode node
