@@ -22,6 +22,8 @@ def main():
     ap.add_argument("--triple", nargs=3, type=int, default=(1, 2, 3))
     ap.add_argument("--w5-K", type=int, choices=SB.W5_K, default=None,
                     help="use an actual all-link j=2 W5 seed instead of the minimal diagnostic seed")
+    ap.add_argument("--factorized", action="store_true",
+                    help="store node-local label marginals instead of Cartesian joint keys")
     ap.add_argument("--include-adjoint", action="store_true", default=True)
     args = ap.parse_args()
 
@@ -34,34 +36,63 @@ def main():
         key = SB.w5_seed_as_covariant(args.w5_K, args.source)
         seed_name = f"W5 all-link j=2 seed K={args.w5_K}"
     overflow = None
-    try:
-        support = SB.t_sequence_structural_support(
-            key, args.source, *args.triple, args.Jmax2,
-            charged_nodes=(args.source, args.triple[0]),
-            include_adjoint=args.include_adjoint,
-            max_states=args.max_states,
-            volume_v=args.source,
-        )
-    except RuntimeError as exc:
-        support = set()
-        overflow = str(exc)
-    result = {
-        "status": "bounded structural support pilot",
-        "seed": seed_name,
-        "Jmax2": args.Jmax2,
-        "source": args.source,
-        "triple": list(args.triple),
-        "include_adjoint": args.include_adjoint,
-        "max_states": args.max_states,
-        "support_size": len(support) if overflow is None else None,
-        "state_limit_reached": overflow is not None,
-        "guard_message": overflow,
-        "spin_sector_count": len({key[0] for key in support}),
-        "max_link_spin2": max((max(key[0]) for key in support), default=0),
+    if args.factorized:
+        try:
+            support = SB.factorized_t_sequence_support(
+                key, args.source, *args.triple, args.Jmax2,
+                charged_nodes=(args.source, args.triple[0]),
+                include_adjoint=args.include_adjoint,
+                max_factor_labels=args.max_states,
+            )
+        except RuntimeError as exc:
+            support = {}
+            overflow = str(exc)
+        profile = SB.factorized_support_profile(support) if support else {}
+        result = {
+            "status": "factorized conservative structural envelope",
+            "seed": seed_name,
+            "Jmax2": args.Jmax2,
+            "source": args.source,
+            "triple": list(args.triple),
+            "include_adjoint": args.include_adjoint,
+            "factorized_label_guard": args.max_states,
+            **profile,
+            "state_limit_reached": overflow is not None,
+            "guard_message": overflow,
+            "max_link_spin2": max((max(spins) for spins in support), default=0),
+            "joint_support_enumerated": False,
+        }
+    else:
+        try:
+            support = SB.t_sequence_structural_support(
+                key, args.source, *args.triple, args.Jmax2,
+                charged_nodes=(args.source, args.triple[0]),
+                include_adjoint=args.include_adjoint,
+                max_states=args.max_states,
+                volume_v=args.source,
+            )
+        except RuntimeError as exc:
+            support = set()
+            overflow = str(exc)
+        result = {
+            "status": "bounded explicit structural support pilot",
+            "seed": seed_name,
+            "Jmax2": args.Jmax2,
+            "source": args.source,
+            "triple": list(args.triple),
+            "include_adjoint": args.include_adjoint,
+            "max_states": args.max_states,
+            "support_size": len(support) if overflow is None else None,
+            "state_limit_reached": overflow is not None,
+            "guard_message": overflow,
+            "spin_sector_count": len({key[0] for key in support}),
+            "max_link_spin2": max((max(key[0]) for key in support), default=0),
+        }
+    result.update({
         "amplitudes_evaluated": False,
         "threshold_pruning": False,
         "physical_W5_claim": False,
-    }
+    })
     print(json.dumps(result, indent=2))
     return 0
 
