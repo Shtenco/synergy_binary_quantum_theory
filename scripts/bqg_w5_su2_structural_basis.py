@@ -280,11 +280,10 @@ def _hit_delta_M2(x: int, y: int, node: int, i: int, j: int) -> int:
         raw = _fundamental_index2(i if node == x else j)
     else:
         raw = -_fundamental_index2(j if node == x else i)
-    # The stored charged labels are in the unoriented local basis. The
-    # repository's orient_local inserts epsilon_j on every edge w < node,
-    # which reverses that leg's magnetic projection.
-    neighbor = y if node == x else x
-    return -raw if neighbor < node else raw
+    # The repository's hit_mats already switches to the dual/transposed
+    # CG matrix when x > y. The oriented intertwiner convention is therefore
+    # accounted for in that branch; applying a second epsilon sign here would
+    # double-count the orientation reversal.
 
 
 def advance_hit_label_support(key, x: int, y: int, Jmax2: int,
