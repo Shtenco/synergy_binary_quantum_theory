@@ -297,7 +297,7 @@ def triple_branches(branches, source_v, a, b, c, Jmax2,
             q = next_q
         out.extend(q)
         _guard(out, limit, "sparse KKV disjunction")
-    return out
+    return project_final(out, (source_v,), limit)
 
 
 def contains_key(branches, key):
