@@ -124,9 +124,7 @@ def test_sparse_sequence_never_materializes_omitted_pair_factors(monkeypatch):
 def test_sparse_compression_drops_redundant_cartesian_pair_factors():
     a0 = ("C", 0, 0, 0, 0)
     a1 = ("C", 2, 0, 0, 0)
-    unary = (frozenset((a0, a1)), frozenset((a0, a1))) + (
-        frozenset((a0,)), frozenset((a0,)), frozenset((a0,))
-    )
+    unary = (frozenset((a0, a1)),) * 4 + (frozenset((a0,)),)
     cartesian = frozenset((x, y) for x in unary[0] for y in unary[1])
     restricted = frozenset(((a0, a0),))
     support = {(0,) * 10: {
