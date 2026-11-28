@@ -4,6 +4,8 @@ from bqg_w5_su2_structural_basis import (
     allowed_pair2, all_total_J2, charged_labels, charged_node_basis, covariant_basis_size,
     gauss_labels, iter_covariant_keys, local_spins, validate_covariant_key,
     w5_gauss_seed, w5_seed_as_covariant, spin_support_for_sequence, t_sequence_spin_support, spin_sector_basis_profile,
+    charged_nodes_basis_size, volume_label_targets, lift_key_to_all_charged,
+    project_all_charged_key, advance_hit_label_support, structural_sequence_support,
 )
 
 
@@ -20,6 +22,7 @@ class StructuralBasisTests(unittest.TestCase):
         self.assertEqual(len(gauss_labels((4, 4, 4, 4))), 5)
         self.assertEqual(len(charged_node_basis((4, 4, 4, 4))), 625)
         self.assertEqual(covariant_basis_size((4,) * 10, 0), 390625)
+        self.assertEqual(charged_nodes_basis_size((4,) * 10, (0, 1)), 48828125)
 
     def test_w5_seed_embedding(self):
         for K in (0, 2, 4, 6, 8):
@@ -57,6 +60,29 @@ class StructuralBasisTests(unittest.TestCase):
         sizes = [n for _, n in profile]
         self.assertEqual(len(profile), 24)
         self.assertEqual((min(sizes), max(sizes), sum(sizes)), (57600, 630000, 5759800))
+
+    def test_volume_selection_preserves_total_J_and_M(self):
+        local = (4, 4, 4, 4)
+        label = ("C", 4, 0, 0, 4)
+        targets = volume_label_targets(local, label)
+        self.assertTrue(targets)
+        self.assertTrue(all(t[1:3] == (4, 0) for t in targets))
+        self.assertEqual({(t[3], t[4]) for t in targets}, set(charged_labels(local, 4)))
+
+    def test_gauss_lift_and_final_projection_roundtrip(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        lifted = lift_key_to_all_charged(key)
+        self.assertTrue(all(lab == ("C", 0, 0, 0, 0) for lab in lifted[1]))
+        projected = project_all_charged_key(lifted, (0, 1))
+        self.assertEqual(projected, key)
+
+    def test_hit_support_updates_only_endpoint_labels_and_link(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        states = list(advance_hit_label_support(key, 0, 1, 2))
+        self.assertEqual(len(states), 4)
+        self.assertTrue(all(s[0][0] == 1 for s in states))
+        self.assertTrue(all(s[0][1:] == (0,) * 9 for s in states))
+        self.assertTrue(all(s[1][2:] == tuple(("C", 0, 0, 0, 0) for _ in range(3)) for s in states))
 
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
