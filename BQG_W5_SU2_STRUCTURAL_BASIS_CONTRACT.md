@@ -645,3 +645,34 @@ separators touched by the current primitive word, with exact inclusion tests
 against joint support on small sectors. Do not use it to build the fixed
 basis until those inclusion tests cover composite paths, volume insertions,
 and both KKV orderings.
+
+
+## Sparse active-path pairwise prototype (2026-11-28)
+
+Added `scripts/bqg_w5_sparse_active_path_support.py` and
+`tests/test_bqg_w5_sparse_active_path_support.py`.
+
+The prototype stores binary relations only for pairs whose endpoints have
+entered the active scope of the primitive word processed so far. The scope
+grows incrementally as each `P(path)` or `V(source)` operation is visited.
+When an omitted pair is needed by the existing pairwise propagation kernel,
+it is reconstructed as the Cartesian product of its current unary domains.
+After the primitive operation, relations outside the active induced scope
+are discarded again.
+
+This is deliberately a relaxation: omitted correlations are forgotten, not
+replaced by guessed constraints. Therefore it can enlarge support but must
+not remove a state supported by the exact joint-key structural propagator.
+The prototype reuses the existing pairwise hit/volume kernels; it is not yet
+a junction-tree message-passing implementation and does not claim optimal
+separator selection or shared-subexpression reuse.
+
+The new tests target exact inclusion for (i) a composite multi-edge path
+with an intervening scalar-volume insertion and (ii) a volume-before-hit
+word, plus an active-scope/profile sanity check. These tests have been
+committed, but their GitHub Actions result has not yet been observed. No
+physical W5 KKV pilot result is claimed at this stage. In particular, the
+current sequence API handles one primitive word; K, C_e(K), and both KKV
+orderings still require an active-scope composition layer and corresponding
+exact-inclusion controls before this representation can be used in a W5
+operator-level pilot or fixed-basis construction.
