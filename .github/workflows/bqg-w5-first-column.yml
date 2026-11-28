@@ -1,0 +1,54 @@
+name: BQG W5 first exact-amplitude column (staged)
+
+on:
+  push:
+    branches:
+      - research/bqg-physical-projector-hda-gates-20261128
+    paths:
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
+      - '.github/workflows/bqg-w5-first-column.yml'
+  pull_request:
+    branches:
+      - research/bqg-fs-symplectic-reduction-20261128
+    paths:
+      - 'scripts/bqg_v10_w5_lorentzian_adjoint_closure.py'
+      - 'scripts/peter_weyl_lorentzian_sine_ordered_triple_gate.py'
+      - 'scripts/peter_weyl_covariant_K_composition_cached_gate.py'
+      - '.github/workflows/bqg-w5-first-column.yml'
+
+jobs:
+  w5-first-column:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical dependencies
+        run: python -m pip install numpy sympy
+      - name: Evaluate one W5 seed column without support truncation
+        id: w5
+        env:
+          PYTHONPATH: scripts
+        shell: bash
+        run: |
+          set +e
+          python scripts/bqg_v10_w5_lorentzian_adjoint_closure.py \
+            --nodes 0 --Jmax2 10 --max-states 1 --max-depth 0 \
+            --K-values 0 --output verification_results/W5_K0_NODE0_PARTIAL_20261128.json
+          code=$?
+          set -e
+          echo "script_exit_code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+            exit "$code"
+          fi
+      - name: Upload machine-readable W5 column witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bqg-w5-k0-node0-first-column
+          path: verification_results/W5_K0_NODE0_PARTIAL_20261128.json
+          if-no-files-found: error

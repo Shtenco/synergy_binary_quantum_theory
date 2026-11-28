@@ -235,13 +235,18 @@ def sparse_sum_difference_norm(columns_a, columns_b, sign=1.0):
     return math.sqrt(total2)
 
 
-def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12):
+def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_tol=1e-12, seed_K_values=W5_K):
     source_nodes = tuple(sorted(set(source_nodes)))
     if not source_nodes or any(v not in NODES for v in source_nodes):
         raise ValueError("source_nodes must be a nonempty subset of 0..4")
     if Jmax2 < 10:
         raise ValueError("W5 j=2 inputs require Jmax2>=10 as an initial support wall")
-    if max_states < len(W5_K) or max_depth < 0 or amp_tol <= 0:
+    seed_K_values = tuple(seed_K_values)
+    if not seed_K_values or len(set(seed_K_values)) != len(seed_K_values):
+        raise ValueError("seed_K_values must be a nonempty sequence without duplicates")
+    if any(K not in W5_K for K in seed_K_values):
+        raise ValueError(f"seed_K_values must be selected from {W5_K}")
+    if max_states < len(seed_K_values) or max_depth < 0 or amp_tol <= 0:
         raise ValueError("invalid closure limits")
 
     HERE = Path(__file__).resolve().parent
@@ -252,7 +257,7 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
     import peter_weyl_lorentzian_sine_ordered_triple_gate as LSINE
     import peter_weyl_lorentzian_ordered_triple_gate as RAW
 
-    seeds = [w5_input_key(K) for K in W5_K]
+    seeds = [w5_input_key(K) for K in seed_K_values]
     closure_keys = list(seeds)
     seen = set(closure_keys)
     depth = {key: 0 for key in seeds}
@@ -366,6 +371,8 @@ def run_closure(source_nodes=NODES, Jmax2=10, max_states=500, max_depth=8, amp_t
             "Jmax2": Jmax2,
             "Jmax": Jmax2 / 2,
             "seed_count": len(seeds),
+        "seed_K_values": list(seed_K_values),
+            "seed_K_values": list(seed_K_values),
             "closure_size_discovered": len(closure_keys),
             "columns_computed": len(forward_columns),
             "max_states": max_states,
@@ -486,9 +493,11 @@ def main():
     ap.add_argument("--max-states", type=int, default=500)
     ap.add_argument("--max-depth", type=int, default=8)
     ap.add_argument("--amp-tol", type=float, default=1e-12)
+    ap.add_argument("--K-values", type=int, nargs="+", default=list(W5_K), choices=W5_K,
+                    help="W5 seed labels to evaluate; defaults to the full five-seed set")
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    result = run_closure(args.nodes, args.Jmax2, args.max_states, args.max_depth, args.amp_tol)
+    result = run_closure(args.nodes, args.Jmax2, args.max_states, args.max_depth, args.amp_tol, args.K_values)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({

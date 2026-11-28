@@ -1,0 +1,49 @@
+name: BQG finite physical-projector reference gate
+
+on:
+  push:
+    branches:
+      - research/bqg-physical-projector-hda-gates-20261128
+    paths:
+      - 'scripts/bqg_finite_master_kernel_gate.py'
+      - 'tests/test_bqg_finite_master_kernel_gate.py'
+      - 'scripts/bqg_w5_seed_gram_gate.py'
+      - 'tests/test_bqg_w5_seed_gram_gate.py'
+      - 'scripts/bqg_w5_closure_gram_gate.py'
+      - 'tests/test_bqg_w5_closure_gram_gate.py'
+      - '.github/workflows/bqg-finite-projector-tests.yml'
+  pull_request:
+    branches:
+      - research/bqg-fs-symplectic-reduction-20261128
+    paths:
+      - 'scripts/bqg_finite_master_kernel_gate.py'
+      - 'tests/test_bqg_finite_master_kernel_gate.py'
+      - 'scripts/bqg_w5_seed_gram_gate.py'
+      - 'tests/test_bqg_w5_seed_gram_gate.py'
+      - 'scripts/bqg_w5_closure_gram_gate.py'
+      - 'tests/test_bqg_w5_closure_gram_gate.py'
+      - '.github/workflows/bqg-finite-projector-tests.yml'
+
+jobs:
+  exact-finite-projector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install SymPy
+        run: python -m pip install sympy
+      - name: Run exact finite common-kernel and W5 seed tests
+        env:
+          PYTHONPATH: scripts
+        run: python -m unittest discover -s tests -p 'test_bqg_*_gate.py' -v
+      - name: Run exact W5 seed Gram certificate
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_seed_gram_gate.py --output verification_results/W5_SEED_GRAM_20261128.json
+      - name: Run machine-readable finite projector certificate
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_finite_master_kernel_gate.py --output verification_results/FINITE_MASTER_KERNEL_REFERENCE_20261128.json
