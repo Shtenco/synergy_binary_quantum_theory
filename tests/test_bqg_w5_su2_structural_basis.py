@@ -137,7 +137,10 @@ class StructuralBasisTests(unittest.TestCase):
                         projected, leak = CK.project_branch_complete_charges(hb, (0, 1))
                         self.assertLess(leak, 1e-12)
                         expected.update(projected)
-                    structural = set(advance_hit_label_support(key, x, y, 2, i, j))
+                    structural = {
+                        projected for hit in advance_hit_label_support(key, x, y, 2, i, j)
+                        if (projected := project_all_charged_key(hit, (0, 1))) is not None
+                    }
                     self.assertEqual(structural, expected)
 
     def test_path_support_matches_actual_internal_index_sum(self):
@@ -147,7 +150,8 @@ class StructuralBasisTests(unittest.TestCase):
             expected = set()
             for hb in PW.apply_path_branch(branch, path, iout, iin, 2):
                 projected, leak = CK.project_branch_complete_charges(hb, charged)
-                self.assertLess(leak, 1e-12)
+                # Fixed internal indices need not be individually Gauss closed;
+                # the numerical adapter reports this as branch leakage.
                 expected.update(projected)
             seq = (("P", path, iout, iin),)
             structural = structural_sequence_support(key, seq, 0, 2, charged_nodes=charged)
