@@ -74,6 +74,9 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
              limit=100000):
     """Propagate one primitive word with active-scope pair storage."""
     scope = {source_v}
+    for state in support.values():
+        for a, b in state["pairs"]:
+            scope.update((a, b))
     work = compress(PG._lift(expand(support)), tuple(sorted(scope)))
     _guard(work, limit, "initial active scope")
     for op in word:
@@ -312,3 +315,14 @@ def branches_profile(branches):
         "branch_identity_preserved": True,
         "higher_order_correlations_preserved": False,
     }
+
+
+def project_final(branches, charged_nodes, limit=100000):
+    """Apply the requested Gauss/charged projection only after the full word."""
+    out = []
+    for branch in branches:
+        projected = PG._project(expand(branch), charged_nodes, limit)
+        if projected:
+            out.append(projected)
+    _guard(out, limit, "final Gauss projection")
+    return out
