@@ -181,9 +181,13 @@ def he_spec_branches(branches, source_v, Jmax2, charged_nodes=(0, 1),
                 for candidate in (word, PW.adjoint_sequence(word)):
                     part = sequence(incoming, candidate, source_v, Jmax2,
                                     charged_nodes, limit)
-                    # Keep only the primitive word's active pair scopes.
-                    scope = active_scope(candidate, source_v)
-                    part = compress(part, scope)
+                    # Preserve both the current word's active scope and
+                    # every inherited nontrivial pair scope. Dropping an
+                    # inherited factor is conservative as a relaxation, but
+                    # needlessly destroys correlations across nested words.
+                    scope = set(active_scope(candidate, source_v))
+                    scope.update(_scope_of(part))
+                    part = compress(part, tuple(sorted(scope)))
                     spec_union = _union(spec_union, part, limit,
                                         "sparse H_E T-word union")
             if spec_union:
