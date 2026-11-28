@@ -223,10 +223,12 @@ class StructuralBasisTests(unittest.TestCase):
                tuple(("G", 0) for _ in range(4)))
         lifted = SB.lift_key_to_all_charged(key)
         initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
-        with patch.object(PW, "oriented_specs",
-                          return_value=((1, (0, 1, 2, 3)),)), \\
-             patch.object(PW, "T_sequences",
-                          return_value=((1.0, ()),)):
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
             exact = SB.k_complete_structural_support(
                 key, 0, 1, charged_nodes=(0,), max_states=100
             )
@@ -246,10 +248,12 @@ class StructuralBasisTests(unittest.TestCase):
                tuple(("G", 0) for _ in range(4)))
         lifted = SB.lift_key_to_all_charged(key)
         initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
-        with patch.object(PW, "oriented_specs",
-                          return_value=((1, (0, 1, 2, 3)),)), \\
-             patch.object(PW, "T_sequences",
-                          return_value=((1.0, ()),)):
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
             exact = SB.C_K_structural_support(
                 key, 0, 1, 1, 0, 0, max_states=100
             )
