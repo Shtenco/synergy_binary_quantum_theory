@@ -119,3 +119,21 @@ def test_sparse_sequence_never_materializes_omitted_pair_factors(monkeypatch):
     )
     assert result
     assert all(len(state["pairs"]) < 10 for state in result.values())
+
+
+def test_sparse_compression_drops_redundant_cartesian_pair_factors():
+    a0 = ("C", 0, 0, 0, 0)
+    a1 = ("C", 2, 0, 0, 0)
+    unary = (frozenset((a0, a1)), frozenset((a0, a1))) + (
+        frozenset((a0,)), frozenset((a0,)), frozenset((a0,))
+    )
+    cartesian = frozenset((x, y) for x in unary[0] for y in unary[1])
+    restricted = frozenset(((a0, a0),))
+    support = {(0,) * 10: {
+        "unary": unary,
+        "pairs": {(0, 1): cartesian, (2, 3): restricted},
+    }}
+    compressed = SAP._compress_pairs(support, {(0, 1), (2, 3)})
+    pairs = compressed[(0,) * 10]["pairs"]
+    assert (0, 1) not in pairs
+    assert pairs[(2, 3)] == restricted
