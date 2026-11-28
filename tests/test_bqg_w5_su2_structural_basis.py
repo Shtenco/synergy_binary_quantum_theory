@@ -349,5 +349,85 @@ class StructuralBasisTests(unittest.TestCase):
                             for x in exact))
 
 
+    def test_pairwise_factor_graph_contains_exact_one_hit_support(self):
+        import bqg_w5_pairwise_factor_graph as FG
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        exact = SB.structural_sequence_support(
+            key, (("P", (0, 1)),), 0, 2, charged_nodes=(0, 1)
+        )
+        pairwise = FG._sequence(
+            FG._initial(key), (("P", (0, 1)),), 0, 2,
+            (0, 1), 10000
+        )
+        self.assertTrue(all(FG.contains_joint(pairwise, x) for x in exact))
+        self.assertGreater(
+            sum(len(x) for s in pairwise.values() for x in s["pairs"].values()), 0
+        )
+
+    def test_pairwise_factor_graph_contains_exact_volume_support(self):
+        import bqg_w5_pairwise_factor_graph as FG
+        key = ((4,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        exact = set(SB.advance_volume_label_support(lifted, 0))
+        pairwise = FG._volume(FG._initial(key), 0, 10000)
+        self.assertTrue(all(FG.contains_joint(pairwise, x) for x in exact))
+
+    def test_pairwise_factor_graph_K_and_CK_include_exact_mock_support(self):
+        import bqg_w5_pairwise_factor_graph as FG
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        initial = FG._initial(key)
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact_k = SB.k_complete_structural_support(
+                key, 0, 1, charged_nodes=(0,), max_states=100
+            )
+            pair_k = FG.factor_graph_k(initial, 0, 1, (0,), 10000)
+            self.assertTrue(all(FG.contains_joint(pair_k, x) for x in exact_k))
+            exact_ck = SB.C_K_structural_support(
+                key, 0, 1, 1, 0, 0, max_states=100
+            )
+            pair_ck = FG.factor_graph_c_k(initial, 0, 1, 1, 0, 0, 10000)
+            self.assertTrue(all(FG.contains_joint(pair_ck, x) for x in exact_ck))
+
+    def test_pairwise_factor_graph_forward_and_adjoint_KKV_include_exact_mock(self):
+        import bqg_w5_pairwise_factor_graph as FG
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        initial = FG._initial(key)
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact_f = SB.triple_forward_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            pair_f = FG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=False, limit=50000
+            )
+            self.assertTrue(all(FG.contains_joint(pair_f, x) for x in exact_f))
+            exact_a = SB.triple_adjoint_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            pair_a = FG.factor_graph_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=True, limit=50000
+            )
+            self.assertTrue(all(FG.contains_joint(pair_a, x) for x in exact_a))
+
+    def test_pairwise_factor_graph_guard_is_fail_closed(self):
+        import bqg_w5_pairwise_factor_graph as FG
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        with self.assertRaises(RuntimeError):
+            FG._volume(FG._initial(key), 0, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
