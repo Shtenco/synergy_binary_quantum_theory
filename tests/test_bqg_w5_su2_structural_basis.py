@@ -351,6 +351,7 @@ class StructuralBasisTests(unittest.TestCase):
 
     def test_pairwise_factor_graph_contains_exact_one_hit_support(self):
         import bqg_w5_pairwise_factor_graph as FG
+        import bqg_w5_su2_structural_basis as SB
         key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
         exact = SB.structural_sequence_support(
             key, (("P", (0, 1)),), 0, 2, charged_nodes=(0, 1)
@@ -366,6 +367,7 @@ class StructuralBasisTests(unittest.TestCase):
 
     def test_pairwise_factor_graph_contains_exact_volume_support(self):
         import bqg_w5_pairwise_factor_graph as FG
+        import bqg_w5_su2_structural_basis as SB
         key = ((4,) * 10,
                (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
         lifted = SB.lift_key_to_all_charged(key)
@@ -375,6 +377,7 @@ class StructuralBasisTests(unittest.TestCase):
 
     def test_pairwise_factor_graph_K_and_CK_include_exact_mock_support(self):
         import bqg_w5_pairwise_factor_graph as FG
+        from unittest.mock import patch
         key = ((0,) * 10,
                (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
         initial = FG._initial(key)
@@ -397,6 +400,7 @@ class StructuralBasisTests(unittest.TestCase):
 
     def test_pairwise_factor_graph_forward_and_adjoint_KKV_include_exact_mock(self):
         import bqg_w5_pairwise_factor_graph as FG
+        from unittest.mock import patch
         key = ((0,) * 10,
                (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
         initial = FG._initial(key)
