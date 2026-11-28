@@ -84,6 +84,14 @@ class StructuralBasisTests(unittest.TestCase):
         self.assertTrue(all(s[0][1:] == (0,) * 9 for s in states))
         self.assertTrue(all(s[1][2:] == tuple(("C", 0, 0, 0, 0) for _ in range(3)) for s in states))
 
+    def test_complete_sequence_support_projects_only_at_end(self):
+        key = ((0,) * 10, tuple(("G", 0) for _ in range(5)))
+        seq = (("P", (0, 1), 0, 0),)
+        support = structural_sequence_support(key, seq, 0, 2, charged_nodes=(0, 1))
+        self.assertEqual(len(support), 4)
+        self.assertTrue(all(k[1][0][0] == "C" and k[1][1][0] == "C" for k in support))
+        self.assertTrue(all(k[1][2:] == tuple(("G", 0) for _ in range(3)) for k in support))
+
     def test_source_node_local_spin_order(self):
         spins = tuple(range(10))
         self.assertEqual(local_spins(spins, 0), (0, 1, 2, 3))
