@@ -12,6 +12,17 @@ class W5ClosureGramGateTests(unittest.TestCase):
     def seed_key(self, k2):
         return ((4,) * 10, (k2, 0, 0, 0, 0))
 
+    def complete_payload(self, keys):
+        raw = [repr(key) for key in keys]
+        return {
+            "status": "PASS_ADJOINT_CONSISTENCY",
+            "closure_size": len(keys),
+            "basis_id_sha256": hashlib.sha256("\\n".join(raw).encode("utf-8")).hexdigest(),
+            "basis_keys_repr": raw,
+            "forward_B_columns_sparse": [[] for _ in keys],
+            "direct_Bdag_columns_sparse": [[] for _ in keys],
+        }
+
     def test_five_seed_keys_are_admissible_and_orthonormal(self):
         keys = [self.seed_key(k2) for k2 in (0, 2, 4, 6, 8)]
         result = gram_certificate(keys)
@@ -44,13 +55,7 @@ class W5ClosureGramGateTests(unittest.TestCase):
 
     def test_complete_artifact_key_parser(self):
         keys = [self.seed_key(k2) for k2 in (0, 2, 4, 6, 8)]
-        payload = {
-            "status": "PASS_ADJOINT_CONSISTENCY",
-            "closure_size": len(keys),
-            "basis_keys_repr": [repr(key) for key in keys],
-            "forward_B_columns_sparse": [[] for _ in keys],
-            "direct_Bdag_columns_sparse": [[] for _ in keys],
-        }
+        payload = self.complete_payload(keys)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "complete.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
@@ -91,17 +96,32 @@ class W5ClosureGramGateTests(unittest.TestCase):
 
     def test_complete_artifact_requires_matching_matrix_dimensions(self):
         key = self.seed_key(0)
-        payload = {
-            "status": "PASS_ADJOINT_CONSISTENCY",
-            "closure_size": 1,
-            "basis_keys_repr": [repr(key)],
-            "forward_B_columns_sparse": [],
-            "direct_Bdag_columns_sparse": [[]],
-        }
+        payload = self.complete_payload([key])
+        payload["forward_B_columns_sparse"] = []
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad_complete.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "forward-column count"):
+                load_keys(path)
+
+    def test_complete_artifact_rejects_out_of_basis_sparse_index(self):
+        key = self.seed_key(0)
+        payload = self.complete_payload([key])
+        payload["forward_B_columns_sparse"] = [[[1, 0.5, 0.0]]]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad_sparse_index.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "out-of-basis"):
+                load_keys(path)
+
+    def test_complete_artifact_rejects_basis_hash_mismatch(self):
+        key = self.seed_key(0)
+        payload = self.complete_payload([key])
+        payload["basis_id_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad_basis_hash.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "basis_id_sha256"):
                 load_keys(path)
 
     def test_partial_artifact_requires_matching_column_count(self):
