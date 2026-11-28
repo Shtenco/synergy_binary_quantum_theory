@@ -26,6 +26,19 @@ def active_scope(sequence, source_v):
     return tuple(sorted(active))
 
 
+def active_pair_scope(sequence):
+    """Directly hit edges in a word; do not complete them to a clique."""
+    active = set()
+    for op in sequence:
+        if op[0] == "P":
+            path = tuple(op[1])
+            active.update(tuple(sorted(edge)) for edge in
+                          zip(path[:-1], path[1:]))
+        elif op[0] != "V":
+            raise ValueError(f"unknown operator {op[0]}")
+    return frozenset(active)
+
+
 def _stored_pairs(scope):
     return tuple(combinations(scope, 2))
 
@@ -38,9 +51,27 @@ def _scope_of(support, extra=()):
     return tuple(sorted(scope))
 
 
+def _pair_scope_of(support):
+    return frozenset(pair for state in support.values()
+                     for pair in state["pairs"])
+
+
 def compress(support, scope):
     """Drop pair factors outside the active induced subgraph."""
     keep = set(_stored_pairs(scope))
+    out = {}
+    for spins, state in support.items():
+        out[spins] = {
+            "unary": tuple(frozenset(x) for x in state["unary"]),
+            "pairs": {p: frozenset(rel) for p, rel in state["pairs"].items()
+                      if p in keep},
+        }
+    return out
+
+
+def _compress_pairs(support, pair_scope):
+    """Retain exactly the explicitly active/inherited pair factors."""
+    keep = set(pair_scope)
     out = {}
     for spins, state in support.items():
         out[spins] = {
@@ -145,20 +176,19 @@ def _sparse_lift(support):
     return out
 
 
-def _ensure_scope(support, scope, limit):
-    """Add only newly active pair factors, initialized as Cartesian products."""
-    required = tuple(combinations(tuple(sorted(scope)), 2))
+def _ensure_pair_scope(support, pair_scope, limit):
+    """Materialize only directly hit or inherited pair factors."""
     out = {}
     for spins, state in support.items():
         pairs = dict(state["pairs"])
-        for a, b in required:
+        for a, b in pair_scope:
             if (a, b) not in pairs:
                 pairs[(a, b)] = frozenset(
                     (x, y) for x in state["unary"][a]
                     for y in state["unary"][b]
                 )
         out[spins] = {"unary": state["unary"], "pairs": pairs}
-    _guard(out, limit, "active-scope materialization")
+    _guard(out, limit, "active-pair materialization")
     return out
 
 
@@ -368,26 +398,27 @@ def _guard(support, limit, stage):
 def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
              limit=100000):
     """Propagate one primitive word with active-scope pair storage."""
-    scope = {source_v}
-    # Retain inherited scopes only where a pair relation is genuinely tighter
-    # than the current unary Cartesian product. Singleton seed relations are
-    # redundant and must not force the initial scope to all five nodes.
+    pair_scope = set()
+    # Preserve inherited nontrivial relations; redundant singleton seed
+    # factors do not activate all ten K5 edges.
     for state in support.values():
         for (a, b), relation in state["pairs"].items():
             cartesian = frozenset((x, y) for x in state["unary"][a]
                                   for y in state["unary"][b])
             if relation != cartesian:
-                scope.update((a, b))
-    work = compress(_sparse_lift(support), tuple(sorted(scope)))
-    _guard(work, limit, "initial active scope")
+                pair_scope.add((a, b))
+    work = _compress_pairs(_sparse_lift(support), pair_scope)
+    _guard(work, limit, "initial active pair scope")
     for op in word:
         if op[0] == "V":
-            scope.add(source_v)
+            pass
         elif op[0] == "P":
-            scope.update(tuple(op[1]))
+            path = tuple(op[1])
+            pair_scope.update(tuple(sorted(edge)) for edge in
+                              zip(path[:-1], path[1:]))
         else:
             raise ValueError(f"unknown operator {op[0]}")
-        work = _ensure_scope(work, scope, limit)
+        work = _ensure_pair_scope(work, pair_scope, limit)
         if op[0] == "V":
             work = _sparse_volume(work, source_v, limit)
         else:
@@ -400,12 +431,12 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
                         f"{exc}; operator={op!r}; edge={(x, y)!r}; "
                         f"active_scope={tuple(sorted(scope))!r}"
                     ) from exc
-        work = compress(work, tuple(sorted(scope)))
+        work = _compress_pairs(work, pair_scope)
         _guard(work, limit, f"after {op[0]}")
         if not work:
             break
     projected = _sparse_project(work, charged_nodes, limit)
-    return compress(projected, tuple(sorted(scope)))
+    return _compress_pairs(projected, pair_scope)
 
 
 def contains_joint(support, key):
@@ -478,9 +509,9 @@ def he_spec_branches(branches, source_v, Jmax2, charged_nodes=(0, 1),
                     # every inherited nontrivial pair scope. Dropping an
                     # inherited factor is conservative as a relaxation, but
                     # needlessly destroys correlations across nested words.
-                    scope = set(active_scope(candidate, source_v))
-                    scope.update(_scope_of(part))
-                    part = compress(part, tuple(sorted(scope)))
+                    pair_scope = set(active_pair_scope(candidate))
+                    pair_scope.update(_pair_scope_of(part))
+                    part = _compress_pairs(part, pair_scope)
                     spec_union = _union(spec_union, part, limit,
                                         "sparse H_E T-word union")
             if spec_union:
@@ -497,14 +528,14 @@ def k_branches(branches, source_v, Jmax2, charged_nodes=(0,),
         vh = sequence(he, (("V", source_v),), source_v, Jmax2,
                       NODES, limit)
         if vh:
-            out.append(compress(vh, _scope_of(vh, (source_v,))))
+            out.append(_compress_pairs(vh, _pair_scope_of(vh)))
     vin = []
     for branch in branches:
         lifted = _sparse_lift(branch)
         vol = _sparse_volume(lifted, source_v, limit)
         projected = _sparse_project(vol, NODES, limit)
         if projected:
-            vin.append(compress(projected, _scope_of(projected, (source_v,))))
+            vin.append(_compress_pairs(projected, _pair_scope_of(projected)))
     out.extend(he_spec_branches(vin, source_v, Jmax2,
                                 NODES, limit))
     return out
@@ -522,14 +553,14 @@ def c_k_branches(branches, source_v, target_v, Jmax2, i, j,
         part = sequence(branch, (("P", (target_v, source_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            inverse.append(compress(part, _scope_of(part, (source_v, target_v))))
+            inverse.append(_compress_pairs(part, _pair_scope_of(part)))
     middle = k_branches(inverse, source_v, Jmax2,
                         NODES, limit)
     for branch in middle:
         closed = sequence(branch, (("P", (source_v, target_v)),),
                           source_v, Jmax2, NODES, limit)
         if closed:
-            out.append(compress(closed, _scope_of(closed, (source_v, target_v))))
+            out.append(_compress_pairs(closed, _pair_scope_of(closed)))
     return out
 
 
@@ -542,33 +573,33 @@ def c_volume_branches(branches, source_v, target_v, Jmax2, i, j,
             part = sequence(branch, (("V", source_v),), source_v,
                             Jmax2, NODES, limit)
             if part:
-                out.append(compress(part, _scope_of(part, (source_v,))))
+                out.append(_compress_pairs(part, _pair_scope_of(part)))
     inverse = []
     for branch in branches:
         part = sequence(branch, (("P", (target_v, source_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            inverse.append(compress(part, _scope_of(part, (source_v, target_v))))
+            inverse.append(_compress_pairs(part, _pair_scope_of(part)))
     middle = []
     for branch in inverse:
         part = sequence(branch, (("V", source_v),), source_v,
                          Jmax2, NODES, limit)
         if part:
-            middle.append(compress(part, _scope_of(part, (source_v, target_v))))
+            middle.append(_compress_pairs(part, _pair_scope_of(part)))
     for branch in middle:
         part = sequence(branch, (("P", (source_v, target_v)),),
                         source_v, Jmax2, NODES, limit)
         if part:
-            out.append(compress(part, _scope_of(part, (source_v, target_v))))
+            out.append(_compress_pairs(part, _pair_scope_of(part)))
     return out
 
 
 def scalar_filter(branches, source_v, limit=100000):
     out = []
     for branch in branches:
-        full = _sparse_scalar_filter(branch, source_v, limit)
-        if full:
-            out.append(compress(full, _scope_of(branch, (source_v,))))
+        filtered = _sparse_scalar_filter(branch, source_v, limit)
+        if filtered:
+            out.append(_compress_pairs(filtered, _pair_scope_of(branch)))
     _guard(out, limit, "scalar-source filter")
     return out
 
@@ -636,10 +667,10 @@ def project_final(branches, charged_nodes, limit=100000):
         # Projection is terminal, but expanding all omitted factors before
         # projection must not make the returned representation dense. Keep
         # the branch's inherited active scope; omitted pairs remain Cartesian.
-        scope = _scope_of(branch)
+        pair_scope = _pair_scope_of(branch)
         projected = _sparse_project(branch, charged_nodes, limit)
         if projected:
-            out.append(compress(projected, scope))
+            out.append(_compress_pairs(projected, pair_scope))
     total = sum(
         sum(map(len, state["unary"])) +
         sum(map(len, state["pairs"].values()))
