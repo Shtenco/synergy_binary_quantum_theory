@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import unittest
-import sympy as sp
-
 from bqg_w5_closure_gram_gate import (
     allowed_k2, gram_certificate, validate_basis_key,
 )
@@ -17,13 +15,10 @@ class W5ClosureGramGateTests(unittest.TestCase):
         self.assertTrue(result["passed"])
         self.assertEqual(result["basis_dimension"], 5)
         self.assertEqual(result["gram_rank"], 5)
-        self.assertEqual(result["input_metric_Q"], [
-            ["1", "0", "0", "0", "0"],
-            ["0", "1", "0", "0", "0"],
-            ["0", "0", "1", "0", "0"],
-            ["0", "0", "0", "1", "0"],
-            ["0", "0", "0", "0", "1"],
-        ])
+        self.assertEqual(result["input_metric_Q"],
+                         {"representation": "implicit_identity", "dimension": 5})
+        self.assertEqual(result["gram_matrix"],
+                         {"type": "identity", "dimension": 5})
 
     def test_duplicate_keys_fail_closed(self):
         key = self.seed_key(0)
