@@ -372,3 +372,41 @@ The next algorithmic step is a factorized operator-level propagator for
 (C(K)) and KKV. It must preserve conservative marginal supersets and
 separately track the scalar-source filter; it must not claim cross-node
 correlations or replace exact joint support where those correlations matter.
+
+
+## Factorized operator-level KKV propagator
+
+A separate module, `scripts/bqg_w5_factorized_operator_support.py`, now composes the
+operator stages directly on marginal supports, without constructing the
+Cartesian product of node labels:
+
+- `factorized_he`: all oriented H_E specs, actual repository T-sequences,
+  and independently reversed adjoint words;
+- `factorized_k`: both V-after-H_E and H_E-after-V branches of [V,H_E];
+- `factorized_c_volume`: direct scalar-volume branch plus inverse-hit,
+  volume, and closing-hit branch for C_e(V);
+- `factorized_c_k`: direct K branch plus inverse-hit, K, and closing-hit
+  branch for C_e(K);
+- `factorized_triple`: forward C_a(K) C_b(K) C_c(V) and independently
+  reversed adjoint C_c(V) C_b(K) C_a(K), retaining the frozen source-node
+  J2 in {0,2} filter after the middle C(K) leg.
+
+The representation is keyed by the ten-link spin sector and stores five
+marginal local-label sets. Every union and expansion has a fail-closed
+marginal-label guard. The product of marginal cardinalities is reported only
+as an upper bound. The implementation does not preserve cross-node
+correlations, enumerate exact joint keys, calculate coefficients, or infer
+nonzero amplitudes.
+
+The CI suite now includes inclusion checks against the exact joint-key
+structural routines for K, C_e(K), the forward KKV triple, and the independently
+reversed adjoint triple. These checks use a deliberately tiny mocked H_E
+family (one empty word): they certify the composition order, projection
+plumbing, and conservative marginal inclusion in that finite control, not the
+full physical W5 word family or numerical operator.
+
+A bounded physical-seed runner,
+`scripts/bqg_w5_factorized_kkv_pilot.py`, exercises the ordered triple
+(1,2,3) on the W5 K=0 seed at Jmax2=10. It reports forward and adjoint
+marginal envelopes separately and treats a guard hit as a diagnostic result.
+It explicitly marks amplitudes and joint-key enumeration as not performed.
