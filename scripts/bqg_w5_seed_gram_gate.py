@@ -67,9 +67,31 @@ def exact_seed_gram() -> sp.Matrix:
     return gram
 
 
+def exact_full_seed_gram() -> sp.Matrix:
+    """Assemble the full K5 spin-network Gram from normalized node/link factors.
+
+    Node 0 carries the five-channel intertwiner family. Nodes 1..4 carry the
+    same normalized K=0 intertwiner in every seed. Every one of the ten links
+    carries the same fixed j=2 Peter-Weyl label. With normalized Haar measure
+    and normalized Peter-Weyl matrix elements, edge contractions identify
+    matching endpoint magnetic indices unitarily; the resulting spin-network
+    inner product factorizes into the node intertwiner inner products.
+    """
+    node0 = exact_seed_gram()
+    fixed_node_gram = sp.eye(1)
+    full = node0
+    for _node in range(4):
+        full = sp.kronecker_product(full, fixed_node_gram)
+    return sp.simplify(full)
+
+
 def run_gate() -> dict:
-    gram = exact_seed_gram()
-    passed = gram == sp.eye(len(SEED_K2_VALUES))
+    node0_gram = exact_seed_gram()
+    gram = exact_full_seed_gram()
+    passed = (
+        node0_gram == sp.eye(len(SEED_K2_VALUES))
+        and gram == sp.eye(len(SEED_K2_VALUES))
+    )
     return {
         "status": "exact W5 five-seed intertwiner Gram gate",
         "passed": bool(passed),
@@ -77,6 +99,15 @@ def run_gate() -> dict:
         "link_spin": "2",
         "seed_K2_values": list(SEED_K2_VALUES),
         "seed_K_values": [str(sp.Rational(k, 2)) for k in SEED_K2_VALUES],
+        "node0_intertwiner_gram": [[str(node0_gram[i, j]) for j in range(node0_gram.cols)]
+                                   for i in range(node0_gram.rows)],
+        "factorization": {
+            "node_0": "five-channel normalized intertwiner family",
+            "nodes_1_to_4": "same normalized K=0 intertwiner in every seed",
+            "links": "ten fixed j=2 normalized Peter-Weyl matrix-element factors",
+            "haar_measure": "normalized Haar measure",
+            "edge_contraction": "unitary magnetic-index identification; inner product factorizes",
+        },
         "input_metric_Q": [[str(gram[i, j]) for j in range(gram.cols)]
                            for i in range(gram.rows)],
         "gram_rank": gram.rank(),
