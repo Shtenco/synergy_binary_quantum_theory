@@ -48,6 +48,10 @@ def test_active_scope_is_local_to_primitive_paths():
     assert prof["joint_keys_enumerated"] is False
     assert prof["amplitudes_evaluated"] is False
     assert prof["missing_pairs_are_unconstrained_cartesian_products"] is True
+    terminal = SAP.project_final([result], (0,), limit=200000)
+    assert terminal
+    assert all(len(state["pairs"]) < 10 for branch in terminal
+               for state in branch.values())
 
 
 def test_sparse_sequential_words_keep_intermediate_nodes_charged():
