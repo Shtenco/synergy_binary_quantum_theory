@@ -74,9 +74,15 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
              limit=100000):
     """Propagate one primitive word with active-scope pair storage."""
     scope = {source_v}
+    # Retain inherited scopes only where a pair relation is genuinely tighter
+    # than the current unary Cartesian product. Singleton seed relations are
+    # redundant and must not force the initial scope to all five nodes.
     for state in support.values():
-        for a, b in state["pairs"]:
-            scope.update((a, b))
+        for (a, b), relation in state["pairs"].items():
+            cartesian = frozenset((x, y) for x in state["unary"][a]
+                                  for y in state["unary"][b])
+            if relation != cartesian:
+                scope.update((a, b))
     work = compress(PG._lift(expand(support)), tuple(sorted(scope)))
     _guard(work, limit, "initial active scope")
     for op in word:
