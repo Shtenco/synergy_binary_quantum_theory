@@ -268,18 +268,40 @@ def project_all_charged_key(key, charged_nodes=(0,)):
     return tuple(spins), tuple(out)
 
 
-def advance_hit_label_support(key, x: int, y: int, Jmax2: int):
-    """Conservative all-node label support for one fundamental edge hit.
+def _fundamental_index2(index: int) -> int:
+    if index not in (0, 1):
+        raise ValueError("fundamental magnetic index must be 0 or 1")
+    return 1 if index == 0 else -1
 
-    Only the two endpoint link spins and their local representation labels
-    change. At each endpoint the fundamental holonomy is a rank-1/2 tensor,
-    so only J' = J +/- 1/2 is retained (doubled labels differ by one).
-    All magnetic labels are kept to avoid convention-dependent pruning.
+
+def _hit_delta_M2(x: int, y: int, node: int, i: int, j: int) -> int:
+    """Exact doubled magnetic shift induced by the repository's hit_mats."""
+    if x < y:
+        raw = _fundamental_index2(i if node == x else j)
+    else:
+        raw = -_fundamental_index2(j if node == x else i)
+    # The stored charged labels are in the unoriented local basis. The
+    # repository's orient_local inserts epsilon_j on every edge w < node,
+    # which reverses that leg's magnetic projection.
+    neighbor = y if node == x else x
+    return -raw if neighbor < node else raw
+
+
+def advance_hit_label_support(key, x: int, y: int, Jmax2: int,
+                              i: int = 0, j: int = 0):
+    """Exact selection-rule support for one fixed-index fundamental hit.
+
+    Link spins change by +/-1 in doubled units. At both endpoints, the
+    fundamental tensor requires |J-J'| <= 1/2 <= J+J'. The fixed indices
+    also determine M' exactly through the CG condition m'=m+m_f; the sign
+    is adjusted for reversed edge orientation and the epsilon_j convention.
     """
     spins, labels = lift_key_to_all_charged(key)
     edge = tuple(sorted((x, y)))
     if edge not in EDGE_INDEX:
         raise ValueError("hit endpoints must define a K5 edge")
+    if x == y:
+        raise ValueError("a holonomy hit must connect distinct vertices")
     ei = EDGE_INDEX[edge]
     s = spins[ei]
     endpoints = (x, y)
@@ -293,18 +315,16 @@ def advance_hit_label_support(key, x: int, y: int, Jmax2: int):
         for v in endpoints:
             old_lab = labels[v]
             old_J2 = old_lab[1] if old_lab[0] == "C" else 0
-            # A fundamental holonomy is a rank-1/2 tensor at each endpoint:
-            # |J-J'| <= 1/2 <= J+J'. In doubled labels this is
-            # |J2-J2'| <= 1 and J2+J2' >= 1. Keep every M2 because the
-            # fixed magnetic-index/orientation convention is handled by the
-            # coefficient engine, not needed for a conservative support bound.
+            old_M2 = old_lab[2] if old_lab[0] == "C" else 0
+            new_M2 = old_M2 + _hit_delta_M2(x, y, v, i, j)
             allowed_J2 = {
                 J2 for J2 in all_total_J2(local_spins(new_spins, v))
                 if abs(J2 - old_J2) <= 1 and J2 + old_J2 >= 1
+                and new_M2 in magnetic_labels(J2)
             }
             opts.append(tuple(
                 lab for lab in charged_node_basis(local_spins(new_spins, v))
-                if lab[1] in allowed_J2
+                if lab[1] in allowed_J2 and lab[2] == new_M2
             ))
         for left, right in product(*opts):
             new_labels = list(labels)
@@ -340,19 +360,28 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
         elif op[0] == "P":
             path = tuple(op[1])
             for state in states:
-                partial = {state}
-                for x, y in zip(path[:-1], path[1:]):
-                    expanded = set()
-                    for st in partial:
-                        for nxt in advance_hit_label_support(st, x, y, Jmax2):
-                            expanded.add(nxt)
-                            if max_states is not None and len(expanded) > max_states:
-                                raise RuntimeError(f"structural support exceeded max_states at op={op!r}, path={path!r}: prior={len(partial)}, expanded={len(expanded)}; no truncation performed")
-                    partial = expanded
-                for item in partial:
-                    next_states.add(item)
-                    if max_states is not None and len(next_states) > max_states:
-                        raise RuntimeError(f"structural support exceeded max_states after op={op!r}: accumulated={len(next_states)}; no truncation performed")
+                # apply_path_branch sums over every internal fundamental index;
+                # preserve that exact finite index set instead of allowing
+                # arbitrary M2 transitions at intermediate vertices.
+                from itertools import product as _product
+                n_edges = len(path) - 1
+                for mids in _product(range(2), repeat=max(0, n_edges - 1)):
+                    cols = (op[2],) + tuple(mids) + (op[3],)
+                    partial = {state}
+                    for edge_no, (x, y) in enumerate(zip(path[:-1], path[1:])):
+                        expanded = set()
+                        for st in partial:
+                            for nxt in advance_hit_label_support(
+                                st, x, y, Jmax2, cols[edge_no], cols[edge_no + 1]
+                            ):
+                                expanded.add(nxt)
+                                if max_states is not None and len(expanded) > max_states:
+                                    raise RuntimeError(f"structural support exceeded max_states at op={op!r}, path={path!r}: prior={len(partial)}, expanded={len(expanded)}; no truncation performed")
+                        partial = expanded
+                    for item in partial:
+                        next_states.add(item)
+                        if max_states is not None and len(next_states) > max_states:
+                            raise RuntimeError(f"structural support exceeded max_states after op={op!r}: accumulated={len(next_states)}; no truncation performed")
         else:
             raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
         states = next_states
@@ -444,10 +473,10 @@ def _volume_support(states, vertex: int, max_states=None):
 
 
 def _hit_project_support(states, x: int, y: int, Jmax2: int,
-                         charged_nodes, max_states=None):
+                         charged_nodes, i: int, j: int, max_states=None):
     out = set()
     for state in states:
-        for hit in advance_hit_label_support(state, x, y, Jmax2):
+        for hit in advance_hit_label_support(state, x, y, Jmax2, i, j):
             projected = project_all_charged_key(hit, charged_nodes)
             if projected is not None:
                 out.add(projected)
@@ -483,14 +512,17 @@ def C_volume_structural_support(key, source_v: int, target_v: int,
     out = set()
     if i == j:
         out.update(_volume_support({key}, source_v, max_states))
-    inverse = _hit_project_support(
-        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
-    )
-    vinverse = _volume_support(inverse, source_v, max_states)
-    closed = _hit_project_support(
-        vinverse, source_v, target_v, Jmax2, (source_v,), max_states
-    )
-    out.update(closed)
+    for aux_k in range(2):
+        inverse = _hit_project_support(
+            {key}, target_v, source_v, Jmax2, (source_v, target_v),
+            aux_k, j, max_states
+        )
+        vinverse = _volume_support(inverse, source_v, max_states)
+        closed = _hit_project_support(
+            vinverse, source_v, target_v, Jmax2, (source_v,),
+            i, aux_k, max_states
+        )
+        out.update(closed)
     _guard_support_size(out, max_states, "C_e(V)")
     return out
 
@@ -504,19 +536,22 @@ def C_K_structural_support(key, source_v: int, target_v: int,
         out.update(k_complete_structural_support(
             key, source_v, Jmax2, (source_v,), max_states
         ))
-    inverse = _hit_project_support(
-        {key}, target_v, source_v, Jmax2, (source_v, target_v), max_states
-    )
-    k_complete = set()
-    for state in inverse:
-        k_complete.update(k_complete_structural_support(
-            state, source_v, Jmax2, (source_v, target_v), max_states
-        ))
-        _guard_support_size(k_complete, max_states, "outer K")
-    closed = _hit_project_support(
-        k_complete, source_v, target_v, Jmax2, (source_v,), max_states
-    )
-    out.update(closed)
+    for aux_k in range(2):
+        inverse = _hit_project_support(
+            {key}, target_v, source_v, Jmax2, (source_v, target_v),
+            aux_k, j, max_states
+        )
+        k_complete = set()
+        for state in inverse:
+            k_complete.update(k_complete_structural_support(
+                state, source_v, Jmax2, (source_v, target_v), max_states
+            ))
+            _guard_support_size(k_complete, max_states, "outer K")
+        closed = _hit_project_support(
+            k_complete, source_v, target_v, Jmax2, (source_v,),
+            i, aux_k, max_states
+        )
+        out.update(closed)
     _guard_support_size(out, max_states, "C_e(K)")
     return out
 
