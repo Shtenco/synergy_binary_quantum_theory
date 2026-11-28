@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--max-factor-labels", type=int, default=100000)
     parser.add_argument("--source", type=int, default=0)
     parser.add_argument("--triple", type=int, nargs=3, default=(1, 2, 3))
-    parser.add_argument("--mode", choices=("forward", "adjoint", "both"),
+    parser.add_argument("--mode", choices=("forward", "adjoint", "both", "node"),
                         default="both")
     args = parser.parse_args()
 
@@ -51,11 +51,17 @@ def main():
     for mode in modes:
         item = {"mode": mode}
         try:
-            support = FO.factorized_triple(
-                initial, args.source, *args.triple, args.Jmax2,
-                adjoint=(mode == "adjoint"),
-                max_factor_labels=args.max_factor_labels,
-            )
+            if mode == "node":
+                support = FO.factorized_node_kkv(
+                    initial, args.source, args.Jmax2,
+                    max_factor_labels=args.max_factor_labels,
+                )
+            else:
+                support = FO.factorized_triple(
+                    initial, args.source, *args.triple, args.Jmax2,
+                    adjoint=(mode == "adjoint"),
+                    max_factor_labels=args.max_factor_labels,
+                )
             item["status"] = "completed"
             item.update(FO.factorized_support_profile(support))
             item["max_doubled_link_spin"] = max(
