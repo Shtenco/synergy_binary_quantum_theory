@@ -383,7 +383,13 @@ def sequence(support, word, source_v, Jmax2, charged_nodes=(0,),
         else:
             path = tuple(op[1])
             for x, y in zip(path[:-1], path[1:]):
-                work = _sparse_hit(work, x, y, Jmax2, limit)
+                try:
+                    work = _sparse_hit(work, x, y, Jmax2, limit)
+                except RuntimeError as exc:
+                    raise RuntimeError(
+                        f"{exc}; operator={op!r}; edge={(x, y)!r}; "
+                        f"active_scope={tuple(sorted(scope))!r}"
+                    ) from exc
         work = compress(work, tuple(sorted(scope)))
         _guard(work, limit, f"after {op[0]}")
         if not work:
