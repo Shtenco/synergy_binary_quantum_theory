@@ -647,75 +647,91 @@ basis until those inclusion tests cover composite paths, volume insertions,
 and both KKV orderings.
 
 
-## Sparse active-path pairwise prototype (2026-11-28)
+## Sparse active-path pairwise propagation (2026-11-28)
 
-Added `scripts/bqg_w5_sparse_active_path_support.py` and
-`tests/test_bqg_w5_sparse_active_path_support.py`.
+Added:
+- `scripts/bqg_w5_sparse_active_path_support.py`
+- `scripts/bqg_w5_sparse_active_path_kkv_pilot.py`
+- `tests/test_bqg_w5_sparse_active_path_support.py`
+- `.github/workflows/bqg-w5-sparse-active-path.yml`
 
-The prototype stores binary relations only for pairs whose endpoints have
-entered the active scope of the primitive word processed so far. The scope
-grows incrementally as each `P(path)` or `V(source)` operation is visited.
-When an omitted pair is needed by the existing pairwise propagation kernel,
-it is reconstructed as the Cartesian product of its current unary domains.
-After the primitive operation, relations outside the active induced scope
-are discarded again.
+The implementation now uses sparse-native propagation rather than expanding
+all ten K5 pair factors before every transition. Its internal kernels include
+sparse lift, hit, volume, projection, scalar filtering, and arc/path
+consistency. Missing pair factors are interpreted as Cartesian products of
+their current unary domains. The propagation path does not call the dense
+`expand()` helper; a regression test replaces that helper with a hard failure
+to enforce this property.
 
-This is deliberately a relaxation: omitted correlations are forgotten, not
-replaced by guessed constraints. Therefore it can enlarge support but must
-not remove a state supported by the exact joint-key structural propagator.
-The prototype reuses the existing pairwise hit/volume kernels; it is not yet
-a junction-tree message-passing implementation and does not claim optimal
-separator selection or shared-subexpression reuse.
+Pair scope is tracked by directly traversed holonomy edges, not by completing
+all active vertices to a clique. Redundant pair relations equal to the
+Cartesian product of their endpoint unary domains are dropped. Inherited
+nontrivial factors are retained across sequential words. Distinct oriented
+spec alternatives remain disjunctive; each T word and its independently
+reversed adjoint are combined within the same oriented-spec branch. The
+forward and reversed-adjoint KKV compositions preserve their separate
+operator orderings. All five nodes remain charged until terminal projection,
+and the scalar-source filter remains after the middle K leg.
 
-The new tests target exact inclusion for (i) a composite multi-edge path
-with an intervening scalar-volume insertion and (ii) a volume-before-hit
-word, plus an active-scope/profile sanity check. These tests have been
-committed, but their GitHub Actions result has not yet been observed. No
-physical W5 KKV pilot result is claimed at this stage. In particular, the
-current sequence API handles one primitive word; K, C_e(K), and both KKV
-orderings still require an active-scope composition layer and corresponding
-exact-inclusion controls before this representation can be used in a W5
-operator-level pilot or fixed-basis construction.
+The sparse regression suite contains seven tests. It covers:
+- exact-support inclusion for composite multi-edge words with a volume
+  insertion;
+- exact-support inclusion for volume-before-hit;
+- sequential composition with deferred Gauss projection;
+- inherited nontrivial pair-scope retention;
+- absence of dense pair expansion in sparse propagation;
+- removal of redundant Cartesian pair factors;
+- active-scope/profile invariants.
 
+All seven passed in
+[focused CI run 46162925635](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46162925635).
+The complete structural workflow also passed, including the sparse regression
+step, in
+[CI run 46162925703](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46162925703).
 
-### Sparse active-path operator composition (2026-11-28, prototype)
+### Real W5 bounded comparison
 
-The sparse module now includes branch-preserving structural wrappers for
-`H_E`, `K=[V,H_E]`, `C_e(V)`, `C_e(K)`, and the forward and independently
-reversed-adjoint KKV leg orderings. Oriented-spec alternatives are retained
-as separate disjuncts; T-sequence and its adjoint are unioned within the
-corresponding oriented-spec branch. The commutator sign is not represented:
-the support is the union of both summand supports, which is a conservative
-upper bound and cannot certify cancellation or non-vanishing.
+Seed: W5, K=0, all ten links j=2, Jmax2=10, source 0, triple (1,2,3).
+The matched baseline and sparse pilot were run with identical entry limits.
+Both forward and adjoint modes reached guard hits; no truncation was performed.
 
-Nested operator legs keep all five nodes charged during intermediate
-propagation. The Gauss projection is deferred until the complete KKV word,
-avoiding the known unsoundness of projecting an uncharged node before a
-later holonomy hit can act on it. The scalar-source `J2 in (0,2)` filter is
-applied after the middle K leg in both forward and reversed-adjoint orderings.
+At a 25,000-entry limit:
+- global disjunctive pairwise baseline: 27,980 entries;
+- sparse active-path: 28,426 entries;
+- sparse frontier: 720 unary entries and 27,706 pair entries;
+- four stored pair factors: 0-2 (10,540), 0-3 (4,760), 0-4 (9,268),
+  and 2-3 (3,138).
 
-Sparse pair scopes are carried across sequential primitive words. A missing
-pair factor is expanded as the Cartesian product of its unary domains before
-calling the existing global pairwise transition kernel. This preserves a
-safe relaxation but can increase intermediate memory; after each primitive
-word, the sparse induced scope is retained. The implementation is a
-branch-aware sparse pairwise envelope, not a junction-tree algorithm and
-not exact joint-state propagation.
+At a 100,000-entry limit:
+- global disjunctive pairwise baseline: 110,692 entries;
+- sparse active-path: 110,725 entries;
+- sparse frontier: 1,962 unary entries and 108,763 pair entries;
+- four stored pair factors.
 
-A sequential-word inclusion test was added in addition to the primitive-word
-tests. The tests compare against exact joint-key structural propagation on
-small finite sectors and check that the sparse result contains every exact
-projected key. No Actions result has yet been observed for the newest commits.
-No real W5 KKV pilot, numerical matrix element, amplitude, or compression
-gain is claimed. The operator-level wrappers must pass the complete exact
-inclusion suite and a bounded W5 pilot before being considered for fixed-basis
-integration.
+The sparse representation therefore does **not** improve the measured W5
+frontier at either matched limit. It stores fewer pair factors, but the
+remaining active-edge relations are sufficiently large that total storage is
+slightly higher (446 entries at the 25,000 limit; 33 at the 100,000 limit).
+The guard hits are expected bounded stops, not successful KKV calculations.
+The CI job is green because the pilot reports guard hits as structured results;
+the W5 forward and adjoint supports were not completed.
 
+No joint keys were enumerated and no amplitudes or numerical matrix elements
+were evaluated. The sparse tests establish conservative inclusion only for
+the tested finite words/sectors; they do not certify the complete physical
+W5 KKV operator.
 
-A bounded runner is now available at
-`scripts/bqg_w5_sparse_active_path_kkv_pilot.py`. It accepts the same
-`K`, `Jmax2`, source, triple, entry-limit, and forward/adjoint mode controls
-as the preceding pairwise pilot. It has not yet been executed in this work
-session; its presence is not evidence of a completed W5 run. The runner
-reports branch counts and stored sparse entries, not amplitudes or exact
-joint-state counts.
+### Current decision
+
+The sparse-native implementation fixes the earlier dense-expansion defect
+and is a valid conservative finite-sector abstraction on the tested cases.
+However, its real W5 pilot does not outperform the pairwise baseline. It is
+**not accepted for fixed-basis operator construction**.
+
+The next useful reduction must compress the large active-edge relations
+themselves—for example with a verified separator/junction representation,
+shared relation subexpressions, or another lossless factorization. Any such
+representation must preserve exact-support inclusion on small sectors and
+must be compared against the same matched W5 baselines. Do not infer a
+physical nonzero KKV column, operator completion, HDA closure, or physical
+projector from these structural support experiments.
