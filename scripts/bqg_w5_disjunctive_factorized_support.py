@@ -90,9 +90,7 @@ def factorized_k_branches(branches, source_v, Jmax2,
     for he_branch in factorized_he_branches(
         branches, source_v, Jmax2, charged_nodes, limit
     ):
-        part = FO._volume([he_branch] if isinstance(he_branch, list) else he_branch,
-                          source_v, limit)
-        out.extend(part)
+        out.extend(_volume([he_branch], source_v, limit))
     vin = _volume(
         [FO._lift(s) for s in branches], source_v, limit
     )
