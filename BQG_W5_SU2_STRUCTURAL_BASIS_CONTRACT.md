@@ -273,3 +273,42 @@ representation-theoretic selection rules.
 A new test verifies that a fundamental hit from (J=0) reaches only
 (J'=1/2), and from (J=1) reaches only (J'=1/2,3/2) in doubled-label
 notation. This is an exact structural rule, not a numerical amplitude result.
+
+
+## Magnetic-index pruning: deliberately not enabled
+
+An attempted fixed-(M_2) transition rule was cross-checked against the
+repository's actual `hit_mats`, `apply_hit_branch`, and
+`project_branch_complete_charges` implementations for both edge
+orientations. The first inferred sign convention did not reproduce the
+reference projections, and a multi-edge path exposed intermediate-branch
+charge leakage. That inference was therefore removed rather than weakening
+the tests or retaining an unverified sign. The production structural support
+continues to retain every admissible (M_2) while enforcing the exact
+rank-1/2 total-(J) triangle rule. Tests now assert that actual fixed-index
+CG projections are contained in the conservative structural support, not
+that an unverified magnetic rule is exact.
+
+## Factorized conservative envelope
+
+The explicit joint-key pilot on the physical W5 (j=2,K=0) seed exceeds
+5,000 states during the first encountered path
+((0,1,2,0)): its preceding frontier has 2,492 states and the next expansion
+reaches 5,001, so the guard aborts without truncation. This is a genuine
+combinatorial bottleneck, not a numerical zero.
+
+To avoid materializing the Cartesian product of all five node-label sets, the
+module now also provides a factorized envelope. For each ten-link spin sector
+it stores the marginal allowed label set at each of the five nodes. The
+product of these local sets is an upper bound on the joint support; cross-node
+correlations are not claimed. Functions:
+`factorized_sequence_support`,
+`factorized_t_sequence_support`, `factorized_contains_key`, and
+`factorized_support_profile`. The factorized representation can report both
+its compact storage size and the (possibly much larger) product-basis
+dimension upper bound without enumerating that product.
+
+Two tests compare this envelope with explicit one-hit and multi-edge path
+supports and require every explicit key to be contained. A bounded pilot on
+the physical W5 (K=0) seed is now part of CI. Its output must be interpreted
+as a conservative envelope, not an exact joint reachable-state list.
