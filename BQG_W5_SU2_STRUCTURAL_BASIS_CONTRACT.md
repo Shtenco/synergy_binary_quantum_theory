@@ -200,3 +200,49 @@ support exceeds the requested memory budget; it never silently truncates.
 The adapter is ready for bounded pilot runs on small spin sectors. It has not
 yet been run on the full W5 seed because the multi-charged ambient spaces are
 too large for indiscriminate enumeration.
+
+
+## Composition through C(V), C(K), and the KKV triple
+
+The structural layer now mirrors the nested operators used by
+`bqg_v10_w5_lorentzian_adjoint_closure.py` and the covariant composition
+modules:
+
+[
+C_e(V)=V-h_e Vh_e^{-1},qquad
+K=[V,H_E],qquad
+C_e(K)=K-h_eKh_e^{-1}.
+]
+
+It composes the exact representation-label upper bounds in the same
+right-to-left order as the numerical operator:
+
+[
+T_{abc}= operatorname{Tr}_{aux}
+ig[C_a(K)C_b(K)C_c(V)ig],
+]
+
+and constructs the adjoint independently in reversed order,
+
+[
+T_{abc}^{dagger}=
+operatorname{Tr}_{aux}
+ig[C_c(V)C_b(K)C_a(K)ig].
+]
+
+The intermediate source-sector filter after the middle leg is retained:
+`J2 in (0,2)`, i.e. (J=0,1). All auxiliary-index choices are unioned;
+magnetic-index zeros and numerical cancellations are deliberately ignored.
+The node-level adapter traverses all 24 epsilon triples and unions forward
+and reversed-adjoint supports. This is an upper support bound, not a
+coefficient calculation.
+
+Implemented functions:
+`k_complete_structural_support`,
+`C_volume_structural_support`, `C_K_structural_support`,
+`triple_forward_structural_support`,
+`triple_adjoint_structural_support`, and
+`node_kkv_structural_support`. Each stage has a hard state-count guard that
+raises instead of truncating. The full node-level KKV support has not yet been
+enumerated: the multi-charge ambient spaces and nested operator branches can
+exceed the current pilot memory budget.
