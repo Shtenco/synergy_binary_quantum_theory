@@ -83,11 +83,40 @@ def factorized_he_branches(branches, source_v, Jmax2,
     return _dedup(out, limit, "H_E deduplication")
 
 
+
+def factorized_he_spec_branches(branches, source_v, Jmax2,
+                                charged_nodes=(0, 1), limit=100000):
+    """Keep oriented_specs disjuncts, while merging T words within each spec.
+
+    This is a coarser disjunction than factorized_he_branches: it avoids
+    materializing every T-word branch separately but still prevents mixing
+    unrelated oriented-spec alternatives before later operator composition.
+    """
+    out = []
+    for incoming in branches:
+        for _sign, spec in PW.oriented_specs(source_v):
+            v, a, b, c = spec
+            spec_union = {}
+            for _coef, seq in PW.T_sequences(v, a, b, c):
+                for word in (seq, PW.adjoint_sequence(seq)):
+                    part = FO._sequence(
+                        incoming, word, source_v, Jmax2, charged_nodes, limit
+                    )
+                    spec_union = FO._union(
+                        spec_union, part, limit=limit,
+                        stage="oriented-spec T-word union"
+                    )
+            if spec_union:
+                out.append(spec_union)
+                _guard(out, limit, "oriented-spec alternatives")
+    return _dedup(out, limit, "oriented-spec deduplication")
+
+
 def factorized_k_branches(branches, source_v, Jmax2,
                           charged_nodes=(0,), limit=100000):
     """Disjunctive V H_E and H_E V branches for K=[V,H_E]."""
     out = []
-    for he_branch in factorized_he_branches(
+    for he_branch in factorized_he_spec_branches(
         branches, source_v, Jmax2, charged_nodes, limit
     ):
         out.extend(_volume([he_branch], source_v, limit))
@@ -98,7 +127,7 @@ def factorized_k_branches(branches, source_v, Jmax2,
         [FO._project(s, charged_nodes, limit) for s in vin],
         limit, "H_E V projection alternatives"
     )
-    out.extend(factorized_he_branches(
+    out.extend(factorized_he_spec_branches(
         vin, source_v, Jmax2, charged_nodes, limit
     ))
     return _dedup(out, limit, "K commutator alternatives")
