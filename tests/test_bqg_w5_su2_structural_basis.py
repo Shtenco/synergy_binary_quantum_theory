@@ -272,5 +272,58 @@ class StructuralBasisTests(unittest.TestCase):
             FO._volume(support, 0, 0)
 
 
+    def test_factorized_forward_KKV_contains_exact_tiny_support(self):
+        import bqg_w5_su2_structural_basis as SB
+        import bqg_w5_factorized_operator_support as FO
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               ((\"C\", 0, 0, 0, 0),) +
+               tuple((\"G\", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact = SB.triple_forward_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            factored = FO.factorized_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=False,
+                max_factor_labels=5000
+            )
+        self.assertTrue(all(SB.factorized_contains_key(factored, x)
+                            for x in exact))
+
+    def test_factorized_reversed_adjoint_KKV_contains_exact_tiny_support(self):
+        import bqg_w5_su2_structural_basis as SB
+        import bqg_w5_factorized_operator_support as FO
+        from unittest.mock import patch
+
+        key = ((0,) * 10,
+               ((\"C\", 0, 0, 0, 0),) +
+               tuple((\"G\", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {lifted[0]: tuple(frozenset((x,)) for x in lifted[1])}
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, ()),)),
+        ):
+            exact = SB.triple_adjoint_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=1000
+            )
+            factored = FO.factorized_triple(
+                initial, 0, 1, 2, 3, 1, adjoint=True,
+                max_factor_labels=5000
+            )
+        self.assertTrue(all(SB.factorized_contains_key(factored, x)
+                            for x in exact))
+
+
 if __name__ == "__main__":
     unittest.main()
