@@ -79,9 +79,12 @@ def exact_full_seed_gram() -> sp.Matrix:
     """
     node0 = exact_seed_gram()
     fixed_node_gram = sp.eye(1)
+    normalized_edge_contraction = sp.eye(1)
     full = node0
     for _node in range(4):
         full = sp.kronecker_product(full, fixed_node_gram)
+    for _edge in range(10):
+        full = sp.kronecker_product(full, normalized_edge_contraction)
     return sp.simplify(full)
 
 
