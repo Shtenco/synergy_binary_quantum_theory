@@ -38,6 +38,21 @@ class FiniteMasterKernelGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_master_constraint([sp.eye(2), sp.ones(1, 2)], sp.eye(2))
 
+    def test_nontrivial_input_metric_projector(self):
+        C = sp.Matrix([[1, 0]])
+        Q = sp.Matrix([[2, 1], [1, 2]])
+        result = build_master_constraint([C], sp.eye(1), input_metric=Q)
+        P = result["projector_matrix"]
+        self.assertEqual(P, sp.Matrix([[0, 0], [sp.Rational(1, 2), 1]]))
+        self.assertTrue(result["checks"]["projector_metric_self_adjoint"])
+        self.assertTrue(result["checks"]["master_metric_self_adjoint"])
+        self.assertTrue(all(result["checks"].values()))
+
+    def test_rejects_invalid_input_metric(self):
+        with self.assertRaises(ValueError):
+            build_master_constraint([sp.eye(2)], sp.eye(1),
+                                    input_metric=sp.diag(1, -1))
+
     def test_rejects_float_input(self):
         with self.assertRaises(ValueError):
             build_master_constraint([sp.Matrix([[0.5, 0]])], sp.eye(1))
