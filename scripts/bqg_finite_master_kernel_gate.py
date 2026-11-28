@@ -37,10 +37,11 @@ def _zero(matrix: sp.Matrix) -> bool:
 
 def build_master_constraint(constraints: Sequence[sp.Matrix], label_metric: sp.Matrix,
                             input_metric: sp.Matrix | None = None) -> dict:
-    """Build M=C†(G⊗I_K)C and the exact orthogonal common-kernel projector.
+    """Build M=Q^{-1}C†(G⊗I_K)C and its Q-orthogonal kernel projector.
 
-    Every C_A must map the same finite input H to the same finite output fiber K.
-    G must be exactly Hermitian positive definite.
+    Every C_A maps the same finite input H to the same finite output fiber K.
+    G and the optional input Gram matrix Q must be exactly Hermitian positive definite.
+    Omitting Q selects orthonormal input coordinates.
     """
     if not constraints:
         raise ValueError("at least one constraint matrix is required")
