@@ -6,7 +6,7 @@ on:
       - research/bqg-physical-projector-hda-gates-20261128
     paths:
       - 'scripts/bqg_finite_master_kernel_gate.py'
-      - 'tests/test_bqg_finite_master_kernel_gate.py'
+      - 'tests/test_bqg_finite_master_kernel_gate.py'\n      - 'scripts/bqg_w5_seed_gram_gate.py'\n      - 'tests/test_bqg_w5_seed_gram_gate.py'
       - '.github/workflows/bqg-finite-projector-tests.yml'
   pull_request:
     branches:
@@ -30,8 +30,8 @@ jobs:
       - name: Run exact finite common-kernel tests
         env:
           PYTHONPATH: scripts
-        run: python -m unittest discover -s tests -p 'test_bqg_finite_master_kernel_gate.py' -v
-      - name: Run machine-readable reference certificate
+        run: python -m unittest discover -s tests -p 'test_bqg_*_gate.py' -v
+      - name: Run exact W5 seed Gram certificate\n        env:\n          PYTHONPATH: scripts\n        run: python scripts/bqg_w5_seed_gram_gate.py --output verification_results/W5_SEED_GRAM_20261128.json\n      - name: Run machine-readable reference certificate
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_finite_master_kernel_gate.py --output verification_results/FINITE_MASTER_KERNEL_REFERENCE_20261128.json
