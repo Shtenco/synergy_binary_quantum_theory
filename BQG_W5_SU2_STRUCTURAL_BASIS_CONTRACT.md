@@ -676,3 +676,37 @@ current sequence API handles one primitive word; K, C_e(K), and both KKV
 orderings still require an active-scope composition layer and corresponding
 exact-inclusion controls before this representation can be used in a W5
 operator-level pilot or fixed-basis construction.
+
+
+### Sparse active-path operator composition (2026-11-28, prototype)
+
+The sparse module now includes branch-preserving structural wrappers for
+`H_E`, `K=[V,H_E]`, `C_e(V)`, `C_e(K)`, and the forward and independently
+reversed-adjoint KKV leg orderings. Oriented-spec alternatives are retained
+as separate disjuncts; T-sequence and its adjoint are unioned within the
+corresponding oriented-spec branch. The commutator sign is not represented:
+the support is the union of both summand supports, which is a conservative
+upper bound and cannot certify cancellation or non-vanishing.
+
+Nested operator legs keep all five nodes charged during intermediate
+propagation. The Gauss projection is deferred until the complete KKV word,
+avoiding the known unsoundness of projecting an uncharged node before a
+later holonomy hit can act on it. The scalar-source `J2 in (0,2)` filter is
+applied after the middle K leg in both forward and reversed-adjoint orderings.
+
+Sparse pair scopes are carried across sequential primitive words. A missing
+pair factor is expanded as the Cartesian product of its unary domains before
+calling the existing global pairwise transition kernel. This preserves a
+safe relaxation but can increase intermediate memory; after each primitive
+word, the sparse induced scope is retained. The implementation is a
+branch-aware sparse pairwise envelope, not a junction-tree algorithm and
+not exact joint-state propagation.
+
+A sequential-word inclusion test was added in addition to the primitive-word
+tests. The tests compare against exact joint-key structural propagation on
+small finite sectors and check that the sparse result contains every exact
+projected key. No Actions result has yet been observed for the newest commits.
+No real W5 KKV pilot, numerical matrix element, amplitude, or compression
+gain is claimed. The operator-level wrappers must pass the complete exact
+inclusion suite and a bounded W5 pilot before being considered for fixed-basis
+integration.
