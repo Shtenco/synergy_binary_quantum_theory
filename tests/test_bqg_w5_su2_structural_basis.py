@@ -523,5 +523,38 @@ class StructuralBasisTests(unittest.TestCase):
             self.assertTrue(all(TG.contains_joint(got_a, x) for x in exact_a))
 
 
+    def test_disjunctive_factorized_nontrivial_KKV_contains_exact_forward_and_adjoint(self):
+        import bqg_w5_disjunctive_factorized_support as DF
+        import bqg_w5_su2_structural_basis as SB
+        from unittest.mock import patch
+        key = ((0,) * 10,
+               (("C", 0, 0, 0, 0),) + tuple(("G", 0) for _ in range(4)))
+        lifted = SB.lift_key_to_all_charged(key)
+        initial = {
+            lifted[0]: tuple(frozenset((lab,)) for lab in lifted[1])
+        }
+        word = (("P", (0, 1), 0, 0),)
+        with (
+            patch.object(PW, "oriented_specs",
+                         return_value=((1, (0, 1, 2, 3)),)),
+            patch.object(PW, "T_sequences",
+                         return_value=((1.0, word),)),
+        ):
+            exact_f = SB.triple_forward_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=20000
+            )
+            got_f = DF.factorized_triple_branches(
+                [initial], 0, 1, 2, 3, 1, adjoint=False, limit=1000000
+            )
+            self.assertTrue(all(DF.contains_key(got_f, x) for x in exact_f))
+            exact_a = SB.triple_adjoint_structural_support(
+                key, 0, 1, 2, 3, 1, max_states=20000
+            )
+            got_a = DF.factorized_triple_branches(
+                [initial], 0, 1, 2, 3, 1, adjoint=True, limit=1000000
+            )
+            self.assertTrue(all(DF.contains_key(got_a, x) for x in exact_a))
+
+
 if __name__ == "__main__":
     unittest.main()
