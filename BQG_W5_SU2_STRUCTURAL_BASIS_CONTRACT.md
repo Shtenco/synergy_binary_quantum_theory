@@ -246,3 +246,30 @@ Implemented functions:
 raises instead of truncating. The full node-level KKV support has not yet been
 enumerated: the multi-charge ambient spaces and nested operator branches can
 exceed the current pilot memory budget.
+
+
+## Exact rank-1/2 holonomy transition refinement
+
+The initial hit propagator retained every admissible total-J sector at both
+endpoints. This was safe but unnecessarily broad. Inspection of the actual
+`PW.apply_hit_branch` and `hit_mats` implementation shows that each
+fundamental holonomy insertion is a rank-1/2 tensor at each endpoint. The
+Wigner-Eckart triangle rule therefore requires
+
+[
+|J-J'|\leq\tfrac12\leq J+J',
+qquad
+J'_2\in\{J_2-1,J_2+1\},
+]
+
+with negative labels excluded. The propagator now imposes this exact
+representation-theoretic restriction independently at both endpoints.
+All admissible (M'_2) values are still retained; no magnetic-index pruning
+is attempted because the orientation and fixed-index convention belongs to
+the coefficient engine. Thus the new rule reduces false candidate sectors
+without assuming any numerical CG coefficient is nonzero beyond the
+representation-theoretic selection rules.
+
+A new test verifies that a fundamental hit from (J=0) reaches only
+(J'=1/2), and from (J=1) reaches only (J'=1/2,3/2) in doubled-label
+notation. This is an exact structural rule, not a numerical amplitude result.
