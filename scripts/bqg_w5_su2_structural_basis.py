@@ -348,6 +348,63 @@ def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
     return projected
 
 
+
+def t_sequence_structural_support(key, v: int, a: int, b: int, c: int,
+                                  Jmax2: int, charged_nodes=(0, 1),
+                                  include_adjoint: bool = True,
+                                  max_states: int | None = 100000):
+    """Union structural label support over actual T_sequences and adjoints."""
+    import sys
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import k5_peter_weyl_safe_hda_column as PW
+
+    out = set()
+    for _coefficient, seq0 in PW.T_sequences(v, a, b, c):
+        words = [seq0]
+        if include_adjoint:
+            words.append(PW.adjoint_sequence(seq0))
+        for word in words:
+            out.update(structural_sequence_support(
+                key, word, v, Jmax2, charged_nodes, max_states
+            ))
+            if max_states is not None and len(out) > max_states:
+                raise RuntimeError("T-sequence support exceeded max_states; no truncation performed")
+    return out
+
+
+def he_structural_support(key, source_v: int, Jmax2: int,
+                          charged_nodes=(0, 1),
+                          max_states: int | None = 100000):
+    """Union support for the full frozen H_E primitive assembly.
+
+    Mirrors the oriented_specs -> (forward, adjoint) -> T_sequences nesting
+    in peter_weyl_covariant_K_leg_gate.apply_HE_complete_key. Numerical
+    coefficients and signs are deliberately ignored: this is an upper support
+    bound, not an operator evaluation.
+    """
+    import sys
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import k5_peter_weyl_safe_hda_column as PW
+
+    out = set()
+    for _sign, spec in PW.oriented_specs(source_v):
+        v, a, b, c = spec
+        part = t_sequence_structural_support(
+            key, v, a, b, c, Jmax2, charged_nodes,
+            include_adjoint=True, max_states=max_states
+        )
+        out.update(part)
+        if max_states is not None and len(out) > max_states:
+            raise RuntimeError("H_E structural support exceeded max_states; no truncation performed")
+    return out
+
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
