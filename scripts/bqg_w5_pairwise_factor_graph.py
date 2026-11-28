@@ -46,11 +46,26 @@ def _merge(dst, spins, state):
 
 
 def _arc_consistency(state):
+    """Enforce unary arc consistency and binary path consistency.
+
+    For every node triple (i,j,k), a retained pair (x_i,x_j) must have at
+    least one common supporting label at k. This is a safe tightening of the
+    pairwise relaxation: every genuinely joint-supported pair survives.
+    """
     unary = [set(x) for x in state["unary"]]
     pairs = {p: set(v) for p, v in state["pairs"].items()}
+
+    def oriented(a, b):
+        p = tuple(sorted((a, b)))
+        rel = pairs[p]
+        if a < b:
+            return rel
+        return {(y, x) for x, y in rel}
+
     changed = True
     while changed:
         changed = False
+        # Unary arc consistency.
         for (a, b), rel in pairs.items():
             na = {x for x, y in rel if y in unary[b]}
             nb = {y for x, y in rel if x in unary[a]}
@@ -60,10 +75,37 @@ def _arc_consistency(state):
             if nb != unary[b]:
                 unary[b] &= nb
                 changed = True
-            nr = {(x, y) for x, y in rel if x in unary[a] and y in unary[b]}
+            nr = {(x, y) for x, y in rel
+                  if x in unary[a] and y in unary[b]}
             if nr != rel:
                 pairs[(a, b)] = nr
                 changed = True
+
+        # Binary path consistency across every third node.
+        for i, j in PAIRS:
+            rel_ij = pairs[(i, j)]
+            if not rel_ij:
+                continue
+            for k in NODES:
+                if k == i or k == j:
+                    continue
+                rik = oriented(i, k)
+                rjk = oriented(j, k)
+                left = {}
+                right = {}
+                for x, y in rik:
+                    left.setdefault(x, set()).add(y)
+                for z, y in rjk:
+                    right.setdefault(z, set()).add(y)
+                kept = {
+                    (x, z) for x, z in rel_ij
+                    if left.get(x, set()).intersection(right.get(z, set()))
+                }
+                if kept != rel_ij:
+                    pairs[(i, j)] = kept
+                    rel_ij = kept
+                    changed = True
+
     return {"unary": tuple(frozenset(x) for x in unary),
             "pairs": {p: frozenset(v) for p, v in pairs.items()}}
 
