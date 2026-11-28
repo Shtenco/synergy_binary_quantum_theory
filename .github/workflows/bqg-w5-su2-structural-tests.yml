@@ -19,6 +19,8 @@ on:
       - 'scripts/bqg_w5_triplet_cluster_support.py'
       - 'scripts/bqg_w5_triplet_cluster_kkv_pilot.py'
       - 'scripts/bqg_w5_factorized_kkv_pilot.py'
+      - 'scripts/bqg_w5_disjunctive_factorized_support.py'
+      - 'scripts/bqg_w5_disjunctive_factorized_kkv_pilot.py'
       - '.github/workflows/bqg-w5-su2-structural-tests.yml'
 
 jobs:
@@ -68,6 +70,10 @@ jobs:
         env:
           PYTHONPATH: scripts
         run: python scripts/bqg_w5_factorized_kkv_pilot.py --K 0 --Jmax2 10 --max-factor-labels 10000 --source 0 --triple 1 2 3 --mode both
+      - name: Run bounded disjunctive factorized W5 KKV pilot
+        env:
+          PYTHONPATH: scripts
+        run: python scripts/bqg_w5_disjunctive_factorized_kkv_pilot.py --K 0 --Jmax2 10 --limit 10000 --source 0 --triple 1 2 3 --mode both
       - name: Run bounded factorized 24-term node KKV pilot
         env:
           PYTHONPATH: scripts
