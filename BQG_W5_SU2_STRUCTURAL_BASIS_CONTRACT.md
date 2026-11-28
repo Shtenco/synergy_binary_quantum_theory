@@ -317,7 +317,7 @@ as a conservative envelope, not an exact joint reachable-state list.
 ## Bounded W5 structural pilot results (2026-11-28)
 
 GitHub Actions run
-[`46087100107`](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46087100107)
+[`46087194577`](https://github.com/Shtenco/synergy_binary_quantum_theory/actions/runs/46087194577)
 completed successfully. The structural test suite ran **19 tests, 0 failures**,
 including three new bounded-composition tests for (K=[V,H_E]),
 diagonal/off-diagonal (C_e(K)), and fail-closed state guards.
@@ -327,13 +327,26 @@ one-triple T-sequence support pilot with 16 keys, one spin sector, and maximum
 doubled link spin 1. This is only a structural smoke test.
 
 For the physical W5 (all-link (j=2,K=0)) seed, the explicit joint-key
-T-sequence pilot at (J_{max,2}=10) reached the 5,000-state guard during
-path ((0,1,2,0)): the prior frontier contained 1,840 states and the next
-expansion reached 5,001. The guard aborted without truncation.
+T-sequence pilot at (J_{max,2}=10) reached the 5,000-state guard during path
+((0,1,2,0)): the prior frontier contained 580 states and the next expansion
+reached 5,001. The guard aborted without truncation. The lower frontier
+relative to the earlier run is due to the exact rank-1/2 endpoint transition
+refinement; the current run is the authoritative result for this branch head.
 
-The factorized envelope for the same W5 seed and ordered triple ((1,2,3)),
-including forward and independently reversed-adjoint T words, completed
-without reaching its 100,000 local-label guard:
+The new end-to-end joint-support pilot exercised a diagonal (C_e(K))
+component for edge ((0,1)). It reached the same hard guard while propagating
+the inner (H_E) word, at path ((0,2,3,0)): prior frontier 2,492, expanded
+frontier 5,001. No (C_e(K)) support set was silently truncated.
+
+The forward KKV triple pilot for ((a,b,c)=(1,2,3)) also reached the guard,
+at its first encountered path ((0,4)): prior frontier 1, expanded frontier
+5,001. This identifies the first practical bottleneck in the fully composed
+operator. It is not evidence that the physical KKV column is zero or
+nonzero.
+
+The factorized T-sequence envelope for the same W5 seed and ordered triple
+((1,2,3)), including forward and independently reversed-adjoint T words,
+completed without reaching its 100,000 local-label guard:
 
 | Metric | Result |
 |---|---:|
@@ -349,11 +362,13 @@ without reaching its 100,000 local-label guard:
 | Maximum doubled link spin reached | 6 |
 
 The product-basis dimension is an upper bound from marginal label sets, not
-the number of jointly reachable keys or nonzero matrix elements. This remains
-one ordered triple, not the full 24-term epsilon sum, full node KKV operator,
-or physical W5 output.
+the number of jointly reachable keys or nonzero matrix elements. The
+factorized envelope currently covers T-sequence support, not yet the
+composed (C(K)) and KKV stages. The explicit pilots cover one edge component
+and one ordered triple, not the full 24-term epsilon sum, full node KKV
+operator, or physical W5 output.
 
-A separate end-to-end bounded joint-support runner now exercises one
-(C_e(K)) component and one forward KKV triple on the physical W5 seed under
-the same fail-closed guard. Its outcome is reported by the subsequent CI run;
-no full KKV enumeration or numerical amplitude calculation is claimed here.
+The next algorithmic step is a factorized operator-level propagator for
+(C(K)) and KKV. It must preserve conservative marginal supersets and
+separately track the scalar-source filter; it must not claim cross-node
+correlations or replace exact joint support where those correlations matter.
