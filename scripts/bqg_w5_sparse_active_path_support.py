@@ -349,9 +349,19 @@ def _guard(support, limit, stage):
         for s in support.values()
     )
     if limit is not None and size > limit:
+        unary_entries = sum(
+            sum(map(len, state["unary"])) for state in support.values()
+        )
+        pair_entries = sum(
+            sum(map(len, state["pairs"].values())) for state in support.values()
+        )
+        pair_factor_counts = sorted({
+            len(state["pairs"]) for state in support.values()
+        })
         raise RuntimeError(
             f"sparse-active-path {stage} entries {size} exceed guard {limit}; "
-            "no truncation"
+            f"unary_entries={unary_entries}; pair_entries={pair_entries}; "
+            f"pair_factor_counts={pair_factor_counts}; no truncation"
         )
 
 
