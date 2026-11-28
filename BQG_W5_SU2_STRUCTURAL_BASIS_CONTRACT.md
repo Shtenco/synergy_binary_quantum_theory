@@ -410,3 +410,11 @@ A bounded physical-seed runner,
 (1,2,3) on the W5 K=0 seed at Jmax2=10. It reports forward and adjoint
 marginal envelopes separately and treats a guard hit as a diagnostic result.
 It explicitly marks amplitudes and joint-key enumeration as not performed.
+
+
+The factorized module also exposes `factorized_node_kkv`, which unions all
+24 epsilon triples and both forward/adjoint orientations for a source node,
+and `factorized_w5_seed_kkv`, which unions the five source-node envelopes.
+The CI runner has a separate bounded mode for the full 24-term node union;
+a guard hit is reported as an incomplete support envelope, never as a
+zero-column result.
