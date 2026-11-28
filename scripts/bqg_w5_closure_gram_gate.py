@@ -104,16 +104,40 @@ def load_keys(path: Path) -> tuple[list, str]:
         if status not in {"PASS_ADJOINT_CONSISTENCY", "FAIL_ADJOINT_OR_LEAKAGE_GATE"}:
             raise ValueError("basis_keys_repr requires a completed closure artifact status")
         raw_keys = data["basis_keys_repr"]
-        if not isinstance(raw_keys, list) or not raw_keys:
-            raise ValueError("basis_keys_repr must be a nonempty list")
+        if (not isinstance(raw_keys, list) or not raw_keys
+                or any(not isinstance(x, str) for x in raw_keys)):
+            raise ValueError("basis_keys_repr must be a nonempty list of repr strings")
         if data.get("closure_size") != len(raw_keys):
             raise ValueError("closure_size does not match basis_keys_repr length")
-        forward = data.get("forward_B_columns_sparse")
-        adjoint = data.get("direct_Bdag_columns_sparse")
-        if not isinstance(forward, list) or len(forward) != len(raw_keys):
-            raise ValueError("completed artifact forward-column count does not match basis")
-        if not isinstance(adjoint, list) or len(adjoint) != len(raw_keys):
-            raise ValueError("completed artifact adjoint-column count does not match basis")
+        if raw_keys != sorted(raw_keys):
+            raise ValueError("completed basis keys are not in canonical repr order")
+        basis_payload = "\\n".join(raw_keys).encode("utf-8")
+        expected_basis_id = hashlib.sha256(basis_payload).hexdigest()
+        if data.get("basis_id_sha256") != expected_basis_id:
+            raise ValueError("basis_id_sha256 does not match the ordered basis keys")
+
+        def validate_sparse_columns(name, columns):
+            if not isinstance(columns, list) or len(columns) != len(raw_keys):
+                raise ValueError(f"completed artifact {name} column count does not match basis")
+            for col_index, column in enumerate(columns):
+                if not isinstance(column, list):
+                    raise ValueError(f"{name}[{col_index}] must be a sparse-entry list")
+                seen_rows = set()
+                for entry in column:
+                    if not isinstance(entry, list) or len(entry) != 3:
+                        raise ValueError(f"{name}[{col_index}] entries must be [row, real, imag]")
+                    row, real, imag = entry
+                    if type(row) is not int or not 0 <= row < len(raw_keys):
+                        raise ValueError(f"{name}[{col_index}] contains an out-of-basis row index")
+                    if row in seen_rows:
+                        raise ValueError(f"{name}[{col_index}] contains a duplicate row index")
+                    seen_rows.add(row)
+                    if (type(real) not in (int, float) or type(imag) not in (int, float)
+                            or not math.isfinite(real) or not math.isfinite(imag)):
+                        raise ValueError(f"{name}[{col_index}] contains a non-finite or non-numeric amplitude")
+
+        validate_sparse_columns("forward_B_columns_sparse", data.get("forward_B_columns_sparse"))
+        validate_sparse_columns("direct_Bdag_columns_sparse", data.get("direct_Bdag_columns_sparse"))
         return [ast.literal_eval(x) for x in raw_keys], "complete_basis_list"
     partial = data.get("partial_forward_columns_top_amplitudes")
     if partial is not None:
