@@ -182,3 +182,21 @@ agreement with the repository's actual `T_sequences` spin-hit pattern.
 This CI result validates the structural helper and its finite combinatorial
 tests. It does not execute the numerical W5 KKV operator, prove nonzero
 amplitudes, or establish adjoint closure or physical constraints.
+
+
+## Adapter for the full oriented H_E primitive
+
+The module now exposes `t_sequence_structural_support` and
+`he_structural_support`. The latter mirrors the control-flow nesting in
+`apply_HE_complete_key`: all `oriented_specs(source_v)`, both the forward
+word and independently reversed adjoint word, and every actual
+`T_sequences(v,a,b,c)` entry. It passes the *outer* `source_v` to volume
+operations, rather than confusing it with the local `v` used to construct a
+T-sequence. Numerical word coefficients and orientation signs are omitted
+because this routine computes only an upper support bound.
+
+A configurable `max_states` guard aborts with an explicit exception if the
+support exceeds the requested memory budget; it never silently truncates.
+The adapter is ready for bounded pilot runs on small spin sectors. It has not
+yet been run on the full W5 seed because the multi-charged ambient spaces are
+too large for indiscriminate enumeration.
