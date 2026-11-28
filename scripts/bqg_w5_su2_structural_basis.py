@@ -191,6 +191,153 @@ def spin_sector_basis_profile(spin_sectors, source_v: int):
     return tuple((spins, covariant_basis_size(spins, source_v))
                  for spins in unique)
 
+
+def charged_nodes_factors(spins: tuple[int, ...], charged_nodes=(0,)):
+    """Ambient factors with an arbitrary fixed set of charged nodes."""
+    if len(spins) != 10 or any(s < 0 for s in spins):
+        raise ValueError("spins must be ten nonnegative doubled link labels")
+    charged = tuple(sorted(set(charged_nodes)))
+    if any(v not in VERTICES for v in charged):
+        raise ValueError("charged nodes must lie in 0..4")
+    return tuple(charged_node_basis(local_spins(spins, v))
+                 if v in charged else gauss_node_basis(local_spins(spins, v))
+                 for v in VERTICES)
+
+
+def charged_nodes_basis_size(spins: tuple[int, ...], charged_nodes=(0,)) -> int:
+    return prod(len(factor) for factor in charged_nodes_factors(spins, charged_nodes))
+
+
+def iter_charged_nodes_keys(spins: tuple[int, ...], charged_nodes=(0,)):
+    factors = charged_nodes_factors(spins, charged_nodes)
+    for labels in product(*factors):
+        yield tuple(spins), tuple(labels)
+
+
+def volume_label_targets(spins_local: tuple[int, int, int, int], label):
+    """Selection-rule superset for the scalar canonical volume block.
+
+    The repository applies one reduced block independently in each (J2,M2)
+    sector. Hence only multiplicity labels (K12,K34) may mix.
+    """
+    if len(label) != 5 or label[0] != "C":
+        raise ValueError("volume requires a charged-node label")
+    _, J2, M2, K12, K34 = label
+    if M2 not in magnetic_labels(J2):
+        raise ValueError("invalid magnetic label for J2")
+    rec = charged_labels(tuple(spins_local), J2)
+    if (K12, K34) not in rec:
+        raise ValueError("input charged label is not admissible")
+    return tuple(("C", J2, M2, a, b) for a, b in rec)
+
+
+def gauss_label_to_charged(label):
+    if len(label) != 2 or label[0] != "G":
+        raise ValueError("expected a Gauss label")
+    return ("C", 0, 0, label[1], label[1])
+
+
+def lift_key_to_all_charged(key):
+    """Lift projected endpoint labels to the unprojected all-node J basis."""
+    spins, labels = key
+    lifted = tuple(gauss_label_to_charged(lab) if lab[0] == "G" else lab
+                   for lab in labels)
+    return tuple(spins), lifted
+
+
+def project_all_charged_key(key, charged_nodes=(0,)):
+    """Project final labels to charged sectors at selected nodes and Gauss at others."""
+    spins, labels = key
+    charged = set(charged_nodes)
+    out = []
+    for v, lab in enumerate(labels):
+        if v in charged:
+            if lab[0] != "C":
+                raise ValueError("charged endpoint lost its total-J label")
+            out.append(lab)
+        else:
+            if lab[0] != "C" or lab[1] != 0 or lab[2] != 0 or lab[3] != lab[4]:
+                return None
+            out.append(("G", lab[3]))
+    return tuple(spins), tuple(out)
+
+
+def advance_hit_label_support(key, x: int, y: int, Jmax2: int):
+    """Conservative all-node label support for one fundamental edge hit.
+
+    Only the two endpoint link spins and their local representation labels
+    change. Endpoint labels are allowed to occupy every admissible total-J
+    sector until the final Gauss/charged projection.
+    """
+    spins, labels = lift_key_to_all_charged(key)
+    edge = tuple(sorted((x, y)))
+    if edge not in EDGE_INDEX:
+        raise ValueError("hit endpoints must define a K5 edge")
+    ei = EDGE_INDEX[edge]
+    s = spins[ei]
+    endpoints = (x, y)
+    for so in (s - 1, s + 1):
+        if so < 0 or so > Jmax2:
+            continue
+        new_spins = list(spins)
+        new_spins[ei] = so
+        new_spins = tuple(new_spins)
+        opts = []
+        for v in endpoints:
+            opts.append(charged_node_basis(local_spins(new_spins, v)))
+        for left, right in product(*opts):
+            new_labels = list(labels)
+            new_labels[x] = left
+            new_labels[y] = right
+            yield new_spins, tuple(new_labels)
+
+
+def advance_volume_label_support(key, vertex: int):
+    """Apply scalar-volume selection rules at one already charged node."""
+    spins, labels = key
+    lab = labels[vertex]
+    for target in volume_label_targets(local_spins(spins, vertex), lab):
+        updated = list(labels)
+        updated[vertex] = target
+        yield spins, tuple(updated)
+
+
+def structural_sequence_support(key, sequence, source_v: int, Jmax2: int,
+                                charged_nodes=(0,), max_states=None):
+    """Conservative label support through one actual Peter-Weyl sequence.
+
+    Intermediate nodes are kept in complete total-J sectors; the requested
+    Gauss/charged projection is imposed only after the whole word.
+    """
+    states = {lift_key_to_all_charged(key)}
+    for op in sequence:
+        next_states = set()
+        if op[0] == "V":
+            for state in states:
+                next_states.update(advance_volume_label_support(state, source_v))
+        elif op[0] == "P":
+            path = tuple(op[1])
+            for state in states:
+                partial = {state}
+                for x, y in zip(path[:-1], path[1:]):
+                    partial = {nxt for st in partial
+                               for nxt in advance_hit_label_support(st, x, y, Jmax2)}
+                next_states.update(partial)
+        else:
+            raise ValueError(f"unknown Peter-Weyl sequence opcode: {op[0]}")
+        states = next_states
+        if max_states is not None and len(states) > max_states:
+            raise RuntimeError("structural support exceeded max_states; no truncation performed")
+        if not states:
+            break
+    projected = set()
+    for state in states:
+        item = project_all_charged_key(state, charged_nodes)
+        if item is not None:
+            projected.add(item)
+    return projected
+
+
 def validate_covariant_key(key, source_v: int) -> bool:
     spins, labels = key
     if len(labels) != 5:
